@@ -70,7 +70,7 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: #f97316;
+  background: #eb992c;
   transition: width 0.35s ease;
 }
 
@@ -145,7 +145,7 @@
 }
 
 .business-onboarding-stepper__marker--current {
-  border-color: #f97316;
+  border-color: #eb992c;
   color: #c2410c;
   background: rgba(249, 115, 22, 0.08);
 }
@@ -156,8 +156,8 @@
 }
 
 .business-onboarding-stepper__marker--completed {
-  border-color: #f97316;
-  background: #f97316;
+  border-color: #eb992c;
+  background: #eb992c;
   color: #fff;
 }
 
@@ -192,7 +192,7 @@
   width: 100%;
   max-width: 6rem;
   border-radius: 9999px;
-  background: #f97316;
+  background: #eb992c;
 }
 
 .business-onboarding-stepper__item--upcoming .business-onboarding-stepper__active-line,

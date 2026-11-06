@@ -21,7 +21,7 @@ export function BusinessSettingsPanelShell({
   grouped?: boolean;
 }) {
   if (embedded) {
-    return <div className={cn("space-y-5", className)}>{children}</div>;
+    return <div className={cn("business-settings-plain space-y-5", className)}>{children}</div>;
   }
 
   const showHeader = Boolean(title || description);

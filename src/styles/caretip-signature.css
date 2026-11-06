@@ -1,0 +1,565 @@
+/*
+ * CareTip signature layer. Visual polish on the existing design: no copy, images or layouts change.
+ * Each numbered section stands alone, so any section can be deleted without affecting the others.
+ * The brand orange stays #EB992C, and buttons stay flat with black text.
+ *
+ * Two ideas carry the look: the ink card (the footer's warm near-black, used for the moments that
+ * matter) and the arc (the curve from the sign-in screen, repeated as a quiet motif).
+ */
+
+:root {
+  --ct-orange: #eb992c;
+  --ct-ink: #171411;
+  --ct-ink-raised: #221d18;
+  --ct-ink-line: rgb(255 255 255 / 0.1);
+  --ct-on-ink: #fff;
+  --ct-on-ink-soft: rgb(255 255 255 / 0.7);
+  --ct-line: rgb(23 20 17 / 0.08);
+  --ct-lift: 0 1px 2px rgb(23 20 17 / 0.04), 0 10px 24px -14px rgb(23 20 17 / 0.12);
+  --ct-lift-hover: 0 2px 4px rgb(23 20 17 / 0.05), 0 18px 32px -16px rgb(23 20 17 / 0.18);
+  --ct-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ---------- 1. Dashboard hero: the ink card ---------- */
+
+html body .caretip-dashboard-shell.caretip-dashboard-shell :is(.business-dashboard-hero, .employee-dashboard-hero).premium-page-hero .premium-page-hero__content {
+  position: relative !important;
+  isolation: isolate;
+  overflow: hidden !important;
+  padding: clamp(1.125rem, 2.2vw, 2rem) !important;
+  border-radius: 24px !important;
+  background: var(--ct-ink) !important;
+  color: var(--ct-on-ink);
+  --foreground: 0 0% 100%;
+  --muted-foreground: 0 0% 74%;
+  --border: 30 8% 34%;
+}
+
+/* The arc: two hairline rings and a soft glow, behind the content. */
+html body .caretip-dashboard-shell.caretip-dashboard-shell :is(.business-dashboard-hero, .employee-dashboard-hero).premium-page-hero .premium-page-hero__content::before,
+html body .caretip-dashboard-shell.caretip-dashboard-shell :is(.business-dashboard-hero, .employee-dashboard-hero).premium-page-hero .premium-page-hero__content::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+html body .caretip-dashboard-shell.caretip-dashboard-shell :is(.business-dashboard-hero, .employee-dashboard-hero).premium-page-hero .premium-page-hero__content::before {
+  top: -22rem;
+  right: -20rem;
+  width: 52rem;
+  height: 52rem;
+  border: 1px solid rgb(235 153 44 / 0.34);
+  background: radial-gradient(closest-side, rgb(235 153 44 / 0.1), transparent);
+}
+
+html body .caretip-dashboard-shell.caretip-dashboard-shell :is(.business-dashboard-hero, .employee-dashboard-hero).premium-page-hero .premium-page-hero__content::after {
+  top: -12rem;
+  right: -10rem;
+  width: 32rem;
+  height: 32rem;
+  border: 1px solid rgb(235 153 44 / 0.2);
+}
+
+/* On small screens the text fills the card, so the arc steps back to the corner. */
+@media (max-width: 1023px) {
+  html body .caretip-dashboard-shell.caretip-dashboard-shell :is(.business-dashboard-hero, .employee-dashboard-hero).premium-page-hero .premium-page-hero__content::before {
+    top: -14rem;
+    right: -14rem;
+    width: 24rem;
+    height: 24rem;
+  }
+
+  html body .caretip-dashboard-shell.caretip-dashboard-shell :is(.business-dashboard-hero, .employee-dashboard-hero).premium-page-hero .premium-page-hero__content::after {
+    display: none;
+  }
+}
+
+html body .premium-page-hero :is(.business-hero-title, .employee-hero-title, .business-dashboard-mobile-hero__title) {
+  color: var(--ct-on-ink) !important;
+  letter-spacing: -0.025em;
+}
+
+html body .caretip-dashboard-shell.caretip-dashboard-shell .premium-page-hero .dashboard-formal-greeting-badge.dashboard-formal-greeting-badge {
+  margin-inline: 0 !important;
+  padding-inline: 0 !important;
+  color: var(--ct-orange) !important;
+  font-weight: 600;
+}
+
+html body .premium-page-hero .dashboard-hero-financial__value,
+html body .premium-page-hero .dashboard-hero-financial__value > * {
+  color: var(--ct-on-ink) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+html body .premium-page-hero :is(
+  .dashboard-hero-financial__label,
+  .dashboard-hero-financial__label-meta,
+  .dashboard-hero-financial__hint,
+  .dashboard-hero-financial__zone-title,
+  .text-muted-foreground
+) {
+  color: var(--ct-on-ink-soft) !important;
+}
+
+/* The total leads; everything else sits in one calm tray beneath it. */
+html body .premium-page-hero .dashboard-hero-financial__zone--payout {
+  margin-top: 0.875rem !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+html body .premium-page-hero .dashboard-hero-financial__payout-grid {
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--ct-ink-line);
+  border-radius: 16px;
+  background: rgb(255 255 255 / 0.05);
+}
+
+html body .premium-page-hero :is(.dashboard-hero-financial, .dashboard-hero-financial-panel, .business-hero-cta-block, .employee-hero-cta-block) {
+  border-color: transparent !important;
+}
+
+html body .premium-page-hero summary {
+  color: var(--ct-on-ink);
+}
+
+/* The image is untouched: it just gets a cleaner frame. */
+html body :is(.business-hero-illustration-card, .employee-hero-illustration-card, .business-dashboard-mobile-hero__visual-frame) {
+  overflow: hidden;
+  border: 1px solid var(--ct-ink-line) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 24px 48px -24px rgb(0 0 0 / 0.7) !important;
+}
+
+.dark .caretip-dashboard-shell :is(.business-dashboard-hero, .employee-dashboard-hero) .premium-page-hero__content {
+  outline: 1px solid var(--ct-ink-line);
+  outline-offset: -1px;
+}
+
+/* ---------- 2. Dashboard surfaces: one card language ---------- */
+
+html body .caretip-dashboard-shell main .rounded-lg.border.bg-card:not(a, button, input),
+html body .caretip-dashboard-shell.caretip-dashboard-shell.caretip-dashboard-shell .business-card.business-card,
+html body .caretip-dashboard-shell .business-overview-goals-panel,
+html body .caretip-dashboard-shell .caretip-feedback-dashboard-panel,
+html body .caretip-dashboard-shell .business-period-summary__metric,
+html body .caretip-dashboard-shell.employee-dashboard .employee-period-card {
+  border-color: var(--ct-line) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--ct-lift) !important;
+}
+
+html body .caretip-dashboard-shell .business-period-summary__metric {
+  padding: 0.875rem 1rem !important;
+  transition: box-shadow 200ms ease, transform 200ms var(--ct-ease);
+}
+
+html body .caretip-dashboard-shell .business-period-summary__metric:hover {
+  box-shadow: var(--ct-lift-hover) !important;
+  transform: translateY(-1px);
+}
+
+html body .caretip-dashboard-shell .business-period-summary__value {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* Empty states read as one centred block. */
+html body .dashboard-workspace-empty {
+  align-items: center !important;
+  width: 100%;
+  text-align: center;
+}
+
+.dark .caretip-dashboard-shell main .rounded-lg.border.bg-card:not(a, button, input),
+.dark .caretip-dashboard-shell .business-period-summary__metric {
+  border-color: hsl(var(--border)) !important;
+  box-shadow: none !important;
+}
+
+/* ---------- 3. Sidebar: the current page joins the ink card ---------- */
+
+html body .caretip-dashboard-shell:is(.business-dashboard, .employee-dashboard) :is(.business-dash-nav-link--active, .employee-dash-nav-link--active),
+html body :is(.business-sidebar, .caretip-mobile-drawer-panel) :is(.business-dash-nav-link--active, .employee-dash-nav-link--active),
+html body .employee-dash-nav-link--active.employee-dash-nav-link--active {
+  width: calc(100% - 1.25rem) !important;
+  margin-block: 2px;
+  margin-inline: 0.625rem;
+  border-radius: 12px !important;
+  background: var(--ct-ink) !important;
+  color: var(--ct-on-ink) !important;
+  box-shadow: none !important;
+}
+
+html body :is(.business-dash-nav-link--active, .employee-dash-nav-link--active) :is(svg, span) {
+  color: inherit !important;
+}
+
+html body :is(.business-dash-nav-link--active, .employee-dash-nav-link--active) svg {
+  color: var(--ct-orange) !important;
+}
+
+.dark .caretip-dashboard-shell:is(.business-dashboard, .employee-dashboard) :is(.business-dash-nav-link--active, .employee-dash-nav-link--active) {
+  background: rgb(255 255 255 / 0.1) !important;
+}
+
+/* ---------- 4. Guest tip page ---------- */
+
+html body .customer-flow {
+  background-image: radial-gradient(90% 300px at 50% -60px, rgb(235 153 44 / 0.14), transparent 70%);
+  background-repeat: no-repeat;
+}
+
+html body .customer-flow-tip-preset {
+  border: 1px solid var(--ct-line);
+  border-radius: 16px !important;
+  background: hsl(var(--card));
+  box-shadow: var(--ct-lift);
+  transition: transform 160ms var(--ct-ease), box-shadow 160ms ease, background-color 160ms ease;
+}
+
+html body .customer-flow-tip-preset:hover {
+  box-shadow: var(--ct-lift-hover);
+  transform: translateY(-1px);
+}
+
+html body .customer-flow-tip-preset:active {
+  transform: scale(0.98);
+}
+
+/* The chosen amount is unmistakable: black on brand orange, like the buttons. */
+html body .customer-flow-tip-preset.ring-2 {
+  border-color: var(--ct-orange);
+  background: var(--ct-orange);
+  --tw-ring-color: transparent;
+}
+
+html body .customer-flow-tip-preset.ring-2 span {
+  color: #000 !important;
+}
+
+/* ---------- 5. Cookie banner on phones: the same choices, less of the page ---------- */
+
+@media (max-width: 767px) {
+  html body .cookie-consent-panel--banner {
+    left: 8px;
+    right: 8px;
+    bottom: max(8px, env(safe-area-inset-bottom, 0px));
+    width: auto;
+    max-width: none;
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  html body .cookie-consent-panel--banner .cookie-consent-panel__title {
+    margin-bottom: 0.125rem;
+    font-size: 0.875rem;
+  }
+
+  html body .cookie-consent-panel--banner .cookie-consent-panel__body {
+    font-size: 0.75rem;
+    line-height: 1.35;
+  }
+
+  html body .cookie-consent-panel--banner .cookie-consent-panel__body + .cookie-consent-panel__body {
+    margin-top: 0.25rem;
+  }
+
+  html body .cookie-consent-panel--banner .cookie-consent-panel__privacy {
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+  }
+
+  html body .cookie-consent-panel--banner .cookie-consent-panel__actions {
+    gap: 0.375rem;
+  }
+
+  html body .cookie-consent-panel--banner .cookie-consent-panel__action {
+    min-height: 2.5rem;
+    padding-block: 0.375rem;
+  }
+}
+
+/* ---------- 6. Sign-in: true brand orange, with the arc ---------- */
+
+html body .caretip-auth-curved-blob {
+  overflow: hidden;
+  background: var(--ct-orange) !important;
+  opacity: 1 !important;
+}
+
+/* Thin light rings only: nothing here may darken the brand orange. */
+html body .caretip-auth-curved-blob::before,
+html body .caretip-auth-curved-blob::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgb(255 255 255 / 0.3);
+  pointer-events: none;
+}
+
+html body .caretip-auth-curved-blob::before {
+  inset: 7rem;
+}
+
+html body .caretip-auth-curved-blob::after {
+  inset: 14rem;
+  border-color: rgb(255 255 255 / 0.18);
+}
+
+/* Black on orange, matching the buttons. White on this orange is hard to read. */
+html body .caretip-auth-marketing :is(.caretip-auth-marketing__headline, .caretip-auth-marketing__body, .caretip-auth-back-home__link) {
+  color: #000 !important;
+  opacity: 1;
+  text-shadow: none;
+}
+
+/* ---------- 7. Marketing typography and alignment ---------- */
+
+html body .caretip-landing h1.caretip-hero-headline {
+  letter-spacing: -0.04em !important;
+}
+
+html body .caretip-landing :is(#final-cta h2, .caretip-features-cta-wise__title) {
+  letter-spacing: -0.04em !important;
+}
+
+/* Small orange text on white is hard to read, so small text goes near-black. */
+html body .caretip-public-nav-join {
+  color: var(--ct-ink);
+}
+
+html body a[href="/forgot-password"],
+html body .cookie-consent-panel__privacy-link {
+  color: var(--ct-ink) !important;
+  text-decoration: underline;
+  text-decoration-color: var(--ct-orange);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.dark .caretip-public-nav-join,
+.dark a[href="/forgot-password"],
+.dark .cookie-consent-panel__privacy-link {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* ---------- 8. Marketing surfaces ---------- */
+
+html body .caretip-features-optical-rail > div:first-child > div:first-child {
+  justify-content: center;
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+
+html body .caretip-landing :is(.caretip-industry-photo-card, .caretip-feature-showcase-card) {
+  transition: transform 260ms var(--ct-ease), box-shadow 260ms ease;
+}
+
+html body .caretip-landing :is(.caretip-industry-photo-card, .caretip-feature-showcase-card):hover {
+  transform: translateY(-3px);
+  box-shadow: var(--ct-lift-hover);
+}
+
+/* The arc closes the page: quiet rings in the closing band. */
+html body .caretip-landing #final-cta {
+  position: relative;
+  overflow: hidden;
+}
+
+html body .caretip-landing #final-cta::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44rem;
+  height: 44rem;
+  border: 1px solid rgb(0 0 0 / 0.08);
+  border-radius: 50%;
+  box-shadow: 0 0 0 4rem rgb(0 0 0 / 0.012), 0 0 0 4.06rem rgb(0 0 0 / 0.06);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body :is(.business-period-summary__metric, .customer-flow-tip-preset, .caretip-industry-photo-card, .caretip-feature-showcase-card) {
+    transition: none;
+  }
+
+  html body :is(.business-period-summary__metric, .customer-flow-tip-preset, .caretip-industry-photo-card, .caretip-feature-showcase-card):hover {
+    transform: none;
+  }
+}
+
+/* ---------- 9. Inner pages: one canvas, one header ---------- */
+
+/* Pages sit on the same warm canvas, instead of a white band that stops short. */
+html body .caretip-dashboard-shell main :is(.caretip-route-outlet, .business-module-page, .business-page, .dashboard-inbox-page) {
+  background: transparent !important;
+}
+
+html body .caretip-dashboard-shell.caretip-dashboard-shell .business-module-workspace-header,
+html body .caretip-dashboard-shell.caretip-dashboard-shell .employee-page-header--surface {
+  position: relative;
+  overflow: hidden;
+  padding-inline: 0 !important;
+}
+
+/* A hairline of the arc in the corner of every page header. */
+html body .caretip-dashboard-shell .business-module-workspace-header::after,
+html body .caretip-dashboard-shell .employee-page-header--surface::after {
+  content: "";
+  position: absolute;
+  top: -13rem;
+  right: -3rem;
+  width: 20rem;
+  height: 20rem;
+  border: 1px solid rgb(235 153 44 / 0.26);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+html body .caretip-dashboard-shell .business-module-workspace-header > *,
+html body .caretip-dashboard-shell .employee-page-header--surface > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Employee pages: back link on its own line, then the title, aligned left like every other page. */
+@media (min-width: 640px) {
+  html body .employee-page-header--subtle > div {
+    width: 100%;
+    max-width: none;
+    flex-flow: row wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  html body .employee-page-header--subtle .employee-page-header__back--subtle {
+    flex: 0 0 100%;
+  }
+
+  html body .employee-page-header--subtle > div > .min-w-0 {
+    flex: 1 1 0;
+    text-align: left;
+  }
+}
+
+/* ---------- 10. Inbox ---------- */
+
+html body .caretip-dashboard-shell.caretip-dashboard-shell.caretip-dashboard-shell .dashboard-inbox-page .inbox-feed-panel {
+  overflow: hidden;
+  border: 1px solid var(--ct-line) !important;
+  border-radius: 20px !important;
+  background: hsl(var(--card)) !important;
+  box-shadow: var(--ct-lift);
+}
+
+html body .inbox-feed-panel article {
+  transition: background-color 160ms ease;
+}
+
+html body .inbox-feed-panel article > div:first-child {
+  border-radius: 14px;
+}
+
+.dark .caretip-dashboard-shell.caretip-dashboard-shell.caretip-dashboard-shell .dashboard-inbox-page .inbox-feed-panel {
+  border-color: hsl(var(--border)) !important;
+  box-shadow: none;
+}
+
+/* ---------- 11. Settings: sections become cards ---------- */
+
+html body .caretip-dashboard-shell.caretip-dashboard-shell .employee-settings-section,
+html body .caretip-dashboard-shell.caretip-dashboard-shell.caretip-dashboard-shell .employee-settings-section:first-of-type,
+html body .caretip-dashboard-shell.caretip-dashboard-shell.caretip-dashboard-shell .business-settings-section.business-settings-section,
+html body .caretip-dashboard-shell.caretip-dashboard-shell .business-settings-plain {
+  margin-block: 0 1rem !important;
+  padding: clamp(1.125rem, 2vw, 1.5rem) !important;
+  border: 1px solid var(--ct-line) !important;
+  border-radius: 18px !important;
+  background: hsl(var(--card)) !important;
+  box-shadow: var(--ct-lift);
+}
+
+html body .caretip-dashboard-shell.caretip-dashboard-shell .employee-settings-section--danger {
+  border-color: rgb(220 38 38 / 0.24) !important;
+  box-shadow: none;
+}
+
+.dark .caretip-dashboard-shell.caretip-dashboard-shell :is(.employee-settings-section, .business-settings-section, .business-settings-plain) {
+  border-color: hsl(var(--border)) !important;
+  box-shadow: none;
+}
+
+/* ---------- 12. Tables and summary tiles ---------- */
+
+html body .caretip-dashboard-shell :is(.dashboard-table-panel, .team-employees-invite, .team-employees-kpi-strip > *) {
+  border: 1px solid var(--ct-line) !important;
+  border-radius: 16px !important;
+  background: hsl(var(--card)) !important;
+  box-shadow: var(--ct-lift) !important;
+}
+
+html body .caretip-dashboard-shell .dashboard-table-panel {
+  overflow: hidden;
+}
+
+html body .caretip-dashboard-shell .team-employees-kpi-strip {
+  gap: 0.75rem;
+  border: 0 !important;
+}
+
+html body .caretip-dashboard-shell .team-employees-kpi-strip > * {
+  padding: 0.875rem 1rem !important;
+}
+
+html body .caretip-dashboard-shell :is(.dashboard-table-panel, .team-employees-roster) tbody tr {
+  transition: background-color 140ms ease;
+}
+
+html body .caretip-dashboard-shell :is(.dashboard-table-panel, .team-employees-roster) tbody tr:hover {
+  background-color: rgb(235 153 44 / 0.05);
+}
+
+html body .caretip-dashboard-shell :is(.team-employees-tips, .team-employees-table__num, .dashboard-table-panel td) {
+  font-variant-numeric: tabular-nums;
+}
+
+.dark .caretip-dashboard-shell :is(.dashboard-table-panel, .team-employees-invite, .team-employees-kpi-strip > *) {
+  border-color: hsl(var(--border)) !important;
+  box-shadow: none !important;
+}
+
+/* ---------- 13. Form controls ---------- */
+
+html body .caretip-dashboard-shell main :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]), textarea, select) {
+  border-radius: 12px;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+html body .caretip-dashboard-shell main :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]), textarea, select):focus-visible {
+  border-color: var(--ct-orange) !important;
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(235 153 44 / 0.28) !important;
+}
+
+html body .caretip-dashboard-shell .business-mobile-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+/* ---------- 14. Charts: brand orange in place of grey ---------- */
+
+html body .business-analytics-report .recharts-bar-rectangle path,
+html body .business-analytics-report .recharts-pie-sector:first-child path {
+  fill: var(--ct-orange);
+}
+
+/* The first legend dot matches the first slice. */
+html body .business-analytics-report li:first-child > span.h-2\.5.w-2\.5.rounded-full {
+  background-color: var(--ct-orange) !important;
+}
