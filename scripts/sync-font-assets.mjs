@@ -2,8 +2,7 @@
  * Copies self-hosted Inter + Manrope + Playfair + Roboto assets into public/fonts
  * for absolute /fonts/... URLs in caretip-font-faces.css.
  *
- * Inter: use the same @fontsource latin .woff files the app used before
- * (this package build does not ship matching .woff2 for those weights).
+ * Inter: @fontsource latin .woff2, plus .woff as the stylesheet's fallback.
  * Manrope / Playfair / Roboto: .woff2 as available.
  */
 import { copyFile, mkdir, access } from "node:fs/promises";
@@ -18,20 +17,40 @@ const fontAssets = [
     "public/fonts/inter/inter-latin-400-normal.woff",
   ],
   [
+    "@fontsource/inter/files/inter-latin-400-normal.woff2",
+    "public/fonts/inter/inter-latin-400-normal.woff2",
+  ],
+  [
     "@fontsource/inter/files/inter-latin-500-normal.woff",
     "public/fonts/inter/inter-latin-500-normal.woff",
+  ],
+  [
+    "@fontsource/inter/files/inter-latin-500-normal.woff2",
+    "public/fonts/inter/inter-latin-500-normal.woff2",
   ],
   [
     "@fontsource/inter/files/inter-latin-600-normal.woff",
     "public/fonts/inter/inter-latin-600-normal.woff",
   ],
   [
+    "@fontsource/inter/files/inter-latin-600-normal.woff2",
+    "public/fonts/inter/inter-latin-600-normal.woff2",
+  ],
+  [
     "@fontsource/inter/files/inter-latin-700-normal.woff",
     "public/fonts/inter/inter-latin-700-normal.woff",
   ],
   [
+    "@fontsource/inter/files/inter-latin-700-normal.woff2",
+    "public/fonts/inter/inter-latin-700-normal.woff2",
+  ],
+  [
     "@fontsource/inter/files/inter-latin-800-normal.woff",
     "public/fonts/inter/inter-latin-800-normal.woff",
+  ],
+  [
+    "@fontsource/inter/files/inter-latin-800-normal.woff2",
+    "public/fonts/inter/inter-latin-800-normal.woff2",
   ],
   [
     "@fontsource/manrope/files/manrope-latin-600-normal.woff2",

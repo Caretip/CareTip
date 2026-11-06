@@ -2,8 +2,8 @@
  * Self-hosted Inter + Manrope + metric fallbacks for index.html first paint.
  * Absolute /fonts/... URLs only — avoids nested-route resolution / Firefox sanitizer.
  *
- * Inter binaries are the same @fontsource latin files previously loaded via Vite
- * (package ships .woff for these weights; CSS listed missing .woff2 first, which caused the sanitizer error).
+ * Inter binaries are the @fontsource latin files, served as .woff2 with .woff as the fallback.
+ * Every URL listed here must exist in public/fonts: a missing file triggers the Firefox sanitizer error.
  */
 
 @font-face {
@@ -29,7 +29,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("/fonts/inter/inter-latin-400-normal.woff") format("woff");
+  src: url("/fonts/inter/inter-latin-400-normal.woff2") format("woff2"), url("/fonts/inter/inter-latin-400-normal.woff") format("woff");
 }
 
 @font-face {
@@ -37,7 +37,7 @@
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: url("/fonts/inter/inter-latin-500-normal.woff") format("woff");
+  src: url("/fonts/inter/inter-latin-500-normal.woff2") format("woff2"), url("/fonts/inter/inter-latin-500-normal.woff") format("woff");
 }
 
 @font-face {
@@ -45,7 +45,7 @@
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url("/fonts/inter/inter-latin-600-normal.woff") format("woff");
+  src: url("/fonts/inter/inter-latin-600-normal.woff2") format("woff2"), url("/fonts/inter/inter-latin-600-normal.woff") format("woff");
 }
 
 @font-face {
@@ -53,7 +53,7 @@
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url("/fonts/inter/inter-latin-700-normal.woff") format("woff");
+  src: url("/fonts/inter/inter-latin-700-normal.woff2") format("woff2"), url("/fonts/inter/inter-latin-700-normal.woff") format("woff");
 }
 
 @font-face {
@@ -61,7 +61,7 @@
   font-style: normal;
   font-weight: 800;
   font-display: swap;
-  src: url("/fonts/inter/inter-latin-800-normal.woff") format("woff");
+  src: url("/fonts/inter/inter-latin-800-normal.woff2") format("woff2"), url("/fonts/inter/inter-latin-800-normal.woff") format("woff");
 }
 
 @font-face {
