@@ -563,3 +563,524 @@ html body .business-analytics-report .recharts-pie-sector:first-child path {
 html body .business-analytics-report li:first-child > span.h-2\.5.w-2\.5.rounded-full {
   background-color: var(--ct-orange) !important;
 }
+
+/* ---------- 15. Landing benefit marker: the brand diamond ---------- */
+
+.caretip-landing-benefit-mark {
+  display: inline-flex;
+  flex: none;
+  width: 1.125rem;
+  height: 1.375rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.caretip-landing-benefit-mark__gem {
+  width: 0.8125rem;
+  height: 0.8125rem;
+  fill: var(--ct-orange);
+}
+
+/* Audience cards: the icon and its label read as one badge. */
+html body .caretip-landing .caretip-audience-benefits__lockup {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 1.125rem;
+}
+
+html body .caretip-landing .caretip-audience-benefits__lockup .caretip-audience-benefits__icon {
+  flex: none;
+  width: 2.125rem !important;
+  height: 2.125rem !important;
+  margin: 0 !important;
+  border-radius: 9999px !important;
+}
+
+html body .caretip-landing .caretip-audience-benefits__lockup .caretip-audience-benefits__icon svg {
+  width: 1.0625rem !important;
+  height: 1.0625rem !important;
+}
+
+html body .caretip-landing .caretip-audience-benefits__lockup .caretip-audience-benefits__role {
+  margin: 0 !important;
+  color: hsl(var(--foreground)) !important;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1.2;
+}
+
+/* ---------- 16. Landing sections ---------- */
+
+/* Hero: crisp type. The wide blurred shadow made small text look smudged over the photo. */
+html body .caretip-landing .caretip-hero-section--full-bg .caretip-hero-copy :is(h1, h1 *, p, span) {
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.32);
+}
+
+/* Industry cards: a deeper foot so the small category label stays readable on any photo. */
+html body .caretip-landing .caretip-industry-photo-card__overlay {
+  background: linear-gradient(to top, rgb(16 12 8 / 0.86) 0%, rgb(16 12 8 / 0.58) 32%, rgb(16 12 8 / 0) 62%);
+}
+
+html body .caretip-landing .caretip-industry-photo-card {
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+@media (hover: hover) {
+  html body .caretip-landing .caretip-industry-photo-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 34px rgb(23 20 17 / 0.18);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body .caretip-landing .caretip-industry-photo-card,
+  html body .caretip-landing .caretip-industry-photo-card:hover {
+    transition: none;
+    transform: none;
+  }
+}
+
+html body .caretip-landing .caretip-landing-dashboard-showcase__leaderboard-name {
+  text-align: left;
+}
+
+/* Closing call to action: ink on the brand orange. White on #EB992C was hard to read. */
+html body .caretip-landing.caretip-landing--premium #final-cta :is(.caretip-features-cta-wise__title, .caretip-features-cta-wise__title *, h2, h2 *, p) {
+  color: var(--ct-ink) !important;
+  -webkit-text-fill-color: var(--ct-ink) !important;
+  text-shadow: none !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #final-cta .caretip-features-cta-wise__actions > a:last-child {
+  color: var(--ct-ink) !important;
+  -webkit-text-fill-color: var(--ct-ink) !important;
+  border-color: rgb(23 20 17 / 0.6) !important;
+}
+
+/* ---------- 17. Phones: public pages ---------- */
+
+@media (max-width: 639px) {
+  /* Footer: two tidy columns rather than one very long list. */
+  html body .caretip-site-footer .caretip-site-footer-link-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2rem 1rem;
+  }
+
+  html body .caretip-landing .caretip-landing-section-cta a {
+    width: 100%;
+  }
+
+  html body .caretip-landing .business-period-summary__label,
+  html body .caretip-landing .caretip-landing-dashboard-showcase__leaderboard-tips-count {
+    font-size: 0.625rem;
+  }
+
+  .caretip-site-footer-link {
+    min-height: 2.5rem;
+  }
+
+  .caretip-pricing-billing-toggle__option {
+    min-height: 2.5rem;
+  }
+}
+
+/* ---------- 18. Phones: dashboards and the notification panel ---------- */
+
+@media (max-width: 639px) {
+  /* The hero sat inside the page padding and its own, leaving the numbers a narrow column. */
+  html body .caretip-dashboard-shell.caretip-dashboard-shell :is(.business-dashboard-hero, .employee-dashboard-hero) {
+    width: calc(100% + 1.75rem);
+    max-width: none;
+    margin-inline: -0.875rem;
+  }
+
+  /* Larger touch areas with no visual change. */
+  .caretip-notification-panel--premium .caretip-notification-panel__mark-all {
+    position: relative;
+  }
+
+  .caretip-notification-panel--premium .caretip-notification-panel__mark-all::after,
+  .fix-prompt__dismiss::after,
+  .mw-auth-input__toggle::after {
+    content: "";
+    position: absolute;
+    inset: -0.75rem;
+  }
+
+  .caretip-notification-panel--premium .caretip-notification-panel__close {
+    min-height: 2.75rem;
+  }
+
+  /* A long inbox scrolls inside the panel and never runs off the screen. */
+  .caretip-notification-panel--premium .caretip-notification-panel__scroll {
+    max-height: min(26rem, calc(100dvh - 15rem));
+    overscroll-behavior: contain;
+  }
+}
+
+/* ---------- 19. Landing section mark: line, diamond, label, diamond, line ---------- */
+
+html body .caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow] {
+  display: flex;
+  width: 100% !important;
+  max-width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  padding: 0;
+}
+
+html body .caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow]::before,
+html body .caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow]::after {
+  content: "";
+  flex: 0 1 3.5rem;
+  min-width: 1rem;
+  height: 1px;
+}
+
+html body .caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow]::before {
+  background: linear-gradient(to right, rgb(235 153 44 / 0), rgb(235 153 44 / 0.8));
+}
+
+html body .caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow]::after {
+  background: linear-gradient(to left, rgb(235 153 44 / 0), rgb(235 153 44 / 0.8));
+}
+
+html body .caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow] [data-accent-dot],
+html body .caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow] .caretip-landing-accent-text::after,
+html body .caretip-landing.caretip-landing--premium .caretip-hero-brand-tagline__accent {
+  flex: none;
+  width: 0.5rem !important;
+  height: 0.5rem !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: var(--ct-orange) !important;
+  box-shadow: none !important;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  animation: none !important;
+}
+
+html body .caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow] .caretip-landing-accent-text {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.45rem;
+  color: hsl(var(--foreground)) !important;
+  font-size: 0.6875rem !important;
+  font-weight: 650 !important;
+  letter-spacing: clamp(0.13em, 0.6vw + 0.1em, 0.2em) !important;
+  line-height: 1.3 !important;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+html body .caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow] .caretip-landing-accent-text::after {
+  content: "";
+  display: inline-block;
+}
+
+@media (max-width: 374px) {
+  html body .caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow] {
+    gap: 0.4375rem;
+  }
+
+  html body .caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow] .caretip-landing-accent-text {
+    letter-spacing: 0.14em !important;
+  }
+}
+
+/* Left-aligned sections: the mark starts at the margin and one line runs out to the right. */
+@media (min-width: 1024px) {
+  html body .caretip-landing.caretip-landing--premium :is(#how-it-works, #recognition) [data-landing-accent-eyebrow] {
+    justify-content: flex-start;
+  }
+
+  html body .caretip-landing.caretip-landing--premium :is(#how-it-works, #recognition) [data-landing-accent-eyebrow]::before,
+  html body .caretip-landing.caretip-landing--premium :is(#how-it-works, #recognition) [data-landing-accent-eyebrow] .caretip-landing-accent-text::after {
+    display: none;
+  }
+
+  html body .caretip-landing.caretip-landing--premium :is(#how-it-works, #recognition) [data-landing-accent-eyebrow]::after {
+    flex: 0 0 4.5rem;
+  }
+}
+
+/* Hero: the same mark over the photo, with a line trailing into the image. */
+html body .caretip-landing.caretip-landing--premium .caretip-hero-brand-tagline {
+  gap: 0.625rem;
+}
+
+html body .caretip-landing.caretip-landing--premium .caretip-hero-brand-tagline::after {
+  content: "";
+  flex: none;
+  width: 3.5rem;
+  height: 1px;
+  background: linear-gradient(to right, rgb(235 153 44 / 0.9), rgb(235 153 44 / 0));
+}
+
+html body .caretip-landing.caretip-landing--premium .caretip-hero-brand-tagline__text {
+  color: rgb(255 248 240) !important;
+  font-size: 0.6875rem !important;
+  font-weight: 650 !important;
+  letter-spacing: 0.2em !important;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ---------- 20. Landing vertical rhythm ---------- */
+
+html body .caretip-landing.caretip-landing--premium .caretip-landing-headline-stack {
+  gap: clamp(0.875rem, 1.4vw, 1.125rem);
+}
+
+html body .caretip-landing.caretip-landing--premium .caretip-landing-headline-stack > h2,
+html body .caretip-landing.caretip-landing--premium .caretip-payments-trust__content h2 {
+  text-wrap: balance;
+}
+
+html body .caretip-landing.caretip-landing--premium :is(.caretip-section-intro, .caretip-customerjourney__intro) p {
+  text-wrap: pretty;
+}
+
+/* The guest intro ran straight into its headline. */
+html body .caretip-landing.caretip-landing--premium .caretip-customerjourney__headline-stack {
+  margin-bottom: clamp(0.875rem, 1.6vw, 1.25rem);
+}
+
+html body .caretip-landing.caretip-landing--premium .caretip-live-minutes-intro h2 {
+  margin-bottom: clamp(0.875rem, 1.4vw, 1.125rem);
+}
+
+/* ---------- 21. Landing payment methods: one white bar ---------- */
+
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-trust__content {
+  gap: clamp(1.75rem, 4vw, 2.5rem);
+}
+
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-trust__title {
+  max-width: 38rem;
+  color: hsl(var(--foreground)) !important;
+  -webkit-text-fill-color: hsl(var(--foreground));
+  font-size: clamp(1.5rem, 2.9vw, 2.25rem) !important;
+  line-height: 1.18;
+  text-align: center;
+  text-wrap: balance;
+}
+
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-trust__marks {
+  margin-top: 0;
+}
+
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-accepted {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.125rem;
+}
+
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-accepted__methods {
+  display: grid;
+  width: 100%;
+  max-width: 42rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: clamp(0.875rem, 2.4vw, 1.5rem) clamp(0.75rem, 3vw, 2rem);
+  border-radius: 1.25rem;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px rgb(23 20 17 / 0.06), 0 18px 40px -28px rgb(23 20 17 / 0.28);
+  list-style: none;
+}
+
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-accepted__item {
+  display: flex;
+  height: 3.25rem;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-accepted__logo {
+  display: block;
+  width: auto !important;
+  max-width: 100%;
+  height: auto !important;
+  margin: 0;
+  transform: none !important;
+}
+
+/* Equal visual weight: some official files carry built-in padding, so each gets its own height. */
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-accepted__logo--visa {
+  max-height: clamp(1rem, 3.4vw, 1.5rem);
+}
+
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-accepted__logo--mastercard,
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-accepted__logo--google-pay {
+  max-height: clamp(2.25rem, 7vw, 3.25rem);
+}
+
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-accepted__logo--apple-pay {
+  max-height: clamp(1.5rem, 4.8vw, 2.25rem);
+}
+
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-accepted__stripe {
+  display: inline-flex;
+  margin: 0;
+  padding: 0;
+}
+
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-accepted__stripe-badge {
+  display: block;
+  width: auto;
+  height: 1.5rem;
+}
+
+/* ---------- 22. Landing setup steps: large numerals, warm tint on the active step ---------- */
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-steps {
+  gap: 0.375rem;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step {
+  display: block;
+  padding: 0.875rem 1rem !important;
+  border: 0 !important;
+  border-radius: 1.125rem;
+  background: transparent !important;
+  box-shadow: none !important;
+  transition: background-color 220ms ease;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step::before,
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step::after {
+  display: none !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step__rail,
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step__sep {
+  display: none !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-steps::before,
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-steps::after {
+  display: none !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step__content,
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step--active .caretip-process-step__content,
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step:hover .caretip-process-step__content {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 3.5rem minmax(0, 1fr);
+  column-gap: 0.75rem;
+  align-items: start;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step__content::before,
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step__content::after {
+  display: none !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step__head {
+  display: contents;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step-number {
+  grid-row: 1 / span 3;
+  grid-column: 1;
+  color: rgb(23 20 17 / 0.26) !important;
+  font-size: 2.25rem !important;
+  font-weight: 300 !important;
+  letter-spacing: -0.04em !important;
+  line-height: 1 !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step-title,
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step-desc,
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step__current {
+  grid-column: 2;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step-title {
+  font-size: 1rem !important;
+  font-weight: 650 !important;
+  line-height: 1.3 !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step-desc {
+  margin-top: 0.25rem !important;
+  font-size: 0.875rem !important;
+  line-height: 1.5 !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step--past .caretip-process-step-number {
+  color: rgb(235 153 44 / 0.7) !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step--active {
+  background: rgb(235 153 44 / 0.1) !important;
+  box-shadow: none !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step--active .caretip-process-step-number {
+  color: var(--ct-orange) !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step--active .caretip-process-step-title {
+  color: hsl(var(--foreground)) !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step--active .caretip-process-step-desc {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step__current {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  margin-top: 0.5rem;
+  color: hsl(var(--foreground)) !important;
+  font-size: 0.625rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.18em !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step__current::before {
+  content: "";
+  width: 0.4375rem;
+  height: 0.4375rem;
+  background: var(--ct-orange);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+
+@media (hover: hover) {
+  html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step:not(.caretip-process-step--active):hover {
+    background: rgb(235 153 44 / 0.08) !important;
+  }
+}
+
+html.dark .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step-number {
+  color: rgb(255 255 255 / 0.28) !important;
+}
+
+html.dark .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step--active .caretip-process-step-number {
+  color: var(--ct-orange) !important;
+}
+
+/* Landing styles arrive after this page's own, so its intro keeps the measure it was designed with. */
+html body .caretip-features-page.caretip-landing.caretip-landing--premium .caretip-section-intro > p {
+  max-width: 36rem;
+}

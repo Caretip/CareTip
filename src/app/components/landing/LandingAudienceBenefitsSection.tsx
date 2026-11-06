@@ -266,8 +266,10 @@ export function LandingAudienceBenefitsSection() {
               ) : null}
 
               <div className="caretip-audience-benefits__copy">
-                <p className="caretip-audience-benefits__role">{card.role}</p>
-                <div className="caretip-audience-benefits__icon">{card.icon}</div>
+                <div className="caretip-audience-benefits__lockup">
+                  <div className="caretip-audience-benefits__icon">{card.icon}</div>
+                  <p className="caretip-audience-benefits__role">{card.role}</p>
+                </div>
                 <h3 className="caretip-audience-benefits__title">{card.title}</h3>
                 <p className="caretip-audience-benefits__body">{card.body}</p>
                 <BenefitPointsList points={card.points} />

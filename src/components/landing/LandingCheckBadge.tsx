@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { Check } from "lucide-react";
 import { caretipType } from "@/lib/typography/caretipType";
 import { cn } from "@/lib/utils";
 
@@ -10,11 +9,13 @@ export const landingBenefitRowClass =
 /** @deprecated Use `landingBenefitRowClass` */
 export const landingLiveMinutesRowClass = landingBenefitRowClass;
 
-/** Single primary check — same marker as pricing tier feature bullets. */
+/** Landing benefit marker: the brand diamond on an ink tile. Pricing keeps its own check marker. */
 export function LandingBenefitCheckMark({ className }: { className?: string }) {
   return (
-    <span className={cn("caretip-pricing-tier-features__check caretip-landing-benefit-check", className)} aria-hidden>
-      <Check className="size-3 caretip-landing-benefit-check__glyph" strokeWidth={2.75} />
+    <span className={cn("caretip-landing-benefit-mark", className)} aria-hidden>
+      <svg viewBox="0 0 16 16" className="caretip-landing-benefit-mark__gem" focusable="false">
+        <path d="M8 1.6 14.4 8 8 14.4 1.6 8Z" />
+      </svg>
     </span>
   );
 }
