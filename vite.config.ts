@@ -29,6 +29,32 @@ function publicSiteOriginFromEnvValue(raw: string | undefined): string {
   }
 }
 
+/** Tells theme-init.js which files to start early, since their hashed names are only known here. */
+function bootAssetsMetaPlugin() {
+  return {
+    name: 'caretip-boot-assets-meta',
+    transformIndexHtml: {
+      order: 'post' as const,
+      handler(_html: string, ctx: { bundle?: Record<string, { fileName: string; facadeModuleId?: string | null }> }) {
+        const assets: Record<string, string> = {};
+        for (const { fileName, facadeModuleId } of Object.values(ctx.bundle ?? {})) {
+          const locale = /\/i18n\/locales\/(de|en)\.json/.exec(facadeModuleId ?? '');
+          if (locale) assets[locale[1]!] = `/${fileName}`;
+          if (/^assets\/landing-[\w-]+\.css$/.test(fileName)) assets.landingCss = `/${fileName}`;
+        }
+        if (!Object.keys(assets).length) return [];
+        return [
+          {
+            tag: 'meta',
+            attrs: { name: 'caretip-boot-assets', content: JSON.stringify(assets) },
+            injectTo: 'head-prepend' as const,
+          },
+        ];
+      },
+    },
+  };
+}
+
 export default defineConfig(({ mode, command }) => {
   const repoRoot = fileURLToPath(new URL('.', import.meta.url))
   const loaded = loadEnv(mode, repoRoot, '')
@@ -83,8 +109,11 @@ export default defineConfig(({ mode, command }) => {
     target: 'es2022',
     outDir: 'dist',
     chunkSizeWarningLimit: 1500,
-    /** Avoid pulling the modulepreload polyfill (and its chunk deps) into the landing route. */
-    modulePreload: false,
+    /**
+     * Preload declared chunks in parallel. Without this each dependency was found only after its
+     * parent downloaded. No polyfill: it would land in the landing route.
+     */
+    modulePreload: { polyfill: false },
     rollupOptions: {
       output: {
         manualChunks(id) {
@@ -106,7 +135,11 @@ export default defineConfig(({ mode, command }) => {
           if (id.includes('i18next') || id.includes('react-i18next')) return 'vendor-i18n';
           if (id.includes('socket.io-client') || id.includes('engine.io-client')) return 'vendor-socket';
           if (id.includes('firebase')) return 'vendor-firebase';
-          if (id.includes('motion') && id.includes('node_modules')) return 'vendor-motion';
+          // Named packages only: a substring match also caught remotion, which pulled the video
+          // player into a chunk that every page loads.
+          if (inPackage('motion') || inPackage('framer-motion') || inPackage('motion-dom') || inPackage('motion-utils')) {
+            return 'vendor-motion';
+          }
           if (id.includes('html2canvas')) return 'vendor-html2canvas';
           if (id.includes('@radix-ui')) return 'vendor-radix';
           if (id.includes('react-router') || id.includes('@remix-run/router')) return 'vendor-router';
@@ -120,6 +153,7 @@ export default defineConfig(({ mode, command }) => {
     // Tailwind is not being actively used – do not remove them
     react(),
     tailwindcss(),
+    bootAssetsMetaPlugin(),
     deployVersionPlugin(deployBuild),
     VitePWA({
       registerType: 'autoUpdate',

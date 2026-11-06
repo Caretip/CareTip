@@ -1,3 +1,4 @@
+import { bundleHasAboveFoldStats, bundleHasDeferredStats } from "./bundleStatsSlices";
 import {
   getBusinessStats,
   listBusinessTips,
@@ -16,6 +17,7 @@ import { snapshotFromStats, todaySnapshotFromPulse } from "./snapshot";
 import type {
   AnalyticsTimeframe,
   BusinessAnalyticsBundle,
+  BusinessAnalyticsSlice,
   BusinessAnalyticsDTO,
   FetchBusinessAnalyticsOptions,
 } from "./types";
@@ -36,24 +38,7 @@ function businessAnalyticsBundleInflightKey(
   return `me:biz-analytics-bundle:${timeframe}:${tips}:${week}:${qr}:${deferred}:${revalidate}`;
 }
 
-/** Whether period stats include above-fold authoritative fields (KPIs, prior, employees). */
-export function bundleHasAboveFoldStats(stats: BusinessDashboardStats | undefined): boolean {
-  if (!stats) return false;
-  return stats.priorPeriod != null && Array.isArray(stats.employees);
-}
-
-/** Whether period stats include deferred lower-page analytics (charts, rankings, shifts, goals). */
-export function bundleHasDeferredStats(stats: BusinessDashboardStats | undefined): boolean {
-  if (!stats) return false;
-  return (
-    (stats.dailyTipDistribution != null && stats.dailyTipDistribution.length > 0) ||
-    stats.locationRankings != null ||
-    stats.tableRankings != null ||
-    stats.avgTipsPerShift != null ||
-    (stats.employeeGoals != null && stats.employeeGoals.length > 0) ||
-    stats.peakHour != null
-  );
-}
+export { bundleHasAboveFoldStats, bundleHasDeferredStats } from "./bundleStatsSlices";
 
 function resolveBundleSliceFlags(bundle: BusinessAnalyticsBundle): {
   aboveFoldFetched: boolean;
@@ -254,7 +239,7 @@ async function loadBusinessAnalyticsBundleNetwork(
     opts?.onProgress?.(bundle);
   };
 
-  const tasks: Promise<void>[] = [];
+  const tasks: Array<{ slice: BusinessAnalyticsSlice; run: Promise<void> }> = [];
 
   let aboveFoldPromise: Promise<void> = Promise.resolve();
 
@@ -276,33 +261,39 @@ async function loadBusinessAnalyticsBundleNetwork(
       markAnalyticsPerformance("analytics.stats.ready");
       publish();
     })();
-    tasks.push(aboveFoldPromise);
+    tasks.push({ slice: "aboveFold", run: aboveFoldPromise });
   } else if (mutable.periodStats) {
     mutable.aboveFoldFetched = true;
   }
 
   if (needsDeferred) {
-    tasks.push(
-      aboveFoldPromise.then(async () => {
-        markAnalyticsPerformance("analytics.deferred.request");
-        const deferredStats = await getBusinessStats(timeframe, {
-          scope: "analytics",
-          signal: opts?.signal,
-          silent: opts?.silent,
-          revalidate: opts?.revalidate,
-        });
+    // Requested alongside the KPIs, merged after them so the KPI values always win.
+    markAnalyticsPerformance("analytics.deferred.request");
+    const deferredRequest = getBusinessStats(timeframe, {
+      scope: "analytics",
+      signal: opts?.signal,
+      silent: opts?.silent,
+      revalidate: opts?.revalidate,
+    });
+    // Awaited in the task below, which is skipped when the KPI request fails first.
+    deferredRequest.catch(() => {});
+    tasks.push({
+      slice: "deferred",
+      run: aboveFoldPromise.then(async () => {
+        const deferredStats = await deferredRequest;
         mutable.periodStats = mergeBusinessDashboardStats(mutable.periodStats, deferredStats)!;
         mutable.deferredAnalyticsFetched = true;
         mutable.fetchedAt = Date.now();
         markAnalyticsPerformance("analytics.deferred.ready");
         publish();
       }),
-    );
+    });
   }
 
   if (needsWeekStats) {
-    tasks.push(
-      getBusinessStats("week", {
+    tasks.push({
+      slice: "weekStats",
+      run: getBusinessStats("week", {
         scope: "summary",
         signal: opts?.signal,
         silent: opts?.silent,
@@ -314,12 +305,13 @@ async function loadBusinessAnalyticsBundleNetwork(
           publish();
         }
       }),
-    );
+    });
   }
 
   if (needsTipsFeed) {
-    tasks.push(
-      listBusinessTips({
+    tasks.push({
+      slice: "tipsFeed",
+      run: listBusinessTips({
         ...feedParams,
         skip: 0,
         status: "success",
@@ -331,28 +323,37 @@ async function loadBusinessAnalyticsBundleNetwork(
           publish();
         }
       }),
-    );
+    });
   }
 
   if (needsQrAnalytics) {
-    tasks.push(
-      getBusinessQrAnalytics(timeframe, { signal: opts?.signal, silent: opts?.silent })
-        .catch(() => null)
-        .then((qrAnalytics) => {
+    tasks.push({
+      slice: "qr",
+      run: getBusinessQrAnalytics(timeframe, { signal: opts?.signal, silent: opts?.silent }).then(
+        (qrAnalytics) => {
           mutable.qrAnalytics = qrAnalytics;
           mutable.qrFetched = true;
           if (mutable.periodStats && mutable.aboveFoldFetched) {
             mutable.fetchedAt = Date.now();
             publish();
           }
-        }),
-    );
+        },
+      ),
+    });
   }
 
-  await Promise.all(tasks);
+  // Slices settle independently: what loaded stays on screen and the rest is reported as failed.
+  const outcomes = await Promise.allSettled(tasks.map((task) => task.run));
+  const failedSlices: BusinessAnalyticsSlice[] = [];
+  let firstFailure: unknown;
+  outcomes.forEach((outcome, index) => {
+    if (outcome.status !== "rejected") return;
+    if (failedSlices.length === 0) firstFailure = outcome.reason;
+    failedSlices.push(tasks[index]!.slice);
+  });
 
   if (!mutable.periodStats || !mutable.aboveFoldFetched) {
-    throw new Error("fetchBusinessAnalyticsBundle: above-fold period stats unavailable");
+    throw firstFailure ?? new Error("fetchBusinessAnalyticsBundle: above-fold period stats unavailable");
   }
 
   const bundle: BusinessAnalyticsBundle = {
@@ -369,7 +370,7 @@ async function loadBusinessAnalyticsBundleNetwork(
   };
 
   setBusinessAnalyticsBundle(timeframe, bundle);
-  return bundle;
+  return failedSlices.length ? { ...bundle, failedSlices, firstFailure } : bundle;
 }
 
 /** Map raw bundle → authoritative DTO with shared BI aggregates. */

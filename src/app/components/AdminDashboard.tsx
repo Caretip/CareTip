@@ -29,6 +29,8 @@ import {
 import { PlatformBusinessMobileCard } from "./platform/PlatformBusinessMobileCard";
 import { PlatformAdminOverviewHero } from "./platform/PlatformAdminOverviewHero";
 import { DashboardChartsIdleMount } from "./dashboard/DashboardChartsIdleMount";
+import { DashboardLoadErrorNotice } from "./dashboard/DashboardLoadErrorNotice";
+import { toUserFriendlyMessage } from "../lib/errorMessages";
 import { AdminDashboardAnalyticsChartsFallback } from "./AdminDashboardAnalyticsChartsFallback";
 import {
   PlatformAdminAttentionAlerts,
@@ -90,6 +92,11 @@ export const AdminDashboard = memo(function AdminDashboard() {
   const [secondaryLoading, setSecondaryLoading] = useState(true);
   /** Stage 3 — commercial intelligence, subscriptions, 30d analytics. */
   const [heavyLoading, setHeavyLoading] = useState(true);
+  /** A failed read must never look like a real zero: operators act on these numbers. */
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [statsFailed, setStatsFailed] = useState(false);
+  const [chartsFailed, setChartsFailed] = useState(false);
+  const [reloadCount, setReloadCount] = useState(0);
 
   useDashboardRenderProbe("platform_admin:AdminDashboard");
   // First KPI when critical stage settles — do not wait for heavy APIs.
@@ -106,6 +113,20 @@ export const AdminDashboard = memo(function AdminDashboard() {
     let heavyIdleId: number | null = null;
     let heavyTimeoutId: number | null = null;
 
+    setLoadError(null);
+    setStatsFailed(false);
+    setChartsFailed(false);
+
+    /** Records a failed read and returns null, so the other reads on this page still land. */
+    const noteFailure = (source: string, onFail?: () => void) => (err: unknown) => {
+      logClientError(`AdminDashboard.${source}`, err);
+      if (!cancelled) {
+        onFail?.();
+        setLoadError((current) => current ?? toUserFriendlyMessage(err));
+      }
+      return null;
+    };
+
     const loadCritical = async () => {
       setCriticalLoading(true);
       void fetchPlatformHealth()
@@ -114,7 +135,7 @@ export const AdminDashboard = memo(function AdminDashboard() {
         })
         .catch((e) => logClientError("AdminDashboard.loadHealth", e));
       try {
-        const statsRes = await fetchPlatformStats().catch(() => null);
+        const statsRes = await fetchPlatformStats().catch(noteFailure("loadStats", () => setStatsFailed(true)));
         if (cancelled) return;
         if (statsRes) setStats(statsRes);
       } catch (e) {
@@ -128,17 +149,20 @@ export const AdminDashboard = memo(function AdminDashboard() {
       setSecondaryLoading(true);
       try {
         const [onboardingRes, onboardingSubmittedRes, logsRes] = await Promise.all([
-          fetchOnboardingQueueMetrics().catch(() => null),
+          fetchOnboardingQueueMetrics().catch(noteFailure("loadOnboardingMetrics", () => setStatsFailed(true))),
           fetchPlatformBusinesses({
             workflow: "onboarding",
             status: "submitted",
             take: VERIFICATION_TEASER_LIMIT,
             sort: "newest",
-          }).catch(() => ({ businesses: [] as PlatformBusinessRow[] })),
-          fetchPlatformAuditLogs({ take: RECENT_ACTIVITY_LIMIT, skip: 0 }).catch(() => ({
-            items: [],
-            total: 0,
-          })),
+          }).catch((err: unknown) => {
+            noteFailure("loadOnboardingQueue")(err);
+            return { businesses: [] as PlatformBusinessRow[] };
+          }),
+          fetchPlatformAuditLogs({ take: RECENT_ACTIVITY_LIMIT, skip: 0 }).catch((err: unknown) => {
+            noteFailure("loadAuditLogs")(err);
+            return { items: [], total: 0 };
+          }),
         ]);
         if (cancelled) return;
 
@@ -172,9 +196,11 @@ export const AdminDashboard = memo(function AdminDashboard() {
       setHeavyLoading(true);
       try {
         const [analyticsRes, subRes, commercialRes] = await Promise.all([
-          fetchPlatformAnalytics(30).catch(() => null),
-          fetchPlatformSubscriptionMonitoring(30).catch(() => null),
-          fetchPlatformCommercialIntelligence().catch(() => null),
+          fetchPlatformAnalytics(30).catch(noteFailure("loadAnalytics", () => setChartsFailed(true))),
+          fetchPlatformSubscriptionMonitoring(30).catch(
+            noteFailure("loadSubscriptions", () => setChartsFailed(true)),
+          ),
+          fetchPlatformCommercialIntelligence().catch(noteFailure("loadCommercial")),
         ]);
         if (cancelled) return;
 
@@ -218,7 +244,7 @@ export const AdminDashboard = memo(function AdminDashboard() {
       }
       if (heavyTimeoutId != null) window.clearTimeout(heavyTimeoutId);
     };
-  }, [authHydrated, sessionValidated, user?.role]);
+  }, [authHydrated, sessionValidated, user?.role, reloadCount]);
 
   const activeBusinessesCount = onboardingMetrics?.approved ?? 0;
   const pendingOnboardingCount = onboardingMetrics?.submitted ?? 0;
@@ -289,6 +315,11 @@ export const AdminDashboard = memo(function AdminDashboard() {
 
         <PlatformAdminAttentionAlerts alerts={attentionAlerts} />
 
+        {loadError ? (
+          <DashboardLoadErrorNotice message={loadError} onRetry={() => setReloadCount((n) => n + 1)} />
+        ) : null}
+
+        {statsFailed ? null : (
         <PlatformAdminSection
           id="platform-kpis"
           title={t("admin.overview.kpisTitle")}
@@ -334,7 +365,9 @@ export const AdminDashboard = memo(function AdminDashboard() {
             locale={i18n.language}
           />
         </PlatformAdminSection>
+        )}
 
+        {chartsFailed ? null : (
         <DashboardChartsIdleMount
           whenVisible
           fallback={<AdminDashboardAnalyticsChartsFallback chartCount={2} />}
@@ -347,6 +380,7 @@ export const AdminDashboard = memo(function AdminDashboard() {
             />
           </Suspense>
         </DashboardChartsIdleMount>
+        )}
 
         <section aria-labelledby="platform-teasers-heading" className="platform-overview-teasers">
           <h2 id="platform-teasers-heading" className="sr-only">

@@ -68,12 +68,20 @@ export async function ensureLocaleBundle(lng: AppLanguage): Promise<void> {
   i18n.addResourceBundle(lng, "translation", bundle, true, true);
 }
 
+/** Data saver or a slow link: the other language is fetched on switch instead of in advance. */
+function connectionDiscouragesPrefetch(): boolean {
+  const connection = (
+    navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }
+  ).connection;
+  return connection?.saveData === true || /(^|-)(2g|3g)$/.test(connection?.effectiveType ?? "");
+}
+
 /**
  * Idle prefetch of the non-active locale (~350KB JSON chunk) so DE↔EN switches
  * do not wait on network. Does not change the active language or block first paint.
  */
 export function prefetchAlternateLocaleBundle(): Promise<void> {
-  if (typeof window === "undefined") return Promise.resolve();
+  if (typeof window === "undefined" || connectionDiscouragesPrefetch()) return Promise.resolve();
   return ensureI18nReady().then(() => {
     const alternate = getAlternateAppLanguage();
     if (i18n.hasResourceBundle(alternate, "translation")) return;
@@ -88,7 +96,7 @@ export function prefetchAlternateLocaleBundle(): Promise<void> {
 
 /** Prefetch EN + DE once the guest tipping journey starts (instant DE↔EN toggles). */
 export async function prefetchCustomerJourneyLocaleBundles(): Promise<void> {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || connectionDiscouragesPrefetch()) return;
   await ensureI18nReady();
   await Promise.all([ensureLocaleBundle("en"), ensureLocaleBundle("de")]);
 }

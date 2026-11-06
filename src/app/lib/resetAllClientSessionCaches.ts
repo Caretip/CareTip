@@ -10,7 +10,7 @@ import {
 } from "./api";
 import { clearAllPageSessionCache } from "./pageSessionCache";
 import { clearSubscriptionTierSession } from "./subscriptionSessionCache";
-import { clearBusinessDashboardSwrStore } from "../hooks/useBusinessDashboardStats";
+import { clearBusinessDashboardSwrStore } from "./businessDashboardSwrStore";
 import { clearEmployeeAccountSwrStore } from "../hooks/useEmployeeAccountSummary";
 import { clearVenueCatalogStore } from "./businessVenueCatalog";
 import { clearBusinessActivitySearchSnapshot } from "./businessActivitySearchSnapshot";

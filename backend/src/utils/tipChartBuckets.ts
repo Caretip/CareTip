@@ -892,6 +892,181 @@ export async function queryEmployeeDashboardSummaryMetrics(opts: {
  * Runs summary first, then period-scoped employee/chart queries sequentially
  * (Supabase transaction pooler is often connection_limit=1).
  */
+/** GROUPING() bitmasks, in each query's column order: a set bit means "not grouped by this". */
+const TIP_TIME_ROLLUP = { hour: 15, dayShift: 19, day: 23, month: 29, year: 30 } as const;
+const TIP_SOURCE_ROLLUP = { employee: 3, location: 5, table: 6 } as const;
+
+type TipTimeRollupRow = {
+  hr: number | null;
+  d: string | null;
+  mo: number | null;
+  yr: number | null;
+  grouping_id: number;
+  total: number;
+  tip_count: number;
+};
+
+type TipSourceRollupRow = {
+  employee_id: string | null;
+  location_id: string | null;
+  table_id: string | null;
+  grouping_id: number;
+  total: number;
+  tip_count: number;
+};
+
+/** Same fallback as `COALESCE(NULLIF(TRIM(name), ''), fallback)`: SQL TRIM strips spaces only. */
+function rollupDisplayName(name: string | null | undefined, fallback: string): string {
+  const trimmed = (name ?? "").replace(/^ +| +$/g, "");
+  return trimmed === "" ? fallback : trimmed;
+}
+
+/**
+ * Every period breakdown in two passes. Each first collapses the tips into a small set of rows, then
+ * groups those: asking Postgres for all the groupings straight off the tips forces a sort of every
+ * row per grouping and was slower than separate queries. Amounts stay numeric until the final cast,
+ * so each total keeps exact precision.
+ */
+async function queryBusinessTipPeriodRollups(opts: {
+  businessId: string;
+  startUtc: Date;
+  endUtc: Date;
+  timezone: string;
+}) {
+  const local = sqlCreatedAtLocal(sanitizeIanaTimezone(opts.timezone));
+  const [timeRows, sourceRows] = await Promise.all([
+    prisma.$queryRaw<TipTimeRollupRow[]>(Prisma.sql`
+      WITH day_hours AS MATERIALIZED (
+        SELECT
+          (${local})::date AS dy,
+          EXTRACT(HOUR FROM (${local}))::int AS hr,
+          SUM(amount) AS total,
+          COUNT(*)::int AS tip_count
+        FROM tips
+        WHERE business_id = ${opts.businessId}
+          AND status = 'success'
+          AND created_at >= ${opts.startUtc}
+          AND created_at <= ${opts.endUtc}
+        GROUP BY 1, 2
+      ),
+      tagged AS (
+        SELECT
+          to_char(dy, 'YYYY-MM-DD') AS d,
+          hr,
+          CASE
+            WHEN hr >= 6 AND hr < 12 THEN 'morning'
+            WHEN hr >= 12 AND hr < 17 THEN 'afternoon'
+            WHEN hr >= 17 AND hr < 22 THEN 'evening'
+            ELSE 'late'
+          END AS shift_key,
+          EXTRACT(MONTH FROM dy)::int AS mo,
+          EXTRACT(YEAR FROM dy)::int AS yr,
+          total,
+          tip_count
+        FROM day_hours
+      )
+      SELECT
+        hr, d, mo, yr,
+        GROUPING(hr, d, shift_key, mo, yr)::int AS grouping_id,
+        COALESCE(SUM(total), 0)::float AS total,
+        COALESCE(SUM(tip_count), 0)::int AS tip_count
+      FROM tagged
+      GROUP BY GROUPING SETS ((hr), (d, shift_key), (d), (mo), (yr))
+    `),
+    prisma.$queryRaw<TipSourceRollupRow[]>(Prisma.sql`
+      WITH sources AS MATERIALIZED (
+        SELECT employee_id, location_id, table_id, SUM(amount) AS total, COUNT(*)::int AS tip_count
+        FROM tips
+        WHERE business_id = ${opts.businessId}
+          AND status = 'success'
+          AND created_at >= ${opts.startUtc}
+          AND created_at <= ${opts.endUtc}
+        GROUP BY 1, 2, 3
+      )
+      SELECT
+        employee_id, location_id, table_id,
+        GROUPING(employee_id, location_id, table_id)::int AS grouping_id,
+        COALESCE(SUM(total), 0)::float AS total,
+        COALESCE(SUM(tip_count), 0)::int AS tip_count
+      FROM sources
+      GROUP BY GROUPING SETS ((employee_id), (location_id), (table_id))
+    `),
+  ]);
+
+  const timeRowsFor = (id: number) => timeRows.filter((row) => row.grouping_id === id);
+  const sourceRowsFor = (id: number) => sourceRows.filter((row) => row.grouping_id === id);
+
+  const tipsByEmployee = new Map<string, { total: number; count: number }>();
+  for (const row of sourceRowsFor(TIP_SOURCE_ROLLUP.employee)) {
+    tipsByEmployee.set(String(row.employee_id), { total: Number(row.total), count: Number(row.tip_count) });
+  }
+
+  const hourlyByHour = new Map<number, number>();
+  const tipCountByHour = new Map<number, number>();
+  for (const row of timeRowsFor(TIP_TIME_ROLLUP.hour)) {
+    const hour = Number(row.hr);
+    if (hour >= 0 && hour < 24) {
+      hourlyByHour.set(hour, Number(row.total));
+      tipCountByHour.set(hour, Number(row.tip_count));
+    }
+  }
+
+  const dailyByYmd = new Map<string, number>();
+  for (const row of timeRowsFor(TIP_TIME_ROLLUP.day).sort((a, b) => String(a.d).localeCompare(String(b.d)))) {
+    dailyByYmd.set(String(row.d).slice(0, 10), Number(row.total));
+  }
+
+  const monthTotals = new Array<number>(12).fill(0);
+  for (const row of timeRowsFor(TIP_TIME_ROLLUP.month)) {
+    const index = Number(row.mo) - 1;
+    if (index >= 0 && index < 12) monthTotals[index] = Number(row.total);
+  }
+
+  const yearTotals = timeRowsFor(TIP_TIME_ROLLUP.year)
+    .map((row) => ({ year: Number(row.yr), total: Number(row.total) }))
+    .sort((a, b) => a.year - b.year);
+
+  const locationRows = sourceRowsFor(TIP_SOURCE_ROLLUP.location).sort((a, b) => b.total - a.total).slice(0, 25);
+  const tableRows = sourceRowsFor(TIP_SOURCE_ROLLUP.table)
+    .filter((row) => row.table_id != null)
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 25);
+  const locationIds = locationRows.flatMap((row) => (row.location_id ? [row.location_id] : []));
+  const tableIds = tableRows.flatMap((row) => (row.table_id ? [row.table_id] : []));
+  const [locations, tables] = await Promise.all([
+    locationIds.length
+      ? prisma.location.findMany({ where: { id: { in: locationIds } }, select: { id: true, name: true } })
+      : Promise.resolve([]),
+    tableIds.length
+      ? prisma.table.findMany({ where: { id: { in: tableIds } }, select: { id: true, name: true } })
+      : Promise.resolve([]),
+  ]);
+  const locationName = new Map(locations.map((row) => [row.id, row.name]));
+  const tableName = new Map(tables.map((row) => [row.id, row.name]));
+
+  return {
+    tipsByEmployee,
+    hourlyByHour,
+    tipCountByHour,
+    completedShifts: timeRowsFor(TIP_TIME_ROLLUP.dayShift).length,
+    dailyByYmd,
+    monthTotals,
+    yearTotals,
+    locationRankings: locationRows.map((row) => ({
+      id: row.location_id,
+      name: rollupDisplayName(row.location_id ? locationName.get(row.location_id) : null, "Main venue"),
+      tipsEur: Number(row.total),
+      tipCount: Number(row.tip_count),
+    })),
+    tableRankings: tableRows.map((row) => ({
+      id: row.table_id,
+      name: rollupDisplayName(row.table_id ? tableName.get(row.table_id) : null, "—"),
+      tipsEur: Number(row.total),
+      tipCount: Number(row.tip_count),
+    })),
+  };
+}
+
 export async function queryBusinessDashboardSqlBundle(opts: {
   businessId: string;
   timeframe: BusinessDashboardTimeframe;
@@ -911,94 +1086,45 @@ export async function queryBusinessDashboardSqlBundle(opts: {
   const periodStart = opts.timeframe === "all" ? opts.scanStart : opts.rangeStart;
   const periodEnd = opts.timeframe === "all" ? opts.scanEnd : opts.rangeEnd;
 
-  const summary = await queryBusinessDashboardSummaryMetrics({
-    businessId: opts.businessId,
-    timeframe: opts.timeframe,
-    rangeStart: opts.rangeStart,
-    rangeEnd: opts.rangeEnd,
-    scanStart: opts.scanStart,
-    scanEnd: opts.scanEnd,
-    sixtyAgo: opts.sixtyAgo,
-    todayStart: opts.todayStart,
-    todayEnd: opts.todayEnd,
-  });
-
-  const tEmp0 = performance.now();
-  const tipsByEmployee = await queryBusinessTipsByEmployee({
-    businessId: opts.businessId,
-    startUtc: periodStart,
-    endUtc: periodEnd,
-  });
-  const tipsByEmployeeMs = Math.round(performance.now() - tEmp0);
-
-  let dailyByYmd = new Map<string, number>();
-  let dailyBucketsMs = 0;
-  if (opts.timeframe === "week" || opts.timeframe === "month") {
-    const tDaily0 = performance.now();
-    dailyByYmd = await queryDailyTipBuckets({
+  // Three reads in total. Running each breakdown as its own scan cost the sum of all of them, and
+  // running those scans together was slower still on a busy venue: they fought over the same rows.
+  const [summary, rollups, priorPeriod] = await Promise.all([
+    queryBusinessDashboardSummaryMetrics({
+      businessId: opts.businessId,
+      timeframe: opts.timeframe,
+      rangeStart: opts.rangeStart,
+      rangeEnd: opts.rangeEnd,
+      scanStart: opts.scanStart,
+      scanEnd: opts.scanEnd,
+      sixtyAgo: opts.sixtyAgo,
+      todayStart: opts.todayStart,
+      todayEnd: opts.todayEnd,
+    }),
+    queryBusinessTipPeriodRollups({
       businessId: opts.businessId,
       startUtc: periodStart,
       endUtc: periodEnd,
       timezone: tz,
-    });
-    dailyBucketsMs = Math.round(performance.now() - tDaily0);
-  }
-
-  let monthTotals: number[] | null = null;
-  let monthTotalsMs = 0;
-  let yearTotals: Array<{ year: number; total: number }> | null = null;
-  if (opts.timeframe === "year") {
-    const tMonth0 = performance.now();
-    monthTotals = await queryMonthlyTipTotalsForRange({
-      businessId: opts.businessId,
-      startUtc: periodStart,
-      endUtc: periodEnd,
-      timezone: tz,
-    });
-    monthTotalsMs = Math.round(performance.now() - tMonth0);
-  } else if (opts.timeframe === "all") {
-    const tYear0 = performance.now();
-    yearTotals = await queryYearlyTipTotalsForRange({
-      businessId: opts.businessId,
-      startUtc: periodStart,
-      endUtc: periodEnd,
-      timezone: tz,
-    });
-    monthTotalsMs = Math.round(performance.now() - tYear0);
-  }
-
-  const tRank0 = performance.now();
-  const rankings = await queryTipRankingsByLocationAndTable({
-    businessId: opts.businessId,
-    startUtc: periodStart,
-    endUtc: periodEnd,
-  });
-  const locationRankingsMs = Math.round(performance.now() - tRank0);
-
-  const tPrior0 = performance.now();
-  const priorPeriod =
+    }),
     opts.timeframe === "all"
-      ? { totalTips: 0, tipCount: 0 }
-      : await queryPriorPeriodTipTotals({
+      ? Promise.resolve({ totalTips: 0, tipCount: 0 })
+      : queryPriorPeriodTipTotals({
           businessId: opts.businessId,
           rangeStart: periodStart,
           rangeEnd: periodEnd,
-        });
-  const priorPeriodMs = Math.round(performance.now() - tPrior0);
+        }),
+  ]);
 
-  const tShift0 = performance.now();
-  const shiftRaw = await queryBusinessTipShiftAggregates({
-    businessId: opts.businessId,
-    startUtc: periodStart,
-    endUtc: periodEnd,
-    timezone: tz,
-  });
+  const { tipsByEmployee, locationRankings, tableRankings } = rollups;
+  const dailyByYmd =
+    opts.timeframe === "week" || opts.timeframe === "month" ? rollups.dailyByYmd : new Map<string, number>();
+  const monthTotals = opts.timeframe === "year" ? rollups.monthTotals : null;
+  const yearTotals = opts.timeframe === "all" ? rollups.yearTotals : null;
   const shiftAggregate = buildTipShiftAggregateFromHourly(
-    shiftRaw.hourlyByHour,
-    shiftRaw.completedShifts,
-    shiftRaw.tipCountByHour,
+    rollups.hourlyByHour,
+    rollups.completedShifts,
+    rollups.tipCountByHour,
   );
-  const shiftAggregatesMs = Math.round(performance.now() - tShift0);
 
   const tSql = Math.round(performance.now() - t0);
   if (shouldLog) {
@@ -1006,13 +1132,6 @@ export async function queryBusinessDashboardSqlBundle(opts: {
       `[dashboard.timing] business.myStats.${opts.timeframe}.sqlBundle ${tSql}ms`,
       {
         businessId: opts.businessId,
-        tipsByEmployeeMs,
-        dailyBucketsMs,
-        monthTotalsMs,
-        locationRankingsMs,
-        priorPeriodMs,
-        shiftAggregatesMs,
-        sequentialQueries: 3 + (dailyBucketsMs > 0 || monthTotalsMs > 0 ? 1 : 0),
       },
     );
   }
@@ -1023,8 +1142,8 @@ export async function queryBusinessDashboardSqlBundle(opts: {
     dailyByYmd,
     monthTotals,
     yearTotals,
-    locationRankings: rankings.locations,
-    tableRankings: rankings.tables,
+    locationRankings,
+    tableRankings,
     priorPeriod,
     shiftAggregate,
   };

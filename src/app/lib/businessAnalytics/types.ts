@@ -13,6 +13,9 @@ export type AnalyticsPeriodSnapshot = {
 };
 
 /** Raw network payload before DTO assembly. */
+/** Independently fetched parts of the bundle. One failing must not take down the others. */
+export type BusinessAnalyticsSlice = "aboveFold" | "deferred" | "weekStats" | "tipsFeed" | "qr";
+
 export type BusinessAnalyticsBundle = {
   timeframe: AnalyticsTimeframe;
   periodStats: BusinessDashboardStats;
@@ -28,6 +31,10 @@ export type BusinessAnalyticsBundle = {
   aboveFoldFetched?: boolean;
   /** True after scope=analytics deferred slice landed (charts/rankings/shifts/goals). */
   deferredAnalyticsFetched?: boolean;
+  /** Set on the value returned from a fetch; never stored, so a later read retries these slices. */
+  failedSlices?: BusinessAnalyticsSlice[];
+  /** First failure behind failedSlices, for the message shown to the user. */
+  firstFailure?: unknown;
 };
 
 /**

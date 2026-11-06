@@ -101,6 +101,7 @@
     "test:auth-refresh-multitab-browser": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/auth-refresh-multitab-browser-runtime.ts",
     "test:fanny-session-loss-browser": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/fanny-session-loss-browser-validation-runtime.ts",
     "test:dashboard-load-error-messages": "node ./scripts/run-vite-ssr-runtime.mjs ./scripts/dashboard-load-error-messages-runtime.ts",
+    "test:dashboard-load-resilience": "node ./scripts/run-vite-ssr-runtime.mjs ./scripts/dashboard-load-resilience-runtime.ts",
     "test:subscribe-with-catch-up": "node ./scripts/run-vite-ssr-runtime.mjs ./scripts/subscribe-with-catch-up-runtime.ts",
     "test:financial-write-no-replay": "node ./scripts/run-vite-ssr-runtime.mjs ./scripts/financial-write-no-replay-runtime.ts",
     "test:chunk-preload-recovery": "node ./scripts/run-vite-ssr-runtime.mjs ./scripts/chunk-preload-recovery-runtime.ts",

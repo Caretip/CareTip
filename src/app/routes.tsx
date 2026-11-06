@@ -64,14 +64,42 @@ import { RatingPage } from './pages/customer/RatingPage';
 import { SuccessPage } from './pages/customer/SuccessPage';
 import { EmployeeQrEntryPage } from './pages/customer/EmployeeQrEntryPage';
 import { QRLandingPage } from './pages/customer/QRLandingPage';
-import { AuthPage } from './components/AuthPage';
 import { JoinPage } from './pages/JoinPage';
-import { PlatformAdminLoginPage } from './pages/platform/PlatformAdminLoginPage';
 import { AuthLogoutHandoffCover } from "./components/auth/AuthLogoutHandoffCover";
 import { RootSpaRouteHold } from "./routing/RootSpaRouteHold";
+import { authPageLazy, platformAdminLoginPageLazy } from "./routing/routeLazy";
+import { hasClientSessionHint } from "./lib/authSessionHint";
+import { runWhenIdle } from "./lib/runWhenIdle";
 import { LandingHeroPersistenceLayer } from "./components/landing/LandingHeroPersistenceLayer";
 import { isChunkLoadFailure } from "./lib/chunkLoadRecovery";
 import { handleChunkLoadFailure } from "./lib/deployUpdate/runtime";
+
+const AuthPageChunk = lazy(() => authPageLazy().then(({ Component }) => ({ default: Component })));
+const PlatformAdminLoginChunk = lazy(() =>
+  platformAdminLoginPageLazy().then(({ Component }) => ({ default: Component })),
+);
+
+/** Suspends in place, so a sign-out never lands on an empty screen while the chunk loads. */
+function AuthPage() {
+  return (
+    <Suspense fallback={<RootSpaRouteHold />}>
+      <AuthPageChunk />
+    </Suspense>
+  );
+}
+
+function PlatformAdminLoginPage() {
+  return (
+    <Suspense fallback={<RootSpaRouteHold />}>
+      <PlatformAdminLoginChunk />
+    </Suspense>
+  );
+}
+
+// A signed-in visitor will land here on logout: have it ready, after the page has settled.
+if (typeof window !== "undefined" && hasClientSessionHint()) {
+  runWhenIdle(() => void authPageLazy(), 12_000);
+}
 // auth.css: imported by AuthPage / JoinPage / routeLazy auth helpers — not on every cold route.
 
 const LoaderDiagRuntime = import.meta.env.DEV
@@ -242,7 +270,7 @@ const routes: RouteObject[] = [
   },
   {
     path: '/auth',
-    // Eager with `/login`: RR `lazy` does not suspend Outlet — logout would white-screen.
+    // Not RR `lazy`, which does not suspend Outlet: logout would white-screen. See AuthPage below.
     Component: AuthPage,
     errorElement: <ErrorBoundary />,
   },

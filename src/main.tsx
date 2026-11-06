@@ -11,6 +11,7 @@ import { handleVitePreloadError, startDeployUpdateRuntime } from "./app/lib/depl
 import { registerCaretipServiceWorker } from "./app/lib/deployUpdate/serviceWorkerRegistration";
 import { scheduleMobileDeferredWork } from "./lib/mobilePerf";
 import { landingI18nPreload } from "./i18n/preloadLocale";
+import { loadLandingStyles } from "./app/lib/landingStyles";
 import { prefetchCustomerEntryGraph } from "./app/lib/prefetchCustomerEntryGraph";
 import { markLandingColdLoad } from "./app/lib/landingColdLoadMarks";
 import { removeStaticCrawlerSummary } from "./app/lib/seo/documentSeo";
@@ -124,7 +125,10 @@ if (import.meta.env.PROD) {
 
 markLandingColdLoad("react-start");
 
-void landingI18nPreload
+// The home page must not paint unstyled, and its boot handoff waits for the real hero.
+const firstPaintStyles = window.location.pathname === "/" ? loadLandingStyles() : Promise.resolve();
+
+void Promise.all([landingI18nPreload, firstPaintStyles])
   .then(() => {
     markLandingColdLoad("i18n-ready");
     removeStaticCrawlerSummary();

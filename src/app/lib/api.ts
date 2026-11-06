@@ -657,6 +657,11 @@ function apiConfigHintForFailedFetch(url: string): string {
 }
 
 const NETWORK_RETRY_DELAY_MS = 2500;
+/**
+ * A read with no response by now is treated as a network failure. Without this a stalled connection
+ * never settles, and whatever waits on it stays in its loading state indefinitely.
+ */
+const API_READ_TIMEOUT_MS = 25_000;
 
 function isCrossOriginApi(): boolean {
   return Boolean(resolveApiBaseUrl());
@@ -706,11 +711,39 @@ export function isUnsafeToReplay(pathname: string, method: string | undefined): 
   );
 }
 
+/** Bounds how long an /api read waits for response headers. Writes are never timed out: their outcome would be unknown. */
+async function fetchWithReadTimeout(url: string, init?: RequestInit): Promise<Response> {
+  const verb = (init?.method ?? "GET").toUpperCase();
+  if ((verb !== "GET" && verb !== "HEAD") || !requestUrlPathname(url).startsWith("/api/")) {
+    return fetch(url, init);
+  }
+  const callerSignal = init?.signal ?? undefined;
+  const controller = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, API_READ_TIMEOUT_MS);
+  const forwardAbort = () => controller.abort();
+  if (callerSignal?.aborted) controller.abort();
+  else callerSignal?.addEventListener("abort", forwardAbort, { once: true });
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch (err) {
+    // A TypeError takes the same path as a dropped connection, including the single retry below.
+    if (timedOut) throw new TypeError("Failed to fetch: request timed out");
+    throw err;
+  } finally {
+    clearTimeout(timer);
+    callerSignal?.removeEventListener("abort", forwardAbort);
+  }
+}
+
 /** One delayed retry for cross-origin /api calls when the host is cold-starting (e.g. Render free tier). */
 async function fetchWithNetworkRetry(url: string, init?: RequestInit): Promise<Response> {
   const flags = init as CaretipRequestInit | undefined;
   try {
-    return await fetch(url, init);
+    return await fetchWithReadTimeout(url, init);
   } catch (err) {
     if (isAbortError(err)) throw err;
     if (flags?.__caretipNetworkRetried || !isCrossOriginApi() || !isNetworkFetchFailure(err)) {
@@ -725,7 +758,7 @@ async function fetchWithNetworkRetry(url: string, init?: RequestInit): Promise<R
     await abortableDelay(NETWORK_RETRY_DELAY_MS, init?.signal ?? undefined);
     const retried: CaretipRequestInit = { ...(init ?? {}), __caretipNetworkRetried: true };
     try {
-      return await fetch(url, retried);
+      return await fetchWithReadTimeout(url, retried);
     } catch (retryErr) {
       if (isNetworkFetchFailure(retryErr)) {
         throw new Error(API_WAKEUP_NETWORK_MESSAGE);
@@ -737,8 +770,74 @@ async function fetchWithNetworkRetry(url: string, init?: RequestInit): Promise<R
 
 export { wakeRemoteApi } from "./wakeRemoteApi";
 
-/** Wraps fetch + handleRes and translates network/API errors to user-friendly messages */
+type SharedRead = { promise: Promise<unknown>; controller: AbortController; waiters: number };
+
+/** Identical reads in flight right now. Entries live only until the response lands; nothing is cached here. */
+const sharedReads = new Map<string, SharedRead>();
+
+function sharedReadKey(url: string, init?: RequestInit): string {
+  const silent = (init as CaretipRequestInit | undefined)?.caretipSilentErrors === true;
+  // The token keeps one account from ever joining a read started by another.
+  return `${getToken() ?? ""}|${silent ? "silent" : "loud"}|${url}`;
+}
+
+/** Waits for a shared read on behalf of one caller. The request is cancelled only once nobody is waiting. */
+function waitForSharedRead<T>(entry: SharedRead, signal: AbortSignal | null | undefined, joined: boolean): Promise<T> {
+  // Callers may keep and patch what they receive, so a joiner gets its own copy.
+  const settled = entry.promise.then((value) => (joined ? structuredClone(value) : value) as T);
+  if (!signal) return settled;
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = () => {
+      entry.waiters -= 1;
+      if (entry.waiters === 0) entry.controller.abort();
+      reject(new DOMException("Aborted", "AbortError"));
+    };
+    signal.addEventListener("abort", onAbort, { once: true });
+    settled.then(
+      (value) => {
+        signal.removeEventListener("abort", onAbort);
+        resolve(value);
+      },
+      (err) => {
+        signal.removeEventListener("abort", onAbort);
+        reject(err);
+      },
+    );
+  });
+}
+
+/**
+ * Sends one request for identical concurrent reads: several widgets on a page often ask for the same
+ * resource as they mount. A write clears the table, so a read started afterwards never joins one
+ * that began before the change.
+ */
 async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
+  if ((init?.method ?? "GET").toUpperCase() !== "GET") {
+    sharedReads.clear();
+    return apiRequestOnce<T>(url, init);
+  }
+  if (init?.signal?.aborted) throw new DOMException("Aborted", "AbortError");
+
+  const key = sharedReadKey(url, init);
+  const existing = sharedReads.get(key);
+  if (existing) {
+    existing.waiters += 1;
+    return waitForSharedRead<T>(existing, init?.signal, true);
+  }
+
+  const controller = new AbortController();
+  const promise = apiRequestOnce<unknown>(url, { ...init, signal: controller.signal });
+  const entry: SharedRead = { promise, controller, waiters: 1 };
+  sharedReads.set(key, entry);
+  const release = () => {
+    if (sharedReads.get(key) === entry) sharedReads.delete(key);
+  };
+  promise.then(release, release);
+  return waitForSharedRead<T>(entry, init?.signal, false);
+}
+
+/** Wraps fetch + handleRes and translates network/API errors to user-friendly messages */
+async function apiRequestOnce<T>(url: string, init?: RequestInit): Promise<T> {
   let res: Response;
   const initFlags = init as CaretipRequestInit | undefined;
   const devDebug = resolveDashboardApiDebugTarget(url);
@@ -1771,6 +1870,25 @@ export async function getBusinessQrAnalytics(
   } as CaretipRequestInit);
 }
 
+/** Lets one caller stop waiting without failing the others sharing the same in-flight request. */
+function untilCallerAborts<T>(shared: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return shared;
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = () => reject(new DOMException("Aborted", "AbortError"));
+    signal.addEventListener("abort", onAbort, { once: true });
+    shared.then(
+      (value) => {
+        signal.removeEventListener("abort", onAbort);
+        resolve(value);
+      },
+      (err) => {
+        signal.removeEventListener("abort", onAbort);
+        reject(err);
+      },
+    );
+  });
+}
+
 export async function getBusinessStats(
   timeframe?: "week" | "month" | "year" | "all",
   opts?: {
@@ -1808,21 +1926,25 @@ export async function getBusinessStats(
     } else {
       const target = resolveDashboardApiDebugTarget(statsUrl);
       if (target) devTrackDeduped(target.group, target.key, { ...target.meta, inflight: true });
-      return inflight;
+      return untilCallerAborts(inflight, opts?.signal);
     }
   }
 
+  // Shared by every caller for this key, so it must not carry one caller's signal: a dashboard
+  // aborting a period switch would otherwise reject the Analytics page waiting on the same request.
   const promise = apiRequest<BusinessDashboardStats>(
     statsUrl,
     {
       headers: getHeaders(),
       credentials: "include",
-      signal: opts?.signal,
       caretipSilentErrors: opts?.silent === true,
     } as CaretipRequestInit,
   )
     .then((value) => {
-      businessStatsResultCache.set(cacheKey, { at: Date.now(), value });
+      // A newer revalidate replaced this request: its result must not overwrite fresher data.
+      if (businessStatsInflight.get(cacheKey) === promise) {
+        businessStatsResultCache.set(cacheKey, { at: Date.now(), value });
+      }
       return value;
     })
     .finally(() => {
@@ -1832,7 +1954,7 @@ export async function getBusinessStats(
     });
 
   businessStatsInflight.set(cacheKey, promise);
-  return promise;
+  return untilCallerAborts(promise, opts?.signal);
 }
 
 /**

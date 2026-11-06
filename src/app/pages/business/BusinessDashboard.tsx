@@ -526,16 +526,18 @@ export const BusinessDashboard = memo(function BusinessDashboard() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.22, ease: "easeOut" }}
             >
-              <BusinessDashboardMetricsGrid
-                analyticsTimeframe={analyticsTimeframe}
-                metrics={displayMetrics}
-                loading={periodMetricsLoading}
-                isPeriodRefreshing={isPeriodRefreshing}
-                refreshingLabel={periodRefreshingLabel}
-                hasTipActivityInPeriod={hasTipActivityInPeriod}
-                topPerformersCount={leaderboardPreview.length}
-                kpiReady={kpiUsable}
-              />
+              {statsLoadFailed && !displayMetrics ? null : (
+                <BusinessDashboardMetricsGrid
+                  analyticsTimeframe={analyticsTimeframe}
+                  metrics={displayMetrics}
+                  loading={periodMetricsLoading}
+                  isPeriodRefreshing={isPeriodRefreshing}
+                  refreshingLabel={periodRefreshingLabel}
+                  hasTipActivityInPeriod={hasTipActivityInPeriod}
+                  topPerformersCount={leaderboardPreview.length}
+                  kpiReady={kpiUsable}
+                />
+              )}
             </motion.div>
 
             {showProUpgradePromo ? (

@@ -5,6 +5,7 @@ import { prisma } from "../../prisma.js";
 import { logServerError } from "../../utils/httpErrors.js";
 import { isPrismaUniqueViolation } from "../../utils/prismaErrors.js";
 import { emitQrScannedCanonical } from "../../socket/realtimeContracts.js";
+import { invalidateBusinessQrAnalyticsCache } from "./qrAnalytics.service.js";
 import {
   ACTIVITY_EVENT_TYPES,
   projectBusinessActivityEvent,
@@ -103,6 +104,8 @@ export async function persistQrScanEvent(
         qrSlug: true,
       },
     });
+
+    invalidateBusinessQrAnalyticsCache(businessId);
 
     if (!tx) {
       emitSideEffects(row, input, sessionId);

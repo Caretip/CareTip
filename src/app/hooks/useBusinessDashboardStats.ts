@@ -5,7 +5,8 @@ import {
   getBusinessStats,
   mergeBusinessDashboardStats,
 } from "../lib/api";
-import { createDashboardSwrStore, DASHBOARD_SWR_METRICS_TTL_MS } from "../lib/dashboardSwrCache";
+import { DASHBOARD_SWR_METRICS_TTL_MS } from "../lib/dashboardSwrCache";
+import { businessSwrStore, clearBusinessDashboardSwrStore } from "../lib/businessDashboardSwrStore";
 import {
   canUseDashboardSwrCache,
   canUsePeriodSwitchCache,
@@ -49,19 +50,7 @@ import { reportDashboardLoadFailure } from "../lib/dashboardLoadDiagnostics";
 
 export type { AnalyticsTimeframe };
 
-type BusinessSwrEntry = {
-  summary: Partial<BusinessDashboardStats>;
-  analytics: Partial<BusinessDashboardStats>;
-  merged: BusinessDashboardStats;
-  at: number;
-};
-
-const businessSwrStore = createDashboardSwrStore<BusinessSwrEntry>();
-
-export function clearBusinessDashboardSwrStore(): void {
-  businessSwrStore.clear();
-  clearBusinessAnalyticsStore();
-}
+export { clearBusinessDashboardSwrStore };
 
 function swrKey(tf: AnalyticsTimeframe): string {
   return `business:${tf}`;
@@ -539,6 +528,20 @@ export function useBusinessDashboardStats(
           const needsPeriodNetwork = !summarySettled || (!analyticsSettled && advancedAnalyticsEnabledRef.current);
 
           if (needsPeriodNetwork && (!summaryFromMemory || !analyticsSettled)) {
+            // Started alongside the KPI request: waiting for it first added a full round trip
+            // before the charts could even begin. KPIs still paint as soon as they land.
+            const deferredStatsRequest =
+              !analyticsSettled && advancedAnalyticsEnabledRef.current
+                ? getBusinessStats(tf, {
+                    scope: "analytics",
+                    signal: controller.signal,
+                    silent,
+                    revalidate,
+                  })
+                : null;
+            // Awaited below. If the KPI request fails first, this rejection has no other handler.
+            deferredStatsRequest?.catch(() => {});
+
             if (!summarySettled) {
               const aboveFoldStats = await fetchBusinessPeriodStats(tf, {
                 silent,
@@ -567,13 +570,8 @@ export function useBusinessDashboardStats(
               }
             }
 
-            if (!analyticsSettled && advancedAnalyticsEnabledRef.current) {
-              const deferredStats = await getBusinessStats(tf, {
-                scope: "analytics",
-                signal: controller.signal,
-                silent,
-                revalidate,
-              });
+            if (deferredStatsRequest) {
+              const deferredStats = await deferredStatsRequest;
               if (!stillActive()) return;
               analyticsPartialRef.current.set(tf, deferredStats);
               analyticsSettled = true;
@@ -646,14 +644,17 @@ export function useBusinessDashboardStats(
           });
           if (!summarySettled) {
             setSummaryLoading(false);
+            // The charts request only starts after this one, so it will never clear its own flag.
+            setAnalyticsLoading(false);
             devSetHydrationPhase("metrics", "error");
             if (!hasMetricValues(statsRef.current)) setStatsLoadFailed(msg);
           } else if (!analyticsSettled) {
             setAnalyticsLoading(false);
             devSetHydrationPhase("charts", "error");
             devSetHydrationPhase("goals", "error");
-            // KPIs may be fine while this slice failed; without charts on screen, say so.
-            if (!chartsVisibleOnScreen()) setStatsLoadFailed(msg);
+            // KPIs may be fine while this slice failed. The roster arrives with the KPIs, so it
+            // cannot stand in for chart data here: the charts would wait on a skeleton forever.
+            if (!statsRef.current?.dailyTipDistribution?.length) setStatsLoadFailed(msg);
           }
         }
       } finally {
@@ -1218,6 +1219,7 @@ export function useBusinessDashboardStats(
     !pendingVerification &&
     !hasBusinessAnalyticsPayload(displayStats) &&
     !hasBusinessAnalyticsPayload(stats) &&
+    !statsLoadFailed &&
     (analyticsLoading || chartsPayloadPending);
 
   const isGoalsInitialLoad =
@@ -1245,7 +1247,7 @@ export function useBusinessDashboardStats(
     analyticsTimeframeLoading: isPeriodRefreshing ? analyticsTimeframe : null,
     statsLoadFailed,
     /** Charts and goals could not load: show that, not their empty or loading states. */
-    analyticsUnavailable: Boolean(statsLoadFailed) && !hasBusinessSecondaryContent(displayStats),
+    analyticsUnavailable: Boolean(statsLoadFailed) && !displayStats?.dailyTipDistribution?.length,
     pendingVerification,
     isInitialLoad: showMetricsSkeleton,
     isMetricsInitialLoad: showMetricsSkeleton,

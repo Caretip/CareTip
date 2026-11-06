@@ -631,17 +631,36 @@ export type BusinessDistributionObligationSnapshot = {
 export async function businessDistributionRemainingObligationForBusiness(
   businessId: string,
 ): Promise<BusinessDistributionObligationSnapshot> {
-  const payables = await loadEligiblePayables(businessId.trim());
-  let totalRemainingCents = 0;
-  let payableRowCount = 0;
-  for (const row of payables) {
-    const remaining = remainingDistributableCents(row);
-    if (remaining > 0) {
-      totalRemainingCents += remaining;
-      payableRowCount += 1;
-    }
-  }
-  return { remainingDistributableCents: totalRemainingCents, payableRowCount };
+  // Same arithmetic as remainingDistributableCents, summed in Postgres: the dashboard hero calls this
+  // on every load, and loading each payable plus its allocations scaled with lifetime tip volume.
+  const rows = await prisma.$queryRaw<Array<{ remaining_cents: number; row_count: number }>>(Prisma.sql`
+    WITH remaining AS (
+      SELECT
+        GREATEST(
+          p.payable_cents - p.transferred_cents - p.reversed_cents - p.refunded_cents
+            - p.disputed_open_cents - p.disputed_lost_cents,
+          0
+        ) - COALESCE(a.allocated_cents, 0) AS cents
+      FROM employee_tip_payables p
+      LEFT JOIN (
+        SELECT employee_tip_payable_id, SUM(amount_cents) AS allocated_cents
+        FROM employee_tip_distribution_allocations
+        WHERE business_id = ${businessId.trim()}
+        GROUP BY employee_tip_payable_id
+      ) a ON a.employee_tip_payable_id = p.id
+      WHERE p.business_id = ${businessId.trim()}
+        AND p.routing_mode = 'business_distribution'
+        AND p.charge_model = 'destination_business'
+        AND p.status = 'held_business'
+    )
+    SELECT COALESCE(SUM(cents), 0)::float AS remaining_cents, COUNT(*)::int AS row_count
+    FROM remaining
+    WHERE cents > 0
+  `);
+  return {
+    remainingDistributableCents: Number(rows[0]?.remaining_cents ?? 0),
+    payableRowCount: Number(rows[0]?.row_count ?? 0),
+  };
 }
 
 /** Authoritative remaining business-distribution obligation minus recorded off-platform distributions. */

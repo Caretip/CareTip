@@ -5,6 +5,7 @@ import { Download } from "lucide-react";
 import { toast } from "sonner";
 import { QrAnalyticsSection } from "./insights/QrAnalyticsSection";
 import { DashboardAnalyticsPeriodToggle } from "../dashboard/DashboardAnalyticsPeriodToggle";
+import { DashboardLoadErrorNotice } from "../dashboard/DashboardLoadErrorNotice";
 import { DashboardRefreshIndicator } from "../dashboard/DashboardRefreshIndicator";
 import { DashboardStatusStrip } from "../dashboard/DashboardStatusStrip";
 import { deriveRealtimeStatusItems } from "../../lib/dashboardStatus/deriveDashboardStatus";
@@ -95,10 +96,11 @@ export function BusinessAnalyticsReporting({
         ? "business.team.performance.bi.growthOverviewYear"
         : "business.team.performance.bi.growthOverviewMonth";
   const periodStatsLoading =
-    !data.valuesMatchPeriod ||
-    (data.isPeriodStatsLoading ?? data.isInitialAnalyticsLoading);
+    !data.periodStatsFailed &&
+    (!data.valuesMatchPeriod || (data.isPeriodStatsLoading ?? data.isInitialAnalyticsLoading));
   const deferredAnalyticsLoading =
-    !data.valuesMatchPeriod || (data.isDeferredAnalyticsLoading ?? false);
+    !data.deferredAnalyticsFailed &&
+    (!data.valuesMatchPeriod || (data.isDeferredAnalyticsLoading ?? false));
   const tipsFeedLoading = data.isTipsFeedLoading ?? false;
   const qrSectionLoading = data.isQrLoading ?? false;
   const cardsRefreshing = data.isAnalyticsRefreshing;
@@ -228,6 +230,10 @@ export function BusinessAnalyticsReporting({
         </p>
       </div>
 
+      {data.loadError ? <DashboardLoadErrorNotice message={data.loadError} onRetry={data.retry} /> : null}
+
+      {data.periodStatsFailed ? null : (
+      <>
       <AnalyticsKpiStrip
         className="business-analytics-report__overview"
         ariaLabel={t("premium.summaryBanner.title")}
@@ -268,6 +274,7 @@ export function BusinessAnalyticsReporting({
         enabled={financialSummaryEnabled}
       />
 
+      {data.qrFailed ? null : (
       <section className="space-y-3" aria-labelledby="business-qr-analytics-heading">
         <h2
           id="business-qr-analytics-heading"
@@ -296,7 +303,9 @@ export function BusinessAnalyticsReporting({
           />
         </div>
       </section>
+      )}
 
+      {data.deferredAnalyticsFailed ? null : (
       <section className="space-y-3" aria-labelledby="business-locations-heading">
         <h2
           id="business-locations-heading"
@@ -319,8 +328,13 @@ export function BusinessAnalyticsReporting({
           />
         </div>
       </section>
+      )}
 
-      <TopQrPerformanceList rows={data.bi.topTipSources} loading={tipsFeedLoading} />
+      {data.tipsFeedFailed ? null : (
+        <TopQrPerformanceList rows={data.bi.topTipSources} loading={tipsFeedLoading} />
+      )}
+      </>
+      )}
     </div>
   );
 }
