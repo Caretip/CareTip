@@ -234,8 +234,10 @@ assert(runTrusted({ "x-caretip-client": "1" }) === 200, "origin", "native client
 
 // --- 12: client IP behind Render's proxy (trust proxy 1) and real login limiter ---
 {
+  const { resolveTrustProxySetting } = await import("../src/lib/clientIp.js");
   const indexSrc = readFileSync(path.join(backendRoot, "src/index.ts"), "utf8");
-  assert(/app\.set\("trust proxy", 1\)/.test(indexSrc), "ip", "index.ts keeps trust proxy = 1 (one Render hop)");
+  assert(/configureTrustProxy\(app\)/.test(indexSrc), "ip", "index.ts applies the trust proxy rule");
+  assert(resolveTrustProxySetting({ NODE_ENV: "production" }) === 1, "ip", "production defaults to trust proxy = 1 (one Render hop)");
 
   const app = express();
   app.set("trust proxy", 1);
@@ -774,6 +776,7 @@ const legacyRefresh = (raw: string) => svc.rotateRefreshTokenWithOutcome(raw, { 
     for (const name of readdirSync(dir)) {
       const p = path.join(dir, name);
       if (statSync(p).isDirectory()) walk(p);
+      else if (p.endsWith(path.join("lib", "clientIp.ts"))) continue;
       else if (/\.ts$/.test(name) && /headers\[\s*["']x-forwarded-for["']\s*\]|get\(\s*["']x-forwarded-for["']\s*\)/i.test(readFileSync(p, "utf8"))) {
         offenders.push(path.relative(backendRoot, p));
       }
