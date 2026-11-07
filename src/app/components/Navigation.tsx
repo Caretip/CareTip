@@ -150,9 +150,9 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
                 </div>
               </div>
 
-              <div className="mx-5 shrink-0 border-t border-border/60" />
+              <div className="caretip-public-mobile-nav-drawer__rule mx-5 shrink-0 border-t border-border/60" />
 
-              <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-5 py-5">
+              <div className="caretip-public-mobile-nav-drawer__scroll flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-5 py-5">
                 <nav className="flex flex-col gap-0.5" aria-label={t("nav.mobileNavigationSection")}>
                   {NAV_ROUTES_BEFORE_INDUSTRIES.map((route) => (
                     <PrefetchLink
@@ -187,7 +187,7 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
                   ))}
                 </nav>
 
-                <div className="my-5 border-t border-border/60" />
+                <div className="caretip-public-mobile-nav-drawer__rule my-5 border-t border-border/60" />
 
                 <div className="flex flex-col gap-0.5" aria-label={t("nav.mobileAccountSection")}>
                   <PrefetchLink
@@ -205,7 +205,7 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
                 <div className="flex-1 min-h-4" aria-hidden />
               </div>
 
-              <div className="shrink-0 border-t border-border/60 px-5 py-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+              <div className="caretip-public-mobile-nav-drawer__foot shrink-0 border-t border-border/60 px-5 py-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
                 <div className="caretip-public-mobile-nav-drawer__cta-stack flex flex-col items-center gap-3">
                   <PrefetchLink
                     to="/signup"

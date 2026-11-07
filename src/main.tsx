@@ -17,6 +17,7 @@ import { markLandingColdLoad } from "./app/lib/landingColdLoadMarks";
 import { removeStaticCrawlerSummary } from "./app/lib/seo/documentSeo";
 import "./styles/index.css";
 import "./styles/caretip-signature.css";
+import "./styles/caretip-mobile-menu.css";
 
 if (typeof window !== "undefined") {
   window.addEventListener("vite:preloadError", handleVitePreloadError);

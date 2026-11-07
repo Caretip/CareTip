@@ -106,7 +106,8 @@ export function EmployeeMobileSidebar({
         <EmployeeSidebarNav entitlementsReady={entitlementsReady} tier={tier} onNavigate={onClose} />
       </nav>
 
-      <div className="shrink-0 border-t border-sidebar-border px-4 pb-4 pt-3">
+      <div className="caretip-mobile-drawer-footer shrink-0">
+        <div className="caretip-mobile-drawer-footer__actions">
         <button
           type="button"
           disabled={signingOut}
@@ -124,6 +125,7 @@ export function EmployeeMobileSidebar({
           ) : null}
           <span className="text-sm font-medium">{t("dashboard.signOut")}</span>
         </button>
+        </div>
       </div>
     </MobileDrawer>
   );

@@ -28,6 +28,28 @@ function MobileWebAuthBackNav() {
   );
 }
 
+function MobileWebAuthHero({
+  title,
+  subtitle,
+  icon,
+}: {
+  title?: string;
+  subtitle?: string;
+  icon?: ReactNode;
+}) {
+  return (
+    <div className="mw-auth-hero">
+      <div className="mw-auth-hero__bar">
+        <MobileWebAuthBackNav />
+        <div className="mw-auth-brand">
+          <CareTipLogo size="auth" variant="wordmark" tone="white" className="mw-auth-brand__logo" />
+        </div>
+      </div>
+      {title ? <AuthHeader title={title} subtitle={subtitle} icon={icon} /> : null}
+    </div>
+  );
+}
+
 export type MobileWebAuthMode = "login" | "register" | "otp";
 
 export type MobileWebAuthShellProps = {
@@ -102,10 +124,7 @@ export function MobileWebAuthShell({
     return (
       <div className="mw-auth" data-mw-auth="session">
         <div className="mw-auth__inner">
-          <MobileWebAuthBackNav />
-          <div className="mw-auth-brand">
-            <CareTipLogo size="auth" variant="wordmark" tone="auto" className="mw-auth-brand__logo" />
-          </div>
+          <MobileWebAuthHero />
           <AuthCard>{sessionBanner}</AuthCard>
         </div>
       </div>
@@ -116,17 +135,16 @@ export function MobileWebAuthShell({
     return (
       <div className="mw-auth" data-mw-auth="otp">
         <div className="mw-auth__inner">
-          <MobileWebAuthBackNav />
+          <MobileWebAuthHero
+            title={onResend ? t("auth.mobileWebAuth.otpTitle") : t("auth.page.mfaCodeLabel")}
+            subtitle={onResend ? t("auth.mobileWebAuth.otpSubtitle") : t("auth.page.mfaSubtitle")}
+            icon={
+              <div className="mw-auth-header__icon-badge" aria-hidden>
+                <ShieldCheck className="h-7 w-7" strokeWidth={2.25} />
+              </div>
+            }
+          />
           <AuthCard variant="otp">
-            <AuthHeader
-              title={onResend ? t("auth.mobileWebAuth.otpTitle") : t("auth.page.mfaCodeLabel")}
-              subtitle={onResend ? t("auth.mobileWebAuth.otpSubtitle") : t("auth.page.mfaSubtitle")}
-              icon={
-                <div className="mw-auth-header__icon-badge" aria-hidden>
-                  <ShieldCheck className="h-7 w-7" strokeWidth={2.25} />
-                </div>
-              }
-            />
             <form className="mw-auth-form" onSubmit={onOtpSubmit} noValidate>
               <OTPInput
                 value={otpCode}
@@ -161,31 +179,26 @@ export function MobileWebAuthShell({
   return (
     <div className="mw-auth" data-mw-auth={mode}>
       <div className="mw-auth__inner">
-        <MobileWebAuthBackNav />
-        <div className="mw-auth-brand">
-          <CareTipLogo size="auth" variant="wordmark" tone="auto" className="mw-auth-brand__logo" />
-        </div>
+        <MobileWebAuthHero
+          title={
+            isLogin
+              ? t("auth.mobileWebAuth.loginTitle")
+              : isEmployee
+                ? employeeVenueName
+                  ? t("auth.employeeAuth.titleWelcomeVenue", { venue: employeeVenueName })
+                  : t("auth.employeeAuth.titleJoinTeam")
+                : t("auth.mobileWebAuth.registerTitle")
+          }
+          subtitle={
+            isLogin
+              ? t("auth.mobileWebAuth.loginSubtitle")
+              : isEmployee
+                ? t("auth.employeeAuth.subtitleInviteVerified")
+                : t("auth.mobileWebAuth.registerSubtitle")
+          }
+        />
 
         <AuthCard>
-          <AuthHeader
-            title={
-              isLogin
-                ? t("auth.mobileWebAuth.loginTitle")
-                : isEmployee
-                  ? employeeVenueName
-                    ? t("auth.employeeAuth.titleWelcomeVenue", { venue: employeeVenueName })
-                    : t("auth.employeeAuth.titleJoinTeam")
-                  : t("auth.mobileWebAuth.registerTitle")
-            }
-            subtitle={
-              isLogin
-                ? t("auth.mobileWebAuth.loginSubtitle")
-                : isEmployee
-                  ? t("auth.employeeAuth.subtitleInviteVerified")
-                  : t("auth.mobileWebAuth.registerSubtitle")
-            }
-          />
-
           <form
             className="mw-auth-form"
             onSubmit={(e) => {

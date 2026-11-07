@@ -142,11 +142,28 @@ function DashboardHeaderBar({
           ) : null}
 
           {isBusinessManager ? (
+            <>
+            <DashboardHeaderMobileProfile
+              displayName={venueName}
+              displayEmail={displayEmail}
+              settingsHref="/dashboard/settings?section=business"
+              className="caretip-dashboard-header-business-identity lg:!hidden"
+              renderMark={(place) => (
+                <BusinessLogoMark
+                  logoPathOrUrl={businessLogo}
+                  businessName={venueName}
+                  size={place === "sheet" ? "md" : "dashboardHeader"}
+                  fallbackTone="muted"
+                  imageLoading="eager"
+                  rounded="rounded-lg"
+                />
+              )}
+            />
             <Link
               to="/dashboard/settings?section=business"
               className={cn(
                 headerIconBtn,
-                "caretip-dashboard-header-business-identity",
+                "caretip-dashboard-header-business-identity max-lg:!hidden",
               )}
               aria-label={`${t("shell.header.businessLogoSettingsAria", { name: venueName })}${businessLogo ? "" : ` (${initialsFromName(venueName)})`}`}
             >
@@ -160,6 +177,7 @@ function DashboardHeaderBar({
                 rounded="rounded-lg"
               />
             </Link>
+            </>
           ) : showProfileCluster ? (
             <>
               <DashboardHeaderMobileProfile

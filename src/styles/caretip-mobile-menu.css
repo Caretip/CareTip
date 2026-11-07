@@ -1,0 +1,486 @@
+/**
+ * Hamburger menus: the public full-page menu and the dashboard drawer share one language.
+ * Hairlines and type carry the layout.
+ * `html body` keeps these above bundle CSS that loads after this file.
+ */
+
+html body {
+  --ct-menu-line: rgb(23 20 17 / 0.09);
+  --ct-menu-soft: rgb(23 20 17 / 0.045);
+  --ct-menu-tint: rgb(235 153 44 / 0.13);
+  --ct-menu-diamond: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  --ct-menu-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E");
+}
+
+html.dark body {
+  --ct-menu-line: rgb(255 255 255 / 0.1);
+  --ct-menu-soft: rgb(255 255 255 / 0.06);
+  --ct-menu-tint: rgb(235 153 44 / 0.16);
+}
+
+@keyframes ct-menu-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.625rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- Public full-page menu ---------- */
+
+html:not(.dark) body .caretip-public-mobile-nav-drawer {
+  background: #fcf9f4;
+}
+
+html body .caretip-public-mobile-nav-drawer__rule {
+  display: none;
+}
+
+html body .caretip-public-mobile-nav-drawer > div:first-of-type a[href="/"] {
+  margin-left: -0.5rem;
+}
+
+html body .caretip-public-mobile-nav-drawer .caretip-public-mobile-nav-drawer__toolbar {
+  gap: 0.5rem !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+html body .caretip-public-mobile-nav-drawer__toolbar :is(a, button) {
+  width: 2.75rem !important;
+  height: 2.75rem !important;
+  min-width: 2.75rem !important;
+  border-radius: 999px !important;
+  background: var(--ct-menu-soft) !important;
+  box-shadow: none !important;
+}
+
+html body .caretip-public-mobile-nav-drawer__scroll {
+  padding-block: 0.5rem 1rem;
+}
+
+html body .caretip-public-mobile-nav-drawer nav {
+  gap: 0;
+}
+
+html body .caretip-public-mobile-nav-drawer__nav-link,
+html body .caretip-public-mobile-nav-drawer__nav-link--accent {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-height: 3.25rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0 !important;
+  border-bottom: 1px solid var(--ct-menu-line);
+  border-radius: 0;
+  background: transparent !important;
+  color: hsl(var(--foreground)) !important;
+  font-size: 0.9688rem !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.012em;
+  line-height: 1.3;
+}
+
+html body .caretip-public-mobile-nav-drawer a.caretip-public-mobile-nav-drawer__nav-link::after,
+html body .caretip-public-mobile-nav-drawer__account-link::after {
+  content: "";
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+  background: currentColor;
+  opacity: 0.32;
+  -webkit-mask: var(--ct-menu-arrow) center / contain no-repeat;
+  mask: var(--ct-menu-arrow) center / contain no-repeat;
+}
+
+html body .caretip-public-mobile-nav-drawer__nav-link svg {
+  width: 1rem;
+  height: 1rem;
+  color: hsl(var(--foreground));
+  opacity: 0.45;
+}
+
+/* Where you are: the brand diamond, not coloured text. */
+html body .caretip-public-mobile-nav-drawer__nav-link--active {
+  padding-left: 1.125rem !important;
+}
+
+html body .caretip-public-mobile-nav-drawer__nav-link--active::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 0.5625rem;
+  height: 0.5625rem;
+  margin-top: -0.28125rem;
+  background: var(--ct-orange);
+  clip-path: var(--ct-menu-diamond);
+}
+
+html body .caretip-public-mobile-nav-drawer .caretip-industries-nav__mobile-list {
+  margin: 0;
+  padding: 0.25rem 0 0.75rem;
+  border-left: 0;
+  border-bottom: 1px solid var(--ct-menu-line);
+}
+
+html body .caretip-public-mobile-nav-drawer .caretip-industries-nav__mobile-link {
+  min-height: 2.75rem;
+  padding-inline: 0;
+  border-radius: 0;
+  background: transparent;
+  color: hsl(var(--foreground) / 0.74);
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+html body .caretip-public-mobile-nav-drawer .caretip-industries-nav__mobile-link--active {
+  color: hsl(var(--foreground));
+  font-weight: 650;
+}
+
+html body .caretip-public-mobile-nav-drawer__account-link {
+  display: flex;
+  width: 100%;
+  min-height: 3.25rem !important;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 !important;
+  border-radius: 0;
+  background: transparent !important;
+  color: hsl(var(--foreground)) !important;
+  font-size: 0.9688rem !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.012em;
+}
+
+html body .caretip-public-mobile-nav-drawer__foot {
+  padding-top: 0.75rem;
+  border-top: 0;
+}
+
+html body .caretip-public-mobile-nav-drawer__cta-stack {
+  width: 100%;
+  gap: 0.625rem;
+}
+
+html body .caretip-public-mobile-nav-drawer__cta-primary,
+html body .caretip-public-mobile-nav-drawer__cta-secondary {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 3rem !important;
+  border-radius: 0.875rem !important;
+  box-shadow: none !important;
+  font-size: 0.9688rem !important;
+}
+
+html body .caretip-public-mobile-nav-drawer__cta-secondary {
+  color: hsl(var(--foreground)) !important;
+}
+
+html:not(.dark) body .caretip-public-mobile-nav-drawer__cta-secondary {
+  background: #fff !important;
+  border-color: var(--ct-menu-line) !important;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html body .caretip-public-mobile-nav-drawer nav > *,
+  html body .caretip-public-mobile-nav-drawer__account-link,
+  html body .caretip-public-mobile-nav-drawer__foot {
+    animation: ct-menu-rise 420ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+
+  html body .caretip-public-mobile-nav-drawer nav > :nth-child(1) { animation-delay: 40ms; }
+  html body .caretip-public-mobile-nav-drawer nav > :nth-child(2) { animation-delay: 80ms; }
+  html body .caretip-public-mobile-nav-drawer nav > :nth-child(3) { animation-delay: 120ms; }
+  html body .caretip-public-mobile-nav-drawer nav > :nth-child(4) { animation-delay: 160ms; }
+  html body .caretip-public-mobile-nav-drawer nav > :nth-child(5) { animation-delay: 200ms; }
+  html body .caretip-public-mobile-nav-drawer__account-link { animation-delay: 240ms; }
+  html body .caretip-public-mobile-nav-drawer__foot { animation-delay: 280ms; }
+}
+
+/* ---------- Dashboard drawer ---------- */
+
+html body .caretip-mobile-drawer-panel--left {
+  width: min(20.5rem, 88vw) !important;
+  max-width: 88vw !important;
+  border-right: 0;
+  border-radius: 0 1.5rem 1.5rem 0;
+  box-shadow: 28px 0 64px -32px rgb(23 20 17 / 0.5);
+}
+
+html body .caretip-mobile-drawer-panel--left .caretip-mobile-drawer-workspace {
+  padding: max(1rem, env(safe-area-inset-top)) 0.875rem 0.875rem 1rem;
+  border-bottom: 0;
+  background: transparent;
+}
+
+html body .caretip-mobile-drawer-panel--left .caretip-mobile-drawer-workspace > div {
+  align-items: center;
+}
+
+html body .caretip-mobile-drawer-panel--left .caretip-mobile-drawer-workspace__identity:not(.caretip-mobile-drawer-workspace__identity--text-only) {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 0.875rem;
+}
+
+/* The business logo stays in the header, so the name carries this block. */
+html body .caretip-mobile-drawer-panel--left .caretip-mobile-drawer-workspace__identity--text-only {
+  padding-left: 0.5rem;
+}
+
+html body .caretip-mobile-drawer-panel--left .caretip-mobile-drawer-workspace__identity--text-only p:first-child {
+  font-size: 1.1875rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+html body .caretip-mobile-drawer-panel--left .caretip-mobile-drawer-workspace button {
+  width: 2.75rem;
+  height: 2.75rem;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  border-radius: 999px;
+  background: var(--ct-menu-soft);
+}
+
+html body .caretip-mobile-drawer-panel--left nav {
+  padding-inline: 0.625rem;
+}
+
+html body .caretip-mobile-drawer-panel--left nav > * {
+  padding-inline: 0;
+}
+
+html body .caretip-mobile-drawer-panel--left :is(.business-dash-nav-link, .employee-dash-nav-link, .admin-dash-nav-link, .platform-admin-dash-nav-link) {
+  position: relative;
+  width: 100%;
+  min-height: 3rem;
+  margin-inline: 0 !important;
+  padding-inline: 0.875rem !important;
+  gap: 0.875rem;
+  border-radius: 0.875rem !important;
+  font-size: 0.9688rem;
+  letter-spacing: -0.012em;
+}
+
+html body .caretip-mobile-drawer-panel--left .business-sidebar-child-link {
+  min-height: 2.625rem;
+  border-radius: 0.75rem !important;
+  box-shadow: none !important;
+}
+
+html body .caretip-mobile-drawer-panel--left .business-sidebar-child-link[aria-current="page"] {
+  background: var(--ct-menu-tint) !important;
+  color: hsl(var(--foreground)) !important;
+  font-weight: 650;
+}
+
+html body .caretip-mobile-drawer-footer {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem 0.75rem max(0.875rem, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--ct-menu-line);
+}
+
+/* Flat brand button, black text. */
+html body .caretip-mobile-drawer-footer .business-sidebar-upgrade-link {
+  min-height: 3rem;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.875rem;
+  background: var(--ct-orange) !important;
+  box-shadow: none !important;
+  color: #171411 !important;
+  font-weight: 650;
+}
+
+html body .caretip-mobile-drawer-footer .business-sidebar-upgrade-link :is(span, svg) {
+  color: #171411 !important;
+}
+
+html body .caretip-mobile-drawer-footer__actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7.25rem, 1fr));
+  gap: 0.5rem;
+}
+
+html body .caretip-mobile-drawer-footer__actions button {
+  min-height: 2.875rem !important;
+  justify-content: center;
+  gap: 0.5rem;
+  padding-inline: 0.625rem !important;
+  border-radius: 0.875rem !important;
+  background: var(--ct-menu-soft) !important;
+  box-shadow: none !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+html body .caretip-mobile-drawer-footer__actions button svg {
+  width: 1.0625rem;
+  height: 1.0625rem;
+}
+
+html body .caretip-mobile-drawer-footer__actions button span {
+  font-size: 0.8438rem;
+  line-height: 1.15;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html body .caretip-mobile-drawer-panel--left nav li {
+    animation: ct-menu-rise 360ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+
+  html body .caretip-mobile-drawer-panel--left nav li:nth-child(2) { animation-delay: 25ms; }
+  html body .caretip-mobile-drawer-panel--left nav li:nth-child(3) { animation-delay: 50ms; }
+  html body .caretip-mobile-drawer-panel--left nav li:nth-child(4) { animation-delay: 75ms; }
+  html body .caretip-mobile-drawer-panel--left nav li:nth-child(5) { animation-delay: 100ms; }
+  html body .caretip-mobile-drawer-panel--left nav li:nth-child(n + 6) { animation-delay: 125ms; }
+}
+
+/* ---------- Header profile sheet ---------- */
+
+@keyframes ct-menu-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: none;
+  }
+}
+
+html body .caretip-mobile-drawer-panel--bottom {
+  z-index: 260;
+  border: 0;
+  border-radius: 1.75rem 1.75rem 0 0;
+  box-shadow: 0 -24px 60px -28px rgb(23 20 17 / 0.45);
+}
+
+html body .caretip-mobile-drawer-backdrop--bottom {
+  z-index: 255;
+}
+
+html body .caretip-mobile-drawer-panel--open-bottom {
+  animation: ct-menu-sheet-up 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+html body .caretip-profile-sheet {
+  display: grid;
+  gap: 1.125rem;
+  padding: 0.625rem 1rem max(1rem, env(safe-area-inset-bottom));
+}
+
+html body .caretip-profile-sheet__grip {
+  width: 2.5rem;
+  height: 0.25rem;
+  margin-inline: auto;
+  border-radius: 999px;
+  background: rgb(23 20 17 / 0.14);
+}
+
+html.dark body .caretip-profile-sheet__grip {
+  background: rgb(255 255 255 / 0.2);
+}
+
+html body .caretip-profile-sheet__identity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.875rem;
+  padding-inline: 0.25rem;
+}
+
+html body .caretip-profile-sheet__name {
+  overflow: hidden;
+  color: hsl(var(--foreground));
+  font-size: 1.1875rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html body .caretip-profile-sheet__email {
+  overflow: hidden;
+  margin-top: 0.125rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.875rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html body .caretip-profile-sheet__actions {
+  display: grid;
+  gap: 0.5rem;
+}
+
+html body .caretip-profile-sheet__action {
+  display: flex;
+  width: 100%;
+  min-height: 3.25rem;
+  align-items: center;
+  gap: 0.875rem;
+  padding-inline: 1rem;
+  border-radius: 0.875rem;
+  background: var(--ct-menu-soft);
+  color: hsl(var(--foreground));
+  font-size: 0.9688rem;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+}
+
+html body a.caretip-profile-sheet__action::after {
+  content: "";
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: none;
+  margin-left: auto;
+  background: currentColor;
+  opacity: 0.35;
+  -webkit-mask: var(--ct-menu-arrow) center / contain no-repeat;
+  mask: var(--ct-menu-arrow) center / contain no-repeat;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body .caretip-mobile-drawer-panel--open-bottom {
+    animation: none;
+  }
+}
+
+/* ---------- Dashboard hero on phones: one layer of padding, card close to the screen edge ---------- */
+
+@media (max-width: 767px) {
+  html body .caretip-dashboard-shell.caretip-dashboard-shell .business-dashboard-hero {
+    width: auto !important;
+    margin: 0 -1.375rem 1rem !important;
+  }
+
+  html body .caretip-dashboard-shell.caretip-dashboard-shell.caretip-dashboard-shell .premium-page-hero.business-dashboard-hero.business-dashboard-hero {
+    margin-bottom: 1rem !important;
+  }
+
+  html body .caretip-dashboard-shell.caretip-dashboard-shell .business-dashboard-hero .premium-page-hero__content {
+    padding: 1.125rem 1rem 1rem !important;
+    border-radius: 1.5rem !important;
+  }
+
+  html body .caretip-dashboard-shell.caretip-dashboard-shell .business-dashboard-hero .business-hero-dashboard-root > div {
+    padding: 0 !important;
+  }
+
+  /* A banner above the hero already brings its own gap. */
+  html body .business-page > * + .business-page__inner:has(.business-dashboard-hero) {
+    padding-top: 0 !important;
+  }
+}

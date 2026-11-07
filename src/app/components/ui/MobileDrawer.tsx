@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { DASHBOARD_MOBILE_DRAWER_PANEL_CLASS } from "@/lib/theme/dashboardSidebarUi";
@@ -14,7 +15,7 @@ type MobileDrawerProps = {
   children: ReactNode;
   className?: string;
   /** Defaults to left slide-in panel. */
-  side?: "left" | "top";
+  side?: "left" | "top" | "bottom";
   ariaLabel?: string;
 };
 
@@ -63,6 +64,15 @@ export function MobileDrawer({
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const panelMotionClass =
@@ -70,16 +80,18 @@ export function MobileDrawer({
       ? reduceMotion
         ? "translate-x-0"
         : "caretip-mobile-drawer-panel--open"
-      : reduceMotion
-        ? "translate-y-0 opacity-100"
-        : "caretip-mobile-drawer-panel--open-top";
+      : side === "bottom"
+        ? "caretip-mobile-drawer-panel--open-bottom"
+        : reduceMotion
+          ? "translate-y-0 opacity-100"
+          : "caretip-mobile-drawer-panel--open-top";
 
   const handleBackdropDismiss = () => {
     if (!backdropDismissible || !canDismissMobileMenuOverlay(openedAtRef.current)) return;
     onClose();
   };
 
-  return (
+  const drawer = (
     <>
       <button
         type="button"
@@ -87,6 +99,7 @@ export function MobileDrawer({
         className={cn(
           "fixed inset-0 z-40 touch-manipulation bg-black/50 lg:hidden",
           reduceMotion ? "opacity-100" : "caretip-mobile-drawer-backdrop--open",
+          side === "bottom" && "caretip-mobile-drawer-backdrop--bottom",
           !backdropDismissible && "pointer-events-none",
         )}
         onClick={handleBackdropDismiss}
@@ -99,10 +112,12 @@ export function MobileDrawer({
           "caretip-mobile-drawer-panel fixed z-50 flex touch-manipulation flex-col overflow-x-clip overscroll-contain lg:hidden",
           side === "left"
             ? cn(
-                "inset-y-0 left-0 w-[min(100%,18rem)] max-w-[85vw] border-r",
+                "caretip-mobile-drawer-panel--left inset-y-0 left-0 w-[min(100%,20.5rem)] max-w-[88vw] border-r",
                 DASHBOARD_MOBILE_DRAWER_PANEL_CLASS,
               )
-            : cn("left-0 right-0 top-full border-b shadow-lg", DASHBOARD_MOBILE_DRAWER_PANEL_CLASS),
+            : side === "bottom"
+              ? cn("caretip-mobile-drawer-panel--bottom inset-x-0 bottom-0", DASHBOARD_MOBILE_DRAWER_PANEL_CLASS)
+              : cn("left-0 right-0 top-full border-b shadow-lg", DASHBOARD_MOBILE_DRAWER_PANEL_CLASS),
           panelMotionClass,
           className,
         )}
@@ -112,4 +127,6 @@ export function MobileDrawer({
       </aside>
     </>
   );
+
+  return side === "bottom" ? createPortal(drawer, document.body) : drawer;
 }

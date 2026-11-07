@@ -643,3 +643,337 @@
     background: hsl(var(--background)) !important;
   }
 }
+
+/* ---------- Brand panel and form sheet ---------- */
+
+.mw-auth {
+  --mw-surface: #fff;
+  --mw-sheet: #fff;
+  --mw-ink: #171411;
+  --mw-input: #faf7f2;
+  --mw-border: rgb(23 20 17 / 0.1);
+  --mw-border-strong: rgb(23 20 17 / 0.2);
+  --mw-radius-input: 0.875rem;
+  --mw-radius-btn: 0.875rem;
+  --mw-field-h: 3.25rem;
+  --mw-btn-h: 3.25rem;
+
+  align-items: stretch;
+  padding: 0;
+}
+
+.dark .mw-auth {
+  --mw-surface: hsl(var(--background));
+  --mw-sheet: hsl(var(--background));
+  --mw-ink: hsl(var(--foreground));
+  --mw-input: hsl(var(--input-background));
+  --mw-border: hsl(var(--border));
+  --mw-border-strong: hsl(var(--border));
+}
+
+.mw-auth__inner {
+  max-width: none;
+  gap: 0;
+  padding: 0;
+}
+
+.mw-auth-hero {
+  --mw-gutter: max(1.25rem, calc((100% - 26rem) / 2));
+
+  position: relative;
+  overflow: hidden;
+  padding: max(0.75rem, env(safe-area-inset-top, 0px)) var(--mw-gutter) 3.25rem;
+  background: var(--mw-orange);
+  color: #000;
+}
+
+/* The desktop panel's thin white rings. Black text, as white on this orange is hard to read. */
+.mw-auth-hero::before,
+.mw-auth-hero::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.mw-auth-hero::before {
+  top: -9.5rem;
+  right: -6.5rem;
+  width: 18rem;
+  height: 18rem;
+  border: 1px solid rgb(255 255 255 / 0.3);
+}
+
+.mw-auth-hero::after {
+  top: -13rem;
+  right: -10rem;
+  width: 25rem;
+  height: 25rem;
+  border: 1px solid rgb(255 255 255 / 0.18);
+}
+
+.mw-auth-hero__bar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.mw-auth-hero .mw-auth-topbar {
+  margin: 0;
+  padding: 0;
+}
+
+.mw-auth-hero .mw-auth-back,
+.mw-auth-hero .mw-auth-back:hover {
+  color: #000;
+}
+
+.mw-auth-hero .mw-auth-brand {
+  margin: 0;
+}
+
+.mw-auth-hero .mw-auth-brand img {
+  filter: brightness(0);
+}
+
+.mw-auth-hero .mw-auth-header {
+  position: relative;
+  z-index: 1;
+  margin: 1.75rem 0 0;
+}
+
+.mw-auth-hero .mw-auth-header__title {
+  color: #000;
+  font-size: clamp(1.75rem, 8.4vw, 2.125rem);
+  letter-spacing: -0.032em;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+.mw-auth-hero .mw-auth-header__subtitle {
+  margin-top: 0.625rem;
+  color: #000;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+
+.mw-auth-card {
+  --mw-gutter: max(1.25rem, calc((100% - 26rem) / 2));
+
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  margin-top: -1.625rem;
+  padding: 1.625rem var(--mw-gutter) max(1.5rem, env(safe-area-inset-bottom, 0px));
+  border-radius: 1.75rem 1.75rem 0 0;
+  background: var(--mw-sheet);
+}
+
+.mw-auth-card--otp {
+  padding-top: 1.625rem;
+}
+
+.mw-auth-form {
+  gap: 1rem;
+}
+
+.mw-auth-field__label {
+  color: var(--mw-ink);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.mw-auth-input {
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.mw-auth-input:focus {
+  border-color: var(--mw-orange);
+  background: var(--mw-sheet);
+  box-shadow: 0 0 0 3px rgb(235 153 44 / 0.22);
+}
+
+.mw-auth-btn {
+  box-shadow: none;
+}
+
+.mw-auth-error:empty {
+  display: none;
+}
+
+.mw-auth-footer {
+  margin-top: auto;
+  padding-top: 1.25rem;
+}
+
+.mw-auth-footer__action {
+  color: var(--mw-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--mw-orange);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mw-auth-card {
+    animation: mw-auth-sheet-rise 420ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+}
+
+@keyframes mw-auth-sheet-rise {
+  from {
+    transform: translateY(1.25rem);
+  }
+
+  to {
+    transform: none;
+  }
+}
+
+/* ---------- Recovery pages: same brand panel and sheet ---------- */
+
+@media (max-width: 767px) {
+  .caretip-auth-page.caretip-auth-recovery-stage {
+    --mw-sheet: #fff;
+    background: var(--mw-sheet);
+  }
+
+  .dark .caretip-auth-page.caretip-auth-recovery-stage {
+    --mw-sheet: hsl(var(--background));
+  }
+
+  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-curved-container,
+  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-split-layout__panel {
+    background: var(--mw-sheet);
+  }
+
+  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-curved-brand {
+    display: none;
+  }
+
+  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-split-layout__panel,
+  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-split-layout__panel-inner,
+  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-recovery-inner {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-card.caretip-auth-card--recovery {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    max-width: none;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-card--recovery::before,
+  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-card--recovery::after {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-card--recovery::before {
+    top: -9.5rem;
+    right: -6.5rem;
+    width: 18rem;
+    height: 18rem;
+    border: 1px solid rgb(255 255 255 / 0.3);
+  }
+
+  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-card--recovery::after {
+    top: -13rem;
+    right: -10rem;
+    width: 25rem;
+    height: 25rem;
+    border: 1px solid rgb(255 255 255 / 0.18);
+  }
+
+  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-card-brand {
+    display: flex;
+    justify-content: flex-start;
+    margin: 0;
+    padding: max(1rem, env(safe-area-inset-top, 0px)) 1.25rem 0;
+    background: #eb992c;
+  }
+
+  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-card-brand:has(+ .caretip-auth-card-body--recovery) {
+    padding-bottom: 3.25rem;
+  }
+
+  /* The auth wordmark switches on theme, and this panel is orange in both. */
+  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-card-brand img {
+    margin-left: -0.4375rem;
+    filter: brightness(0);
+  }
+
+  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-header--verify {
+    margin: 0 !important;
+    padding: 1.5rem 1.25rem 3.25rem;
+    background: #eb992c;
+    text-align: left;
+  }
+
+  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-title {
+    color: #000;
+    font-size: clamp(1.625rem, 7.6vw, 2rem);
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    text-align: left;
+  }
+
+  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-subtitle--verify {
+    margin-top: 0.625rem;
+    color: #000;
+    font-size: 0.9375rem;
+    line-height: 1.45;
+    text-align: left;
+  }
+
+  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-card-body--recovery {
+    position: relative;
+    z-index: 2;
+    margin-top: -1.625rem;
+    padding: 1.625rem 1.25rem 0.75rem;
+    border-radius: 1.75rem 1.75rem 0 0;
+    background: var(--mw-sheet);
+  }
+
+  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-submit {
+    min-height: 3.25rem;
+    border-radius: 0.875rem !important;
+    box-shadow: none;
+  }
+
+  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-card-body--recovery input:not([type="checkbox"]) {
+    min-height: 3.25rem;
+    border-radius: 0.875rem;
+  }
+
+  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-footer-link {
+    margin-top: 0.5rem;
+    padding-inline: 1.25rem;
+  }
+
+  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-footer-link a {
+    color: hsl(var(--foreground));
+    text-decoration: underline;
+    text-decoration-color: #eb992c;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
+  }
+}
