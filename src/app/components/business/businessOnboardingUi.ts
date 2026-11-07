@@ -1,13 +1,11 @@
 import { cn } from "@/lib/utils";
 
-/** Plus Jakarta headlines + Inter UI — scoped to onboarding */
-export const onboardingDisplayFont =
-  '"Plus Jakarta Sans", "Plus Jakarta Sans Fallback", ui-sans-serif, system-ui, sans-serif';
+export const onboardingDisplayFont = "inherit";
 
 export const onboardingUiFont = "var(--font-inter)";
 
 export const onboardingHeadline = cn(
-  "text-balance font-bold tracking-tight text-foreground",
+  "text-balance font-bold tracking-[-0.032em] text-foreground",
   "text-[clamp(1.875rem,5vw,2.625rem)] leading-[1.1]",
 );
 
@@ -25,7 +23,7 @@ export const onboardingStepHint = cn(
 );
 
 export const onboardingLabel = cn(
-  "mb-2 block text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted-foreground",
+  "mb-2 block text-[0.8125rem] font-semibold text-foreground",
 );
 
 export const onboardingSectionKicker = cn(
@@ -47,11 +45,11 @@ export const onboardingFieldHint = cn(
 );
 
 export const onboardingInput = cn(
-  "h-[3.125rem] w-full rounded-md border border-border/80 bg-background px-4",
+  "h-[3.25rem] w-full rounded-[0.875rem] border border-border/60 bg-[#faf7f2] px-4 dark:bg-background",
   "text-[15px] font-normal text-foreground placeholder:text-muted-foreground",
   "transition-colors duration-150",
   "hover:border-foreground/25",
-  "focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
+  "focus:border-primary focus:bg-background focus:outline-none focus:ring-[3px] focus:ring-primary/20",
   "disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100",
 );
 
@@ -76,8 +74,8 @@ export const onboardingSectionCard = "space-y-5";
 export const onboardingSectionTitle = onboardingSectionKicker;
 
 export const onboardingBackBtn = cn(
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4",
-  "text-sm font-medium text-muted-foreground transition-colors duration-150",
+  "inline-flex min-h-[3.25rem] items-center justify-center gap-2 rounded-[0.875rem] px-4",
+  "text-sm font-semibold text-foreground transition-colors duration-150",
   "hover:text-foreground hover:bg-muted/80",
   "disabled:pointer-events-none disabled:opacity-30",
 );

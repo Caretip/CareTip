@@ -65,6 +65,7 @@ import {
   fallbackMessageForHttpStatus,
   SERVICE_UNAVAILABLE_CLIENT_MESSAGE,
   API_WAKEUP_NETWORK_MESSAGE,
+  userFacingErrorCopy,
 } from "../lib/errorMessages";
 import { AUTH_STORAGE_SYNC_EVENT, notifyAuthStorageSync } from "../lib/authStorageSync";
 
@@ -664,7 +665,7 @@ export function useAuth() {
       logClientError("useAuth.refreshSession", err);
       const msg = err instanceof Error ? err.message : "";
       if (msg === SERVICE_UNAVAILABLE_CLIENT_MESSAGE) {
-        toast.error(SERVICE_UNAVAILABLE_CLIENT_MESSAGE, { id: "caretip-auth-refresh-503" });
+        toast.error(userFacingErrorCopy(SERVICE_UNAVAILABLE_CLIENT_MESSAGE), { id: "caretip-auth-refresh-503" });
       }
       if (isTransientRefreshErrorMessage(msg)) {
         return loadUserFromStorage();

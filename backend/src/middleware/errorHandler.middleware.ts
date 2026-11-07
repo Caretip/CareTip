@@ -1,6 +1,7 @@
 import type { ErrorRequestHandler } from "express";
 import multer from "multer";
 import { clientSafeMessage, CLIENT_FALLBACK } from "../utils/httpErrors.js";
+import { requestIdOf } from "./requestId.middleware.js";
 
 /**
  * Last middleware: logs server errors and returns JSON. Requires `express-async-errors` so async route rejections reach here.
@@ -17,6 +18,7 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
       method: req.method,
       path: req.originalUrl ?? req.url,
       status: multerStatus,
+      requestId: requestIdOf(res),
     };
     console.error("❌ BACKEND ERROR (multer):", context, err.code, err.message);
     if (err.stack) console.error(err.stack);
@@ -26,7 +28,9 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
         : err.code === "LIMIT_UNEXPECTED_FILE"
           ? "Unexpected upload field. Use the correct file field name."
           : err.message || "Upload failed.";
-    res.status(multerStatus).json({ message: clientSafeMessage(new Error(msg), CLIENT_FALLBACK.generic) });
+    res
+      .status(multerStatus)
+      .json({ message: clientSafeMessage(new Error(msg), CLIENT_FALLBACK.generic), requestId: requestIdOf(res) });
     return;
   }
 
@@ -47,6 +51,7 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
     method: req.method,
     path: req.originalUrl ?? req.url,
     status,
+    requestId: requestIdOf(res),
   };
   console.error("❌ BACKEND ERROR:", context, err);
   if (err instanceof Error && err.stack) console.error(err.stack);
@@ -65,5 +70,6 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
       ? clientSafeMessage(err, CLIENT_FALLBACK.generic)
       : CLIENT_FALLBACK.generic;
 
-  res.status(status).json({ message });
+  // `requestId` lets support match a report to the log line above; it carries no user data.
+  res.status(status).json({ message, requestId: requestIdOf(res) });
 };

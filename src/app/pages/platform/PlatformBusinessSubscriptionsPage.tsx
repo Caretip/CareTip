@@ -32,6 +32,7 @@ export function PlatformBusinessSubscriptionsPage() {
       <Suspense fallback={null}>
         <PlatformSubscriptionMonitoringSection
           part="full"
+          embedded
           initialFilter={filter}
           onFilterChange={onFilterChange}
           hideActivityFilters={false}

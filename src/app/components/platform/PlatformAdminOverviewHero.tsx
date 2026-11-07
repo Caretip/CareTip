@@ -29,7 +29,11 @@ export function PlatformAdminOverviewHero({ health, adminName, locale }: Platfor
   const { t, i18n } = useTranslation();
   const status = resolvePlatformStatus(health);
   const dateLocale = (locale ?? i18n.language)?.toLowerCase().startsWith("de") ? de : enUS;
-  const nowLabel = format(new Date(), "EEEE, MMMM d · h:mm a", { locale: dateLocale });
+  const nowLabel = format(
+    new Date(),
+    dateLocale?.code?.startsWith("de") ? "EEEE, d. MMMM · HH:mm" : "EEEE, MMMM d · h:mm a",
+    { locale: dateLocale },
+  );
   const formalGreeting = formatDashboardFormalGreeting(t, adminName);
 
   const statusBadge = useMemo(() => {

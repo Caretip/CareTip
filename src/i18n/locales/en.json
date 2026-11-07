@@ -211,7 +211,22 @@
       }
     },
     "copied": "Copied",
-    "unableToCopy": "Unable to copy"
+    "unableToCopy": "Unable to copy",
+    "errorScreen": {
+      "crashTitle": "This screen couldn't be displayed",
+      "crashBody": "Please refresh the page. If the problem continues, contact support and tell us what you were doing.",
+      "crashAction": "Refresh page",
+      "notFoundTitle": "Page not found",
+      "notFoundBody": "The page you're looking for doesn't exist or may have been moved.",
+      "staleTitle": "CareTip needs a refresh",
+      "staleBody": "This browser has an older version of CareTip. Refresh to load the latest version.",
+      "staleAction": "Refresh",
+      "routeTitle": "This page couldn’t load",
+      "routeBody": "Please try again, or go back to the home page.",
+      "homeAction": "Go back home"
+    },
+    "tryAgain": "Try again",
+    "dismiss": "Dismiss"
   },
   "mobileWebHandoff": {
     "errorTitle": "Couldn't open Billing",
@@ -2072,7 +2087,8 @@
       "homeAria": "Home",
       "back": "Back",
       "confirmingRecipient": "Confirming recipient",
-      "poweredByCareTip": "Digital tipping powered by CareTip"
+      "poweredByCareTip": "Digital tipping powered by CareTip",
+      "goHome": "Go home"
     },
     "header": {
       "chooseAmountFor": "Choose tip amount for {{name}}",
@@ -7315,7 +7331,8 @@
           "summaryError": "Could not load payout totals.",
           "retrySummary": "Retry totals",
           "mixedCurrency": "Totals use the primary payout currency."
-        }
+        },
+        "openStripeFailed": "We couldn't open Stripe right now. Please try again."
       }
     },
     "billing": {

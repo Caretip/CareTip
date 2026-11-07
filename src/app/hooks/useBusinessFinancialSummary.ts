@@ -4,7 +4,7 @@ import {
   type BusinessFinancialSummaryBundle,
   type BusinessFinancialPeriod,
 } from "../lib/api";
-import { toUserFriendlyMessage } from "../lib/errorMessages";
+import { isAbortError, isApiConnectivityError, toUserFriendlyMessage } from "../lib/errorMessages";
 import { markAnalyticsPerformance } from "../lib/businessAnalytics/analyticsPerformanceMarks";
 import { reportDashboardLoadFailure } from "../lib/dashboardLoadDiagnostics";
 
@@ -27,6 +27,28 @@ async function loadCompleteSummary(
     throw new Error("Incomplete financial summary response");
   }
   return bundle;
+}
+
+/** Pause before the single automatic retry of a slice that failed to reach the API. */
+const CONNECTIVITY_RETRY_DELAY_MS = 1500;
+
+/**
+ * On first load the dashboard sends many requests at once; a slow backend can drop the last
+ * ones (timeout / unreachable). Retry such a read once, quietly, before showing "unavailable".
+ * Server errors and incomplete responses are not retried: they surface as before.
+ */
+async function loadCompleteSummaryWithConnectivityRetry(
+  stillCurrent: () => boolean,
+  ...args: Parameters<typeof getBusinessFinancialSummary>
+): Promise<BusinessFinancialSummaryBundle> {
+  try {
+    return await loadCompleteSummary(...args);
+  } catch (err) {
+    if (isAbortError(err) || !isApiConnectivityError(err) || !stillCurrent()) throw err;
+    await new Promise((resolve) => setTimeout(resolve, CONNECTIVITY_RETRY_DELAY_MS));
+    if (!stillCurrent()) throw err;
+    return loadCompleteSummary(...args);
+  }
 }
 
 function mergeLedgerSlice(
@@ -124,7 +146,7 @@ export function useBusinessFinancialSummary(
       try {
         if (progressive) {
           markAnalyticsPerformance("analytics.financial.request");
-          const ledgerPromise = loadCompleteSummary(requestedPeriod, { section: "ledger" })
+          const ledgerPromise = loadCompleteSummaryWithConnectivityRetry(stillCurrent, requestedPeriod, { section: "ledger" })
             .then((ledgerPart) => {
               if (!stillCurrent() || ledgerPart.period !== requestedPeriod) return;
               setData((prev) => mergeLedgerSlice(prev, ledgerPart, requestedPeriod));
@@ -140,7 +162,7 @@ export function useBusinessFinancialSummary(
               throw err;
             });
 
-          const connectPromise = loadCompleteSummary(requestedPeriod, { section: "connect" })
+          const connectPromise = loadCompleteSummaryWithConnectivityRetry(stillCurrent, requestedPeriod, { section: "connect" })
             .then((connectPart) => {
               if (!stillCurrent()) return;
               setData((prev) => mergeConnectSlice(prev, connectPart, requestedPeriod));
@@ -184,7 +206,7 @@ export function useBusinessFinancialSummary(
           const rejected = settled.find((r) => r.status === "rejected");
           if (rejected) throw rejected.reason;
         } else {
-          const bundle = await loadCompleteSummary(requestedPeriod, {
+          const bundle = await loadCompleteSummaryWithConnectivityRetry(stillCurrent, requestedPeriod, {
             includeReconciliation,
           });
           if (!stillCurrent() || bundle.period !== requestedPeriod) return;

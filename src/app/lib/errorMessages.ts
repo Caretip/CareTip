@@ -34,18 +34,71 @@ function localizeFriendlyMessageCopy(english: string): string {
 }
 
 /** Use only when the failure type cannot be determined (null/empty/unknown). */
-export const GENERIC_UNKNOWN_ERROR = "Something went wrong. Please try again.";
+export const GENERIC_UNKNOWN_ERROR =
+  "Something went wrong. Please try again. If the problem continues, contact support.";
 
-/** Shown when auth/session refresh fails with HTTP 503 (matches product copy; avoids infinite retry loops). */
+/** The browser could not reach CareTip (offline, connection dropped, API restarting). */
+export const NETWORK_UNAVAILABLE_MESSAGE =
+  "We couldn't connect right now. Please check your connection and try again.";
+
+/** Temporary service interruption (503 / 502): the request may be retried shortly. */
+export const TEMPORARILY_UNAVAILABLE_MESSAGE =
+  "We're temporarily unable to complete your request. Please try again shortly.";
+
+/** Request or gateway timeout. */
+export const REQUEST_TIMEOUT_MESSAGE = "This is taking longer than expected. Please try again.";
+
+/** Unexpected server failure (500): details stay in server logs. */
+export const SERVER_ERROR_MESSAGE =
+  "Something went wrong on our side. Please try again. If the problem continues, contact support.";
+
+/**
+ * Internal signal for HTTP 503 (also the backend's wire text). Code compares against it to keep a
+ * session through outages; users see {@link TEMPORARILY_UNAVAILABLE_MESSAGE} instead.
+ */
 export const SERVICE_UNAVAILABLE_CLIENT_MESSAGE = "Service temporarily unavailable";
 
-/** Cross-origin API unreachable after retry (e.g. Render cold start on free tier). */
+/**
+ * Internal signal: cross-origin API unreachable after retry (e.g. cold start). Compared by auth code;
+ * users see {@link NETWORK_UNAVAILABLE_MESSAGE} instead.
+ */
 export const API_WAKEUP_NETWORK_MESSAGE =
   "Unable to connect to the server. The API may still be waking up. Wait a few seconds and try again.";
+
+/** Internal signals and legacy technical copy, mapped to the wording users see (English; German via the DE table). */
+const DISPLAY_COPY: Record<string, string> = {
+  [SERVICE_UNAVAILABLE_CLIENT_MESSAGE]: TEMPORARILY_UNAVAILABLE_MESSAGE,
+  [API_WAKEUP_NETWORK_MESSAGE]: NETWORK_UNAVAILABLE_MESSAGE,
+  "Unable to connect to the server. Check your connection and try again.": NETWORK_UNAVAILABLE_MESSAGE,
+  "Something went wrong. Please try again.": GENERIC_UNKNOWN_ERROR,
+  "Something went wrong. Please try again later.": GENERIC_UNKNOWN_ERROR,
+  "Our servers hit a problem. Please try again in a few minutes.": SERVER_ERROR_MESSAGE,
+  "Our servers are temporarily unavailable. Please try again in a few minutes.": TEMPORARILY_UNAVAILABLE_MESSAGE,
+  "The request took too long. Please try again.": REQUEST_TIMEOUT_MESSAGE,
+};
+
+/** Maps an internal or legacy message to user-facing copy, localized. Use for toasts that show a signal directly. */
+export function userFacingErrorCopy(message: string): string {
+  return localizeFriendlyMessageCopy(DISPLAY_COPY[message] ?? message);
+}
+
+/** Marks an error re-thrown with display copy as a connectivity failure, whatever its wording or language. */
+export const CONNECTIVITY_ERROR_FLAG = "caretipConnectivity" as const;
+
+/** Display copy that means "could not reach CareTip" (English and German), for errors without the flag. */
+function isConnectivityCopy(message: string): boolean {
+  return (
+    message === NETWORK_UNAVAILABLE_MESSAGE ||
+    message === translateFriendlyMessageToDe(NETWORK_UNAVAILABLE_MESSAGE)
+  );
+}
 
 /** True when the browser could not reach the CareTip API (offline, backend stopped, cold start). */
 export function isApiConnectivityError(error: unknown): boolean {
   if (error == null) return false;
+  if (typeof error === "object" && CONNECTIVITY_ERROR_FLAG in error) {
+    return Boolean((error as Record<string, unknown>)[CONNECTIVITY_ERROR_FLAG]);
+  }
   if (isAbortError(error)) return false;
   if (isApiRequestError(error) && (error.status === 503 || error.status === 502 || error.status === 504)) {
     return true;
@@ -53,6 +106,7 @@ export function isApiConnectivityError(error: unknown): boolean {
   if (error instanceof TypeError) return true;
   const message = error instanceof Error ? error.message : String(error);
   if (!message.trim()) return false;
+  if (isConnectivityCopy(message.trim())) return true;
   const lower = message.toLowerCase();
   return (
     /failed to fetch|networkerror|load failed|network request failed|unable to connect to the server/i.test(
@@ -145,10 +199,9 @@ const ERROR_MAP: Record<string, string> = {
   "Verification token is required": "This link has expired. Request a new one.",
   "Email verification required": "Please verify your email using the link we sent you.",
   "Restart the Caretip API after editing .env. JWT_SECRET is only loaded when the backend starts. Stop it (Ctrl+C) and run npm run dev again.":
-    "Sign-in isn’t working on the server right now. If you manage the app, restart the API after setting JWT_SECRET.",
+    "Sign-in isn't available right now. Please try again in a few minutes.",
   // Legacy keys
-  "Server is currently unavailable. Please try again in a moment.":
-    "The app is temporarily unavailable. Please try again in a moment.",
+  "Server is currently unavailable. Please try again in a moment.": TEMPORARILY_UNAVAILABLE_MESSAGE,
 
   // Password validation
   "Current and new password are required": "Please enter your current password and a new password.",
@@ -262,7 +315,7 @@ const ERROR_MAP: Record<string, string> = {
   "amount must be a positive number": "Please enter a tip amount greater than zero.",
   "Invalid amount": "Please enter a valid tip amount.",
   "Payment processing is not configured yet.":
-    "Tipping isn’t turned on for this environment yet. The venue needs to finish payment setup.",
+    "Tipping isn't available at this venue yet. The venue needs to finish payment setup.",
   "Stripe payment processing is not configured": "Payments aren’t set up yet. The venue needs to connect Stripe.",
   "We couldn't start the payment. Please try again.": "We couldn't start the payment. Please try again.",
   "We couldn't complete that request. Please try again.":
@@ -304,10 +357,11 @@ const ERROR_MAP: Record<string, string> = {
   // Network / generic transport
   "The request body was not valid JSON. Send a JSON object (for example {\"email\":\"...\",\"password\":\"...\"}) with Content-Type: application/json.":
     "The request was not valid. Please try again or refresh the page.",
-  "Failed to fetch": "Unable to connect to the server. Check your connection and try again.",
-  "NetworkError": "Unable to connect to the server. Check your connection and try again.",
-  "Load failed": "Unable to connect to the server. Check your connection and try again.",
-  [API_WAKEUP_NETWORK_MESSAGE]: API_WAKEUP_NETWORK_MESSAGE,
+  "Failed to fetch": NETWORK_UNAVAILABLE_MESSAGE,
+  "NetworkError": NETWORK_UNAVAILABLE_MESSAGE,
+  "Load failed": NETWORK_UNAVAILABLE_MESSAGE,
+  [API_WAKEUP_NETWORK_MESSAGE]: NETWORK_UNAVAILABLE_MESSAGE,
+  [NETWORK_UNAVAILABLE_MESSAGE]: NETWORK_UNAVAILABLE_MESSAGE,
   "Aborted": "The request was cancelled. Please try again.",
 
   // Storage / uploads (server sends these exact strings)
@@ -326,8 +380,7 @@ const ERROR_MAP: Record<string, string> = {
     "We couldn't save your verification file. Please try again.",
   "Logo upload timed out. Try again with a smaller image.":
     "Logo upload timed out. Try again with a smaller image.",
-  "The service is temporarily unavailable. Please try again later.":
-    "The service is temporarily unavailable. Please try again later.",
+  "The service is temporarily unavailable. Please try again later.": TEMPORARILY_UNAVAILABLE_MESSAGE,
 
   INSTANT_PAYOUT_NO_INSTANT_DESTINATION:
     "Add a payout method that supports Instant Payout, then try again.",
@@ -362,14 +415,14 @@ const STATUS_MESSAGES: Record<number, string> = {
   401: "Please sign in to continue.",
   403: "You don't have permission to do this.",
   404: "We couldn't find what you're looking for.",
-  408: "The request took too long. Please try again.",
+  408: REQUEST_TIMEOUT_MESSAGE,
   409: "This couldn’t be completed yet. Try again in a moment.",
   422: "The information you entered isn't valid. Please check and try again.",
   429: "Too many requests. Please wait a moment and try again.",
-  500: "Our servers hit a problem. Please try again in a few minutes.",
-  502: "Our servers are temporarily unavailable. Please try again in a few minutes.",
+  500: SERVER_ERROR_MESSAGE,
+  502: TEMPORARILY_UNAVAILABLE_MESSAGE,
   503: SERVICE_UNAVAILABLE_CLIENT_MESSAGE,
-  504: "The request took too long. Please try again.",
+  504: REQUEST_TIMEOUT_MESSAGE,
 };
 
 const STATUS_MESSAGE_VALUES = new Set(Object.values(STATUS_MESSAGES));
@@ -395,7 +448,7 @@ export function fallbackMessageForHttpStatus(status: number): string | undefined
  * Converts any error (API, fetch, thrown) into a user-friendly message.
  */
 export function toUserFriendlyMessage(error: unknown, options?: ToUserFriendlyMessageOptions): string {
-  if (error == null) return localizeFriendlyMessageCopy(GENERIC_UNKNOWN_ERROR);
+  if (error == null) return userFacingErrorCopy(GENERIC_UNKNOWN_ERROR);
   if (isAbortError(error)) return "";
 
   if (
@@ -553,8 +606,34 @@ export function toUserFriendlyMessage(error: unknown, options?: ToUserFriendlyMe
 
   if (resolved === GENERIC_UNKNOWN_ERROR && isApiRequestError(error)) {
     const byStatus = statusMessageForUnmappedApiError(error.status);
-    if (byStatus) return localizeFriendlyMessageCopy(byStatus);
+    if (byStatus) return userFacingErrorCopy(byStatus);
   }
 
-  return localizeFriendlyMessageCopy(resolved);
+  return userFacingErrorCopy(resolved);
+}
+
+/** Server copy that must never reach the UI verbatim (internals, transport, stack traces). */
+function looksTechnical(message: string): boolean {
+  const lower = message.toLowerCase();
+  return (
+    /\bP\d{4}\b/.test(message) ||
+    /prisma|jwt|jsonwebtoken|stack trace|supabase|internal server error|econnrefused|enetunreach|\bsql\b|postgres|undefined|\bnull\b|exception|^http \d{3}$|request failed \(\d{3}\)/i.test(lower) ||
+    (lower.includes("at ") && /\.(ts|js|tsx|jsx):\d+/i.test(message))
+  );
+}
+
+/**
+ * For screens that show an API error inline or in a toast: mapped copy when CareTip knows the error;
+ * a plain business-rule sentence from the API (4xx) as sent; otherwise the screen's own translated fallback.
+ * Never shows transport, server or database internals.
+ */
+export function toDisplayErrorMessage(error: unknown, fallback: string): string {
+  if (error == null || isAbortError(error)) return fallback;
+  const friendly = toUserFriendlyMessage(error);
+  if (friendly && friendly !== userFacingErrorCopy(GENERIC_UNKNOWN_ERROR)) return friendly;
+  if (isApiRequestError(error) && error.status >= 400 && error.status < 500) {
+    const raw = error.message?.trim() ?? "";
+    if (raw && raw.length <= 240 && !looksTechnical(raw)) return raw;
+  }
+  return fallback;
 }

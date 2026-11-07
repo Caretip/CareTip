@@ -53,6 +53,7 @@ import leadRoutes from "./routes/lead.routes.js";
 import legalRoutes from "./routes/legal.routes.js";
 import { initSocketServer } from "./socket/socketServer.js";
 import { errorHandler } from "./middleware/errorHandler.middleware.js";
+import { requestIdMiddleware } from "./middleware/requestId.middleware.js";
 import { jsonParseErrorHandler } from "./middleware/jsonParseError.middleware.js";
 import { getImageUploadStorageDiagnostics } from "./services/upload.service.js";
 import { blockSensitiveStaticUploadPaths } from "./middleware/blockSensitiveStaticUploads.middleware.js";
@@ -91,6 +92,7 @@ app.disable("x-powered-by");
 
 configureTrustProxy(app);
 
+app.use(requestIdMiddleware);
 app.use(securityHeadersMiddleware);
 
 async function assertEnvForAuth(): Promise<void> {

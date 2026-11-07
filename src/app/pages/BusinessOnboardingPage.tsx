@@ -37,9 +37,9 @@ import { cn } from "@/lib/utils";
 import type { OnboardingStep } from "../components/business/BusinessOnboardingProgress";
 import {
   BusinessOnboardingFootnote,
-  BusinessOnboardingHeader,
-  BusinessOnboardingProgressHeader,
+  BusinessOnboardingRail,
 } from "../components/business/BusinessOnboardingShell";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { BusinessOnboardingGuestPreview } from "../components/business/BusinessOnboardingGuestPreview";
 import { BusinessOnboardingLogoUpload } from "../components/business/BusinessOnboardingLogoUpload";
 import { BusinessOnboardingCompleteStep } from "../components/business/BusinessOnboardingCompleteStep";
@@ -66,11 +66,6 @@ import {
 import type { CountryCode } from "libphonenumber-js";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 
-const PAGE_HEADLINE_KEYS = [
-  "business.onboarding.stepTitle.businessDetails",
-  "business.onboarding.stepTitle.brandingSetup",
-] as const;
-
 const PAGE_DESC_KEYS = [
   "business.onboarding.stepHint.businessDetails",
   "business.onboarding.stepHint.brandingSetup",
@@ -81,6 +76,7 @@ export function BusinessOnboardingPage() {
   const navigate = useNavigate();
   const { user, sessionValidated, setHasCompletedOnboarding, refetchUser, logout } = useAuth();
   const [step, setStep] = useState<OnboardingStep>(1);
+  const previewInColumn = useMediaQuery("(min-width: 1280px)");
   const [syncingOnboarding, setSyncingOnboarding] = useState(true);
 
   const [legalBusinessName, setLegalBusinessName] = useState("");
@@ -217,7 +213,14 @@ export function BusinessOnboardingPage() {
       }
     }
 
-    const websiteResult = normalizeOptionalWebsiteUrl(website);
+    // Owners type "cafe.de": adding the scheme is our job, not theirs.
+    const websiteTrimmed = website.trim();
+    const websiteInput =
+      websiteTrimmed && !/^[a-z][a-z0-9+.-]*:\/\//i.test(websiteTrimmed)
+        ? `https://${websiteTrimmed}`
+        : websiteTrimmed;
+    if (websiteInput !== website) setWebsite(websiteInput);
+    const websiteResult = normalizeOptionalWebsiteUrl(websiteInput);
     if (!websiteResult.ok) {
       next.website = contactErrorMessage(websiteResult.code);
     }
@@ -508,19 +511,17 @@ export function BusinessOnboardingPage() {
   const skipEntranceMotion = skipEntranceMotionRef.current;
 
   return (
-    <div className="business-onboarding-page flex min-h-screen flex-col">
-      <BusinessOnboardingHeader step={step} />
+    <div className="business-onboarding-page business-onboarding-layout flex min-h-screen flex-col">
+      <BusinessOnboardingRail step={step} />
 
       <main className="business-onboarding-main flex-1">
         <motion.div
           initial={skipEntranceMotion ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="business-onboarding-shell mx-auto w-full max-w-[72rem] px-4 sm:px-6 lg:px-8"
+          className="business-onboarding-shell w-full"
         >
           <div className="space-y-8 lg:space-y-10">
-            <BusinessOnboardingProgressHeader step={step} />
-
             {isCompleteStep ? (
               <BusinessOnboardingCompleteStep
                 busy={busy}
@@ -531,12 +532,11 @@ export function BusinessOnboardingPage() {
               <div
                 className={cn(
                   "business-onboarding-split",
-                  step === 2 && "business-onboarding-split--with-preview",
+                  previewInColumn && "business-onboarding-split--with-preview",
                 )}
               >
                 <div className="business-onboarding-workspace min-w-0">
                   <header className="mb-8 space-y-2 sm:mb-10">
-                    <p className={onboardingSectionKicker}>{t(PAGE_HEADLINE_KEYS[step - 1])}</p>
                     <h1
                       id="onboarding-page-title"
                       className={cn(onboardingHeadline, "!text-[clamp(1.625rem,4vw,2.25rem)]")}
@@ -561,6 +561,7 @@ export function BusinessOnboardingPage() {
                           <div className="space-y-7">
                             <BusinessOnboardingTextField
                               label={t("business.onboarding.fields.legalName")}
+                              autoComplete="organization"
                               placeholder={t("business.onboarding.fields.legalNamePlaceholder")}
                               value={legalBusinessName}
                               onChange={setLegalBusinessName}
@@ -581,8 +582,8 @@ export function BusinessOnboardingPage() {
                         ) : null}
 
                         {step === 2 ? (
-                          <div className="space-y-10">
-                            <div className="space-y-5">
+                          <div className="space-y-6">
+                            <div className="business-onboarding-card space-y-5">
                               <BusinessOnboardingLogoUpload
                                 file={logoFile}
                                 savedLogoUrl={logoDismissed ? null : savedLogoPath}
@@ -601,12 +602,13 @@ export function BusinessOnboardingPage() {
                               />
                             </div>
 
-                            <div className="space-y-7 border-t border-border/60 pt-10">
+                            <div className="business-onboarding-card space-y-7">
                               <div>
-                                <p className={onboardingSectionKicker}>{t("business.onboarding.sections.locationContact")}</p>
+                                <p className={cn(onboardingSectionKicker, "business-onboarding-card__title")}>{t("business.onboarding.sections.locationContact")}</p>
                               </div>
                               <BusinessOnboardingTextField
                                 label={t("business.onboarding.fields.address")}
+                                autoComplete="street-address"
                                 placeholder={t("business.onboarding.fields.addressPlaceholder")}
                                 value={registeredAddress}
                                 onChange={setRegisteredAddress}
@@ -634,6 +636,9 @@ export function BusinessOnboardingPage() {
                                 </BusinessOnboardingSelectField>
                                 <BusinessOnboardingTextField
                                   label={t("business.onboarding.fields.phone")}
+                                  type="tel"
+                                  inputMode="tel"
+                                  autoComplete="tel-national"
                                   placeholder={t("business.onboarding.fields.phonePlaceholder")}
                                   value={contactPhone}
                                   onChange={(v) => {
@@ -645,6 +650,9 @@ export function BusinessOnboardingPage() {
                               </div>
                               <BusinessOnboardingTextField
                                 label={t("business.onboarding.fields.website")}
+                                type="url"
+                                inputMode="url"
+                                autoComplete="url"
                                 placeholder={t("business.onboarding.fields.websitePlaceholder")}
                                 value={website}
                                 onChange={(v) => {
@@ -659,6 +667,18 @@ export function BusinessOnboardingPage() {
                         ) : null}
                       </motion.div>
                     </AnimatePresence>
+
+                    {step === 2 && !previewInColumn ? (
+                      <details className="business-onboarding-preview-toggle">
+                        <summary>
+                          <span>{t("business.onboarding.preview.liveLabel")}</span>
+                          <span className="business-onboarding-preview-toggle__hint">
+                            {t("business.onboarding.preview.caption")}
+                          </span>
+                        </summary>
+                        <BusinessOnboardingGuestPreview {...previewData} />
+                      </details>
+                    ) : null}
 
                     <BusinessOnboardingNavFooter
                       primaryLabel={
@@ -681,7 +701,7 @@ export function BusinessOnboardingPage() {
                   </section>
                 </div>
 
-                {step === 2 ? (
+                {previewInColumn ? (
                   <aside
                     className="business-onboarding-preview-aside business-onboarding-preview-aside--setup min-w-0"
                     aria-label={t("business.onboarding.preview.panelAria")}
@@ -692,7 +712,9 @@ export function BusinessOnboardingPage() {
               </div>
             )}
 
-            <BusinessOnboardingFootnote />
+            <div className="business-onboarding-main-trust">
+              <BusinessOnboardingFootnote />
+            </div>
           </div>
         </motion.div>
       </main>

@@ -9,6 +9,8 @@ import {
   fallbackMessageForHttpStatus,
   SERVICE_UNAVAILABLE_CLIENT_MESSAGE,
   API_WAKEUP_NETWORK_MESSAGE,
+  CONNECTIVITY_ERROR_FLAG,
+  SERVER_ERROR_MESSAGE,
   isAbortError,
   isApiConnectivityError,
 } from "./errorMessages";
@@ -869,9 +871,14 @@ async function apiRequestOnce<T>(url: string, init?: RequestInit): Promise<T> {
       logClientError("api.apiRequest", err, { url });
     }
     if (devDebug) devTrackEnd(devDebug.group, devDebug.key, "error", err);
-    const baseMsg = toUserFriendlyMessage(err);
-    const devHint = import.meta.env.DEV ? apiConfigHintForFailedFetch(url) : "";
-    throw new Error(baseMsg + devHint);
+    const connectivity = isApiConnectivityError(err);
+    if (import.meta.env.DEV && connectivity) {
+      // Setup hint for developers only: kept out of the message users see.
+      const devHint = apiConfigHintForFailedFetch(url).trim();
+      if (devHint) console.warn(`[CareTip] ${requestUrlPathname(url)}: ${devHint}`);
+    }
+    // The message is display copy (any language); the flag keeps it classifiable as a connectivity failure.
+    throw Object.assign(new Error(toUserFriendlyMessage(err)), { [CONNECTIVITY_ERROR_FLAG]: connectivity });
   }
 
   if (res.status === 401) {
@@ -1617,7 +1624,7 @@ export async function refreshSessionAPI(): Promise<AuthResponse> {
   if (r.status === 500) {
     const m = fallbackMessageForHttpStatus(500);
     logClientError("api.refreshSessionAPI", new Error(`HTTP ${r.status}`), { status: r.status });
-    throw new Error(m ?? "Our servers hit a problem. Please try again in a few minutes.");
+    throw new Error(m ?? SERVER_ERROR_MESSAGE);
   }
   if (r.status === 401 || r.status === 403) {
     throw new Error(fallbackMessageForHttpStatus(401) ?? "Your session has expired. Please sign in again.");

@@ -13,7 +13,7 @@ import { test, expect, type Page, type Route } from "@playwright/test";
  * engine, not Apple's network stack or ITP behaviour.
  */
 
-const GENERIC = "Something went wrong. Please try again.";
+const GENERIC = /Something went wrong. Please try again./;
 const RATE_LIMITED = "Too many requests. Please wait a moment and try again.";
 const STATS_FAILED = "We couldn't load dashboard stats. Please try again in a moment.";
 const LIMITER_BODY = { message: "Too many requests. Please slow down." };
@@ -491,7 +491,14 @@ test.describe("Business dashboard refresh resilience", () => {
     api.failures.set("financial:ledger", down);
     api.failures.set("financial:connect", down);
     await openDashboard(page);
-    await expect(page.getByText("Service temporarily unavailable").first()).toBeVisible();
+    // The 503 wire text stays internal; users see the friendly copy (English, or German in a DE browser).
+    await expect(
+      page
+        .getByText(
+          /We're temporarily unable to complete your request|Ihre Anfrage kann gerade vorübergehend nicht bearbeitet werden/,
+        )
+        .first(),
+    ).toBeVisible();
 
     api.failures.clear();
     await page.getByRole("button", { name: "Try again" }).first().click();
@@ -567,7 +574,7 @@ test.describe("Business dashboard refresh resilience", () => {
     const api = await installMockApi(page);
     api.failures.set("stats", "network");
     await openDashboard(page);
-    await expect(page.getByText(/Unable to connect to the server/).first()).toBeVisible();
+    await expect(page.getByText(/We couldn't connect right now|Wir konnten gerade keine Verbindung herstellen/).first()).toBeVisible();
     await expect(page.getByText(GENERIC)).toHaveCount(0);
   });
 

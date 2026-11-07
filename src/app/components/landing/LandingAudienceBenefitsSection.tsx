@@ -11,8 +11,10 @@ import { landingCopyVisible, landingUi } from "@/components/landing/landingUi";
 import { landingHeadlineComponents } from "@/components/landing/landingRichText";
 import { landingStaggerDelay } from "@/lib/landingMotion";
 import { cn } from "@/lib/utils";
-import { LANDING_DASHBOARD_SHOWCASE_EMPLOYEE_LIMIT } from "./dashboardShowcase/landingDashboardShowcaseData";
-import { LandingDashboardShowcaseVisual } from "./dashboardShowcase/LandingDashboardShowcaseVisual";
+import ownerVisualDeWebp from "../../../../images/owner-dashboard-de.webp";
+import ownerVisualDeAvif from "../../../../images/owner-dashboard-de.avif";
+import ownerVisualEnWebp from "../../../../images/owner-dashboard-en.webp";
+import ownerVisualEnAvif from "../../../../images/owner-dashboard-en.avif";
 import teamsVisualDeWebp from "../../../../images/emp.webp";
 import teamsVisualDeAvif from "../../../../images/emp.avif";
 import teamsVisualEnWebp from "../../../../images/new-imo.webp";
@@ -114,6 +116,8 @@ export function LandingAudienceBenefitsSection() {
     const isDe = i18n.language?.toLowerCase().startsWith("de");
     const teamsVisual = isDe ? teamsVisualDeWebp : teamsVisualEnWebp;
     const teamsVisualAvif = isDe ? teamsVisualDeAvif : teamsVisualEnAvif;
+    const ownerVisual = isDe ? ownerVisualDeWebp : ownerVisualEnWebp;
+    const ownerVisualAvif = isDe ? ownerVisualDeAvif : ownerVisualEnAvif;
 
     const businessPoints = [
       { title: t(`${prefix}.businessP1Title`), body: t(`${prefix}.businessP1Body`) },
@@ -134,13 +138,22 @@ export function LandingAudienceBenefitsSection() {
         body: t(`${prefix}.businessBody`),
         points: businessPoints,
         photoClass: "caretip-audience-benefits__visual--dashboard",
+        // The real CareTip dashboard (team activity, leaderboard, goals) with a live tip and a guest review.
         cardVisual: (
-          <LandingDashboardShowcaseVisual
-            variant="premium"
-            employeeLimit={LANDING_DASHBOARD_SHOWCASE_EMPLOYEE_LIMIT}
-            showCaption={false}
-            embeddedInCard
-          />
+          <picture className="caretip-audience-benefits__owner-shot block w-full">
+            <source type="image/avif" srcSet={ownerVisualAvif} />
+            <img
+              src={ownerVisual}
+              alt={t("landing.dashboardShowcase.ariaLabel")}
+              width={1104}
+              height={1144}
+              loading="lazy"
+              decoding="async"
+              sizes="(min-width: 1024px) 34.5rem, 100vw"
+              className="block h-auto w-full select-none"
+              draggable={false}
+            />
+          </picture>
         ),
       },
       {
@@ -246,7 +259,7 @@ export function LandingAudienceBenefitsSection() {
                         {...({ fetchpriority: "auto" } as ImgHTMLAttributes<HTMLImageElement>)}
                         sizes="(min-width: 1024px) 32rem, 100vw"
                         width={854}
-                        height={1280}
+                        height={1133}
                         onError={(event) => {
                           const img = event.currentTarget;
                           const picture = img.parentElement;

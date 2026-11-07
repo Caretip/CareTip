@@ -46,7 +46,7 @@ export function PlatformUsageKpiStrip({ stats, loading }: PlatformUsageKpiStripP
             <span className="text-pretty text-xs font-medium leading-snug line-clamp-2">{label}</span>
           </div>
           <p className="mt-2 text-2xl font-semibold tabular-nums text-foreground">
-            {loading ? "…" : value}
+            {loading ? "…" : typeof value === "number" ? new Intl.NumberFormat("de-DE").format(value) : value}
           </p>
         </div>
       ))}

@@ -187,8 +187,8 @@ html.dark .caretip-landing .caretip-audience-benefits__visual--phone .caretip-au
 
 @media (max-width: 639px) {
   .caretip-landing .caretip-audience-benefits__visual--phone.caretip-audience-benefits__visual--matched {
-    /* Match new-imo portrait (~854×1280) — full width, taller frame for hand at bottom */
-    aspect-ratio: 854 / 1280;
+    /* Match the cropped portrait (854×1133) — the whole photo, nothing cut */
+    aspect-ratio: 854 / 1133;
     width: 100%;
     max-height: none;
     height: auto;
@@ -552,4 +552,24 @@ html:lang(de)
 .caretip-landing #business-section #for-employees .caretip-audience-benefits__copy {
   background: transparent;
   box-shadow: none;
+}
+
+/* Service-teams photo frame: same shape as the dashboard mockup, phone and hands fully in view */
+@media (min-width: 640px) and (max-width: 1023.98px) {
+  .caretip-landing .caretip-audience-benefits__visual--phone.caretip-audience-benefits__visual--matched {
+    aspect-ratio: 1104 / 1144;
+    max-height: none;
+    height: auto;
+    margin-top: 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  /* The mockup's tablet edge sits 24/1104 of its width below the top (notification card above it):
+     the photo starts there too, and its bottom stays level with the review card. */
+  .caretip-landing .caretip-audience-benefits__visual--phone.caretip-audience-benefits__visual--matched {
+    padding-top: 2.174%;
+    /* …and it ends level with the tablet's bottom edge (100/1104 of the width above the review card's foot) */
+    padding-bottom: 9.058%;
+  }
 }

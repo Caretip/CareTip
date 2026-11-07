@@ -46,13 +46,18 @@ function formatTransactionAt(iso: string, locale: string): string {
   }
 }
 
+/** Display only: the fixed fee in German decimals, matching the amounts beside it. */
+function formatFeeFixed(cents: number): string {
+  return new Intl.NumberFormat("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(cents / 100);
+}
+
 function formatCaretipFeeCell(row: GlobalTransactionRow, t: TFunction): string {
   if (row.caretipFeeEur == null) {
     return t("admin.globalTransactionsPage.feeUnavailable");
   }
   return t("admin.globalTransactionsPage.feeCell", {
     percent: row.caretipFeePercent,
-    fixed: (row.caretipFeeFixedCents / 100).toFixed(2),
+    fixed: formatFeeFixed(row.caretipFeeFixedCents),
     amount: formatEur(row.caretipFeeEur),
   });
 }
@@ -170,9 +175,9 @@ export function GlobalTransactionsPage() {
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const filterSummary = useMemo(() => {
     if (debouncedQ) {
-      return t("admin.globalTransactionsPage.summarySearch", { total, q: debouncedQ });
+      return t("admin.globalTransactionsPage.summarySearch", { total: new Intl.NumberFormat("de-DE").format(total), q: debouncedQ });
     }
-    return t("admin.globalTransactionsPage.summaryDefault", { total });
+    return t("admin.globalTransactionsPage.summaryDefault", { total: new Intl.NumberFormat("de-DE").format(total) });
   }, [debouncedQ, t, total]);
 
   const emptyCopy = useMemo(() => {
@@ -228,7 +233,7 @@ export function GlobalTransactionsPage() {
         title={t("admin.globalTransactionsPage.title")}
         subtitle={t("admin.globalTransactionsPage.subtitle", {
           feePercent: items[0]?.caretipFeePercent ?? 10,
-          feeFixed: ((items[0]?.caretipFeeFixedCents ?? 49) / 100).toFixed(2),
+          feeFixed: formatFeeFixed(items[0]?.caretipFeeFixedCents ?? 49),
         })}
       />
 

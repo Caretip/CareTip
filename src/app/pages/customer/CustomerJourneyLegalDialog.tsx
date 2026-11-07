@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/app/components/ui/dialog";
+import { toDisplayErrorMessage } from "@/app/lib/errorMessages";
 
 const SafeLegalHtmlContent = lazy(() =>
   import("@/components/public/legal/SafeLegalHtmlContent").then((module) => ({
@@ -38,7 +39,7 @@ export function CustomerJourneyLegalDialog({ kind, open, onOpenChange }: Custome
       .catch((err: unknown) => {
         if (!cancelled) {
           setDoc(null);
-          setError(err instanceof Error ? err.message : t("legal.loadError"));
+          setError(toDisplayErrorMessage(err, t("legal.loadError")));
         }
       })
       .finally(() => {

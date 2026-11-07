@@ -55,6 +55,22 @@ function bootAssetsMetaPlugin() {
   };
 }
 
+/**
+ * Dev/preview proxy: when the backend on :3001 is not listening (starting, restarting, crashed),
+ * Vite answers an empty 500, which the app reads as a server bug ("Something went wrong").
+ * Answer 503 instead so the client classifies it as connectivity and keeps the session.
+ * Vite still logs the proxy error in the terminal.
+ */
+function apiProxyUnreachableAs503(proxy: { on: (event: 'error', cb: (err: Error, req: unknown, res: unknown) => void) => void }) {
+  proxy.on('error', (_err, _req, res) => {
+    const out = res as { headersSent?: boolean; writableEnded?: boolean; writeHead?: (s: number, h: Record<string, string>) => { end: (b: string) => void } } | undefined
+    if (!out || typeof out.writeHead !== 'function' || out.headersSent || out.writableEnded) return
+    out
+      .writeHead(503, { 'Content-Type': 'application/json', 'Retry-After': '2' })
+      .end(JSON.stringify({ message: 'Service temporarily unavailable', code: 'API_UNREACHABLE' }))
+  })
+}
+
 export default defineConfig(({ mode, command }) => {
   const repoRoot = fileURLToPath(new URL('.', import.meta.url))
   const loaded = loadEnv(mode, repoRoot, '')
@@ -307,6 +323,7 @@ export default defineConfig(({ mode, command }) => {
         secure: false,
         /** Keep refresh cookie on the Vite dev origin (localhost:5173). */
         cookieDomainRewrite: '',
+        configure: apiProxyUnreachableAs503,
       },
       '/socket.io': {
         target: 'http://localhost:3001',
@@ -329,6 +346,7 @@ export default defineConfig(({ mode, command }) => {
         secure: false,
         /** Keep refresh cookie on the Vite dev origin (localhost:5173). */
         cookieDomainRewrite: '',
+        configure: apiProxyUnreachableAs503,
       },
       '/socket.io': {
         target: 'http://localhost:3001',

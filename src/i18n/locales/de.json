@@ -211,7 +211,22 @@
       }
     },
     "copied": "Kopiert",
-    "unableToCopy": "Kopieren nicht möglich"
+    "unableToCopy": "Kopieren nicht möglich",
+    "errorScreen": {
+      "crashTitle": "Diese Ansicht konnte nicht angezeigt werden",
+      "crashBody": "Bitte laden Sie die Seite neu. Wenn das Problem weiterhin besteht, wenden Sie sich an den Support und beschreiben Sie kurz, was Sie gerade getan haben.",
+      "crashAction": "Seite neu laden",
+      "notFoundTitle": "Seite nicht gefunden",
+      "notFoundBody": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
+      "staleTitle": "CareTip muss aktualisiert werden",
+      "staleBody": "In diesem Browser ist eine ältere Version von CareTip geladen. Laden Sie die Seite neu, um die aktuelle Version zu erhalten.",
+      "staleAction": "Neu laden",
+      "routeTitle": "Diese Seite konnte nicht geladen werden",
+      "routeBody": "Bitte versuchen Sie es erneut oder kehren Sie zur Startseite zurück.",
+      "homeAction": "Zur Startseite"
+    },
+    "tryAgain": "Erneut versuchen",
+    "dismiss": "Schließen"
   },
   "mobileWebHandoff": {
     "errorTitle": "Abrechnung konnte nicht geöffnet werden",
@@ -2072,7 +2087,8 @@
       "homeAria": "Startseite",
       "back": "Zurück",
       "confirmingRecipient": "Empfänger wird bestätigt",
-      "poweredByCareTip": "Digitales Trinkgeld powered by CareTip"
+      "poweredByCareTip": "Digitales Trinkgeld powered by CareTip",
+      "goHome": "Zur Startseite"
     },
     "header": {
       "chooseAmountFor": "Trinkgeldbetrag für {{name}} wählen",
@@ -7312,7 +7328,8 @@
           "summaryError": "Auszahlungssummen konnten nicht geladen werden.",
           "retrySummary": "Summen erneut laden",
           "mixedCurrency": "Summen gelten für die primäre Auszahlungswährung."
-        }
+        },
+        "openStripeFailed": "Stripe konnte gerade nicht geöffnet werden. Bitte versuchen Sie es erneut."
       }
     },
     "billing": {

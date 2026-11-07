@@ -836,37 +836,38 @@
   }
 }
 
-/* ---------- Recovery pages: same brand panel and sheet ---------- */
+/* ---------- Recovery and join pages: same brand panel and sheet ---------- */
 
 @media (max-width: 767px) {
-  .caretip-auth-page.caretip-auth-recovery-stage {
+  .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) {
     --mw-sheet: #fff;
     background: var(--mw-sheet);
   }
 
-  .dark .caretip-auth-page.caretip-auth-recovery-stage {
+  .dark .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) {
     --mw-sheet: hsl(var(--background));
   }
 
-  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-curved-container,
-  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-split-layout__panel {
+  .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) .caretip-auth-curved-container,
+  .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) .caretip-auth-split-layout__panel {
     background: var(--mw-sheet);
   }
 
-  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-curved-brand {
+  .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) .caretip-auth-curved-brand {
     display: none;
   }
 
-  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-split-layout__panel,
-  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-split-layout__panel-inner,
-  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-recovery-inner {
+  .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) .caretip-auth-split-layout__panel,
+  .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) .caretip-auth-split-layout__panel-inner,
+  .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) .caretip-auth-recovery-inner,
+  .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) .caretip-auth-card-wrap {
     width: 100%;
     max-width: none;
     margin: 0;
     padding: 0;
   }
 
-  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-card.caretip-auth-card--recovery {
+  .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) .caretip-auth-card.caretip-auth-card--recovery {
     position: relative;
     overflow: hidden;
     width: 100%;
@@ -878,8 +879,8 @@
     box-shadow: none;
   }
 
-  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-card--recovery::before,
-  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-card--recovery::after {
+  .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) .caretip-auth-card--recovery::before,
+  .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) .caretip-auth-card--recovery::after {
     content: "";
     position: absolute;
     z-index: 1;
@@ -887,7 +888,7 @@
     pointer-events: none;
   }
 
-  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-card--recovery::before {
+  .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) .caretip-auth-card--recovery::before {
     top: -9.5rem;
     right: -6.5rem;
     width: 18rem;
@@ -895,7 +896,7 @@
     border: 1px solid rgb(255 255 255 / 0.3);
   }
 
-  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-card--recovery::after {
+  .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) .caretip-auth-card--recovery::after {
     top: -13rem;
     right: -10rem;
     width: 25rem;
@@ -903,7 +904,7 @@
     border: 1px solid rgb(255 255 255 / 0.18);
   }
 
-  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-card-brand {
+  .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) .caretip-auth-card-brand {
     display: flex;
     justify-content: flex-start;
     margin: 0;
@@ -911,24 +912,29 @@
     background: #eb992c;
   }
 
-  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-card-brand:has(+ .caretip-auth-card-body--recovery) {
+  .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) .caretip-auth-card-brand:has(+ .caretip-auth-card-body--recovery) {
     padding-bottom: 3.25rem;
   }
 
   /* The auth wordmark switches on theme, and this panel is orange in both. */
-  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-card-brand img {
+  .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) .caretip-auth-card-brand img {
     margin-left: -0.4375rem;
     filter: brightness(0);
   }
 
-  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-header--verify {
+  .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) .caretip-auth-card--recovery .caretip-auth-header {
     margin: 0 !important;
     padding: 1.5rem 1.25rem 3.25rem;
     background: #eb992c;
+    color: #000;
     text-align: left;
   }
 
-  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-title {
+  .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) .caretip-auth-card--recovery .caretip-auth-header > * {
+    color: #000;
+  }
+
+  .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) .caretip-auth-title {
     color: #000;
     font-size: clamp(1.625rem, 7.6vw, 2rem);
     letter-spacing: -0.03em;
@@ -936,7 +942,7 @@
     text-align: left;
   }
 
-  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-subtitle--verify {
+  .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) .caretip-auth-card--recovery .caretip-auth-subtitle {
     margin-top: 0.625rem;
     color: #000;
     font-size: 0.9375rem;
@@ -944,7 +950,7 @@
     text-align: left;
   }
 
-  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-card-body--recovery {
+  .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) .caretip-auth-card-body--recovery {
     position: relative;
     z-index: 2;
     margin-top: -1.625rem;
@@ -953,23 +959,55 @@
     background: var(--mw-sheet);
   }
 
-  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-submit {
+  .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) .caretip-auth-submit {
     min-height: 3.25rem;
     border-radius: 0.875rem !important;
     box-shadow: none;
   }
 
-  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-card-body--recovery input:not([type="checkbox"]) {
+  .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) .caretip-auth-card-body--recovery input:not([type="checkbox"]) {
     min-height: 3.25rem;
     border-radius: 0.875rem;
   }
 
-  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-footer-link {
+  /* Join keeps its way back home, at the top of the orange. */
+  .caretip-auth-page.caretip-auth-join-stage .caretip-auth-split-layout__top-slot {
+    margin: 0;
+    padding: max(0.875rem, env(safe-area-inset-top, 0px)) 1.25rem 0;
+    background: #eb992c;
+  }
+
+  .caretip-auth-page.caretip-auth-join-stage .caretip-auth-split-layout__top-slot,
+  .caretip-auth-page.caretip-auth-join-stage .caretip-auth-split-layout__top-slot * {
+    color: #000;
+  }
+
+  .caretip-auth-page.caretip-auth-join-stage .caretip-auth-card-brand {
+    padding-top: 1rem;
+  }
+
+  .caretip-auth-page.caretip-auth-join-stage .caretip-auth-form-footer a {
+    color: hsl(var(--foreground));
+    text-decoration: underline;
+    text-decoration-color: #eb992c;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
+  }
+
+  .caretip-auth-page.caretip-auth-join-stage .caretip-auth-marketing__inner {
+    padding: 0;
+  }
+
+  .caretip-auth-page.caretip-auth-join-stage .caretip-auth-marketing__content {
+    display: none;
+  }
+
+  .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) .caretip-auth-footer-link {
     margin-top: 0.5rem;
     padding-inline: 1.25rem;
   }
 
-  .caretip-auth-page.caretip-auth-recovery-stage .caretip-auth-footer-link a {
+  .caretip-auth-page:is(.caretip-auth-recovery-stage, .caretip-auth-join-stage) .caretip-auth-footer-link a {
     color: hsl(var(--foreground));
     text-decoration: underline;
     text-decoration-color: #eb992c;

@@ -2,6 +2,7 @@ import React, { Component, type ErrorInfo, type ReactNode } from "react";
 import { captureClientException } from "../lib/sentry";
 import { isChunkLoadFailure } from "../lib/chunkLoadRecovery";
 import { handleChunkLoadFailure } from "../lib/deployUpdate/runtime";
+import i18n from "@/i18n/i18n";
 
 interface Props {
   children: ReactNode;
@@ -38,16 +39,15 @@ export class GlobalErrorBoundary extends Component<Props, State> {
       return (
         <div className="min-h-screen flex items-center justify-center bg-background px-4">
           <div className="text-center max-w-md">
-            <h1 className="text-xl font-semibold text-foreground">This screen hit a problem</h1>
-            <p className="text-muted-foreground mt-2 text-sm">
-              Refresh the page to try again. If it keeps happening, contact support with what you were doing when it broke.
-            </p>
+            {/* Sits above the providers: uses the shared i18n instance directly. */}
+            <h1 className="text-xl font-semibold text-foreground">{i18n.t("common.errorScreen.crashTitle")}</h1>
+            <p className="text-muted-foreground mt-2 text-sm">{i18n.t("common.errorScreen.crashBody")}</p>
             <button
               type="button"
               className="mt-6 inline-flex px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary-hover text-sm font-medium"
               onClick={() => window.location.reload()}
             >
-              Refresh page
+              {i18n.t("common.errorScreen.crashAction")}
             </button>
           </div>
         </div>

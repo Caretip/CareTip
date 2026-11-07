@@ -1,10 +1,6 @@
-import { useEffect, useState } from "react";
-import { Building2, Lock, Signal, Users, Wifi } from "lucide-react";
+import { Home, Lock, RotateCw, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { BusinessLogoMark } from "./BusinessLogoMark";
-import { EmployeeProfilePhoto } from "../ui/profile-avatar";
-import { customerFlowUi as cf } from "../../pages/customer/customerFlowUi";
-import { cn } from "@/lib/utils";
 import type { TipPreviewStaffMember } from "./BusinessOnboardingGuestPreview.types";
 
 type PreviewLine = { text: string; isPlaceholder: boolean };
@@ -12,244 +8,122 @@ type PreviewLine = { text: string; isPlaceholder: boolean };
 type BusinessOnboardingFinalPhoneScreenProps = {
   displayName: string;
   venueNameLine: PreviewLine;
-  venueTypeLine: PreviewLine;
-  addressLine: PreviewLine;
+  /** Not shown: the guest page carries neither the type nor the address. */
+  venueTypeLine?: PreviewLine;
+  addressLine?: PreviewLine;
   heroLogoSrc: string | null;
   tipStaff: TipPreviewStaffMember[];
-  employeeCount: number;
+  employeeCount?: number;
 };
 
-function PreviewInfoCard({
-  icon: Icon,
-  label,
-  value,
-  isPlaceholder,
-}: {
-  icon: typeof Building2;
-  label: string;
-  value: string;
-  isPlaceholder?: boolean;
-}) {
+function StatusBarIcons() {
   return (
-    <div className="business-onboarding-final-phone__info-card">
-      <div className="business-onboarding-final-phone__info-icon" aria-hidden>
-        <Icon className="h-3.5 w-3.5 text-primary" strokeWidth={2.25} />
-      </div>
-      <div className="business-onboarding-final-phone__info-copy">
-        <p className="business-onboarding-final-phone__info-label">{label}</p>
-        <p
-          className={cn(
-            "business-onboarding-final-phone__info-value",
-            isPlaceholder && "business-onboarding-guest-preview__text--placeholder",
-          )}
-        >
-          {value}
-        </p>
-      </div>
-    </div>
+    <span className="onb-phone__status-icons" aria-hidden>
+      <svg viewBox="0 0 18 12" width="18" height="12">
+        <rect x="0" y="8" width="3" height="4" rx="0.8" />
+        <rect x="5" y="5.5" width="3" height="6.5" rx="0.8" />
+        <rect x="10" y="3" width="3" height="9" rx="0.8" />
+        <rect x="15" y="0" width="3" height="12" rx="0.8" />
+      </svg>
+      <svg viewBox="0 0 16 12" width="16" height="12">
+        <path d="M8 2.6c2.3 0 4.4.9 6 2.4l1.3-1.4A10.4 10.4 0 0 0 8 .7 10.4 10.4 0 0 0 .7 3.6L2 5c1.6-1.5 3.7-2.4 6-2.4Zm0 3.6c1.3 0 2.5.5 3.4 1.3l1.3-1.4A6.8 6.8 0 0 0 8 4.3a6.8 6.8 0 0 0-4.7 1.8l1.3 1.4c.9-.8 2.1-1.3 3.4-1.3Zm0 3.5c.5 0 1 .2 1.3.5L8 11.6 6.7 10.2c.3-.3.8-.5 1.3-.5Z" />
+      </svg>
+      <span className="onb-phone__battery">
+        <span />
+      </span>
+    </span>
   );
 }
 
-function TippableStaffGrid({
-  staff,
-  selectedId,
-  onSelect,
-}: {
-  staff: TipPreviewStaffMember[];
-  selectedId: string;
-  onSelect: (id: string) => void;
-}) {
-  const { t } = useTranslation();
-
+function StaffTile({ member, tipLabel }: { member: TipPreviewStaffMember; tipLabel: string }) {
+  const initial = member.displayName.trim().charAt(0).toUpperCase() || "?";
   return (
-    <div className="business-onboarding-final-phone__staff-section business-onboarding-final-phone__staff-section--tippable">
-      <div className="business-onboarding-final-phone__staff-pill">
-        <Users className="h-4 w-4 shrink-0 text-primary" strokeWidth={2.25} aria-hidden />
-        <div className="min-w-0 flex-1">
-          <p className="business-onboarding-final-phone__staff-pill-title">
-            {t("business.onboarding.preview.selectStaffToTip")}
-          </p>
-          <p className="business-onboarding-final-phone__staff-pill-desc">
-            {t("business.onboarding.preview.tapStaffToTip")}
-          </p>
-        </div>
-      </div>
-      <ul className="business-onboarding-final-phone__staff-grid">
-        {staff.map((member) => {
-          const isSelected = member.id === selectedId;
-          return (
-            <li key={member.id}>
-              <button
-                type="button"
-                aria-pressed={isSelected}
-                onClick={() => onSelect(member.id)}
-                className={cn(
-                  "business-onboarding-final-phone__staff-tile-btn",
-                  cf.selectableTile,
-                  isSelected ? cf.selectableOn : cf.selectableIdle,
-                )}
-              >
-                <EmployeeProfilePhoto
-                  src={member.photoUrl}
-                  displayName={member.displayName}
-                  lightbox={false}
-                  className={cn(
-                    "business-onboarding-final-phone__staff-photo",
-                    isSelected
-                      ? "h-[3.5rem] w-[3.5rem] ring-[3px] ring-primary/45"
-                      : "h-[3.25rem] w-[3.25rem] ring-2 ring-primary/25",
-                  )}
-                />
-                <span className="business-onboarding-final-phone__staff-name business-onboarding-final-phone__staff-name--premium">
-                  {member.displayName}
-                </span>
-                <span className="business-onboarding-final-phone__staff-role">{member.roleLabel}</span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
+    <li className="onb-phone__staff">
+      <span className="onb-phone__staff-photo">
+        {member.photoUrl ? (
+          <img src={member.photoUrl} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" />
+        ) : (
+          <span className="onb-phone__staff-initial">{initial}</span>
+        )}
+      </span>
+      <span className="onb-phone__staff-name">{member.displayName}</span>
+      <span className="onb-phone__staff-role">{member.roleLabel}</span>
+      <span className="onb-phone__tip">{tipLabel}</span>
+    </li>
   );
 }
 
+/**
+ * The guest page as guests see it after scanning the QR code: same layout and wording as
+ * BusinessStaffDirectoryPage, inside the phone's browser. Built at a real 390px width and scaled.
+ */
 export function BusinessOnboardingFinalPhoneScreen({
   displayName,
   venueNameLine,
-  venueTypeLine,
-  addressLine,
   heroLogoSrc,
   tipStaff,
-  employeeCount,
 }: BusinessOnboardingFinalPhoneScreenProps) {
   const { t } = useTranslation();
-  const [selectedId, setSelectedId] = useState(tipStaff[0]?.id ?? "");
-
-  useEffect(() => {
-    if (tipStaff.length === 0) {
-      setSelectedId("");
-      return;
-    }
-    if (!tipStaff.some((member) => member.id === selectedId)) {
-      setSelectedId(tipStaff[0]!.id);
-    }
-  }, [tipStaff, selectedId]);
-
-  const selected = tipStaff.find((member) => member.id === selectedId) ?? tipStaff[0];
-
-  const guestStatusTitle =
-    employeeCount > 0
-      ? t("tipFlow.qrLanding.staffReady", { count: employeeCount })
-      : t("tipFlow.qrLanding.leaveTip");
-
-  const guestStatusSub = t("tipFlow.qrLanding.secureFooter");
 
   return (
-    <>
-      <div className="business-onboarding-guest-preview__status-bar">
-        <span className="business-onboarding-guest-preview__status-time">9:41</span>
-        <div className="business-onboarding-guest-preview__status-icons">
-          <Signal className="h-2.5 w-2.5" strokeWidth={2.5} aria-hidden />
-          <Wifi className="h-2.5 w-2.5" strokeWidth={2.5} aria-hidden />
-          <span className="business-onboarding-guest-preview__status-battery" aria-hidden />
-        </div>
+    <div className="onb-phone__screen">
+      <div className="onb-phone__status">
+        <span className="onb-phone__time">9:41</span>
+        <span className="onb-phone__island" />
+        <StatusBarIcons />
       </div>
 
-      <header className="business-onboarding-final-phone__header">
-        <BusinessLogoMark
-          logoPathOrUrl={heroLogoSrc}
-          businessName={displayName}
-          size="sm"
-          className="business-onboarding-final-phone__header-logo shrink-0"
-        />
-        <div className="min-w-0 flex-1">
-          <p
-            className={cn(
-              "business-onboarding-final-phone__header-name",
-              venueNameLine.isPlaceholder && "business-onboarding-guest-preview__text--placeholder",
-            )}
-          >
+      <div className="onb-phone__page">
+        <div className="onb-phone__topbar">
+          <span className="onb-phone__home" aria-hidden>
+            <Home className="h-5 w-5" strokeWidth={2} />
+          </span>
+          <span className="onb-phone__lang" aria-hidden>
+            <span className="onb-phone__flag" />
+            DE
+          </span>
+        </div>
+
+        <header className="onb-phone__venue">
+          <BusinessLogoMark
+            logoPathOrUrl={heroLogoSrc}
+            businessName={displayName}
+            size="md"
+            className="onb-phone__logo"
+          />
+          <p className={venueNameLine.isPlaceholder ? "onb-phone__name onb-phone__name--placeholder" : "onb-phone__name"}>
             {displayName}
           </p>
-          <p
-            className={cn(
-              "business-onboarding-final-phone__header-sub",
-              addressLine.isPlaceholder && "business-onboarding-guest-preview__text--placeholder",
-            )}
-          >
-            {addressLine.text}
-          </p>
-        </div>
-      </header>
+          <p className="onb-phone__prompt">{t("tipFlow.header.selectTeamMember")}</p>
+        </header>
 
-      <div className="business-onboarding-final-phone__scroll">
-        <div className="business-onboarding-final-phone__hero">
-          <span className="business-onboarding-final-phone__live-chip">
-            <span className="business-onboarding-final-phone__live-dot" aria-hidden />
-            {t("tipFlow.qrLanding.tippingLabel")}
+        <div className="onb-phone__section">
+          <p className="onb-phone__label">{t("tipFlow.locationLanding.searchTitle")}</p>
+          <span className="onb-phone__search">
+            <Search className="h-5 w-5" strokeWidth={2} aria-hidden />
+            {t("tipFlow.qrLanding.searchPlaceholder")}
           </span>
-          <div className="business-onboarding-final-phone__hero-visual">
-            <BusinessLogoMark
-              logoPathOrUrl={heroLogoSrc}
-              businessName={displayName}
-              size="customer"
-              className="business-onboarding-final-phone__hero-logo"
-            />
-          </div>
-          <p className="business-onboarding-final-phone__hero-title">
-            {t("tipFlow.qrLanding.whoServedYou")}
-          </p>
-          <p className="business-onboarding-final-phone__hero-sub">
-            {t("tipFlow.qrLanding.whoServedYouDesc")}
-          </p>
-        </div>
 
-        <TippableStaffGrid staff={tipStaff} selectedId={selectedId} onSelect={setSelectedId} />
-
-        <div className="business-onboarding-final-phone__info-stack">
-          <PreviewInfoCard
-            icon={Building2}
-            label={t("business.onboarding.preview.infoVenue")}
-            value={venueTypeLine.text}
-            isPlaceholder={venueTypeLine.isPlaceholder}
-          />
-        </div>
-
-        <div className="business-onboarding-final-phone__trust-card">
-          <div className="business-onboarding-final-phone__trust-icon" aria-hidden>
-            <Lock className="h-3.5 w-3.5 text-primary" strokeWidth={2.25} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="business-onboarding-final-phone__trust-title">
-              {t("business.onboarding.preview.trustTitle")}
-            </p>
-            <p className="business-onboarding-final-phone__trust-body">
-              {t("business.onboarding.preview.trustBody")}
-            </p>
-          </div>
-        </div>
-
-        <div className="business-onboarding-final-phone__status-card">
-          <span className="business-onboarding-final-phone__status-dot" aria-hidden />
-          <div className="min-w-0 flex-1">
-            <p className="business-onboarding-final-phone__status-title">{guestStatusTitle}</p>
-            <p className="business-onboarding-final-phone__status-sub">{guestStatusSub}</p>
-          </div>
-          <Lock className="h-3.5 w-3.5 shrink-0 text-emerald-600/70 dark:text-emerald-400/75" strokeWidth={2} aria-hidden />
+          <p className="onb-phone__label onb-phone__label--team">{t("tipFlow.locationLanding.teamTitle")}</p>
+          <ul className="onb-phone__grid">
+            {tipStaff.slice(0, 4).map((member) => (
+              <StaffTile key={member.id} member={member} tipLabel={t("tipFlow.qrLanding.tipCta")} />
+            ))}
+          </ul>
         </div>
       </div>
 
-      <footer className="business-onboarding-final-phone__footer">
-        <div className="business-onboarding-final-phone__cta" role="presentation">
-          {selected
-            ? t("business.onboarding.preview.tipButtonPreviewNamed", { name: selected.displayName })
-            : t("business.onboarding.preview.tipButtonPreview")}
-        </div>
-        <p className="business-onboarding-final-phone__cta-helper">
-          {t("business.onboarding.preview.ctaHelper")}
-        </p>
-        <div className="business-onboarding-guest-preview__home-indicator" aria-hidden />
-      </footer>
-    </>
+      <div className="onb-phone__browser" aria-hidden>
+        <span className="onb-phone__address">
+          <span className="onb-phone__aa">aA</span>
+          <span className="onb-phone__url">
+            <Lock className="h-3.5 w-3.5" strokeWidth={2.5} />
+            caretip.de
+          </span>
+          <RotateCw className="h-4 w-4" strokeWidth={2.25} />
+        </span>
+        <span className="onb-phone__home-indicator" />
+      </div>
+    </div>
   );
 }

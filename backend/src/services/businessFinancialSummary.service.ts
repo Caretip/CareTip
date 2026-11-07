@@ -79,6 +79,9 @@ type StripeBalanceSnapshot = {
   currency: string | null;
 };
 
+/** Read-only balance lookup for the dashboard hero; well under the client's 25s read timeout. */
+const STRIPE_BALANCE_READ_TIMEOUT_MS = 8_000;
+
 async function retrieveStripeBalanceForAccount(
   stripeAccountId: string,
   connected: boolean,
@@ -90,9 +93,22 @@ async function retrieveStripeBalanceForAccount(
     currency: null,
   };
   if (!connected || !isStripeConfigured()) return empty;
+  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
+    // Bounded: the SDK default (80s, with retries) outlasts the browser's 25s read timeout, which
+    // failed the whole connect section as "connectivity". The SDK timeout only starts once a socket
+    // is open, so a hard cap also covers a slow connect. A slow read falls back to "unreadable".
+    const deadline = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error("Stripe balance read timed out")), STRIPE_BALANCE_READ_TIMEOUT_MS);
+    });
     const bal = await logDashboardPhase("business.financialSummary", "stripeBalance", () =>
-      getStripeClient().balance.retrieve({ stripeAccount: stripeAccountId }),
+      Promise.race([
+        getStripeClient().balance.retrieve(
+          {},
+          { stripeAccount: stripeAccountId, timeout: STRIPE_BALANCE_READ_TIMEOUT_MS, maxNetworkRetries: 0 },
+        ),
+        deadline,
+      ]),
     );
     return {
       stripeReadable: true,
@@ -102,6 +118,8 @@ async function retrieveStripeBalanceForAccount(
     };
   } catch {
     return empty;
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }
 

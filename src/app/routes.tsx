@@ -162,15 +162,15 @@ function ErrorBoundary() {
   }, [chunkError]);
 
   const title = is404
-    ? "Page not found"
+    ? t("common.errorScreen.notFoundTitle")
     : chunkFailed
-      ? "CareTip needs a refresh"
-      : "This page couldn’t load";
+      ? t("common.errorScreen.staleTitle")
+      : t("common.errorScreen.routeTitle");
   const message = is404
-    ? "The page you're looking for doesn't exist or may have been moved."
+    ? t("common.errorScreen.notFoundBody")
     : chunkFailed
-      ? "This version of CareTip is out of date in this browser. Refresh to load the latest screens."
-      : "Navigation hit an unexpected problem. Go home and try again, or refresh if you were in the middle of something.";
+      ? t("common.errorScreen.staleBody")
+      : t("common.errorScreen.routeBody");
 
   return (
     <div
@@ -186,14 +186,14 @@ function ErrorBoundary() {
             className="inline-block px-6 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary-hover transition-colors"
             onClick={() => window.location.reload()}
           >
-            Refresh
+            {t("common.errorScreen.staleAction")}
           </button>
         ) : (
           <a
             href="/"
             className="inline-block px-6 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary-hover transition-colors"
           >
-            Go back home
+            {t("common.errorScreen.homeAction")}
           </a>
         )}
       </div>

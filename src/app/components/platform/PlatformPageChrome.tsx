@@ -61,8 +61,12 @@ export function PlatformPageHeader({
       <div className={platformUi.pageTitleRow}>
         <div className="min-w-0 flex-1">
           {kicker ? <p className={cn(dashboardWorkspaceUi.eyebrow, platformUi.pageEyebrow)}>{kicker}</p> : null}
-          <div className="mt-1 flex items-start gap-2.5">
-            {Icon ? <Icon className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground sm:h-[1.35rem] sm:w-[1.35rem]" aria-hidden /> : null}
+          <div className="mt-2 flex items-start gap-3">
+            {Icon ? (
+              <span className="platform-admin-page-header__icon" aria-hidden>
+                <Icon className="h-5 w-5" />
+              </span>
+            ) : null}
             <div className="min-w-0">
               <h1 className={platformUi.pageTitle}>{title}</h1>
               {subtitle ? <p className={platformUi.pageSubtitle}>{subtitle}</p> : null}

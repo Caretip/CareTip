@@ -33,7 +33,7 @@ import {
   warnLoaderStuck,
 } from "../lib/loadingStateDiagnostics";
 
-import { SERVICE_UNAVAILABLE_CLIENT_MESSAGE } from "../lib/errorMessages";
+import { SERVICE_UNAVAILABLE_CLIENT_MESSAGE, userFacingErrorCopy } from "../lib/errorMessages";
 import { isDefinitiveRefreshFailure } from "../lib/authRefreshFailureClassification";
 
 import type { SessionBootstrapResult } from "../lib/authSessionBootstrap";
@@ -269,7 +269,7 @@ export function useAuthInitializer(): void {
 
         if (refresh.kind === "transient_error") {
           if (hadLocalSession) {
-            toast.error(SERVICE_UNAVAILABLE_CLIENT_MESSAGE, { id: "caretip-auth-refresh-503" });
+            toast.error(userFacingErrorCopy(SERVICE_UNAVAILABLE_CLIENT_MESSAGE), { id: "caretip-auth-refresh-503" });
             authDebug("session_bootstrap", { outcome: "transient_error" });
             logClientError(
               "useAuthInitializer.sessionBootstrap.transient",

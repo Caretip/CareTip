@@ -44,6 +44,11 @@ import {
   PLATFORM_SYSTEM_BASE,
 } from "./platform/platformAdminNav";
 import { formatEur } from "../lib/formatEur";
+
+/** Display only: thousands separators for overview counts. */
+function formatAdminCount(n: number): string {
+  return new Intl.NumberFormat("de-DE").format(n);
+}
 import { cn } from "@/lib/utils";
 import {
   useDashboardKpiProfile,
@@ -329,32 +334,36 @@ export const AdminDashboard = memo(function AdminDashboard() {
             <PlatformAdminMetricCell
               label={t("admin.overview.kpi.activeBusinesses")}
               hint={t("admin.overview.kpi.activeBusinessesHelp")}
-              value={String(activeBusinessesCount)}
+              value={formatAdminCount(activeBusinessesCount)}
               loading={secondaryLoading}
             />
             <PlatformAdminMetricCell
               label={t("admin.overview.kpi.totalBusinesses")}
-              value={String(stats?.businessesCount ?? 0)}
+              value={formatAdminCount(stats?.businessesCount ?? 0)}
               loading={criticalLoading}
             />
             <PlatformAdminMetricCell
               label={t("admin.overview.kpi.staff")}
-              value={String(stats?.employeesCount ?? 0)}
+              value={formatAdminCount(stats?.employeesCount ?? 0)}
               loading={criticalLoading}
             />
             <PlatformAdminMetricCell
               label={t("admin.overview.kpi.transactions")}
-              value={String(stats?.successTransactionCount ?? 0)}
+              value={formatAdminCount(stats?.successTransactionCount ?? 0)}
               loading={criticalLoading}
             />
             <PlatformAdminMetricCell
               label={t("admin.overview.kpi.tipVolume")}
-              value={stats?.totalVolumeEurFormatted ?? formatEur(stats?.totalVolumeEur ?? 0)}
+              value={
+                typeof stats?.totalVolumeEur === "number"
+                  ? formatEur(stats.totalVolumeEur)
+                  : (stats?.totalVolumeEurFormatted ?? formatEur(0))
+              }
               loading={criticalLoading}
             />
             <PlatformAdminMetricCell
               label={t("admin.overview.kpi.pendingOnboarding")}
-              value={String(pendingOnboardingCount)}
+              value={formatAdminCount(pendingOnboardingCount)}
               loading={secondaryLoading}
               featured={pendingOnboardingCount > 0}
             />

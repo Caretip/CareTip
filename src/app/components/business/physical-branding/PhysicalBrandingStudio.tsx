@@ -45,6 +45,7 @@ import {
   physicalQrTemplateDisplayName,
 } from "@/app/lib/physicalQrOrderUi";
 import { quotePhysicalQrPrints } from "@/app/lib/physicalQrPricing";
+import { toDisplayErrorMessage } from "@/app/lib/errorMessages";
 
 const QTY_MIN = 1;
 const QTY_MAX = 50;
@@ -173,7 +174,7 @@ export function PhysicalBrandingStudio() {
         setContexts(ctx);
         setOrders(history.orders);
       } catch (err) {
-        if (!cancelled) setLoadError(err instanceof Error ? err.message : t("business.qrStudio.physical.loadError"));
+        if (!cancelled) setLoadError(toDisplayErrorMessage(err, t("business.qrStudio.physical.loadError")));
       }
     })();
     return () => {
@@ -306,7 +307,7 @@ export function PhysicalBrandingStudio() {
       await startCheckout(order.id);
     } catch (err) {
       printCheckoutInFlight.current = false;
-      toast.error(err instanceof Error ? err.message : t("business.qrStudio.physical.orderError"));
+      toast.error(toDisplayErrorMessage(err, t("business.qrStudio.physical.orderError")));
       setSubmitting(false);
       void fetchPhysicalQrOrders()
         .then((history) => setOrders(history.orders))
@@ -339,7 +340,7 @@ export function PhysicalBrandingStudio() {
         await startCheckout(orderId);
       } catch (err) {
         printCheckoutInFlight.current = false;
-        toast.error(err instanceof Error ? err.message : t("business.qrStudio.physical.orderError"));
+        toast.error(toDisplayErrorMessage(err, t("business.qrStudio.physical.orderError")));
         setPayingOrderId(null);
       }
     },

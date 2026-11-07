@@ -1,3 +1,4 @@
+import i18n from "@/i18n/i18n";
 import { useCallback, useEffect, useState } from "react";
 import {
   createBillingCheckoutSession,
@@ -6,6 +7,7 @@ import {
   type SubscriptionPlanKey,
 } from "@/app/lib/api";
 import { MerchantLegalAcceptanceCheckbox } from "@/app/components/legal/MerchantLegalAcceptanceCheckbox";
+import { toDisplayErrorMessage } from "@/app/lib/errorMessages";
 
 type CheckoutParams = {
   planKey: SubscriptionPlanKey;
@@ -35,7 +37,7 @@ export function useMerchantCheckoutLegalGate() {
       .catch((err: unknown) => {
         if (!cancelled) {
           setAcceptedOnFile(false);
-          setLoadError(err instanceof Error ? err.message : "Could not load legal status.");
+          setLoadError(toDisplayErrorMessage(err, i18n.t("legal.loadError")));
         }
       });
     return () => {

@@ -1,8 +1,9 @@
 import { motion, useReducedMotion } from "motion/react";
 import { useCallback, useId, useState, type CSSProperties, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Check } from "lucide-react";
+import { Check, Lock } from "lucide-react";
 import { ProfileAvatar } from "../../components/ui/profile-avatar";
+import { BusinessLogoMark } from "../../components/business/BusinessLogoMark";
 import { LoadingSpinner } from "../../components/ui/loading-spinner";
 import { CustomerJourneyCareTipAttribution } from "./CustomerJourneyCareTipAttribution";
 import type { CustomerJourneyVenueBrand } from "./customerJourneyBrand";
@@ -35,25 +36,6 @@ export type TipSuccessExperienceProps = {
   embedded?: boolean;
   showAttribution?: boolean;
 };
-
-function SuccessHeroIcon({ accent, compact }: { accent: string; compact?: boolean }) {
-  const reduceMotion = useReducedMotion();
-  return (
-    <motion.div
-      className={cn("mx-auto flex items-center justify-center", compact ? "mb-2" : "mb-3")}
-      initial={reduceMotion ? false : { scale: 0.88, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 280, damping: 24, delay: 0.06 }}
-      aria-hidden
-    >
-      <Check
-        className={cn(compact ? "size-8" : "size-9 sm:size-10")}
-        strokeWidth={2.5}
-        style={{ color: accent }}
-      />
-    </motion.div>
-  );
-}
 
 function CollapsibleReceipt({
   receiptNumber,
@@ -157,70 +139,92 @@ export function TipSuccessExperience({
         )}
       >
         <div
-          className="customer-flow-success-surface w-full text-center"
+          className="customer-flow-success-surface tip-thanks w-full text-center"
           style={{ "--success-accent": accent } as CSSProperties}
         >
+          {venue.logo || venue.name ? (
+            <div className="tip-thanks__venue">
+              {venue.logo ? (
+                <BusinessLogoMark
+                  logoPathOrUrl={venue.logo}
+                  businessName={venue.name}
+                  size="sm"
+                  className="tip-thanks__venue-logo"
+                />
+              ) : null}
+              <span className="truncate">{venue.name}</span>
+            </div>
+          ) : null}
+
           <motion.section
             aria-labelledby="tip-success-headline"
             {...fadeUp}
             transition={{ delay: 0.06, duration: 0.3 }}
           >
-            <SuccessHeroIcon accent={accent} compact={embedded} />
-            <h1 id="tip-success-headline" className="customer-flow-success-surface__headline">
+            <motion.div
+              className={cn("tip-thanks__portrait", embedded && "tip-thanks__portrait--compact")}
+              initial={reduceMotion ? false : { scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 260, damping: 22, delay: 0.04 }}
+            >
+              <ProfileAvatar
+                src={employee.avatar}
+                displayName={employee.name}
+                variant="square"
+                className="tip-thanks__photo"
+                lightbox={false}
+              />
+              <span className="tip-thanks__badge" aria-hidden>
+                <Check strokeWidth={3} />
+              </span>
+              <span className="tip-thanks__spark tip-thanks__spark--a" aria-hidden />
+              <span className="tip-thanks__spark tip-thanks__spark--b" aria-hidden />
+              <span className="tip-thanks__spark tip-thanks__spark--c" aria-hidden />
+            </motion.div>
+            <p className="tip-thanks__status">
+              <span className="tip-thanks__status-dot" aria-hidden />
+              {t("tipFlow.success.paymentSuccessful")}
+            </p>
+            <h1 id="tip-success-headline" className="customer-flow-success-surface__headline tip-thanks__headline">
               {displayHeadline}
             </h1>
-            <p className="customer-flow-success-surface__thankyou">{thankYouMessage}</p>
-            {!embedded && !showReceipt ? (
-              <p className="customer-flow-success-surface__email-note mt-2 text-sm text-muted-foreground">
-                {t("tipFlow.success.emailReceipt")}
-              </p>
-            ) : null}
+            <p className="customer-flow-success-surface__thankyou tip-thanks__message">{thankYouMessage}</p>
           </motion.section>
 
           <motion.section
-            className={cn("customer-flow-success-recipient", embedded ? "mt-5" : "mt-7")}
+            className={cn("tip-thanks__card", embedded ? "mt-5" : "mt-7")}
             aria-label={t("tipFlow.success.recipientSummaryAria")}
             {...fadeUp}
             transition={{ delay: 0.12, duration: 0.3 }}
           >
-            <ProfileAvatar
-              src={employee.avatar}
-              displayName={employee.name}
-              variant="square"
-              className={cn(
-                "customer-flow-success-recipient__avatar mx-auto shrink-0",
-                cf.employeePhotoSquare,
-                embedded ? "h-14 w-14" : "h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem]",
-              )}
-              lightbox={false}
-            />
-            <p className="customer-flow-success-recipient__name mt-2.5 truncate">{employee.name}</p>
-            {employee.role ? (
-              <p className="customer-flow-success-recipient__role truncate">{employee.role}</p>
+            <div className="tip-thanks__row">
+              <span className="tip-thanks__label">{t("tipFlow.success.recipientLabel")}</span>
+              <span className="tip-thanks__value">
+                <span className="truncate">{employee.name}</span>
+                {employee.role ? <span className="tip-thanks__role truncate">{employee.role}</span> : null}
+              </span>
+            </div>
+            {tipAmount != null && tipAmount > 0 ? (
+              <div className="tip-thanks__row">
+                <span className="tip-thanks__label">{t("tipFlow.success.tipAmount")}</span>
+                <span className="tip-thanks__amount tabular-nums">{formatEur(tipAmount)}</span>
+              </div>
             ) : null}
+            {showReceipt && receiptNumber ? (
+              <div className="tip-thanks__receipt">
+                <CollapsibleReceipt receiptNumber={receiptNumber} tipAmount={tipAmount} embedded={embedded} />
+              </div>
+            ) : null}
+            <p className="tip-thanks__secure">
+              <Lock className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} aria-hidden />
+              {t("tipFlow.success.trustPoweredBy")}
+            </p>
           </motion.section>
 
-          {showReceipt && receiptNumber ? (
-            <motion.div
-              className={cn(embedded ? "mt-4" : "mt-5")}
-              {...fadeUp}
-              transition={{ delay: 0.16, duration: 0.3 }}
-            >
-              <CollapsibleReceipt
-                receiptNumber={receiptNumber}
-                tipAmount={tipAmount}
-                embedded={embedded}
-              />
-            </motion.div>
-          ) : tipAmount != null && tipAmount > 0 ? (
-            <motion.p
-              className={cn("text-center text-sm text-muted-foreground", embedded ? "mt-4" : "mt-5")}
-              {...fadeUp}
-              transition={{ delay: 0.16, duration: 0.3 }}
-            >
-              {t("tipFlow.success.tipAmount")}:{" "}
-              <span className="font-semibold tabular-nums text-foreground">{formatEur(tipAmount)}</span>
-            </motion.p>
+          {!embedded && !showReceipt ? (
+            <p className="customer-flow-success-surface__email-note tip-thanks__note">
+              {t("tipFlow.success.emailReceipt")}
+            </p>
           ) : null}
 
           {extraActions}

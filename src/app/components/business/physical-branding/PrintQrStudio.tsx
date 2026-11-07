@@ -78,6 +78,7 @@ import {
   stripeConnectPrintBadgeKey,
   stripeConnectTrafficLight,
 } from "@/app/lib/stripeConnectPresentation";
+import { toDisplayErrorMessage } from "@/app/lib/errorMessages";
 
 export type PrintCartLine = PrintQrStudioCartLine;
 
@@ -264,7 +265,7 @@ export function PrintQrStudio() {
       } catch (err) {
         if (cancelled) return;
         if (!snap) {
-          setLoadError(err instanceof Error ? err.message : t("business.qrStudio.physical.loadError"));
+          setLoadError(toDisplayErrorMessage(err, t("business.qrStudio.physical.loadError")));
         }
       } finally {
         if (!cancelled) setBootLoading(false);
@@ -600,7 +601,7 @@ export function PrintQrStudio() {
         toast.error(t("business.qrStudio.print.downgradeCartReset"));
         setCart([]);
       } else {
-        toast.error(err instanceof Error ? err.message : t("business.qrStudio.physical.orderError"));
+        toast.error(toDisplayErrorMessage(err, t("business.qrStudio.physical.orderError")));
       }
       printCheckoutInFlight.current = false;
       setSubmitting(false);

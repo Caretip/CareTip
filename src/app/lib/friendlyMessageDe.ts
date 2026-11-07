@@ -4,7 +4,20 @@
  */
 export const FRIENDLY_MESSAGE_DE: Record<string, string> = {
   "Something went wrong. Please try again.": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
-  "Service temporarily unavailable": "Dienst vorübergehend nicht verfügbar",
+  "Something went wrong. Please try again. If the problem continues, contact support.":
+    "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut. Wenn das Problem weiterhin besteht, wenden Sie sich an den Support.",
+  "We couldn't connect right now. Please check your connection and try again.":
+    "Wir konnten gerade keine Verbindung herstellen. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
+  "We're temporarily unable to complete your request. Please try again shortly.":
+    "Ihre Anfrage kann gerade vorübergehend nicht bearbeitet werden. Bitte versuchen Sie es in Kürze erneut.",
+  "This is taking longer than expected. Please try again.":
+    "Das dauert länger als erwartet. Bitte versuchen Sie es erneut.",
+  "Something went wrong on our side. Please try again. If the problem continues, contact support.":
+    "Bei uns ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut. Wenn das Problem weiterhin besteht, wenden Sie sich an den Support.",
+  "Tipping isn't available at this venue yet. The venue needs to finish payment setup.":
+    "Trinkgeld ist bei diesem Betrieb noch nicht verfügbar. Der Betrieb muss die Zahlungseinrichtung noch abschließen.",
+  // Internal 503 signal: if it is ever translated directly, show the same friendly German copy.
+  "Service temporarily unavailable": "Ihre Anfrage kann gerade vorübergehend nicht bearbeitet werden. Bitte versuchen Sie es in Kürze erneut.",
   "Your account is active. QR management is handled by your business.":
     "Ihr Konto ist aktiv. QR-Verwaltung erfolgt über Ihr Unternehmen.",
   "We couldn't load that data right now. Please try again in a moment.":
@@ -32,9 +45,9 @@ export const FRIENDLY_MESSAGE_DE: Record<string, string> = {
   "The request was not valid. Please try again or refresh the page.":
     "Die Anfrage war ungültig. Bitte versuchen Sie es erneut oder laden Sie die Seite neu.",
   "Unable to connect to the server. Check your connection and try again.":
-    "Keine Verbindung zum Server. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+    "Wir konnten gerade keine Verbindung herstellen. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
   "Unable to connect to the server. The API may still be waking up. Wait a few seconds and try again.":
-    "Keine Verbindung zum Server. Die API startet möglicherweise noch. Warten Sie einige Sekunden und versuchen Sie es erneut.",
+    "Wir konnten gerade keine Verbindung herstellen. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
   "The request was cancelled. Please try again.": "Die Anfrage wurde abgebrochen. Bitte versuchen Sie es erneut.",
 
   "Add a star rating or a short note, or leave the page if you prefer not to.":

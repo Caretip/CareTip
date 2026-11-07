@@ -140,6 +140,11 @@ export function useBusinessDashboardStats(
   const wasDashboardEnabledRef = useRef(false);
   const scheduleInactivePrefetchRef = useRef<(activeTf: AnalyticsTimeframe) => void>(() => {});
   const prevAdvancedAnalyticsRef = useRef<boolean | null>(null);
+  /**
+   * One-shot: the post-login warm just fetched this timeframe's KPIs from the network. The first
+   * dashboard load then requests only the missing charts slice instead of refetching the KPIs.
+   */
+  const postLoginFreshSummaryTfRef = useRef<AnalyticsTimeframe | null>(null);
 
   /** Warm stats are often KPIs only. Treating them as the analytics slice would skip the charts request. */
   const adoptCachedPeriodStats = useCallback(
@@ -350,7 +355,12 @@ export function useBusinessDashboardStats(
         networkSettledTfsRef.current.has(tf) &&
         Boolean(summaryPartial) &&
         (!revalidate || hasMetricValues(summaryPartial as BusinessDashboardStats));
-      let summarySettled = periodSessionReady && !revalidate;
+      const postLoginSummaryFresh =
+        postLoginFreshSummaryTfRef.current === tf &&
+        opts?.forceNetwork !== true &&
+        hasMetricValues(summaryPartial as BusinessDashboardStats);
+      if (postLoginFreshSummaryTfRef.current === tf) postLoginFreshSummaryTfRef.current = null;
+      let summarySettled = (periodSessionReady && !revalidate) || postLoginSummaryFresh;
       let analyticsSettled =
         !advancedAnalyticsEnabledRef.current
           ? summarySettled
@@ -899,6 +909,7 @@ export function useBusinessDashboardStats(
     if (!hasSettledLiveUiRef.current) {
       if (postLoginWarm && warmStats) {
         adoptCachedPeriodStats(tf, warmStats);
+        if (hasMetricValues(warmStats)) postLoginFreshSummaryTfRef.current = tf;
         networkSettledTfsRef.current.add(tf);
         markDashboardLiveSettled(hasSettledLiveUiRef);
         persistSwr(tf);

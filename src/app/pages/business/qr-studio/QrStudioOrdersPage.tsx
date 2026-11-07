@@ -16,6 +16,7 @@ import { businessUi } from "@/app/components/business/businessDashboardUi";
 import { Button } from "@/components/ui/button";
 import { useRequireAuth } from "../../../hooks/useRequireAuth";
 import { cn } from "@/lib/utils";
+import { toDisplayErrorMessage } from "@/app/lib/errorMessages";
 
 export function QrStudioOrdersPage() {
   const { t } = useTranslation();
@@ -38,7 +39,7 @@ export function QrStudioOrdersPage() {
       if (businessId) writePhysicalQrOrdersSnapshot(businessId, next);
     } catch (err) {
       if (!readPhysicalQrOrdersSnapshot(businessId)) {
-        setError(err instanceof Error ? err.message : t("business.qrStudio.physical.loadError"));
+        setError(toDisplayErrorMessage(err, t("business.qrStudio.physical.loadError")));
       }
     }
   }, [businessId, t]);
@@ -74,7 +75,7 @@ export function QrStudioOrdersPage() {
           throw new Error(t("business.qrStudio.physical.orderError"));
         }
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : t("business.qrStudio.physical.orderError"));
+        toast.error(toDisplayErrorMessage(err, t("business.qrStudio.physical.orderError")));
         setPayingOrderId(null);
       }
     },

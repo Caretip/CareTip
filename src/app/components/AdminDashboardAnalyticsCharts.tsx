@@ -43,14 +43,15 @@ import {
   YAxis,
 } from "recharts";
 
+/** Restrained financial palette: brand orange leads, warm neutrals support, green and red only for outcomes. */
 const ADMIN_CHART_COLORS = {
   primary: "#eb992c",
-  cyan: "#22d3ee",
-  purple: "#a78bfa",
-  emerald: "#34d399",
-  amber: "#f59e0b",
-  red: "#fb7185",
-  slate: "#94a3b8",
+  cyan: "#57534e",
+  purple: "#c4a484",
+  emerald: "#16a34a",
+  amber: "#d97706",
+  red: "#dc2626",
+  slate: "#d6d3d1",
 } as const;
 
 export const ADMIN_ANALYTICS_TZ_OPTIONS = [

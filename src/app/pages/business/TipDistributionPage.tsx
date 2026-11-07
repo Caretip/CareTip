@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
-import { HandCoins } from "lucide-react";
 import {
   createTipDistributionBatch,
   getTipDistributionBatch,
@@ -17,7 +16,6 @@ import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
 import { formatEur } from "../../lib/formatEur";
 import { STRIPE_CONNECT_HREF } from "../../components/business/businessDashboardNav";
-import { BusinessModuleWorkspaceHeader } from "../../components/business/BusinessModuleWorkspaceHeader";
 import { PayoutScheduleConnectNavCard } from "../../components/finance/payout/PayoutScheduleConnectNavCard";
 import { TipDistributionReadyEmpty } from "../../components/business/TipDistributionReadyEmpty";
 import { TipDistributionDirectToEmployeeStatus } from "../../components/business/TipDistributionDirectToEmployeeStatus";
@@ -165,15 +163,6 @@ export function TipDistributionPage() {
   return (
     <div className={businessUi.modulePageShell}>
       <div className={businessUi.modulePageContained}>
-        <BusinessModuleWorkspaceHeader
-          personality="billing"
-          badge={t("business.tipDistribution.eyebrow")}
-          icon={HandCoins}
-          title={t("business.tipDistribution.title")}
-          subtitle={t("business.tipDistribution.subtitle")}
-          hideSubtitleOnMobile
-        />
-
         <PayoutScheduleConnectNavCard
           to={STRIPE_CONNECT_HREF}
           titleKey="business.tipDistribution.payoutScheduleNav.title"

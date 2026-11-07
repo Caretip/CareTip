@@ -408,19 +408,7 @@ html body .caretip-dashboard-shell.caretip-dashboard-shell .employee-page-header
   padding-inline: 0 !important;
 }
 
-/* A hairline of the arc in the corner of every page header. */
-html body .caretip-dashboard-shell .business-module-workspace-header::after,
-html body .caretip-dashboard-shell .employee-page-header--surface::after {
-  content: "";
-  position: absolute;
-  top: -13rem;
-  right: -3rem;
-  width: 20rem;
-  height: 20rem;
-  border: 1px solid rgb(235 153 44 / 0.26);
-  border-radius: 50%;
-  pointer-events: none;
-}
+/* The arc belongs to the dark dashboard hero only; white page headers stay clean. */
 
 html body .caretip-dashboard-shell .business-module-workspace-header > *,
 html body .caretip-dashboard-shell .employee-page-header--surface > * {
@@ -547,9 +535,12 @@ html body .caretip-dashboard-shell main :is(input:not([type="checkbox"], [type="
   box-shadow: 0 0 0 3px rgb(235 153 44 / 0.28) !important;
 }
 
-html body .caretip-dashboard-shell .business-mobile-list {
-  display: grid;
-  gap: 0.5rem;
+/* Card lists are the phone/tablet view of a table; on desktop only the table shows (no duplicate records). */
+@media (max-width: 1023.98px) {
+  html body .caretip-dashboard-shell .business-mobile-list {
+    display: grid;
+    gap: 0.5rem;
+  }
 }
 
 /* ---------- 14. Charts: brand orange in place of grey ---------- */

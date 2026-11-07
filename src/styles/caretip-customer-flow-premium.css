@@ -788,3 +788,253 @@
     width: 5rem;
   }
 }
+
+/* —— Thank-you page, premium: venue, the person you tipped, a quiet receipt —— */
+.tip-thanks {
+  --tip-thanks-accent: var(--success-accent, #eb992c);
+  --tip-thanks-line: hsl(var(--border) / 0.75);
+  --tip-thanks-surface: #faf7f2;
+}
+
+.dark .tip-thanks {
+  --tip-thanks-surface: rgb(255 255 255 / 0.05);
+}
+
+.tip-thanks__venue {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.75rem;
+  color: hsl(var(--foreground) / 0.82);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.tip-thanks__venue-logo {
+  max-height: 1.75rem !important;
+  min-height: 1.75rem !important;
+  min-width: 1.75rem !important;
+  border-radius: 0.5rem;
+}
+
+.tip-thanks__portrait {
+  position: relative;
+  width: 6.5rem;
+  height: 6.5rem;
+  margin: 0 auto 1.375rem;
+}
+
+.tip-thanks__portrait--compact {
+  width: 5rem;
+  height: 5rem;
+  margin-bottom: 1rem;
+}
+
+.tip-thanks__photo {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 1.75rem !important;
+  box-shadow:
+    0 0 0 6px color-mix(in srgb, var(--tip-thanks-accent) 16%, transparent),
+    0 22px 40px -22px rgb(23 20 17 / 0.5);
+}
+
+/* Brand diamond carrying the check. */
+.tip-thanks__badge {
+  position: absolute;
+  right: -0.375rem;
+  bottom: -0.375rem;
+  display: inline-flex;
+  width: 2.125rem;
+  height: 2.125rem;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid hsl(var(--background));
+  border-radius: 0.5rem;
+  background: var(--tip-thanks-accent);
+  color: #000;
+  transform: rotate(45deg);
+}
+
+.tip-thanks__badge svg {
+  width: 0.9375rem;
+  height: 0.9375rem;
+  transform: rotate(-45deg);
+}
+
+.tip-thanks__spark {
+  position: absolute;
+  width: 0.5rem;
+  height: 0.5rem;
+  background: var(--tip-thanks-accent);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  opacity: 0;
+}
+
+.tip-thanks__spark--a {
+  top: -0.5rem;
+  left: -1.25rem;
+}
+
+.tip-thanks__spark--b {
+  top: 1.25rem;
+  right: -1.75rem;
+  width: 0.375rem;
+  height: 0.375rem;
+}
+
+.tip-thanks__spark--c {
+  bottom: 0.25rem;
+  left: -1.75rem;
+  width: 0.3125rem;
+  height: 0.3125rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tip-thanks__spark {
+    animation: tip-thanks-spark 1.6s ease-out 0.35s both;
+  }
+
+  .tip-thanks__spark--b {
+    animation-delay: 0.5s;
+  }
+
+  .tip-thanks__spark--c {
+    animation-delay: 0.65s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tip-thanks__spark {
+    opacity: 0.85;
+  }
+}
+
+@keyframes tip-thanks-spark {
+  0% {
+    opacity: 0;
+    transform: scale(0.4) translateY(0.5rem);
+  }
+
+  40% {
+    opacity: 1;
+    transform: scale(1.15) translateY(0);
+  }
+
+  100% {
+    opacity: 0.85;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.tip-thanks__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  margin-bottom: 0.75rem;
+  padding: 0.3125rem 0.75rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tip-thanks-accent) 13%, transparent);
+  color: hsl(var(--foreground));
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.tip-thanks__status-dot {
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-radius: 999px;
+  background: #16a34a;
+  box-shadow: 0 0 0 3px rgb(22 163 74 / 0.18);
+}
+
+.customer-flow-success-surface__headline.tip-thanks__headline {
+  font-size: clamp(1.875rem, 7vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+}
+
+.customer-flow-success-page--embedded .customer-flow-success-surface__headline.tip-thanks__headline {
+  font-size: clamp(1.5rem, 4.5vw, 1.875rem);
+}
+
+.customer-flow-success-surface__thankyou.tip-thanks__message {
+  max-width: 20rem;
+  margin-top: 0.625rem;
+  font-size: 1rem;
+}
+
+.tip-thanks__card {
+  width: 100%;
+  max-width: 24rem;
+  margin-inline: auto;
+  padding: 0.375rem 1.125rem 1rem;
+  border: 1px solid var(--tip-thanks-line);
+  border-radius: 1.25rem;
+  background: var(--tip-thanks-surface);
+  text-align: left;
+}
+
+.tip-thanks__row {
+  display: flex;
+  min-height: 3.25rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--tip-thanks-line);
+}
+
+.tip-thanks__label {
+  flex: none;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.875rem;
+}
+
+.tip-thanks__value {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-end;
+  color: hsl(var(--foreground));
+  font-size: 0.9375rem;
+  font-weight: 650;
+  text-align: right;
+}
+
+.tip-thanks__role {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.tip-thanks__amount {
+  color: hsl(var(--foreground));
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.tip-thanks__receipt {
+  padding-top: 0.75rem;
+}
+
+.tip-thanks__secure {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  margin-top: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.75rem;
+}
+
+.tip-thanks__note {
+  max-width: 22rem;
+  margin: 0.875rem auto 0;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
