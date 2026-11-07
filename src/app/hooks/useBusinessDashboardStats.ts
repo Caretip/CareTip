@@ -141,6 +141,15 @@ export function useBusinessDashboardStats(
   const scheduleInactivePrefetchRef = useRef<(activeTf: AnalyticsTimeframe) => void>(() => {});
   const prevAdvancedAnalyticsRef = useRef<boolean | null>(null);
 
+  /** Warm stats are often KPIs only. Treating them as the analytics slice would skip the charts request. */
+  const adoptCachedPeriodStats = useCallback(
+    (tf: AnalyticsTimeframe, periodStats: BusinessDashboardStats) => {
+      summaryPartialRef.current.set(tf, periodStats);
+      if (hasBusinessAnalyticsPayload(periodStats)) analyticsPartialRef.current.set(tf, periodStats);
+    },
+    [],
+  );
+
   const persistSwr = useCallback((tf: AnalyticsTimeframe) => {
     const summary = summaryPartialRef.current.get(tf);
     const analytics = analyticsPartialRef.current.get(tf);
@@ -177,8 +186,7 @@ export function useBusinessDashboardStats(
       if (!summaryPartial || !hasMetricValues(summaryPartial as BusinessDashboardStats)) {
         const bundle = getBusinessAnalyticsBundle(tf);
         if (bundle?.periodStats && hasMetricValues(bundle.periodStats as BusinessDashboardStats)) {
-          summaryPartialRef.current.set(tf, bundle.periodStats);
-          analyticsPartialRef.current.set(tf, bundle.periodStats);
+          adoptCachedPeriodStats(tf, bundle.periodStats as BusinessDashboardStats);
         } else {
           return false;
         }
@@ -192,9 +200,9 @@ export function useBusinessDashboardStats(
         return false;
       }
       if (!advancedAnalyticsEnabledRef.current) return true;
-      return Boolean(analyticsPartialRef.current.get(tf));
+      return hasBusinessAnalyticsPayload(analyticsPartialRef.current.get(tf));
     },
-    [],
+    [adoptCachedPeriodStats],
   );
 
   const commitUiStats = useCallback((tf: AnalyticsTimeframe, seq: number, fromNetwork: boolean) => {
@@ -319,8 +327,7 @@ export function useBusinessDashboardStats(
       if (trustPeriodCache) {
         const sharedBundle = getBusinessAnalyticsBundle(tf);
         if (sharedBundle?.periodStats && !revalidate) {
-          summaryPartialRef.current.set(tf, sharedBundle.periodStats);
-          analyticsPartialRef.current.set(tf, sharedBundle.periodStats);
+          adoptCachedPeriodStats(tf, sharedBundle.periodStats as BusinessDashboardStats);
         }
       }
 
@@ -687,6 +694,7 @@ export function useBusinessDashboardStats(
       isPeriodSessionReady,
       persistSwr,
       applyCachedToUi,
+      adoptCachedPeriodStats,
       abortInactiveTimeframes,
       cancelDeferredHeroMonth,
       cancelDeferredAnalytics,
@@ -791,8 +799,7 @@ export function useBusinessDashboardStats(
       if (canUsePeriodSwitchCache(hasSettledLiveUiRef.current)) {
         const bundle = getBusinessAnalyticsBundle(tf);
         if (bundle?.periodStats) {
-          summaryPartialRef.current.set(tf, bundle.periodStats);
-          analyticsPartialRef.current.set(tf, bundle.periodStats);
+          adoptCachedPeriodStats(tf, bundle.periodStats as BusinessDashboardStats);
         }
       }
       hydratePeriodSessionCache(tf);
@@ -837,6 +844,7 @@ export function useBusinessDashboardStats(
     },
     [
       abortInactiveTimeframes,
+      adoptCachedPeriodStats,
       cancelDeferredHeroMonth,
       cancelDeferredAnalytics,
       hydratePeriodSessionCache,
@@ -890,8 +898,7 @@ export function useBusinessDashboardStats(
 
     if (!hasSettledLiveUiRef.current) {
       if (postLoginWarm && warmStats) {
-        summaryPartialRef.current.set(tf, warmStats);
-        analyticsPartialRef.current.set(tf, warmStats);
+        adoptCachedPeriodStats(tf, warmStats);
         networkSettledTfsRef.current.add(tf);
         markDashboardLiveSettled(hasSettledLiveUiRef);
         persistSwr(tf);
@@ -1227,8 +1234,8 @@ export function useBusinessDashboardStats(
     sessionValidated &&
     !pendingVerification &&
     advancedAnalyticsEnabled &&
-    analyticsLoading &&
-    !isRevalidating &&
+    !statsLoadFailed &&
+    (analyticsLoading || chartsPayloadPending) &&
     !isBusinessGoalsPayloadSettled(displayStats);
 
   return {

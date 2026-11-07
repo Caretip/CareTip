@@ -272,5 +272,18 @@ reset(() => ({ status: 200, body: { results: [{ kind: "a", show: true }, { kind:
 }
 report("PASS  setup prompts mounted together evaluate in one request");
 
+{
+  // Sign-in warms KPIs only. If that counted as the charts payload, the dashboard skipped
+  // scope=analytics and the chart, leaderboard and goals stayed empty until a browser refresh.
+  const { hasBusinessAnalyticsPayload, isBusinessGoalsPayloadSettled } = await import(
+    "../src/app/lib/dashboardVisibleContent"
+  );
+  const warmKpisOnly = { totalTips: 12, tipCount: 3, employeeCount: 2, employees: [], priorPeriod: {} } as never;
+  assert.equal(hasBusinessAnalyticsPayload(warmKpisOnly), false);
+  assert.equal(isBusinessGoalsPayloadSettled(warmKpisOnly), false);
+  assert.equal(hasBusinessAnalyticsPayload({ dailyTipDistribution: [], employeeGoals: [] }), true);
+}
+report("PASS  warm KPIs from sign-in never stand in for the charts payload");
+
 report("dashboard-load-resilience: all checks passed");
 process.exit(0);
