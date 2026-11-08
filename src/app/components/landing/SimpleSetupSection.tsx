@@ -14,13 +14,26 @@ import { AnimatedHeadingLazy } from "@/components/ui/AnimatedHeading.lazy";
 import { landingStaggerDelay } from "@/lib/landingMotion";
 import { cn } from "@/lib/utils";
 
+const AUTO_ADVANCE_MS = 4500;
+
 function formatStepNumber(index: number): string {
   return String(index + 1).padStart(2, "0");
+}
+
+function prefersReducedMotion(): boolean {
+  return typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
 }
 
 export function SimpleSetupSection() {
   const { t, i18n } = useTranslation();
   const [activeStep, setActiveStep] = useState(0);
+  const [inView, setInView] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [pageVisible, setPageVisible] = useState(
+    () => typeof document === "undefined" || document.visibilityState === "visible",
+  );
+  const [cycleKey, setCycleKey] = useState(0);
+  const sectionRef = useRef<HTMLElement>(null);
   const onboardingIntentSent = useRef(false);
   const { text: setupHeadline, highlight: setupHighlight } = parseLandingHeadline(
     t("landing.simpleSetup.title"),
@@ -32,11 +45,20 @@ export function SimpleSetupSection() {
   }, [i18n.language]);
 
   useEffect(() => {
-    if (activeStep > 0 && !onboardingIntentSent.current) {
-      onboardingIntentSent.current = true;
-      dispatchLandingIntent("onboarding_attempt");
-    }
-  }, [activeStep]);
+    const el = sectionRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(([entry]) => setInView(entry?.isIntersecting ?? false), {
+      threshold: 0.35,
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const onVisibility = () => setPageVisible(document.visibilityState === "visible");
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
 
   const pillSub = t("landing.simpleSetup.pillSub");
   const sectionSubtitle = t("landing.simpleSetup.subtitle");
@@ -52,8 +74,26 @@ export function SimpleSetupSection() {
     [t, i18n.language],
   );
 
+  useEffect(() => {
+    if (!inView || paused || !pageVisible || prefersReducedMotion()) return;
+    const id = window.setInterval(() => {
+      setActiveStep((current) => (current + 1) % steps.length);
+    }, AUTO_ADVANCE_MS);
+    return () => window.clearInterval(id);
+  }, [inView, paused, pageVisible, steps.length, cycleKey]);
+
+  const selectStep = (idx: number) => {
+    setActiveStep(idx);
+    setCycleKey((k) => k + 1);
+    if (idx > 0 && !onboardingIntentSent.current) {
+      onboardingIntentSent.current = true;
+      dispatchLandingIntent("onboarding_attempt");
+    }
+  };
+
   return (
     <section
+      ref={sectionRef}
       id="how-it-works"
       className={cn(
         landingUi.section,
@@ -98,6 +138,18 @@ export function SimpleSetupSection() {
             role="list"
             aria-label={t("landing.simpleSetup.stepsAria")}
             className={cn("relative w-full", landingUi.mobileStackAfter)}
+            onPointerEnter={(e) => {
+              if (e.pointerType === "mouse") setPaused(true);
+            }}
+            onPointerLeave={(e) => {
+              if (e.pointerType === "mouse") setPaused(false);
+            }}
+            onFocus={(e) => {
+              if (e.target.matches(":focus-visible")) setPaused(true);
+            }}
+            onBlur={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setPaused(false);
+            }}
           >
             <div
               className="caretip-process-steps caretip-process-steps--editorial relative flex flex-col"
@@ -120,7 +172,7 @@ export function SimpleSetupSection() {
                       type="button"
                       role="listitem"
                       aria-current={isActive ? "step" : undefined}
-                      onClick={() => setActiveStep(idx)}
+                      onClick={() => selectStep(idx)}
                       className={cn(
                         "caretip-process-step group relative w-full text-left",
                         isActive && "caretip-process-step--active",
