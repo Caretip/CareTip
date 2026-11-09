@@ -33,9 +33,14 @@ test("missing variables are reported by name only, never by value", () => {
 
 test("rejects non-https endpoints and endpoints with embedded credentials", () => {
   assert.throws(() => loadConfig(baseEnv({ B2_S3_ENDPOINT: "http://s3.example.com" })), /B2_S3_ENDPOINT must use https/);
+  const withCredentials = new URL("https://x.supabase.co/storage/v1/s3");
+  withCredentials.username = "fake-user";
+  withCredentials.password = "fake-password";
   assert.throws(
-    () => loadConfig(baseEnv({ SUPABASE_S3_ENDPOINT: "https://user:pass@x.supabase.co/storage/v1/s3" })),
-    (err) => err.problems.includes("SUPABASE_S3_ENDPOINT must not contain credentials") && !err.message.includes("pass@"),
+    () => loadConfig(baseEnv({ SUPABASE_S3_ENDPOINT: withCredentials.toString() })),
+    (err) =>
+      err.problems.includes("SUPABASE_S3_ENDPOINT must not contain credentials") &&
+      !err.message.includes("fake-password"),
   );
 });
 
