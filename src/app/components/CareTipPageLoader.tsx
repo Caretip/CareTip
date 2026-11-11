@@ -26,37 +26,19 @@ export function CareTipLoadingTitle({
     <img
       src="/brand/caretip-app-icon.svg"
       alt=""
-      width={compact ? 48 : 80}
-      height={compact ? 48 : 80}
+      width={compact ? 48 : 64}
+      height={compact ? 48 : 64}
       decoding="async"
-      className={cn(
-        "select-none object-contain",
-        compact ? "h-12 w-12" : "h-16 w-16 sm:h-20 sm:w-20",
-        className,
-      )}
+      className={cn("select-none object-contain", compact ? "h-12 w-12" : "h-16 w-16", className)}
       draggable={false}
     />
   );
 }
 
 /**
- * Orange light tracing the contour of the CareTip tile (same 465 viewBox as the icon art;
- * the tile spans 66.4–398.6, the trace runs 28 units outside it).
- */
-function CareTipLoaderTrace() {
-  const rect = { x: 38.43, y: 38.42, width: 388.14, height: 388.14, rx: 103.92 };
-  return (
-    <svg className="app-branded-loader__track" viewBox="0 0 465 465" aria-hidden focusable="false">
-      <rect className="app-branded-loader__track-line" {...rect} />
-      <rect className="app-branded-loader__indeterminate app-branded-loader__indeterminate--tail" pathLength={100} {...rect} />
-      <rect className="app-branded-loader__indeterminate" pathLength={100} {...rect} />
-    </svg>
-  );
-}
-
-/**
- * Shared CareTip branded loader mark — the app icon with a light tracing its contour, a glass
- * sweep and a gentle breath; full-size loaders add three diamond steps, then one loading sentence.
+ * Shared CareTip branded loader: the app icon, still, above one hairline on which a short brand-orange
+ * segment glides, then one loading sentence. A single calm motion; no gloss, pulse or bouncing marks.
+ * The HTML cold-boot screen in index.html draws the same thing, so the hand-off is invisible.
  * Never pair this sentence with a second line of copy on the same screen.
  */
 export function CareTipBrandedLoaderMark({
@@ -75,7 +57,7 @@ export function CareTipBrandedLoaderMark({
    * user-facing stage is active. One tagline only.
    */
   tagline?: string;
-  /** Hide the moving progress arc (logout cover). */
+  /** Hide the progress line (logout cover): logo and sentence only. */
   calm?: boolean;
 }) {
   const { t } = useTranslation();
@@ -92,20 +74,12 @@ export function CareTipBrandedLoaderMark({
         className,
       )}
     >
-      <div className="app-branded-loader__icon-wrap" aria-hidden>
-        <span className="app-branded-loader__lift">
-          <CareTipLoadingTitle compact={compact} className="app-branded-loader__title" />
-          {calm ? null : <span className="app-branded-loader__shine" />}
+      <CareTipLoadingTitle compact={compact} className="app-branded-loader__title" />
+      {calm ? null : (
+        <span className="app-branded-loader__progress" aria-hidden>
+          <span className="app-branded-loader__indeterminate" />
         </span>
-        {calm ? null : <CareTipLoaderTrace />}
-      </div>
-      {!compact && !calm ? (
-        <span className="app-branded-loader__steps" aria-hidden>
-          <i />
-          <i />
-          <i />
-        </span>
-      ) : null}
+      )}
       {withTagline ? (
         <p className="app-branded-loader__tagline">{tagline}</p>
       ) : null}

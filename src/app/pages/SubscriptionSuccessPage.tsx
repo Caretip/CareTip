@@ -44,7 +44,10 @@ export function SubscriptionSuccessPage() {
   }, [navigate, sessionId, syncAttempt, t]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-16">
+    <div
+      className="flex min-h-screen items-center justify-center bg-background px-4 py-16"
+      data-caretip-route-ready=""
+    >
       <div className="w-full max-w-md rounded-lg border border-border/70 bg-card p-8 text-center shadow-sm">
         {phase === "polling" ? (
           <>

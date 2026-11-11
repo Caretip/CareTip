@@ -67,6 +67,7 @@ import { QRLandingPage } from './pages/customer/QRLandingPage';
 import { JoinPage } from './pages/JoinPage';
 import { AuthLogoutHandoffCover } from "./components/auth/AuthLogoutHandoffCover";
 import { RootSpaRouteHold } from "./routing/RootSpaRouteHold";
+import { AuthBootstrapShell } from "./components/auth/AuthBootstrapShell";
 import { authPageLazy, platformAdminLoginPageLazy } from "./routing/routeLazy";
 import { hasClientSessionHint } from "./lib/authSessionHint";
 import { runWhenIdle } from "./lib/runWhenIdle";
@@ -79,10 +80,15 @@ const PlatformAdminLoginChunk = lazy(() =>
   platformAdminLoginPageLazy().then(({ Component }) => ({ default: Component })),
 );
 
-/** Suspends in place, so a sign-out never lands on an empty screen while the chunk loads. */
+/**
+ * Suspends in place, so a sign-out never lands on an empty screen while the chunk loads.
+ * The fallback is the auth page's own branded loader. RootSpaRouteHold drew nothing here: these
+ * routes are not RR `lazy`, so by the time the chunk suspends the navigation is already idle, and
+ * #root stayed empty until the chunk arrived (a blank flash on landing → login).
+ */
 function AuthPage() {
   return (
-    <Suspense fallback={<RootSpaRouteHold />}>
+    <Suspense fallback={<AuthBootstrapShell />}>
       <AuthPageChunk />
     </Suspense>
   );
@@ -90,7 +96,7 @@ function AuthPage() {
 
 function PlatformAdminLoginPage() {
   return (
-    <Suspense fallback={<RootSpaRouteHold />}>
+    <Suspense fallback={<AuthBootstrapShell />}>
       <PlatformAdminLoginChunk />
     </Suspense>
   );

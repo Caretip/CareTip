@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { getConnectStatus, type ConnectStatus } from "../lib/api";
+import { type ConnectStatus } from "../lib/api";
+import { fetchConnectStatusCached } from "../lib/stripeConnectStatusCache";
 import { toUserFriendlyMessage } from "../lib/errorMessages";
 
 export function useConnectStatus(enabled = true) {
@@ -14,7 +15,9 @@ export function useConnectStatus(enabled = true) {
     setLoading(true);
     setError(null);
     try {
-      const status = await getConnectStatus();
+      // Always a fresh read (revalidate), as before. Going through the shared cache also records it,
+      // so the Stripe Connect page can paint this status at once instead of a loader.
+      const status = await fetchConnectStatusCached({ revalidate: true });
       setData(status);
     } catch (err) {
       setError(toUserFriendlyMessage(err) || t("business.billing.connect.loadError"));

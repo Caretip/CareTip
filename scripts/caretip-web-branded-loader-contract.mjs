@@ -27,12 +27,13 @@ const de = read("src/i18n/locales/de.json");
 
 if (
   html.includes('id="caretip-html-boot"') &&
+  html.includes("caretip-html-boot__progress") &&
   html.includes("caretip-html-boot__indeterminate") &&
-  html.includes("caretip-html-boot-orbit") &&
+  html.includes("caretip-html-boot-glide") &&
   html.includes("caretip-html-boot__tagline")
 ) {
-  pass("HTML cold-boot uses CareTip mark + orange orbit arc + tagline");
-} else fail("HTML cold-boot mark/track/tagline missing");
+  pass("HTML cold-boot uses CareTip mark + gliding hairline + tagline");
+} else fail("HTML cold-boot mark/hairline/tagline missing");
 
 const htmlWithoutNoscript = html.replace(/<noscript>[\s\S]*?<\/noscript>/gi, "");
 if (
@@ -69,29 +70,29 @@ if (
   pass("HTML boot tagline is path-aware (guest / onboarding / default)");
 } else fail("HTML boot path-aware tagline missing");
 
+const RETIRED_LOADER_PARTS = ["__steps", "__shine", "__lift", "__track", "loader-orbit", "loader-breathe", "loader-sweep", "loader-step"];
 if (
+  polish.includes("app-branded-loader__progress") &&
   polish.includes("app-branded-loader__indeterminate") &&
-  polish.includes("caretip-brand-loader-orbit") &&
-  polish.includes("stroke-dashoffset") &&
-  polish.includes("app-branded-loader__shine") &&
-  polish.includes("app-branded-loader__steps") &&
+  polish.includes("caretip-brand-loader-glide") &&
+  polish.includes("cubic-bezier(0.65, 0, 0.35, 1)") &&
   polish.includes("--caretip-loader-trace: #eb992c") &&
   polish.includes("prefers-reduced-motion") &&
   polish.includes("muted-foreground") &&
   !polish.includes("app-branded-loader__spinner") &&
-  !polish.includes("app-branded-loader__icon-wrap::before")
+  !RETIRED_LOADER_PARTS.some((part) => polish.includes(`app-branded-loader${part}`) || polish.includes(`caretip-brand${part}`))
 ) {
-  pass("React CSS: brand-orange contour trace, glass sweep, diamond steps + reduced-motion (no legacy spinner)");
-} else fail("React branded loader CSS incomplete");
+  pass("React CSS: one brand-orange gliding hairline + reduced-motion (no gloss, orbit, pulse or diamond steps)");
+} else fail("React branded loader CSS incomplete or retired effects are back");
 
 if (
   html.includes("--caretip-loader-trace: #eb992c") &&
-  html.includes("caretip-html-boot__shine") &&
-  html.includes("caretip-html-boot__steps") &&
-  html.includes('viewBox="0 0 465 465"') &&
-  !html.includes("caretip-html-boot__icon-wrap::before")
+  html.includes("cubic-bezier(0.65, 0, 0.35, 1)") &&
+  html.includes("translateX(263%)") &&
+  polish.includes("translateX(263%)") &&
+  !RETIRED_LOADER_PARTS.some((part) => html.includes(`caretip-html-boot${part}`) || html.includes(`html-boot-${part.replace(/^loader-/, "")}`))
 ) {
-  pass("HTML cold boot mirrors the React mark (contour trace, sweep, diamond steps)");
+  pass("HTML cold boot mirrors the React mark (same hairline glide, no retired effects)");
 } else fail("HTML cold-boot mark out of sync with React loader");
 
 if (globals.includes("prefers-reduced-motion") && globals.includes(".app-setup-loading--exiting")) {
@@ -100,14 +101,17 @@ if (globals.includes("prefers-reduced-motion") && globals.includes(".app-setup-l
 
 if (
   mark.includes("CareTipBrandedLoaderMark") &&
+  mark.includes("app-branded-loader__progress") &&
   mark.includes("app-branded-loader__indeterminate") &&
+  !mark.includes("app-branded-loader__steps") &&
+  !mark.includes("app-branded-loader__shine") &&
   mark.includes("/brand/caretip-app-icon.svg") &&
   mark.includes("common.gettingReady") &&
   mark.includes("app-branded-loader__tagline") &&
   !mark.includes("app-branded-loader__brand") &&
   !mark.includes("LoadingSpinner")
 ) {
-  pass("Shared CareTipBrandedLoaderMark uses app icon + arc + one getting-ready sentence");
+  pass("Shared CareTipBrandedLoaderMark uses app icon + hairline + one getting-ready sentence");
 } else fail("CareTipBrandedLoaderMark contract failed");
 
 if (screen.includes("CareTipBrandedLoaderMark") && manager.includes("AppBrandedLoadingScreen")) {

@@ -3,6 +3,8 @@ import { LayoutGrid, MapPin, MoreHorizontal, Pencil, Plus, QrCode, Trash2 } from
 import { useTranslation } from "react-i18next";
 import type { LocationDTO, TableDTO } from "@/app/lib/api";
 import { Button } from "@/components/ui/button";
+import { caretipBtnPrimaryCompact } from "@/lib/caretipButtonSystem";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,33 +23,41 @@ type BusinessLocationVenueCardProps = {
   onCreateTable: () => void;
 };
 
-function IntegrationStatus({
-  label,
-  configured,
-}: {
-  label: string;
-  configured: boolean;
-}) {
+/**
+ * Short label for a table's number plate: the last number in the name ("Patio 3" → "3",
+ * "12" → "12", "Table 7a" → "7A"), otherwise the initials of its first two words ("Main Bar" → "MB").
+ */
+export function tablePlateLabel(name: string): string {
+  const trimmed = name.trim();
+  const numbers = trimmed.match(/\d+[a-z]?/gi);
+  if (numbers && numbers.length > 0) return numbers[numbers.length - 1]!.slice(0, 4).toUpperCase();
+  const words = trimmed.split(/\s+/).filter(Boolean);
+  const initials = words
+    .slice(0, 2)
+    .map((w) => Array.from(w)[0] ?? "")
+    .join("");
+  return (initials || "·").toUpperCase();
+}
+
+function ReviewLinkStatus({ label, configured }: { label: string; configured: boolean }) {
   const { t } = useTranslation();
+  const status = configured
+    ? t("business.locationsPage.reviewConfigured")
+    : t("business.locationsPage.reviewNotConfigured");
   return (
-    <div className="business-venue-card__integration">
-      <span className="business-venue-card__integration-label">{label}</span>
-      <span
-        className={
-          configured
-            ? "business-venue-card__status business-venue-card__status--on"
-            : "business-venue-card__status"
-        }
-      >
-        <span className="business-venue-card__status-dot" aria-hidden />
-        {configured
-          ? t("business.locationsPage.reviewConfigured")
-          : t("business.locationsPage.reviewNotConfigured")}
-      </span>
-    </div>
+    <span className={cn("venue-chip", configured ? "venue-chip--on" : "venue-chip--off")}>
+      <span className="venue-chip__dot" aria-hidden />
+      <span className="venue-chip__label">{label}</span>
+      <span className="venue-chip__value">{status}</span>
+    </span>
   );
 }
 
+/**
+ * One location and the tables inside it. The location is a section (accent bar, map-pin badge,
+ * large title, its own actions); its tables are compact tiles in a tray inside that section, each
+ * with a number plate, so the two levels never look alike.
+ */
 export function BusinessLocationVenueCard({
   location,
   tables,
@@ -59,123 +69,138 @@ export function BusinessLocationVenueCard({
   onCreateTable,
 }: BusinessLocationVenueCardProps) {
   const { t } = useTranslation();
+  const titleId = `venue-${location.id}-title`;
+  const tablesHeadingId = `venue-${location.id}-tables`;
   const googleConfigured = Boolean(location.googlePlaceId?.trim());
   const tripConfigured = Boolean(location.tripadvisorReviewUrl?.trim());
+  const createTableProps = {
+    onClick: onCreateTable,
+    disabled: createTableDisabled,
+    "aria-disabled": createTableDisabled,
+    "aria-describedby": showTableQuotaNotice ? "tables-quota-notice" : undefined,
+    title: showTableQuotaNotice ? t("business.tablesPage.createDisabledAtCapAria") : undefined,
+  };
 
   return (
-    <article className="business-venue-card" aria-labelledby={`venue-${location.id}-title`}>
-      <header className="business-venue-card__header">
-        <div className="business-venue-card__identity">
-          <div
-            className="business-venue-card__icon flex h-9 w-9 shrink-0 items-center justify-center rounded-md"
-            aria-hidden
-          >
-            <MapPin className="h-4 w-4" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h2 id={`venue-${location.id}-title`} className="business-venue-card__title">
-              {location.name}
-            </h2>
-            {location.description ? (
-              <p className="business-venue-card__desc line-clamp-2">{location.description}</p>
-            ) : null}
-            <div className="business-venue-card__integrations">
-              <IntegrationStatus
-                label={t("business.locationsPage.integrationGoogle")}
-                configured={googleConfigured}
-              />
-              <IntegrationStatus
-                label={t("business.locationsPage.integrationTripadvisor")}
-                configured={tripConfigured}
-              />
-            </div>
+    <article className="venue-section" aria-labelledby={titleId}>
+      <header className="venue-section__header">
+        <div className="venue-section__badge" aria-hidden>
+          <MapPin className="h-5 w-5" strokeWidth={2.25} />
+        </div>
+
+        <div className="venue-section__heading">
+          <p className="venue-section__kicker">{t("business.tablesPage.labelLocation")}</p>
+          <h2 id={titleId} className="venue-section__title">
+            {location.name}
+          </h2>
+          {location.description ? (
+            <p className="venue-section__desc line-clamp-2">{location.description}</p>
+          ) : null}
+          <div className="venue-section__meta">
+            <span className="venue-chip venue-chip--count">
+              <LayoutGrid className="h-3.5 w-3.5" aria-hidden />
+              {t("business.locationsPage.tableCountLabel", { count: tables.length })}
+            </span>
+            <ReviewLinkStatus
+              label={t("business.locationsPage.integrationGoogle")}
+              configured={googleConfigured}
+            />
+            <ReviewLinkStatus
+              label={t("business.locationsPage.integrationTripadvisor")}
+              configured={tripConfigured}
+            />
           </div>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 shrink-0"
-              aria-label={t("business.locationsPage.locationActionsAria", { name: location.name })}
-            >
-              <MoreHorizontal className="h-4 w-4" aria-hidden />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-44">
-            <DropdownMenuItem onSelect={onEdit}>
-              <Pencil className="mr-2 h-4 w-4" aria-hidden />
-              {t("business.locationsPage.editLocation")}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
-              onSelect={onDelete}
-            >
-              <Trash2 className="mr-2 h-4 w-4" aria-hidden />
-              {t("business.locationsPage.delete")}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </header>
 
-      <div className="business-venue-card__tables">
-        <div className="business-venue-card__tables-head">
-          <div>
-            <h3 className="business-venue-card__tables-title">
-              {t("business.locationsPage.tablesHeading")}
-            </h3>
-            <p className="business-venue-card__tables-count">
-              {t("business.locationsPage.tableCountLabel", { count: tables.length })}
-            </p>
-          </div>
+        <div className="venue-section__actions">
           <Button
             type="button"
-            size="sm"
-            variant="outline"
-            onClick={onCreateTable}
-            disabled={createTableDisabled}
-            aria-disabled={createTableDisabled}
-            aria-describedby={showTableQuotaNotice ? "tables-quota-notice" : undefined}
-            title={
-              showTableQuotaNotice ? t("business.tablesPage.createDisabledAtCapAria") : undefined
-            }
-            className="business-venue-card__add-table h-8 shrink-0 gap-1.5"
+            {...createTableProps}
+            className={cn(caretipBtnPrimaryCompact, "venue-section__create gap-1.5")}
           >
-            <Plus className="h-3.5 w-3.5" aria-hidden />
+            <Plus className="h-4 w-4" aria-hidden />
             {t("business.locationsPage.createTableShort")}
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="venue-section__menu h-9 w-9 shrink-0"
+                aria-label={t("business.locationsPage.locationActionsAria", { name: location.name })}
+              >
+                <MoreHorizontal className="h-4 w-4" aria-hidden />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onSelect={onEdit}>
+                <Pencil className="mr-2 h-4 w-4" aria-hidden />
+                {t("business.locationsPage.editLocation")}
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={onDelete}>
+                <Trash2 className="mr-2 h-4 w-4" aria-hidden />
+                {t("business.locationsPage.delete")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+      </header>
+
+      <section className="venue-section__tray" aria-labelledby={tablesHeadingId}>
+        <h3 id={tablesHeadingId} className="venue-section__tray-title">
+          {t("business.locationsPage.tablesHeading")}
+          <span className="venue-section__tray-count" aria-hidden>
+            {tables.length}
+          </span>
+        </h3>
 
         {tables.length === 0 ? (
-          <div className="business-venue-card__tables-empty">
-            <p className="font-medium text-foreground">
-              {t("business.locationsPage.tablesEmptyTitle")}
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t("business.locationsPage.tablesEmptyDesc")}
-            </p>
+          <div className="venue-tables-empty">
+            <div className="venue-tables-empty__plate" aria-hidden>
+              <Plus className="h-4 w-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="venue-tables-empty__title">{t("business.locationsPage.tablesEmptyTitle")}</p>
+              <p className="venue-tables-empty__desc">{t("business.locationsPage.tablesEmptyDesc")}</p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              {...createTableProps}
+              className="venue-tables-empty__action h-9 shrink-0 gap-1.5"
+            >
+              <Plus className="h-3.5 w-3.5" aria-hidden />
+              {t("business.locationsPage.createTableShort")}
+            </Button>
           </div>
         ) : (
-          <ul className="business-venue-card__table-list">
+          <ul className="venue-tables">
             {tables.map((row) => (
-              <li key={row.id} className="business-venue-card__table-row">
-                <div className="flex min-w-0 items-center gap-2">
-                  <LayoutGrid className="business-venue-card__table-icon h-3.5 w-3.5 shrink-0" aria-hidden />
-                  <span className="truncate text-sm font-medium text-foreground">{row.name}</span>
+              <li key={row.id} className="venue-table">
+                <div className="venue-table__plate" aria-hidden>
+                  {tablePlateLabel(row.name)}
+                </div>
+                <div className="venue-table__body">
+                  <span className="venue-table__kicker">{t("business.tablesPage.thTable")}</span>
+                  <span className="venue-table__name" title={row.name}>
+                    {row.name}
+                  </span>
                 </div>
                 <Link
                   to={tablesQrHref}
-                  className="business-venue-card__table-qr"
+                  className="venue-table__qr"
+                  aria-label={`${t("business.locationsPage.viewTableQr")}: ${row.name}`}
                 >
-                  <QrCode className="business-venue-card__table-qr-icon h-3.5 w-3.5" aria-hidden />
-                  {t("business.locationsPage.viewTableQr")}
+                  <QrCode className="h-3.5 w-3.5" aria-hidden />
+                  <span>{t("business.locationsPage.viewTableQr")}</span>
                 </Link>
               </li>
             ))}
           </ul>
         )}
-      </div>
+      </section>
     </article>
   );
 }

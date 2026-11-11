@@ -1,237 +1,492 @@
 /**
- * Business Locations / Tables workspace cards
+ * Business Locations / Tables workspace.
+ *
+ * Two levels that must never look alike:
+ * - Location: a full-width section. Brand-orange accent bar and map-pin badge, large title,
+ *   a "Location" kicker, its own actions.
+ * - Table: a compact tile inside the location's tinted tray, with a number plate and a
+ *   "Table" kicker. Neutral colours only, so the orange stays a location signal.
+ *
+ * Brand rule: #eb992c is never darkened and never used as text on white (2.30:1). It appears as
+ * fills and bars with dark (#111) content on top, which is 8.6:1.
  */
-.caretip-dashboard-shell.business-dashboard .business-venue-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+.locations-workspace {
+  --venue-orange: var(--caretip-brand-orange, #eb992c);
+  --venue-ink: #111111;
+  --venue-text: hsl(var(--foreground));
+  --venue-muted: hsl(var(--muted-foreground));
+  --venue-line: hsl(var(--border) / 0.8);
+  --venue-surface: hsl(var(--card));
+  --venue-tray: #faf8f5;
+  --venue-tile: #ffffff;
+  --venue-plate: #f3f1ed;
+  --venue-radius: 1rem;
+  --venue-radius-inner: 0.75rem;
 }
 
-.caretip-dashboard-shell.business-dashboard .business-venue-card {
-  border-radius: 0.5rem;
-  border: 1px solid hsl(var(--border) / 0.85);
-  background: hsl(var(--card));
-  padding: 1rem 1rem 0.875rem;
+.dark .locations-workspace {
+  --venue-ink: #111111;
+  --venue-line: hsl(var(--border));
+  --venue-tray: hsl(var(--muted) / 0.35);
+  --venue-tile: hsl(var(--card));
+  --venue-plate: hsl(var(--muted) / 0.8);
+}
+
+/* ---------- Overview strip ---------- */
+.locations-workspace .venue-overview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.locations-workspace .venue-overview__stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--venue-line);
+  border-radius: 999px;
+  background: var(--venue-surface);
+  padding: 0.375rem 0.875rem 0.375rem 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--venue-text);
+}
+
+.locations-workspace .venue-overview__icon {
+  display: inline-flex;
+  height: 1.5rem;
+  width: 1.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+}
+
+.locations-workspace .venue-overview__icon--location {
+  background: var(--venue-orange);
+  color: var(--venue-ink);
+}
+
+.locations-workspace .venue-overview__icon--table {
+  background: var(--venue-plate);
+  color: var(--venue-text);
+}
+
+/* ---------- Location list ---------- */
+.locations-workspace .business-venue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
 @media (min-width: 640px) {
-  .caretip-dashboard-shell.business-dashboard .business-venue-card {
-    padding: 1.125rem 1.25rem 1rem;
+  .locations-workspace .business-venue-list {
+    gap: 1.5rem;
   }
 }
 
-.caretip-dashboard-shell.business-dashboard .business-venue-card__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
+/* ---------- Location section ---------- */
+.locations-workspace .venue-section {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--venue-line);
+  border-radius: var(--venue-radius);
+  background: var(--venue-surface);
+  box-shadow:
+    0 1px 2px rgb(17 17 17 / 0.04),
+    0 8px 24px -12px rgb(17 17 17 / 0.12);
 }
 
-.caretip-dashboard-shell.business-dashboard .business-venue-card__identity {
+/* The accent bar marks a location; tables never carry it. */
+.locations-workspace .venue-section::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--venue-orange);
+}
+
+.locations-workspace .venue-section__header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.875rem 1rem;
+  padding: 1.125rem 1rem 1rem 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .locations-workspace .venue-section__header {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    padding: 1.375rem 1.5rem 1.25rem 1.75rem;
+  }
+}
+
+.locations-workspace .venue-section__badge {
   display: flex;
+  height: 2.75rem;
+  width: 2.75rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  background: var(--venue-orange);
+  color: var(--venue-ink);
+}
+
+@media (min-width: 640px) {
+  .locations-workspace .venue-section__badge {
+    height: 3rem;
+    width: 3rem;
+  }
+}
+
+.locations-workspace .venue-section__heading {
   min-width: 0;
-  flex: 1;
-  gap: 0.75rem;
 }
 
-.caretip-dashboard-shell.business-dashboard .business-venue-card__title {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  line-height: 1.35;
-  color: hsl(var(--foreground));
+.locations-workspace .venue-section__kicker {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--venue-muted);
+}
+
+.locations-workspace .venue-section__title {
+  margin-top: 0.375rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--venue-text);
   word-break: break-word;
 }
 
-.caretip-dashboard-shell.business-dashboard .business-venue-card__desc {
-  margin-top: 0.25rem;
-  font-size: 0.8125rem;
-  line-height: 1.45;
-  color: hsl(var(--muted-foreground));
+@media (min-width: 640px) {
+  .locations-workspace .venue-section__title {
+    font-size: 1.3125rem;
+  }
 }
 
-.caretip-dashboard-shell.business-dashboard .business-venue-card__integrations {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
-  margin-top: 0.625rem;
+.locations-workspace .venue-section__desc {
+  margin-top: 0.375rem;
+  max-width: 42rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--venue-muted);
 }
 
-.caretip-dashboard-shell.business-dashboard .business-venue-card__integration {
+.locations-workspace .venue-section__meta {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
   gap: 0.375rem;
+  margin-top: 0.75rem;
 }
 
-.caretip-dashboard-shell.business-dashboard .business-venue-card__integration-label {
-  font-size: 0.6875rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: hsl(var(--muted-foreground));
+/* Actions span the full width on phones, then sit in the header's right column. */
+.locations-workspace .venue-section__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.caretip-dashboard-shell.business-dashboard .business-venue-card__status {
+.locations-workspace .venue-section__create {
+  flex: 1;
+}
+
+@media (min-width: 640px) {
+  .locations-workspace .venue-section__actions {
+    grid-column: auto;
+  }
+
+  .locations-workspace .venue-section__create {
+    flex: none;
+  }
+}
+
+.locations-workspace .venue-section__menu {
+  border-color: var(--venue-line);
+  background: var(--venue-surface);
+}
+
+/* ---------- Chips (location meta) ---------- */
+.locations-workspace .venue-chip {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
+  border: 1px solid var(--venue-line);
+  border-radius: 999px;
+  background: var(--venue-surface);
+  padding: 0.25rem 0.625rem;
   font-size: 0.75rem;
   line-height: 1.2;
-  color: hsl(var(--muted-foreground));
+  color: var(--venue-muted);
 }
 
-.caretip-dashboard-shell.business-dashboard .business-venue-card__status-dot {
-  width: 0.375rem;
-  height: 0.375rem;
+.locations-workspace .venue-chip--count {
+  border-color: transparent;
+  background: var(--venue-plate);
+  font-weight: 600;
+  color: var(--venue-text);
+}
+
+.locations-workspace .venue-chip__dot {
+  height: 0.4375rem;
+  width: 0.4375rem;
   flex-shrink: 0;
   border-radius: 999px;
-  background: hsl(var(--muted-foreground) / 0.4);
+  background: hsl(var(--muted-foreground) / 0.45);
 }
 
-.caretip-dashboard-shell.business-dashboard .business-venue-card__status--on {
-  color: #111;
+.locations-workspace .venue-chip__label {
+  font-weight: 600;
+  color: var(--venue-text);
 }
 
-.caretip-dashboard-shell.business-dashboard .business-venue-card__status--on .business-venue-card__status-dot {
+.locations-workspace .venue-chip--on .venue-chip__dot {
   background: #15803d;
 }
 
-.caretip-dashboard-shell.business-dashboard .business-venue-card__tables {
-  margin-top: 0.875rem;
-  padding-top: 0.875rem;
-  border-top: 1px solid hsl(var(--border) / 0.75);
+.locations-workspace .venue-chip--on .venue-chip__value {
+  color: var(--venue-text);
 }
 
-.caretip-dashboard-shell.business-dashboard .business-venue-card__tables-head {
+/* ---------- Tables tray (inside a location) ---------- */
+.locations-workspace .venue-section__tray {
+  margin: 0 0.75rem 0.75rem 1rem;
+  border-radius: var(--venue-radius-inner);
+  background: var(--venue-tray);
+  padding: 0.875rem;
+}
+
+@media (min-width: 640px) {
+  .locations-workspace .venue-section__tray {
+    margin: 0 1.25rem 1.25rem 1.5rem;
+    padding: 1rem 1.125rem 1.125rem;
+  }
+}
+
+.locations-workspace .venue-section__tray-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--venue-muted);
+}
+
+.locations-workspace .venue-section__tray-count {
+  display: inline-flex;
+  min-width: 1.375rem;
+  height: 1.375rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--venue-tile);
+  border: 1px solid var(--venue-line);
+  padding: 0 0.375rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0;
+  color: var(--venue-text);
+}
+
+/* ---------- Table tiles ---------- */
+.locations-workspace .venue-tables {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 13.5rem), 1fr));
+  gap: 0.625rem;
+}
+
+.locations-workspace .venue-table {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "plate body"
+    "plate qr";
+  align-items: center;
+  column-gap: 0.75rem;
+  row-gap: 0.25rem;
+  min-width: 0;
+  border: 1px solid var(--venue-line);
+  border-radius: 0.625rem;
+  background: var(--venue-tile);
+  padding: 0.625rem 0.75rem;
+  transition:
+    border-color 150ms ease,
+    transform 150ms ease;
+}
+
+.locations-workspace .venue-table:hover {
+  border-color: hsl(var(--foreground) / 0.28);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .locations-workspace .venue-table:hover {
+    transform: translateY(-1px);
+  }
+}
+
+/* The number plate: what identifies a table at a glance. */
+.locations-workspace .venue-table__plate {
+  grid-area: plate;
+  display: flex;
+  height: 2.75rem;
+  min-width: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  background: var(--venue-plate);
+  padding: 0 0.375rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  color: var(--venue-text);
+}
+
+.locations-workspace .venue-table__body {
+  grid-area: body;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.locations-workspace .venue-table__kicker {
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--venue-muted);
+}
+
+.locations-workspace .venue-table__name {
+  margin-top: 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--venue-text);
+}
+
+.locations-workspace .venue-table__qr {
+  grid-area: qr;
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 0.3125rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--venue-text);
+  text-decoration: underline;
+  text-decoration-color: hsl(var(--foreground) / 0.25);
+  text-underline-offset: 3px;
+}
+
+.locations-workspace .venue-table__qr:hover {
+  text-decoration-color: currentColor;
+}
+
+.locations-workspace .venue-table__qr:focus-visible {
+  outline: 2px solid var(--venue-text);
+  outline-offset: 2px;
+}
+
+/* ---------- Empty tray ---------- */
+.locations-workspace .venue-tables-empty {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.5rem 0.75rem;
-  margin-bottom: 0.625rem;
-}
-
-.caretip-dashboard-shell.business-dashboard .business-venue-card__tables-title {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: hsl(var(--foreground));
-}
-
-.caretip-dashboard-shell.business-dashboard .business-venue-card__tables-count {
-  font-size: 0.75rem;
-  color: hsl(var(--muted-foreground));
-}
-
-.caretip-dashboard-shell.business-dashboard .business-venue-card__tables-empty {
-  border-radius: 0.375rem;
-  border: 1px dashed hsl(var(--border) / 0.9);
-  background: hsl(var(--muted) / 0.25);
+  align-items: center;
+  gap: 0.75rem 1rem;
+  border: 1.5px dashed hsl(var(--border));
+  border-radius: 0.625rem;
+  background: var(--venue-tile);
   padding: 0.875rem 1rem;
 }
 
-.caretip-dashboard-shell.business-dashboard .business-venue-card__table-list {
+.locations-workspace .venue-tables-empty__plate {
+  display: flex;
+  height: 2.75rem;
+  width: 2.75rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  border: 1.5px dashed hsl(var(--border));
+  color: var(--venue-muted);
+}
+
+.locations-workspace .venue-tables-empty__title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--venue-text);
+}
+
+.locations-workspace .venue-tables-empty__desc {
+  margin-top: 0.125rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--venue-muted);
+}
+
+.locations-workspace .venue-tables-empty__action {
+  border-color: hsl(var(--foreground) / 0.2);
+}
+
+/* ---------- No locations yet ---------- */
+.locations-workspace .venue-empty {
   display: flex;
   flex-direction: column;
-  border-radius: 0.375rem;
-  border: 1px solid hsl(var(--border) / 0.75);
-  overflow: hidden;
+  align-items: center;
+  border: 1.5px dashed hsl(var(--border));
+  border-radius: var(--venue-radius);
+  background: var(--venue-surface);
+  padding: 3rem 1.5rem;
+  text-align: center;
 }
 
-.caretip-dashboard-shell.business-dashboard .business-venue-card__table-row {
+.locations-workspace .venue-empty__badge {
   display: flex;
-  flex-wrap: wrap;
+  height: 3.5rem;
+  width: 3.5rem;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem 0.75rem;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
+  justify-content: center;
+  border-radius: 1rem;
+  background: var(--venue-orange);
+  color: var(--venue-ink);
 }
 
-.caretip-dashboard-shell.business-dashboard .business-venue-card__table-row:not(:last-child) {
-  border-bottom: 1px solid hsl(var(--border) / 0.65);
+.locations-workspace .venue-empty__text {
+  margin-top: 1rem;
+  max-width: 26rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--venue-text);
 }
 
-.caretip-dashboard-shell.business-dashboard .business-venue-card__table-qr {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: hsl(var(--foreground));
-  text-underline-offset: 2px;
-}
-
-.caretip-dashboard-shell.business-dashboard .business-venue-card__table-qr:hover {
-  text-decoration: underline;
-}
-
-/* Standorte / Tische — brand orange as the page accent. */
-.caretip-dashboard-shell.business-dashboard .locations-workspace .business-module-workspace-header .mb-1 > span:first-child {
+/* ---------- Header eyebrow (kept from the shared module header) ---------- */
+.caretip-dashboard-shell.business-dashboard
+  .locations-workspace
+  .business-module-workspace-header
+  .mb-1
+  > span:first-child {
   color: #111;
 }
 
-.caretip-dashboard-shell.business-dashboard .locations-workspace .locations-workspace__empty-icon {
-  color: var(--caretip-brand-orange, #eb992c);
-  opacity: 0.85;
-}
-
-.caretip-dashboard-shell.business-dashboard .locations-workspace .business-venue-card {
-  border: 1px solid hsl(var(--border) / 0.7);
-  border-radius: 0.25rem;
-  background: #fff;
-  box-shadow: none;
-}
-
-.caretip-dashboard-shell.business-dashboard .locations-workspace .business-venue-card__icon {
-  border-radius: 0.25rem;
-  background: color-mix(in srgb, var(--caretip-brand-orange, #eb992c) 16%, transparent);
-  color: var(--caretip-brand-orange, #eb992c);
-}
-
-.caretip-dashboard-shell.business-dashboard .locations-workspace .business-venue-card__tables {
-  border-top-color: hsl(var(--border) / 0.65);
-}
-
-.caretip-dashboard-shell.business-dashboard .locations-workspace .business-venue-card__add-table {
-  border-radius: 0.25rem;
-  border-color: color-mix(in srgb, var(--caretip-brand-orange, #eb992c) 28%, hsl(var(--border)));
-  background: color-mix(in srgb, var(--caretip-brand-orange, #eb992c) 8%, transparent);
-  color: var(--caretip-brand-orange, #eb992c);
-}
-
-.caretip-dashboard-shell.business-dashboard .locations-workspace .business-venue-card__add-table:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--caretip-brand-orange, #eb992c) 16%, transparent);
-  color: var(--caretip-brand-orange, #eb992c);
-}
-
-.caretip-dashboard-shell.business-dashboard .locations-workspace .business-venue-card__tables-empty,
-.caretip-dashboard-shell.business-dashboard .locations-workspace .business-venue-card__table-list {
-  border-radius: 0.25rem;
-  border-color: hsl(var(--border) / 0.65);
-}
-
-.caretip-dashboard-shell.business-dashboard .locations-workspace .business-venue-card__table-row:hover {
-  background: #fff;
-}
-
-.caretip-dashboard-shell.business-dashboard .locations-workspace .business-venue-card__table-icon,
-.caretip-dashboard-shell.business-dashboard .locations-workspace .business-venue-card__table-qr {
-  color: var(--caretip-brand-orange, #eb992c);
-}
-
-.caretip-dashboard-shell.business-dashboard .locations-workspace .business-venue-card__table-qr-icon {
-  color: #111;
-}
-
-.dark .caretip-dashboard-shell.business-dashboard .locations-workspace .business-module-workspace-header .mb-1 > span:first-child {
+.dark
+  .caretip-dashboard-shell.business-dashboard
+  .locations-workspace
+  .business-module-workspace-header
+  .mb-1
+  > span:first-child {
   color: hsl(var(--foreground));
-}
-
-.dark .caretip-dashboard-shell.business-dashboard .locations-workspace .business-venue-card__table-qr-icon {
-  color: hsl(var(--foreground));
-}
-
-.dark .caretip-dashboard-shell.business-dashboard .locations-workspace .business-venue-card__table-qr,
-.dark .caretip-dashboard-shell.business-dashboard .locations-workspace .business-venue-card__add-table {
-  color: var(--caretip-brand-orange-light, #ff9e2d);
 }

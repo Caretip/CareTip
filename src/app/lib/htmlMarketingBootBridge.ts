@@ -8,6 +8,28 @@ import { isCustomerJourneyPath } from "./appLoadingJourney";
 import { isLandingHeroCommitted } from "./landingHeroReadyDom";
 import { markLandingColdLoad } from "./landingColdLoadMarks";
 import { normalizePublicPathname } from "./publicRoutes";
+import { isPublicAuthenticationPath } from "./authSession";
+
+/**
+ * Upper bound for holding the boot screen while a destination's chunk loads. Past it the boot is
+ * released whatever the page has drawn, so a slow or broken chunk can never leave the cover up.
+ */
+export const HTML_BOOT_RETAIN_CAP_MS = 10_000;
+
+/**
+ * Auth forms and recovery steps. Each is a lazy chunk whose root is `.caretip-auth-page`
+ * (AuthPage, AuthRecoveryLayout, JoinPage) or, while auth state settles, the branded
+ * `.app-branded-loader` (AuthBootstrapShell).
+ */
+export function isAuthFormShellPath(p: string): boolean {
+  if (isPublicAuthenticationPath(p)) return true;
+  if (p === "/verify-email" || p === "/activate") return true;
+  if (p === "/join" || p.startsWith("/join/")) return true;
+  if (p.startsWith("/account/recovery") || p.startsWith("/account/email-change")) return true;
+  return false;
+}
+
+const AUTH_FORM_COMMITTED_SELECTOR = ".caretip-auth-page, .app-branded-loader, [data-caretip-route-ready]";
 
 /** Authenticated app shells that hand off HTML boot to {@link PROTECTED_APP_SHELL_READY_ATTR}. */
 export const PROTECTED_APP_SHELL_READY_ATTR = "data-caretip-dashboard-ready";
@@ -76,13 +98,27 @@ export function shouldRetainHtmlBootUntilLandingCommit(): boolean {
   if (isProtectedAppShellHandoffPath(p)) {
     return !isProtectedAppShellCommitted();
   }
+  // Public destinations never hold the boot past the cap: a page that does not set its ready
+  // marker (or a chunk that never arrives) must not leave the visitor on a loader indefinitely.
+  if (performance.now() >= HTML_BOOT_RETAIN_CAP_MS) return false;
   if (p === "/") {
     return !isLandingHeroCommitted();
   }
   const committed = document.querySelector(
     "[data-caretip-route-ready], [data-caretip-public-committed], .caretip-landing",
   );
+  // Auth forms first: they must hand off to their own page, never wait for a tip-page marker.
+  // Without this branch the boot left on React's first DOM write and the cream background showed
+  // alone until the form chunk arrived (1.3 s on a 4G phone at /login).
+  if (isAuthFormShellPath(p)) {
+    return document.querySelector(AUTH_FORM_COMMITTED_SELECTOR) == null;
+  }
   if (isCustomerJourneyPath(p)) {
+    return document.querySelector("[data-caretip-route-ready]") == null;
+  }
+  // Stripe subscription return pages (protected, outside the dashboard shell): hold until the
+  // page commits, or the boot left on the first DOM write and a bare background showed first.
+  if (p.startsWith("/subscription/")) {
     return document.querySelector("[data-caretip-route-ready]") == null;
   }
   // Lazy PublicPageShell marketing — same cream-gap class as former lazy `/`.

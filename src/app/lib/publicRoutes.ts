@@ -49,12 +49,22 @@ const PUBLIC_MARKETING_PREFIXES = [
   "/verify",
   "/verify-email",
   "/check-email",
+  // Public recovery / handoff pages (no session required), like the auth recovery paths above.
+  "/account/recovery",
+  "/account/email-change",
+  "/mobile-auth",
 ];
 
 /**
  * Static first-segment paths registered in routes.tsx — must not match `/{businessSlug}`.
+ * A missing entry makes an app route look like a venue's tipping page: `/subscription/success`
+ * was held under "Preparing your tipping experience…" with no end.
  */
 const RESERVED_TOP_LEVEL_SEGMENTS = new Set([
+  "account",
+  "awaiting-approval",
+  "mobile-auth",
+  "subscription",
   "admin",
   "auth",
   "activate",

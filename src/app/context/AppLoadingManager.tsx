@@ -22,6 +22,7 @@ import {
   traceGlobalOverlayDismissed,
 } from "../lib/globalAppLoadingTrace";
 import {
+  HTML_BOOT_RETAIN_CAP_MS,
   beginHtmlBootBridgeExit,
   dismissHtmlMarketingBootBridge,
   isHtmlBootElementPresent,
@@ -386,7 +387,16 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
       ],
     });
     tryHandoff();
-    return () => mo.disconnect();
+    // The observer only runs on DOM changes. If nothing changes while a retained boot waits, this
+    // last check at the cap releases it (shouldRetainHtmlBootUntilLandingCommit honours the cap).
+    const capTimer = window.setTimeout(
+      tryHandoff,
+      Math.max(0, HTML_BOOT_RETAIN_CAP_MS - performance.now()) + 50,
+    );
+    return () => {
+      mo.disconnect();
+      window.clearTimeout(capTimer);
+    };
   }, [completeHtmlBootAfterPublicPaint]);
 
   /** Login/logout soft-nav: instantly clear cold-boot overlay so it cannot flash after auth. */

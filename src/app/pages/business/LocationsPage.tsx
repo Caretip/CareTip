@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
-import { MapPin } from "lucide-react";
+import { LayoutGrid, MapPin } from "lucide-react";
 import { BusinessLocationVenueCard } from "../../components/business/locations/BusinessLocationVenueCard";
 import { toast } from "sonner";
 import { useRequireAuth } from "../../hooks/useRequireAuth";
@@ -57,7 +57,6 @@ import { BusinessModuleWorkspaceHeader } from "../../components/business/Busines
 import { QR_STUDIO_BASE } from "../../components/business/businessDashboardNav";
 import { LockedFeatureCard } from "../../components/subscription/LockedFeatureCard";
 
-const ACTION_TEAL = "#eb992c";
 const TABLES_QR_HREF = `${QR_STUDIO_BASE}/tables`;
 
 type VenueBundle = { locations: LocationDTO[]; tables: TableDTO[] };
@@ -418,11 +417,36 @@ export function LocationsPage() {
         {showInitialSkeleton ? (
           <LocationTablesWorkspaceSkeleton />
         ) : locations.length === 0 ? (
-          <div className={cn(businessUi.cardStatic, "py-16 text-center text-muted-foreground border-dashed")}>
-            <MapPin className="locations-workspace__empty-icon mx-auto mb-3 h-10 w-10" />
-            <p>{t("business.locationsPage.empty")}</p>
+          <div className="venue-empty">
+            <div className="venue-empty__badge" aria-hidden>
+              <MapPin className="h-6 w-6" strokeWidth={2.25} />
+            </div>
+            <p className="venue-empty__text">{t("business.locationsPage.empty")}</p>
+            <Button
+              type="button"
+              onClick={openCreate}
+              disabled={!isBusiness || atSingleLocationCap}
+              className={cn(businessUi.btnPrimary, "mt-5")}
+            >
+              {t("business.locationsPage.addNew")}
+            </Button>
           </div>
         ) : (
+          <>
+          <div className="venue-overview" aria-live="polite">
+            <span className="venue-overview__stat">
+              <span className="venue-overview__icon venue-overview__icon--location" aria-hidden>
+                <MapPin className="h-3.5 w-3.5" strokeWidth={2.5} />
+              </span>
+              {t("business.locationsPage.summaryLocations", { count: locations.length })}
+            </span>
+            <span className="venue-overview__stat">
+              <span className="venue-overview__icon venue-overview__icon--table" aria-hidden>
+                <LayoutGrid className="h-3.5 w-3.5" />
+              </span>
+              {t("business.locationsPage.tableCountLabel", { count: tables.length })}
+            </span>
+          </div>
           <ul className="business-venue-list overflow-visible">
             {locations.map((loc) => {
               const locTables = tablesByLocation.get(loc.id) ?? [];
@@ -442,6 +466,7 @@ export function LocationsPage() {
               );
             })}
           </ul>
+          </>
         )}
 
         {showTableCapabilityLock ? (
@@ -557,7 +582,7 @@ export function LocationsPage() {
               type="button"
               onClick={() => void handleSave()}
               disabled={saving}
-              style={{ backgroundColor: ACTION_TEAL }}
+              className={businessUi.btnPrimary}
             >
               {saving ? <LoadingSpinner size="sm" /> : t("business.locationsPage.save")}
             </Button>
@@ -609,7 +634,7 @@ export function LocationsPage() {
               type="button"
               onClick={() => void handleSaveTable()}
               disabled={savingTable || !tableLocation}
-              style={{ backgroundColor: ACTION_TEAL }}
+              className={businessUi.btnPrimary}
             >
               {savingTable ? <LoadingSpinner size="sm" /> : t("business.tablesPage.save")}
             </Button>

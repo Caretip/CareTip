@@ -145,18 +145,32 @@ export function LocationTablesWorkspaceSkeleton({
       aria-label={aria.loading}
     >
       {Array.from({ length: sections }).map((_, i) => (
-        <li key={i} className="rounded-lg border border-border bg-card p-4 sm:p-5">
-          <div className="flex gap-3">
-            <ShimmerBar className="h-10 w-10 shrink-0 rounded-lg" />
+        // Mirrors a location section: header (badge, kicker, title, chips) above a tray of table tiles.
+        <li key={i} className="overflow-hidden rounded-2xl border border-border bg-card">
+          <div className="flex gap-4 p-5 pl-6">
+            <ShimmerBar className="h-12 w-12 shrink-0 rounded-xl" />
             <div className="flex min-w-0 flex-1 flex-col gap-2">
-              <ShimmerBar className="h-4 w-[45%] max-w-[11rem]" />
-              <ShimmerBar className="h-3 w-[70%] max-w-[16rem]" />
+              <ShimmerBar className="h-2.5 w-14" />
+              <ShimmerBar className="h-5 w-[50%] max-w-[13rem]" />
+              <div className="flex gap-1.5 pt-1">
+                <ShimmerBar className="h-6 w-20 rounded-full" />
+                <ShimmerBar className="h-6 w-28 rounded-full" />
+              </div>
             </div>
           </div>
-          <div className="mt-4 space-y-2 border-t border-border/70 pt-4">
-            <ShimmerBar className="h-3 w-16" />
-            <ShimmerBar className="h-10 w-full rounded-md" />
-            <ShimmerBar className="h-10 w-full rounded-md" />
+          <div className="mx-4 mb-4 rounded-xl bg-muted/40 p-4 sm:ml-6 sm:mr-5">
+            <ShimmerBar className="mb-3 h-2.5 w-16" />
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+              {Array.from({ length: 3 }).map((__, j) => (
+                <div key={j} className="flex items-center gap-3 rounded-lg border border-border/70 bg-card p-2.5">
+                  <ShimmerBar className="h-11 w-11 shrink-0 rounded-lg" />
+                  <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                    <ShimmerBar className="h-2 w-10" />
+                    <ShimmerBar className="h-3.5 w-[70%]" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </li>
       ))}

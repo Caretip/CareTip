@@ -4,7 +4,8 @@ import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { createConnectAccountLink, createConnectLoginLink, type ConnectStatus } from "../../../../lib/api";
-import { fetchConnectStatusCached } from "../../../../lib/stripeConnectStatusCache";
+import { fetchConnectStatusCached, readConnectStatusSnapshot } from "../../../../lib/stripeConnectStatusCache";
+import { Skeleton } from "../../../ui/skeleton";
 import {
   stripeConnectBodyKey,
   stripeConnectCtaKey,
@@ -47,7 +48,9 @@ export function BusinessStripeConnectCard() {
   const { user } = useRequireAuth();
   const headerActions = useBusinessStripeHeaderActions();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [data, setData] = useState<ConnectStatus | null>(null);
+  // Paint the last known status at once (the dashboard has usually fetched it) and revalidate below,
+  // instead of starting from a one-line loader that the full card then pushes down.
+  const [data, setData] = useState<ConnectStatus | null>(() => readConnectStatusSnapshot());
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<"onboarding" | "dashboard" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -151,11 +154,24 @@ export function BusinessStripeConnectCard() {
   }, [headerActions, showDashboard, busy, startDashboard, t]);
 
   if (loading && !data) {
+    // Same outline as the loaded card (title, status headline, venue, account type, pills, last
+    // sync, action) so the cards below do not jump when the status arrives.
     return (
-      <div className="flex min-h-[72px] items-center gap-2 text-sm text-muted-foreground" role="status">
-        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-        <span>{t("business.billing.connect.loading")}</span>
-      </div>
+      <section className="stripe-connect-card space-y-5" role="status" aria-busy="true">
+        <span className="sr-only">{t("business.billing.connect.loading")}</span>
+        <div className="min-w-0 space-y-2" aria-hidden>
+          <Skeleton className="bg-muted h-5 w-32" />
+          <Skeleton className="bg-muted h-7 w-52 max-w-full sm:h-8" />
+          <Skeleton className="bg-muted h-4 w-40 max-w-full" />
+          <Skeleton className="bg-muted h-4 w-36 max-w-full" />
+          <div className="flex flex-wrap items-center gap-2 pt-0.5">
+            <Skeleton className="bg-muted h-6 w-24 rounded-full" />
+            <Skeleton className="bg-muted h-6 w-32 rounded-full" />
+          </div>
+          <Skeleton className="bg-muted h-3.5 w-56 max-w-full" />
+        </div>
+        <Skeleton className="bg-muted h-11 w-full rounded-lg sm:w-48" aria-hidden />
+      </section>
     );
   }
 

@@ -5,7 +5,7 @@ import {
 } from "./appLoadingPriority";
 import { isAppShellInteractive } from "./appShellLifecycle";
 import { isPublicAuthenticationPath } from "./authSession";
-import { isPublicMarketingPath } from "./publicRoutes";
+import { isPublicBusinessSlugPath, isPublicMarketingPath } from "./publicRoutes";
 
 /** Higher tier owns the loading story until its registration ends. */
 export const LOADER_JOURNEY_TIER = {
@@ -219,8 +219,11 @@ export function isCustomerJourneyPath(pathname: string): boolean {
     return true;
   }
 
+  // Two segments: a venue's staff page (`/{businessSlug}/{employeeSlug}`). Not every two-segment
+  // public path is a tip journey: `/reset-password/:token` and `/join/:code` matched before and were
+  // held under the boot screen waiting for a tip-page ready marker they never set.
   const segments = p.split("/").filter(Boolean);
-  if (segments.length === 2 && isPublicMarketingPath(p)) {
+  if (segments.length === 2 && isPublicBusinessSlugPath(p)) {
     return true;
   }
 
