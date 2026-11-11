@@ -17,7 +17,6 @@ import {
   syncDocumentHiddenClass,
 } from "@/lib/landingMediaResume";
 import "@/styles/bundles/marketing-shell.css";
-import "@/styles/bundles/landing.css";
 
 /** Landing has no email/password forms; autofill mitigations live on `AuthPage` (login/signup). */
 export function LandingPage() {

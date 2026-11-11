@@ -111,7 +111,7 @@ export function CookieConsentSettingsModal() {
           className={cn(cc.panel, "max-w-lg")}
           aria-describedby="cookie-settings-intro"
         >
-          <DialogPrimitive.Title id="cookie-settings-title" className={cc.title}>
+          <DialogPrimitive.Title className={cc.title}>
             {t("cookieConsent.settings.title")}
           </DialogPrimitive.Title>
           <div className={cc.scroll}>

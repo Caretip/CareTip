@@ -176,7 +176,7 @@ export const AnimatedHeading = memo(function AnimatedHeading({
   }
 
   return (
-    <span ref={ref} className={cn(containerClassName)} aria-label={flatText}>
+    <span ref={ref} className={cn(containerClassName)} role="img" aria-label={flatText}>
       {tokens.map((token, i) => {
         if (token.type === "br") {
           return (

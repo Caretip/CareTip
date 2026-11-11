@@ -21,12 +21,12 @@ function Medal3D() {
         className="absolute inset-0 opacity-90"
         style={{
           background:
-            "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.85), transparent 55%), radial-gradient(circle at 70% 80%, rgba(233,120,28,0.25), transparent 60%)",
+            "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.85), transparent 55%), radial-gradient(circle at 70% 80%, rgba(235,153,44,0.25), transparent 60%)",
         }}
       />
       <div className="absolute inset-0 flex items-center justify-center">
         <div
-          className="h-8 w-8 rounded-full ring-1 ring-primary/15 shadow-[0_18px_44px_rgba(233,120,28,0.18)]"
+          className="h-8 w-8 rounded-full ring-1 ring-primary/15 shadow-[0_18px_44px_rgba(235,153,44,0.18)]"
           style={{
             background: "linear-gradient(180deg, #FFF4D6, #F2C76E 40%, #B77B1B)",
           }}
@@ -48,17 +48,17 @@ function Orb3D() {
       />
       <div className="absolute inset-0 flex items-center justify-center">
         <div
-          className="h-8 w-8 rounded-full ring-1 ring-primary/15 shadow-[0_14px_36px_rgba(233,120,28,0.18)]"
+          className="h-8 w-8 rounded-full ring-1 ring-primary/15 shadow-[0_14px_36px_rgba(235,153,44,0.18)]"
           style={{
             background:
-              "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.95), rgba(255,255,255,0.15) 40%, rgba(233,120,28,0.08) 75%)",
+              "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.95), rgba(255,255,255,0.15) 40%, rgba(235,153,44,0.08) 75%)",
           }}
         />
       </div>
       <div
         aria-hidden
         className="absolute -bottom-4 left-1/2 h-10 w-10 -translate-x-1/2 rounded-full blur-xl"
-        style={{ background: "rgba(233,120,28,0.18)" }}
+        style={{ background: "rgba(235,153,44,0.18)" }}
       />
     </div>
   );
@@ -79,8 +79,8 @@ function Ribbon3D() {
         aria-hidden
         className="absolute left-3 top-1.5 h-9 w-6 rounded-xl"
         style={{
-          background: "linear-gradient(180deg, rgba(233,120,28,0.65), rgba(233,120,28,0.18))",
-          boxShadow: "0 18px 40px rgba(233,120,28,0.18)",
+          background: "linear-gradient(180deg, rgba(235,153,44,0.65), rgba(235,153,44,0.18))",
+          boxShadow: "0 18px 40px rgba(235,153,44,0.18)",
         }}
       />
       <div
@@ -88,7 +88,7 @@ function Ribbon3D() {
         className="absolute right-3 top-1.5 h-9 w-6 rounded-xl bg-black/10"
       />
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="h-3 w-3 rounded-full bg-primary shadow-[0_16px_40px_rgba(233,120,28,0.22)]" />
+        <div className="h-3 w-3 rounded-full bg-primary shadow-[0_16px_40px_rgba(235,153,44,0.22)]" />
       </div>
     </div>
   );
@@ -109,7 +109,7 @@ function LeaderCard({ leader, isTop }: { leader: Leader; isTop: boolean }) {
           chip: "bg-[#FFF3D8] text-[#7B4F0A] ring-[#F2C76E]/60",
           edge: "border-[#F2C76E]/55",
           sheen:
-            "linear-gradient(135deg, rgba(255,255,255,0.70), rgba(255,255,255,0.14) 45%, rgba(233,120,28,0.12))",
+            "linear-gradient(135deg, rgba(255,255,255,0.70), rgba(255,255,255,0.14) 45%, rgba(235,153,44,0.12))",
         }
       : leader.tone === "silver"
         ? {
@@ -159,8 +159,8 @@ function LeaderCard({ leader, isTop }: { leader: Leader; isTop: boolean }) {
               className="h-2.5 rounded-full"
               style={{
                 width: `${leader.progress}%`,
-                background: "#e9781c",
-                boxShadow: "0 18px 44px rgba(233,120,28,0.22)",
+                background: "#eb992c",
+                boxShadow: "0 18px 44px rgba(235,153,44,0.22)",
               }}
             />
           </div>
@@ -209,7 +209,7 @@ function DynamicLeaderboard() {
         aria-hidden
         className="pointer-events-none absolute -inset-10 -z-10 blur-3xl"
         style={{
-          background: "radial-gradient(460px circle at 50% 58%, rgba(233,120,28,0.18), transparent 62%)",
+          background: "radial-gradient(460px circle at 50% 58%, rgba(235,153,44,0.18), transparent 62%)",
         }}
       />
 
@@ -242,7 +242,7 @@ function DynamicLeaderboard() {
                     ? {
                         boxShadow: [
                           "0 34px 110px rgba(0,0,0,0.22)",
-                          "0 34px 130px rgba(233,120,28,0.18)",
+                          "0 34px 130px rgba(235,153,44,0.18)",
                           "0 34px 110px rgba(0,0,0,0.22)",
                         ],
                       }
@@ -334,11 +334,11 @@ function ExplodedViewStage({
             <motion.div
               aria-hidden
               className="absolute inset-y-0 left-0 rounded-full blur-md"
-              style={{ width: "72%", background: "rgba(233,120,28,0.40)" }}
+              style={{ width: "72%", background: "rgba(235,153,44,0.40)" }}
               animate={{ opacity: [0.15, 0.32, 0.15] }}
               transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
             />
-            <div className="relative h-2.5 w-[72%] rounded-full bg-primary shadow-[0_18px_44px_rgba(233,120,28,0.20)]" />
+            <div className="relative h-2.5 w-[72%] rounded-full bg-primary shadow-[0_18px_44px_rgba(235,153,44,0.20)]" />
           </div>
           <p className="mt-2 text-xs font-semibold text-gray-600">Tips goal</p>
         </motion.div>

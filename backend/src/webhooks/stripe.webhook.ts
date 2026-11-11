@@ -45,6 +45,15 @@ import {
  */
 const router = Router();
 
+/** A test-mode event must never touch a live ledger, or a live event a test one. */
+export function isStripeEventModeMismatch(event: Pick<Stripe.Event, "livemode">, secretKey: string | undefined): boolean {
+  const key = secretKey?.trim() ?? "";
+  const keyLive = key.startsWith("sk_live_") || key.startsWith("rk_live_");
+  const keyTest = key.startsWith("sk_test_") || key.startsWith("rk_test_");
+  if (typeof event.livemode !== "boolean" || (!keyLive && !keyTest)) return false;
+  return event.livemode !== keyLive;
+}
+
 const TIP_EVENT_TYPES = new Set([
   "checkout.session.expired",
   "payment_intent.succeeded",
@@ -277,6 +286,11 @@ router.post("/stripe", async (req: Request, res: Response) => {
   } catch (err) {
     logServerError("stripe.webhook.verify", err, { phase: "signature_verify" });
     return res.status(400).send("Webhook signature verification failed");
+  }
+
+  if (isStripeEventModeMismatch(event, process.env.STRIPE_SECRET_KEY)) {
+    console.error("[stripe.webhook] mode mismatch: event ignored", { eventId: event.id, eventType: event.type });
+    return res.json({ received: true, ignored: "mode_mismatch" });
   }
 
   try {

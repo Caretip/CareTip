@@ -43,6 +43,8 @@ import {
   setAuthUser,
   subscribeAuthUser,
 } from "../lib/authUserStore";
+import { subscribeWithCatchUp } from "../lib/subscribeWithCatchUp";
+import { publishSessionEnded } from "../lib/authSessionBroadcast";
 import { clearEmployeeNotifications } from "../lib/employeeNotificationStore";
 import { resetAllClientSessionCaches } from "../lib/resetAllClientSessionCaches";
 import { performClientLogoutCleanup, captureLogoutSnapshot } from "../lib/clientLogout";
@@ -63,6 +65,7 @@ import {
   fallbackMessageForHttpStatus,
   SERVICE_UNAVAILABLE_CLIENT_MESSAGE,
   API_WAKEUP_NETWORK_MESSAGE,
+  userFacingErrorCopy,
 } from "../lib/errorMessages";
 import { AUTH_STORAGE_SYNC_EVENT, notifyAuthStorageSync } from "../lib/authStorageSync";
 
@@ -342,8 +345,23 @@ export function useAuth() {
   const [, syncAuthFlags] = useReducer((n: number) => n + 1, 0);
   const { authHydrated, sessionValidated } = getAuthSessionFlags();
 
-  useEffect(() => subscribeAuthUser(() => setUserSnapshot(getAuthUser())), []);
-  useEffect(() => subscribeAuthSessionFlags(() => syncAuthFlags()), []);
+  useEffect(() => subscribeWithCatchUp(subscribeAuthUser, () => setUserSnapshot(getAuthUser())), []);
+  useEffect(
+    () =>
+      subscribeWithCatchUp(
+        subscribeAuthSessionFlags,
+        () => syncAuthFlags(),
+        () => {
+          const latest = getAuthSessionFlags();
+          return (
+            latest.authHydrated !== authHydrated || latest.sessionValidated !== sessionValidated
+          );
+        },
+      ),
+    // Compares against the flags this subscription's first render used.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   useEffect(() => {
     const onStorageSync = () => {
@@ -535,6 +553,7 @@ export function useAuth() {
 
     // Clear session before route swap so AuthPage never paints authenticated chrome mid-handoff.
     const { clientCleanupMs } = performClientLogoutCleanup(snapshot);
+    publishSessionEnded("logout");
 
     flushSync(() => {
       navigate(snapshot.loginPath, { replace: true });
@@ -646,7 +665,7 @@ export function useAuth() {
       logClientError("useAuth.refreshSession", err);
       const msg = err instanceof Error ? err.message : "";
       if (msg === SERVICE_UNAVAILABLE_CLIENT_MESSAGE) {
-        toast.error(SERVICE_UNAVAILABLE_CLIENT_MESSAGE, { id: "caretip-auth-refresh-503" });
+        toast.error(userFacingErrorCopy(SERVICE_UNAVAILABLE_CLIENT_MESSAGE), { id: "caretip-auth-refresh-503" });
       }
       if (isTransientRefreshErrorMessage(msg)) {
         return loadUserFromStorage();

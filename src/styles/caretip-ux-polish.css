@@ -2,67 +2,139 @@
  * UX polish — branded loaders, image frames, route motion, action feedback.
  */
 
-/* —— Branded CareTip loader (quiet premium: orange mark + muted grey arc → one sentence) —— */
+/* —— Branded CareTip loader: the icon, a light tracing its contour, a glass sweep, diamond steps → one sentence —— */
 .app-branded-loader__mark {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1.35rem;
+  gap: 1.1rem;
   padding: 0.5rem 0.25rem;
   text-align: center;
 }
 
 .app-branded-loader__icon-wrap {
-  /* Secondary activity cue — muted token, never competes with CareTip orange logo */
-  --caretip-loader-arc: hsl(var(--muted-foreground) / 0.38);
+  --caretip-loader-trace: #eb992c;
+  --caretip-loader-track: rgb(235 153 44 / 0.16);
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+.dark .app-branded-loader__icon-wrap {
+  --caretip-loader-track: rgb(235 153 44 / 0.24);
+}
+
+/* Icon + glass sweep breathe together */
+.app-branded-loader__lift {
+  position: relative;
+  display: block;
+  animation: caretip-brand-loader-breathe 2.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
 .app-branded-loader__title {
   position: relative;
   z-index: 1;
+  display: block;
 }
 
-/*
- * Thin neutral progress arc around the mark (CSS-only).
- * Presentation-only — does not gate startup timing. No glow.
- */
+/* Glass sweep, clipped to the orange tile (14.29% inset, 22.86% corner radius of the icon art) */
+.app-branded-loader__shine {
+  position: absolute;
+  inset: 14.29%;
+  z-index: 2;
+  overflow: hidden;
+  border-radius: 22.86%;
+  pointer-events: none;
+}
+
+.app-branded-loader__shine::after {
+  content: "";
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: 0;
+  width: 45%;
+  background: linear-gradient(100deg, rgb(255 255 255 / 0) 0%, rgb(255 255 255 / 0.42) 50%, rgb(255 255 255 / 0) 100%);
+  transform: translateX(-160%) skewX(-12deg);
+  animation: caretip-brand-loader-sweep 2.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+/* Contour trace around the tile (CSS-only, presentation-only — does not gate startup timing) */
 .app-branded-loader__track {
   position: absolute;
-  inset: -0.5rem;
-  border-radius: 9999px;
-  pointer-events: none;
+  inset: 0;
   z-index: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.app-branded-loader__track rect {
+  fill: none;
+}
+
+.app-branded-loader__track-line {
+  stroke: var(--caretip-loader-track);
+  stroke-width: 7;
 }
 
 .app-branded-loader__indeterminate {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: conic-gradient(
-    from 210deg,
-    transparent 0deg 268deg,
-    color-mix(in srgb, var(--caretip-loader-arc) 55%, transparent) 268deg 308deg,
-    var(--caretip-loader-arc) 308deg 348deg,
-    transparent 348deg 360deg
-  );
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 0);
-  mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 0);
-  animation: caretip-brand-loader-orbit 1.6s linear infinite;
+  stroke: var(--caretip-loader-trace);
+  stroke-width: 13;
+  stroke-linecap: round;
+  stroke-dasharray: 0 18 10 72;
+  animation: caretip-brand-loader-orbit 1.8s linear infinite;
 }
 
-.app-branded-loader__mark--compact .app-branded-loader__track {
-  inset: -0.35rem;
+.app-branded-loader__indeterminate--tail {
+  stroke-opacity: 0.32;
+  stroke-width: 10;
+  stroke-dasharray: 28 72;
+}
+
+.app-branded-loader__mark--compact .app-branded-loader__track-line {
+  stroke-width: 10;
 }
 
 .app-branded-loader__mark--compact .app-branded-loader__indeterminate {
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 1.25px), #000 0);
-  mask: radial-gradient(farthest-side, transparent calc(100% - 1.25px), #000 0);
+  stroke-width: 19;
+}
+
+.app-branded-loader__mark--compact .app-branded-loader__indeterminate--tail {
+  stroke-width: 15;
+}
+
+/* Diamond steps — the CareTip diamond, lit in sequence */
+.app-branded-loader__steps {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 0.5rem;
+}
+
+.app-branded-loader__steps i {
+  width: 0.4375rem;
+  height: 0.4375rem;
+  background: #eb992c;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  opacity: 0.22;
+  animation: caretip-brand-loader-step 1.5s ease-in-out infinite;
+}
+
+.app-branded-loader__steps i:nth-child(2) {
+  animation-delay: 0.25s;
+}
+
+.app-branded-loader__steps i:nth-child(3) {
+  animation-delay: 0.5s;
+}
+
+.app-branded-loader__mark--calm .app-branded-loader__lift {
+  animation: none;
 }
 
 .app-branded-loader__tagline {
@@ -78,19 +150,55 @@
 
 @keyframes caretip-brand-loader-orbit {
   to {
-    transform: rotate(360deg);
+    stroke-dashoffset: -100;
+  }
+}
+
+@keyframes caretip-brand-loader-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.035);
+  }
+}
+
+@keyframes caretip-brand-loader-sweep {
+  0% {
+    transform: translateX(-160%) skewX(-12deg);
+  }
+  55%,
+  100% {
+    transform: translateX(330%) skewX(-12deg);
+  }
+}
+
+@keyframes caretip-brand-loader-step {
+  0%,
+  100% {
+    opacity: 0.22;
+    transform: scale(0.85);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.1);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .app-branded-loader__indeterminate {
+  .app-branded-loader__lift,
+  .app-branded-loader__indeterminate,
+  .app-branded-loader__steps i {
     animation: none;
-    background: conic-gradient(
-      from 200deg,
-      transparent 0deg 300deg,
-      var(--caretip-loader-arc) 300deg 340deg,
-      transparent 340deg 360deg
-    );
+  }
+
+  .app-branded-loader__shine {
+    display: none;
+  }
+
+  .app-branded-loader__steps i {
+    opacity: 0.55;
   }
 }
 

@@ -67,6 +67,10 @@ function getStripe(): Stripe {
   if (!key) {
     throw new Error("Stripe payment processing is not configured (set STRIPE_SECRET_KEY on the server)");
   }
+  // A test process must never hold a live key, however one reached it.
+  if (key.startsWith("sk_live_") && (process.env.NODE_ENV === "test" || process.env.CARETIP_TEST_ISOLATION === "1")) {
+    throw new Error("Refusing a live Stripe key in a test environment");
+  }
   if (!stripeSingleton) {
     stripeSingleton = new Stripe(key);
   }
@@ -1094,7 +1098,6 @@ export async function handleSuccessfulTipPayment(session: Stripe.Checkout.Sessio
     businessId: businessIdEarly,
     amount: session.amount_total != null ? session.amount_total / 100 : null,
     paymentStatus: session.payment_status ?? null,
-    metadata: session.metadata ?? {},
   });
 
   if (session.payment_status && session.payment_status !== "paid") {
@@ -1329,6 +1332,23 @@ export async function handleSuccessfulTipPayment(session: Stripe.Checkout.Sessio
       });
     }
 
+    try {
+      // A refund event can beat the tip here. It was skipped then, so it is picked up now.
+      const { applyExistingStripeRefundsAfterSuccessfulTip } = await import(
+        "./finance/tipRefunds.service.js"
+      );
+      await applyExistingStripeRefundsAfterSuccessfulTip({
+        paymentIntentId: piId,
+        listRefunds: async () =>
+          (await getStripe().refunds.list({ payment_intent: piId, limit: 20 })).data,
+      });
+    } catch (err) {
+      logServerError("stripe.handleSuccessfulTipPayment.existingRefunds", err, {
+        paymentIntentId: piId,
+        sessionId: session.id,
+      });
+    }
+
     console.info("[tip-reconcile] webhook_tip_created", {
       checkoutSessionId: session.id,
       paymentIntentId: piId,
@@ -1336,7 +1356,6 @@ export async function handleSuccessfulTipPayment(session: Stripe.Checkout.Sessio
       tipCreatedAt: tip.createdAt?.toISOString?.() ?? new Date().toISOString(),
       businessId,
       employeeId,
-      customerName: typeof md.customerName === "string" ? md.customerName : null,
       amountEur: confirmedEur,
     });
 

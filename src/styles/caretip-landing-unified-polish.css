@@ -38,8 +38,8 @@ html.dark .caretip-landing [data-landing-accent-compact] .caretip-landing-accent
   background: linear-gradient(
     104deg,
     rgba(251, 191, 36, 0.4) 0%,
-    rgba(233, 120, 28, 0.22) 48%,
-    rgba(233, 120, 28, 0.05) 100%
+    rgba(235, 153, 44, 0.22) 48%,
+    rgba(235, 153, 44, 0.05) 100%
   );
 }
 
@@ -54,7 +54,7 @@ html.dark .caretip-landing [data-landing-accent-compact] .caretip-landing-accent
   height: 4.75rem;
   transform: translateX(-50%);
   border-radius: 9999px;
-  background: rgb(233 120 28 / 0.04);
+  background: rgb(235 153 44 / 0.04);
   filter: blur(48px);
   pointer-events: none;
 }

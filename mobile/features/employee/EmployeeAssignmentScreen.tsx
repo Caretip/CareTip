@@ -61,7 +61,7 @@ export function EmployeeAssignmentScreen() {
           <Section title={t("employeeAssignment.locationLabel")}>
             {assignment?.location ? (
               <View style={styles.assignmentBlock}>
-                <MapPin size={16} color="#e9781c" />
+                <MapPin size={16} color="#eb992c" />
                 <View style={styles.assignmentTextWrap}>
                   <Text style={styles.assignmentPrimary}>{assignment.location.name}</Text>
                   {assignment.location.description ? (
@@ -87,7 +87,7 @@ export function EmployeeAssignmentScreen() {
                     key={table.id}
                     style={[styles.tableRow, index > 0 ? styles.tableRowBorder : null]}
                   >
-                    <UtensilsCrossed size={16} color="#e9781c" />
+                    <UtensilsCrossed size={16} color="#eb992c" />
                     <View style={styles.assignmentTextWrap}>
                       <Text style={styles.assignmentPrimary}>{table.name}</Text>
                       <Text style={styles.assignmentSecondary}>

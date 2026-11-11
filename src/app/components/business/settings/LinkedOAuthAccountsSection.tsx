@@ -38,7 +38,7 @@ import { AuthGoogleOAuthScope } from "@/app/components/auth/AuthGoogleOAuthScope
 import { useAuth } from "@/app/hooks/useAuth";
 import { isWalkthroughDemoAccount } from "@/app/lib/walkthroughDemo";
 
-const TEAL = "#e9781c";
+const TEAL = "#eb992c";
 
 function providerConfigured(provider: OAuthProviderId): boolean {
   switch (provider) {

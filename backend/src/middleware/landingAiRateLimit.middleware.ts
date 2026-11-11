@@ -1,17 +1,15 @@
-import rateLimit from "express-rate-limit";
+import { sharedRateLimit } from "./sharedRateLimit.middleware.js";
 
-export const landingAiChatLimiter = rateLimit({
+export const landingAiChatLimiter = sharedRateLimit({
+  scope: "landing-ai-chat",
   windowMs: 15 * 60 * 1000,
   max: 30,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { message: "Too many messages. Please wait a moment and try again." },
+  message: "Too many messages. Please wait a moment and try again.",
 });
 
-export const landingAiEventsLimiter = rateLimit({
+export const landingAiEventsLimiter = sharedRateLimit({
+  scope: "landing-ai-events",
   windowMs: 15 * 60 * 1000,
   max: 120,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { message: "Too many events." },
+  message: "Too many events.",
 });

@@ -21,9 +21,19 @@ export function isChunkLoadFailure(error: unknown): boolean {
     name === "ChunkLoadError" ||
     /Failed to fetch dynamically imported module/i.test(message) ||
     /Importing a module script failed/i.test(message) ||
+    /Unable to preload CSS/i.test(message) ||
     /Loading chunk [\w.-]+ failed/i.test(message) ||
     /error loading dynamically imported module/i.test(message)
   );
+}
+
+/**
+ * Handles Vite's `vite:preloadError`. The event is never cancelled: cancelling makes the failed
+ * dynamic import resolve to undefined and crash its caller. Left alone it stays a rejection for the
+ * retry and "needs a refresh" paths to handle, and any recovery reload proceeds regardless.
+ */
+export function handleVitePreloadError(): void {
+  recoverStaleChunkOnce();
 }
 
 /** Retry the same factory once. Does not reload the document. */

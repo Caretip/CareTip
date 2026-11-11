@@ -435,6 +435,7 @@ model User {
   auditLogs               AuditLog[]
   passwordResetTokens     PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
+  accountRecoveryRequests AccountRecoveryRequest[]
   mobileWebHandoffTokens  MobileWebHandoffToken[]
   refreshTokens           RefreshToken[]
   settings                UserSettings?
@@ -2129,6 +2130,38 @@ model LegalDocument {
 }
 
 /// Outbox for GDPR lifecycle jobs (Slice C expand — workers in later slices).
+/// Support-assisted recovery of an employee login. See docs/ops/employee-account-recovery.md.
+model AccountRecoveryRequest {
+  id                    String    @id @default(cuid())
+  userId                String    @map("user_id")
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  loginEmailAtRequest   String    @map("login_email_at_request")
+  replacementEmail      String    @map("replacement_email")
+  statement             String
+  status                String    @default("awaiting_email_proof")
+  requesterIpPrefix     String?   @map("requester_ip_prefix")
+  replacementVerifiedAt DateTime? @map("replacement_verified_at")
+  eligibleAt            DateTime? @map("eligible_at")
+  expiresAt             DateTime  @map("expires_at")
+  identityMethod        String?   @map("identity_method")
+  identityEvidenceRef   String?   @map("identity_evidence_ref")
+  identityVerifiedById  String?   @map("identity_verified_by_id")
+  identityVerifiedAt    DateTime? @map("identity_verified_at")
+  approvedById          String?   @map("approved_by_id")
+  approvedAt            DateTime? @map("approved_at")
+  approvalReason        String?   @map("approval_reason")
+  rejectedById          String?   @map("rejected_by_id")
+  rejectedAt            DateTime? @map("rejected_at")
+  rejectionReason       String?   @map("rejection_reason")
+  cancelledAt           DateTime? @map("cancelled_at")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  @@index([status, createdAt])
+  @@index([userId])
+  @@map("account_recovery_requests")
+}
+
 model DataLifecycleJob {
   id          String                   @id @default(cuid())
   type        DataLifecycleJobType

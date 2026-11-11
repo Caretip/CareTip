@@ -5,7 +5,8 @@ import {
   getBusinessStats,
   mergeBusinessDashboardStats,
 } from "../lib/api";
-import { createDashboardSwrStore, DASHBOARD_SWR_METRICS_TTL_MS } from "../lib/dashboardSwrCache";
+import { DASHBOARD_SWR_METRICS_TTL_MS } from "../lib/dashboardSwrCache";
+import { businessSwrStore, clearBusinessDashboardSwrStore } from "../lib/businessDashboardSwrStore";
 import {
   canUseDashboardSwrCache,
   canUsePeriodSwitchCache,
@@ -45,22 +46,11 @@ import {
 import { trackSocketPatchApplied } from "../lib/realtime/realtimeMetrics";
 import type { LiveNewTipPayload } from "../lib/realtime/realtimeContracts";
 import { consumePostLoginDashboardWarm } from "../lib/authPostLoginTransition";
+import { reportDashboardLoadFailure } from "../lib/dashboardLoadDiagnostics";
 
 export type { AnalyticsTimeframe };
 
-type BusinessSwrEntry = {
-  summary: Partial<BusinessDashboardStats>;
-  analytics: Partial<BusinessDashboardStats>;
-  merged: BusinessDashboardStats;
-  at: number;
-};
-
-const businessSwrStore = createDashboardSwrStore<BusinessSwrEntry>();
-
-export function clearBusinessDashboardSwrStore(): void {
-  businessSwrStore.clear();
-  clearBusinessAnalyticsStore();
-}
+export { clearBusinessDashboardSwrStore };
 
 function swrKey(tf: AnalyticsTimeframe): string {
   return `business:${tf}`;
@@ -150,6 +140,20 @@ export function useBusinessDashboardStats(
   const wasDashboardEnabledRef = useRef(false);
   const scheduleInactivePrefetchRef = useRef<(activeTf: AnalyticsTimeframe) => void>(() => {});
   const prevAdvancedAnalyticsRef = useRef<boolean | null>(null);
+  /**
+   * One-shot: the post-login warm just fetched this timeframe's KPIs from the network. The first
+   * dashboard load then requests only the missing charts slice instead of refetching the KPIs.
+   */
+  const postLoginFreshSummaryTfRef = useRef<AnalyticsTimeframe | null>(null);
+
+  /** Warm stats are often KPIs only. Treating them as the analytics slice would skip the charts request. */
+  const adoptCachedPeriodStats = useCallback(
+    (tf: AnalyticsTimeframe, periodStats: BusinessDashboardStats) => {
+      summaryPartialRef.current.set(tf, periodStats);
+      if (hasBusinessAnalyticsPayload(periodStats)) analyticsPartialRef.current.set(tf, periodStats);
+    },
+    [],
+  );
 
   const persistSwr = useCallback((tf: AnalyticsTimeframe) => {
     const summary = summaryPartialRef.current.get(tf);
@@ -187,8 +191,7 @@ export function useBusinessDashboardStats(
       if (!summaryPartial || !hasMetricValues(summaryPartial as BusinessDashboardStats)) {
         const bundle = getBusinessAnalyticsBundle(tf);
         if (bundle?.periodStats && hasMetricValues(bundle.periodStats as BusinessDashboardStats)) {
-          summaryPartialRef.current.set(tf, bundle.periodStats);
-          analyticsPartialRef.current.set(tf, bundle.periodStats);
+          adoptCachedPeriodStats(tf, bundle.periodStats as BusinessDashboardStats);
         } else {
           return false;
         }
@@ -202,9 +205,9 @@ export function useBusinessDashboardStats(
         return false;
       }
       if (!advancedAnalyticsEnabledRef.current) return true;
-      return Boolean(analyticsPartialRef.current.get(tf));
+      return hasBusinessAnalyticsPayload(analyticsPartialRef.current.get(tf));
     },
-    [],
+    [adoptCachedPeriodStats],
   );
 
   const commitUiStats = useCallback((tf: AnalyticsTimeframe, seq: number, fromNetwork: boolean) => {
@@ -329,8 +332,7 @@ export function useBusinessDashboardStats(
       if (trustPeriodCache) {
         const sharedBundle = getBusinessAnalyticsBundle(tf);
         if (sharedBundle?.periodStats && !revalidate) {
-          summaryPartialRef.current.set(tf, sharedBundle.periodStats);
-          analyticsPartialRef.current.set(tf, sharedBundle.periodStats);
+          adoptCachedPeriodStats(tf, sharedBundle.periodStats as BusinessDashboardStats);
         }
       }
 
@@ -353,7 +355,12 @@ export function useBusinessDashboardStats(
         networkSettledTfsRef.current.has(tf) &&
         Boolean(summaryPartial) &&
         (!revalidate || hasMetricValues(summaryPartial as BusinessDashboardStats));
-      let summarySettled = periodSessionReady && !revalidate;
+      const postLoginSummaryFresh =
+        postLoginFreshSummaryTfRef.current === tf &&
+        opts?.forceNetwork !== true &&
+        hasMetricValues(summaryPartial as BusinessDashboardStats);
+      if (postLoginFreshSummaryTfRef.current === tf) postLoginFreshSummaryTfRef.current = null;
+      let summarySettled = (periodSessionReady && !revalidate) || postLoginSummaryFresh;
       let analyticsSettled =
         !advancedAnalyticsEnabledRef.current
           ? summarySettled
@@ -538,6 +545,20 @@ export function useBusinessDashboardStats(
           const needsPeriodNetwork = !summarySettled || (!analyticsSettled && advancedAnalyticsEnabledRef.current);
 
           if (needsPeriodNetwork && (!summaryFromMemory || !analyticsSettled)) {
+            // Started alongside the KPI request: waiting for it first added a full round trip
+            // before the charts could even begin. KPIs still paint as soon as they land.
+            const deferredStatsRequest =
+              !analyticsSettled && advancedAnalyticsEnabledRef.current
+                ? getBusinessStats(tf, {
+                    scope: "analytics",
+                    signal: controller.signal,
+                    silent,
+                    revalidate,
+                  })
+                : null;
+            // Awaited below. If the KPI request fails first, this rejection has no other handler.
+            deferredStatsRequest?.catch(() => {});
+
             if (!summarySettled) {
               const aboveFoldStats = await fetchBusinessPeriodStats(tf, {
                 silent,
@@ -566,13 +587,8 @@ export function useBusinessDashboardStats(
               }
             }
 
-            if (!analyticsSettled && advancedAnalyticsEnabledRef.current) {
-              const deferredStats = await getBusinessStats(tf, {
-                scope: "analytics",
-                signal: controller.signal,
-                silent,
-                revalidate,
-              });
+            if (deferredStatsRequest) {
+              const deferredStats = await deferredStatsRequest;
               if (!stillActive()) return;
               analyticsPartialRef.current.set(tf, deferredStats);
               analyticsSettled = true;
@@ -639,15 +655,23 @@ export function useBusinessDashboardStats(
         const msg = toUserFriendlyMessage(err);
         if (handlePendingVerification(msg)) return;
         if (affectsUi && uiRequestSeqRef.current === seq) {
+          reportDashboardLoadFailure("stats", err, {
+            timeframe: tf,
+            phase: summarySettled ? "analytics" : "summary",
+          });
           if (!summarySettled) {
             setSummaryLoading(false);
+            // The charts request only starts after this one, so it will never clear its own flag.
+            setAnalyticsLoading(false);
             devSetHydrationPhase("metrics", "error");
             if (!hasMetricValues(statsRef.current)) setStatsLoadFailed(msg);
           } else if (!analyticsSettled) {
             setAnalyticsLoading(false);
             devSetHydrationPhase("charts", "error");
             devSetHydrationPhase("goals", "error");
-            if (!hasMetricValues(statsRef.current)) setStatsLoadFailed(msg);
+            // KPIs may be fine while this slice failed. The roster arrives with the KPIs, so it
+            // cannot stand in for chart data here: the charts would wait on a skeleton forever.
+            if (!statsRef.current?.dailyTipDistribution?.length) setStatsLoadFailed(msg);
           }
         }
       } finally {
@@ -680,6 +704,7 @@ export function useBusinessDashboardStats(
       isPeriodSessionReady,
       persistSwr,
       applyCachedToUi,
+      adoptCachedPeriodStats,
       abortInactiveTimeframes,
       cancelDeferredHeroMonth,
       cancelDeferredAnalytics,
@@ -784,8 +809,7 @@ export function useBusinessDashboardStats(
       if (canUsePeriodSwitchCache(hasSettledLiveUiRef.current)) {
         const bundle = getBusinessAnalyticsBundle(tf);
         if (bundle?.periodStats) {
-          summaryPartialRef.current.set(tf, bundle.periodStats);
-          analyticsPartialRef.current.set(tf, bundle.periodStats);
+          adoptCachedPeriodStats(tf, bundle.periodStats as BusinessDashboardStats);
         }
       }
       hydratePeriodSessionCache(tf);
@@ -830,6 +854,7 @@ export function useBusinessDashboardStats(
     },
     [
       abortInactiveTimeframes,
+      adoptCachedPeriodStats,
       cancelDeferredHeroMonth,
       cancelDeferredAnalytics,
       hydratePeriodSessionCache,
@@ -883,8 +908,8 @@ export function useBusinessDashboardStats(
 
     if (!hasSettledLiveUiRef.current) {
       if (postLoginWarm && warmStats) {
-        summaryPartialRef.current.set(tf, warmStats);
-        analyticsPartialRef.current.set(tf, warmStats);
+        adoptCachedPeriodStats(tf, warmStats);
+        if (hasMetricValues(warmStats)) postLoginFreshSummaryTfRef.current = tf;
         networkSettledTfsRef.current.add(tf);
         markDashboardLiveSettled(hasSettledLiveUiRef);
         persistSwr(tf);
@@ -1212,6 +1237,7 @@ export function useBusinessDashboardStats(
     !pendingVerification &&
     !hasBusinessAnalyticsPayload(displayStats) &&
     !hasBusinessAnalyticsPayload(stats) &&
+    !statsLoadFailed &&
     (analyticsLoading || chartsPayloadPending);
 
   const isGoalsInitialLoad =
@@ -1219,8 +1245,8 @@ export function useBusinessDashboardStats(
     sessionValidated &&
     !pendingVerification &&
     advancedAnalyticsEnabled &&
-    analyticsLoading &&
-    !isRevalidating &&
+    !statsLoadFailed &&
+    (analyticsLoading || chartsPayloadPending) &&
     !isBusinessGoalsPayloadSettled(displayStats);
 
   return {
@@ -1238,6 +1264,8 @@ export function useBusinessDashboardStats(
     analyticsLoading: isAnalyticsSectionLoading,
     analyticsTimeframeLoading: isPeriodRefreshing ? analyticsTimeframe : null,
     statsLoadFailed,
+    /** Charts and goals could not load: show that, not their empty or loading states. */
+    analyticsUnavailable: Boolean(statsLoadFailed) && !displayStats?.dailyTipDistribution?.length,
     pendingVerification,
     isInitialLoad: showMetricsSkeleton,
     isMetricsInitialLoad: showMetricsSkeleton,

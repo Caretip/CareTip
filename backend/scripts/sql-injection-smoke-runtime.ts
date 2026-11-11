@@ -12,7 +12,7 @@ import {
   sanitizeLikeContainsSearch,
 } from "../src/utils/likeSearch.js";
 
-const API = (process.env.RUNTIME_API_BASE ?? "http://localhost:3001").replace(/\/$/, "");
+const API = (process.env.RUNTIME_API_BASE ?? (process.env.CI ? "http://localhost:3001" : "http://127.0.0.1:9")).replace(/\/$/, "");
 
 export const SQLI_PAYLOADS = [
   "' OR 1=1--",

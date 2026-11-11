@@ -81,6 +81,7 @@ const admin = {
     id: "e2e-evidence-admin",
     email: "evidence-admin@e2e.local",
     role: "platform_admin",
+    isPlatformAdmin: true,
     name: "Evidence Admin",
     emailVerified: true,
     hasCompletedOnboarding: true,

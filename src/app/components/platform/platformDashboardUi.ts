@@ -36,7 +36,7 @@ export const platformUi = {
   backLink:
     "mb-5 inline-flex min-h-[44px] touch-manipulation items-center gap-2 text-sm font-medium text-primary transition-colors hover:text-foreground",
 
-  contentCard: "dashboard-panel-card rounded-lg border border-border/70 bg-card p-4 sm:p-5",
+  contentCard: "dashboard-panel-card rounded-2xl border border-border/60 bg-card p-4 shadow-[0_1px_2px_rgb(23_20_17/0.04)] sm:p-5",
 
   /** Overview hub — content on the page surface (Netlify-style). */
   overviewHero: "bg-transparent",
@@ -47,15 +47,15 @@ export const platformUi = {
   overviewTeaserCard:
     "flex h-full min-h-0 flex-col border-t border-border/70 bg-transparent p-0 pt-5 shadow-none",
 
-  dataPanel: "overflow-hidden rounded-lg border border-border/70 bg-card",
+  dataPanel: "overflow-hidden rounded-2xl border border-border/60 bg-card shadow-[0_1px_2px_rgb(23_20_17/0.04)]",
   mobileList: "space-y-2.5 p-3 max-lg:p-3 lg:hidden",
   tableWrap: "hidden overflow-x-auto lg:block",
-  table: "w-full text-sm",
+  table: "w-full text-sm tabular-nums",
   tableHeadRow: "border-b border-border bg-muted/30 text-left",
   tableTh:
-    "px-4 py-2.5 text-xs font-medium text-muted-foreground",
+    "px-4 py-3 text-xs font-medium text-muted-foreground",
   tableRow: "border-b border-border/60 transition-colors hover:bg-muted/25",
-  tableTd: "px-4 py-2.5",
+  tableTd: "px-4 py-3",
   panelFooter: "border-t border-border px-4 py-2.5 text-xs leading-relaxed text-muted-foreground",
   emptyState: "px-4 py-10 text-center text-sm text-muted-foreground",
 
@@ -72,7 +72,7 @@ export const platformUi = {
   analyticsControls: "flex w-full flex-col gap-2.5 max-lg:gap-3 sm:w-auto sm:max-w-[min(100%,16rem)] sm:items-end",
   analyticsChartsGrid: "platform-admin-charts-grid grid grid-cols-1 gap-4 max-lg:gap-5 lg:grid-cols-2 lg:gap-5",
 
-  analyticsCard: "overflow-hidden rounded-lg border border-border/70 bg-card",
+  analyticsCard: "overflow-hidden rounded-2xl border border-border/60 bg-card shadow-[0_1px_2px_rgb(23_20_17/0.04)]",
   analyticsCardHeader: "space-y-1.5 border-b border-border bg-muted/25 px-4 pb-3 pt-4 sm:px-5",
   analyticsCardTitle: "text-sm font-semibold text-foreground sm:text-base",
   analyticsCardDesc: "text-pretty text-xs leading-relaxed text-muted-foreground sm:text-sm",

@@ -26,6 +26,7 @@ export async function assertMfaVerifyAllowed(userId: string): Promise<void> {
     key: failureKey(userId),
     maxPerWindow: lock.maxFailures,
     windowMs,
+    fallback: "divided",
   });
   if (!peek.allowed) {
     throw new MfaVerifyLockedError();
@@ -40,6 +41,7 @@ export async function recordMfaVerifyFailure(userId: string): Promise<void> {
     key: failureKey(userId),
     maxPerWindow: lock.maxFailures,
     windowMs,
+    fallback: "divided",
   });
 }
 

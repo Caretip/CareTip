@@ -5,13 +5,13 @@ import { brand } from "./colors";
  * not a second splash orange. Canvas stays dark — orange is accents only.
  *
  * Sign In / primary auth CTA fill is `caretipPrimaryCtaGradient` (web 180deg
- * #ff9e2d → #e9781c), not a three-stop or diagonal mobile interpretation.
+ * #ff9e2d → #eb992c), not a three-stop or diagonal mobile interpretation.
  */
 export const authBrand = {
   orange: brand.orange,
   orangeDeep: brand.orangeDeep,
   orangeSoft: brand.orangeHover,
-  orangeMuted: "rgba(233, 120, 28, 0.92)",
+  orangeMuted: "rgba(235, 153, 44, 0.92)",
   white: "#FFFFFF",
   dark: "#0B1220",
   darkSoft: "#1A2332",
@@ -25,7 +25,7 @@ export const authBrand = {
   fieldFill: "rgba(8, 12, 20, 0.42)",
   fieldFillFocused: "rgba(8, 12, 20, 0.55)",
   fieldBorder: "rgba(255, 255, 255, 0.22)",
-  fieldBorderFocused: "rgba(233, 120, 28, 0.95)",
+  fieldBorderFocused: "rgba(235, 153, 44, 0.95)",
   fieldLabel: "rgba(255, 255, 255, 0.94)",
   fieldText: "#FFFFFF",
   fieldPlaceholder: "rgba(255, 255, 255, 0.82)",

@@ -98,6 +98,20 @@ export default defineConfig({
       },
     },
     {
+      name: "dashboard-refresh-webkit",
+      testMatch: /dashboard-refresh-resilience.spec.ts/,
+      use: {
+        ...devices["Desktop Safari"],
+      },
+    },
+    {
+      name: "dashboard-refresh-iphone-webkit",
+      testMatch: /dashboard-refresh-resilience.spec.ts/,
+      use: {
+        ...devices["iPhone 13"],
+      },
+    },
+    {
       name: "iphone-safari",
       testMatch: /mobile-menu\.spec\.ts/,
       use: {

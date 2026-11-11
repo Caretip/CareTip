@@ -26,7 +26,7 @@ export const DASH_EMPTY_STATE =
 export const DASH_EMPTY_ICON = "mb-3 h-9 w-9 opacity-20";
 
 export const DASH_BTN_PRIMARY =
-  "bg-primary text-primary-foreground shadow-[0_6px_18px_rgba(233,120,28,0.28)] hover:shadow-[0_8px_22px_rgba(233,120,28,0.32)] hover:bg-primary/90";
+  "bg-primary text-primary-foreground shadow-[0_6px_18px_rgba(235,153,44,0.28)] hover:shadow-[0_8px_22px_rgba(235,153,44,0.32)] hover:bg-primary/90";
 export const DASH_BTN_SECONDARY =
   "border-black/[0.10] bg-white text-foreground hover:bg-muted";
 

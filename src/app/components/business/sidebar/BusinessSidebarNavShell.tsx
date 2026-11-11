@@ -257,6 +257,7 @@ function SidebarGroup({
           isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
         )}
         aria-hidden={!isExpanded}
+        {...(isExpanded ? {} : { inert: "" })}
       >
         <ul className="overflow-hidden">
           {entry.children.map((child) => (

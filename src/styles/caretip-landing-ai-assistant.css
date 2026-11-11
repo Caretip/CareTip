@@ -51,7 +51,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
-  background: linear-gradient(145deg, hsl(var(--primary) / 0.92), hsl(var(--primary) / 0.72));
+  background: hsl(var(--primary));
   color: hsl(var(--primary-foreground));
 }
 

@@ -5,6 +5,7 @@ import { prisma } from "../../prisma.js";
 import { logServerError } from "../../utils/httpErrors.js";
 import { isPrismaUniqueViolation } from "../../utils/prismaErrors.js";
 import { emitQrScannedCanonical } from "../../socket/realtimeContracts.js";
+import { invalidateBusinessQrAnalyticsCache } from "./qrAnalytics.service.js";
 import {
   ACTIVITY_EVENT_TYPES,
   projectBusinessActivityEvent,
@@ -104,6 +105,8 @@ export async function persistQrScanEvent(
       },
     });
 
+    invalidateBusinessQrAnalyticsCache(businessId);
+
     if (!tx) {
       emitSideEffects(row, input, sessionId);
     }
@@ -182,6 +185,34 @@ function emitSideEffects(
   }
 }
 
+/**
+ * POST /api/qr/scan is public, so `notify` is only a request to notify. The names shown in a
+ * manager's inbox come from the scan's own verified location and table, never the request body.
+ */
+async function resolveQrNotifyNames(
+  businessId: string,
+  row: { locationId: string | null; tableId: string | null },
+): Promise<NonNullable<RecordQrScanEventInput["notify"]>> {
+  const [location, table] = await Promise.all([
+    row.locationId
+      ? prisma.location.findFirst({
+          where: { id: row.locationId, businessId },
+          select: { name: true },
+        })
+      : null,
+    row.tableId
+      ? prisma.table.findFirst({
+          where: { id: row.tableId, location: { businessId } },
+          select: { name: true, location: { select: { name: true } } },
+        })
+      : null,
+  ]);
+  return {
+    locationName: location?.name ?? table?.location.name,
+    tableName: table?.name,
+  };
+}
+
 /** Emit websocket/activity/notification after transactional scan insert commits. */
 export async function emitQrScanSideEffects(input: RecordQrScanEventInput, scanId: string): Promise<void> {
   const row = await prisma.qrScanEvent.findUnique({
@@ -199,7 +230,8 @@ export async function emitQrScanSideEffects(input: RecordQrScanEventInput, scanI
     },
   });
   if (!row) return;
-  emitSideEffects(row, input, row.sessionId);
+  const notify = input.notify ? await resolveQrNotifyNames(input.businessId, row) : undefined;
+  emitSideEffects(row, { ...input, notify }, row.sessionId);
 }
 
 /**

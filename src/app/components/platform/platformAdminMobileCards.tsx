@@ -90,7 +90,7 @@ export function PlatformTransactionMobileCard({ row }: { row: GlobalTransactionR
               ? t("admin.globalTransactionsPage.feeUnavailable")
               : t("admin.globalTransactionsPage.feeCell", {
                   percent: row.caretipFeePercent,
-                  fixed: (row.caretipFeeFixedCents / 100).toFixed(2),
+                  fixed: new Intl.NumberFormat("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(row.caretipFeeFixedCents / 100),
                   amount: formatEur(row.caretipFeeEur),
                 })}
           </dd>

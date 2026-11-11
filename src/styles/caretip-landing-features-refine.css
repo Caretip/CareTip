@@ -17,8 +17,8 @@ html:not(.dark) .caretip-landing #features.caretip-landing-features-section::bef
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 72% 48% at 14% 18%, rgba(233, 120, 28, 0.045) 0%, transparent 58%),
-    radial-gradient(ellipse 58% 42% at 92% 82%, rgba(233, 120, 28, 0.035) 0%, transparent 56%);
+    radial-gradient(ellipse 72% 48% at 14% 18%, rgba(235, 153, 44, 0.045) 0%, transparent 58%),
+    radial-gradient(ellipse 58% 42% at 92% 82%, rgba(235, 153, 44, 0.035) 0%, transparent 56%);
 }
 
 html.dark .caretip-landing #features.caretip-landing-features-section {
@@ -32,7 +32,7 @@ html.dark .caretip-landing #features.caretip-landing-features-section::before {
   pointer-events: none;
   background: radial-gradient(
     ellipse 70% 50% at 50% 0%,
-    rgba(233, 120, 28, 0.07) 0%,
+    rgba(235, 153, 44, 0.07) 0%,
     transparent 62%
   );
 }
@@ -64,7 +64,7 @@ html.dark .caretip-landing #features.caretip-landing-features-section::before {
 }
 
 html:not(.dark) .caretip-landing .caretip-landing-feature-panel--primary {
-  border: 1px solid rgba(233, 120, 28, 0.28) !important;
+  border: 1px solid rgba(235, 153, 44, 0.28) !important;
   background: var(--caretip-landing-card-bg, rgba(255, 255, 255, 0.94)) !important;
   box-shadow: var(--caretip-landing-card-shadow);
 }
@@ -76,7 +76,7 @@ html:not(.dark) .caretip-landing .caretip-landing-feature-panel--neutral {
 }
 
 html.dark .caretip-landing .caretip-landing-feature-panel--primary {
-  border: 1px solid rgba(233, 120, 28, 0.38) !important;
+  border: 1px solid rgba(235, 153, 44, 0.38) !important;
   background: rgba(18, 18, 18, 0.92) !important;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.24);
 }
@@ -94,7 +94,7 @@ html.dark .caretip-landing .caretip-landing-feature-panel--neutral {
   }
 
   html:not(.dark) .caretip-landing .caretip-landing-feature-panel--primary:hover {
-    border-color: rgba(233, 120, 28, 0.42) !important;
+    border-color: rgba(235, 153, 44, 0.42) !important;
   }
 
   html.dark .caretip-landing .caretip-landing-feature-panel:hover {
@@ -102,7 +102,7 @@ html.dark .caretip-landing .caretip-landing-feature-panel--neutral {
   }
 
   html.dark .caretip-landing .caretip-landing-feature-panel--primary:hover {
-    border-color: rgba(233, 120, 28, 0.52) !important;
+    border-color: rgba(235, 153, 44, 0.52) !important;
   }
 }
 
@@ -177,12 +177,12 @@ html.dark .caretip-landing .caretip-landing-feature-panel--neutral {
 
 .caretip-landing #features .caretip-landing-feature-icon--obsidian,
 .caretip-landing #payments-trust .caretip-landing-feature-icon--obsidian {
-  border: 1px solid rgba(233, 120, 28, 0.28);
+  border: 1px solid rgba(235, 153, 44, 0.28);
   background: linear-gradient(148deg, #141414 0%, #231810 46%, #0c0806 100%);
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.18),
-    0 8px 18px -10px rgba(233, 120, 28, 0.35),
-    0 0 22px -10px rgba(233, 120, 28, 0.11),
+    0 8px 18px -10px rgba(235, 153, 44, 0.35),
+    0 0 22px -10px rgba(235, 153, 44, 0.11),
     inset 0 1px 0 rgba(255, 255, 255, 0.07);
 }
 
@@ -192,7 +192,7 @@ html.dark .caretip-landing .caretip-landing-feature-panel--neutral {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: radial-gradient(circle at 28% 22%, rgba(233, 120, 28, 0.24) 0%, transparent 58%);
+  background: radial-gradient(circle at 28% 22%, rgba(235, 153, 44, 0.24) 0%, transparent 58%);
   pointer-events: none;
 }
 
@@ -202,8 +202,8 @@ html.dark .caretip-landing #payments-trust .caretip-landing-feature-icon--obsidi
   background: linear-gradient(148deg, #0a0a0a 0%, #1a120c 48%, #050403 100%);
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.4),
-    0 10px 22px -12px rgba(233, 120, 28, 0.28),
-    0 0 24px -10px rgba(233, 120, 28, 0.09),
+    0 10px 22px -12px rgba(235, 153, 44, 0.28),
+    0 0 24px -10px rgba(235, 153, 44, 0.09),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
@@ -219,8 +219,8 @@ html.dark .caretip-landing #payments-trust .caretip-landing-feature-icon__glyph-
     border-color: rgba(245, 158, 11, 0.42);
     box-shadow:
       0 2px 8px rgba(0, 0, 0, 0.22),
-      0 12px 24px -10px rgba(233, 120, 28, 0.45),
-      0 0 26px -8px rgba(233, 120, 28, 0.14),
+      0 12px 24px -10px rgba(235, 153, 44, 0.45),
+      0 0 26px -8px rgba(235, 153, 44, 0.14),
       inset 0 1px 0 rgba(255, 255, 255, 0.09);
   }
 }

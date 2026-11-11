@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils";
-import { BUSINESS_TYPE_I18N } from "../../lib/businessVenueOptions";
 import { getEmployees } from "../../lib/api";
 import { logClientError } from "../../lib/clientLog";
 import { buildPreviewStaffSlots } from "./businessOnboardingGuestPreview.utils";
@@ -21,10 +19,8 @@ function previewLine(value: string, placeholderKey: string, t: (key: string) => 
 export function BusinessOnboardingGuestPreview({
   legalBusinessName,
   businessType,
-  registeredAddress,
   logoFile,
   savedLogoPath,
-  employeeCount,
   businessId,
 }: BusinessOnboardingGuestPreviewProps) {
   const { t } = useTranslation();
@@ -44,25 +40,6 @@ export function BusinessOnboardingGuestPreview({
   const venueNameLine = useMemo(
     () => previewLine(legalBusinessName, "business.onboarding.preview.placeholderVenueName", t),
     [legalBusinessName, t],
-  );
-
-  const venueTypeLine = useMemo(() => {
-    if (!businessType.trim()) {
-      return {
-        text: t("business.onboarding.preview.placeholderVenueType"),
-        isPlaceholder: true,
-      };
-    }
-    const key = BUSINESS_TYPE_I18N[businessType];
-    return {
-      text: key ? t(key) : businessType,
-      isPlaceholder: false,
-    };
-  }, [businessType, t]);
-
-  const addressLine = useMemo(
-    () => previewLine(registeredAddress, "business.onboarding.preview.placeholderAddress", t),
-    [registeredAddress, t],
   );
 
   const hasBusinessName = legalBusinessName.trim().length > 0;
@@ -138,29 +115,20 @@ export function BusinessOnboardingGuestPreview({
             : t("business.onboarding.preview.guestAria")}
         </p>
 
-        <div className="business-onboarding-guest-preview__device" aria-hidden="true">
-          <div className="business-onboarding-guest-preview__device-notch" />
-          <div
-            className={cn(
-              "business-onboarding-guest-preview__device-screen",
-              "business-onboarding-guest-preview__device-screen--guest-experience",
-              "business-onboarding-final-phone",
-              "flex min-h-0 flex-col",
-            )}
-          >
+        <div className="onb-phone" aria-hidden="true">
+          <span className="onb-phone__btn onb-phone__btn--action" />
+          <span className="onb-phone__btn onb-phone__btn--up" />
+          <span className="onb-phone__btn onb-phone__btn--down" />
+          <span className="onb-phone__btn onb-phone__btn--power" />
+          <div className="onb-phone__glass">
             <BusinessOnboardingFinalPhoneScreen
               displayName={displayName}
               venueNameLine={venueNameLine}
-              venueTypeLine={venueTypeLine}
-              addressLine={addressLine}
               heroLogoSrc={heroLogoSrc}
               tipStaff={tipStaff}
-              employeeCount={employeeCount}
             />
           </div>
         </div>
-
-        <div className="business-onboarding-guest-preview__device-shadow" aria-hidden />
       </div>
     </section>
   );

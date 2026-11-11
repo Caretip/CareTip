@@ -8,7 +8,7 @@ const caretipBtnBase = [
   "whitespace-nowrap rounded-lg font-sans !leading-none tracking-tight",
   "transition-[box-shadow,background-color,border-color,opacity] duration-200 ease-out",
   "active:opacity-[0.96]",
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e9781c]/45 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#eb992c]/45 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
   "disabled:pointer-events-none disabled:opacity-50",
   "[&_svg]:pointer-events-none [&_svg]:shrink-0",
 ].join(" ");
@@ -24,13 +24,13 @@ export const caretipBtnSizeSecondary =
 /** Nav / compact toolbar */
 export const caretipBtnSizeCompact = "h-10 min-h-10 px-4 text-sm font-bold";
 
-export const caretipBtnPrimary = cn("caretip-btn-primary", caretipBtnBase, caretipBtnSizePrimary, "text-white");
+export const caretipBtnPrimary = cn("caretip-btn-primary", caretipBtnBase, caretipBtnSizePrimary, "text-black");
 
 export const caretipBtnPrimaryCompact = cn(
   "caretip-btn-primary caretip-btn-primary--compact",
   caretipBtnBase,
   caretipBtnSizeCompact,
-  "text-white",
+  "text-black",
 );
 
 export const caretipBtnSecondary = cn(

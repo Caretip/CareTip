@@ -248,3 +248,241 @@
 .caretip-mobile-drawer-panel .admin-sidebar-child-link--pending {
   font-weight: 600;
 }
+
+/* ---------- Platform admin: clean financial look (presentation only) ---------- */
+
+html body .caretip-dashboard-shell.platform-dashboard {
+  --pa-ink: #171411;
+  --pa-line: rgb(23 20 17 / 0.08);
+  --pa-line-strong: rgb(23 20 17 / 0.14);
+  --pa-surface: #fff;
+  --pa-head: #faf8f5;
+  --pa-hover: rgb(235 153 44 / 0.05);
+  --pa-diamond: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+
+html.dark body .caretip-dashboard-shell.platform-dashboard {
+  --pa-ink: hsl(var(--foreground));
+  --pa-line: rgb(255 255 255 / 0.08);
+  --pa-line-strong: rgb(255 255 255 / 0.14);
+  --pa-surface: hsl(var(--card));
+  --pa-head: rgb(255 255 255 / 0.03);
+  --pa-hover: rgb(235 153 44 / 0.07);
+}
+
+/* Numbers line up in every table, card and strip. */
+html body .caretip-dashboard-shell.platform-dashboard :is(table, .platform-admin-metric-strip, .platform-admin-metric-cell, .platform-admin-stat-grid, .platform-admin-overview-kpis) {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Page header */
+html body .caretip-dashboard-shell.platform-dashboard .platform-admin-page-header {
+  margin-bottom: 1.75rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--pa-line);
+}
+
+html body .caretip-dashboard-shell.platform-dashboard .platform-admin-page-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+html body .caretip-dashboard-shell.platform-dashboard .platform-admin-page-eyebrow::before {
+  content: "";
+  width: 0.4375rem;
+  height: 0.4375rem;
+  background: #eb992c;
+  clip-path: var(--pa-diamond);
+}
+
+html body .caretip-dashboard-shell.platform-dashboard .platform-admin-page-header__icon {
+  display: inline-flex;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  background: rgb(235 153 44 / 0.12);
+  color: var(--pa-ink);
+}
+
+html body .caretip-dashboard-shell.platform-dashboard .platform-admin-page-title {
+  color: var(--pa-ink);
+  font-size: clamp(1.5rem, 2.4vw, 1.875rem);
+  font-weight: 650;
+  letter-spacing: -0.028em;
+  line-height: 1.15;
+}
+
+html body .caretip-dashboard-shell.platform-dashboard .platform-admin-page-subtitle {
+  max-width: 62ch;
+  margin-top: 0.375rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+/* Metric strips: one bordered ledger card, label small, figure prominent */
+html body .caretip-dashboard-shell.platform-dashboard .platform-admin-metric-strip {
+  overflow: hidden;
+  border: 1px solid var(--pa-line);
+  border-radius: 1rem;
+  background: var(--pa-surface);
+  box-shadow: 0 1px 2px rgb(23 20 17 / 0.04);
+}
+
+html body .caretip-dashboard-shell.platform-dashboard .platform-admin-metric-cell__label {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+html body .caretip-dashboard-shell.platform-dashboard .platform-admin-metric-cell__value {
+  margin-top: 0.375rem;
+  color: var(--pa-ink);
+  font-size: clamp(1.125rem, 1.4vw, 1.5rem);
+  font-weight: 650;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+/* Each figure gets enough width to sit on one line; strips wrap into rows instead. */
+@media (min-width: 640px) {
+  html body .caretip-dashboard-shell.platform-dashboard .platform-admin-metric-strip {
+    grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr));
+    padding: 0;
+  }
+
+  html body .caretip-dashboard-shell.platform-dashboard .platform-admin-metric-cell {
+    padding: 1rem 1.125rem;
+    border-right: 1px solid var(--pa-line);
+    border-bottom: 1px solid var(--pa-line);
+    border-left: 0 !important;
+  }
+}
+
+@media (max-width: 639.98px) {
+  html body .caretip-dashboard-shell.platform-dashboard .platform-admin-metric-strip {
+    padding: 0.25rem 1rem;
+  }
+
+  html body .caretip-dashboard-shell.platform-dashboard .platform-admin-metric-cell + .platform-admin-metric-cell {
+    border-top: 1px solid var(--pa-line);
+  }
+}
+
+html body .caretip-dashboard-shell.platform-dashboard .platform-admin-metric-cell__hint {
+  margin-top: 0.5rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+/* Tables: quiet header band, hairline rows, warm hover */
+html body .caretip-dashboard-shell.platform-dashboard table thead tr {
+  border-bottom: 1px solid var(--pa-line-strong);
+  background: var(--pa-head);
+}
+
+html body .caretip-dashboard-shell.platform-dashboard table th {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+html body .caretip-dashboard-shell.platform-dashboard table tbody tr {
+  border-bottom: 1px solid var(--pa-line);
+}
+
+html body .caretip-dashboard-shell.platform-dashboard table tbody tr:hover {
+  background: var(--pa-hover);
+}
+
+/* Wide ledgers scroll sideways inside their panel instead of losing columns. */
+html body .caretip-dashboard-shell.platform-dashboard :has(> table.platform-admin-ledger-table) {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+/* Status badges: semantic colour, never orange-for-success */
+html body .caretip-dashboard-shell.platform-dashboard .platform-admin-status-badge {
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+html body .caretip-dashboard-shell.platform-dashboard .platform-admin-status-badge--success {
+  border-color: rgb(22 163 74 / 0.22);
+  background: rgb(22 163 74 / 0.09);
+  color: #15803d;
+}
+
+html body .caretip-dashboard-shell.platform-dashboard .platform-admin-status-badge--pending {
+  border-color: rgb(217 119 6 / 0.25);
+  background: rgb(217 119 6 / 0.09);
+  color: #b45309;
+}
+
+html body .caretip-dashboard-shell.platform-dashboard .platform-admin-status-badge--failure {
+  border-color: rgb(220 38 38 / 0.22);
+  background: rgb(220 38 38 / 0.08);
+  color: #b91c1c;
+}
+
+html body .caretip-dashboard-shell.platform-dashboard .platform-admin-status-badge--neutral {
+  border-color: var(--pa-line-strong);
+  background: rgb(23 20 17 / 0.04);
+  color: hsl(var(--foreground) / 0.8);
+}
+
+/* Filter bars sit on a card, aligned controls */
+html body .caretip-dashboard-shell.platform-dashboard .platform-admin-filter-bar {
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--pa-line);
+  border-radius: 0.875rem;
+  background: var(--pa-surface);
+}
+
+/* Row actions in data tables: outlined, so a page of rows is not a wall of orange */
+html body .caretip-dashboard-shell.platform-dashboard .platform-admin-row-action {
+  border: 1px solid var(--pa-line-strong);
+  border-radius: 0.625rem;
+  background: var(--pa-surface);
+  color: var(--pa-ink);
+  font-weight: 600;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+html body .caretip-dashboard-shell.platform-dashboard .platform-admin-row-action:hover:not(:disabled) {
+  border-color: #eb992c;
+  background: rgb(235 153 44 / 0.08);
+}
+
+/* Sidebar sub-items were shrunk to 8–9px by older rules: readable size, ink when active */
+html body .caretip-dashboard-shell.platform-dashboard .admin-sidebar-child-link {
+  font-size: 0.8125rem !important;
+  line-height: 1.35 !important;
+}
+
+html body .caretip-dashboard-shell.platform-dashboard .admin-sidebar-child-link[aria-current="page"] {
+  color: var(--pa-ink) !important;
+  font-weight: 650 !important;
+}
+
+@media (max-width: 1023.98px) {
+  html body .caretip-dashboard-shell.platform-dashboard .platform-admin-page-header {
+    margin-bottom: 1.25rem;
+    padding-bottom: 1.125rem;
+  }
+}

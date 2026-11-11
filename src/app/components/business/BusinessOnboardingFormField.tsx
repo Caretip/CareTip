@@ -31,6 +31,10 @@ type TextFieldProps = {
   hint?: string;
   error?: string;
   optional?: boolean;
+  /** Mobile keyboards and autofill. */
+  type?: "text" | "tel" | "url";
+  inputMode?: "text" | "tel" | "url";
+  autoComplete?: string;
 };
 
 export function BusinessOnboardingTextField({
@@ -41,6 +45,9 @@ export function BusinessOnboardingTextField({
   hint,
   error,
   optional,
+  type = "text",
+  inputMode,
+  autoComplete,
 }: TextFieldProps) {
   return (
     <label className="business-onboarding-field block min-w-0">
@@ -49,6 +56,9 @@ export function BusinessOnboardingTextField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        type={type}
+        inputMode={inputMode}
+        autoComplete={autoComplete}
         className={onboardingInput}
         aria-invalid={error ? true : undefined}
         aria-required={optional ? undefined : true}

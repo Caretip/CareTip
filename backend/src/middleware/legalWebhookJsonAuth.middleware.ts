@@ -1,5 +1,6 @@
 import type { RequestHandler } from "express";
 import { logLegalWebhookJsonAuthFailure } from "../utils/legalWebhookLogging.js";
+import { safeSecretEqual } from "../lib/safeCompare.js";
 
 /**
  * Legacy JSON webhook auth — Bearer token in Authorization header only.
@@ -17,7 +18,7 @@ export const legalWebhookJsonAuth: RequestHandler = (req, res, next) => {
   const match = /^Bearer\s+(.+)$/i.exec(header);
   const token = match?.[1]?.trim();
 
-  if (!token || token !== expected) {
+  if (!safeSecretEqual(token, expected)) {
     logLegalWebhookJsonAuthFailure(
       header ? "Invalid Bearer token" : "Missing Authorization header",
       req,

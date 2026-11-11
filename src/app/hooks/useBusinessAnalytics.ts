@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { logClientError } from "../lib/clientLog";
+import { isAbortError, toUserFriendlyMessage } from "../lib/errorMessages";
 
 import {
 
@@ -53,7 +54,7 @@ import {
   derivePeriodScopedSectionLoading,
   hasVisiblePeriodStats as dtoHasVisiblePeriodStats,
 } from "../lib/analyticsLoadingLifecycle";
-import type { BusinessAnalyticsBundle } from "../lib/businessAnalytics";
+import type { BusinessAnalyticsBundle, BusinessAnalyticsSlice } from "../lib/businessAnalytics";
 import { markAnalyticsPerformance } from "../lib/businessAnalytics/analyticsPerformanceMarks";
 
 
@@ -305,6 +306,9 @@ export function useBusinessAnalytics(
   const [tipsFeedReady, setTipsFeedReady] = useState(false);
 
   const [qrReady, setQrReady] = useState(false);
+  /** Why the last load came up short. Null while loading and after success. */
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [failedSlices, setFailedSlices] = useState<readonly BusinessAnalyticsSlice[]>([]);
 
 
 
@@ -372,13 +376,20 @@ export function useBusinessAnalytics(
 
   const load = useCallback(
 
-    async (opts?: { quiet?: boolean; periodSwitch?: boolean; revalidate?: boolean }) => {
+    async (opts?: { quiet?: boolean; periodSwitch?: boolean; revalidate?: boolean; userRetry?: boolean }) => {
 
       if (!enabled) return;
 
       const tf = timeframeRef.current;
       const gen = ++loadGenRef.current;
       const stillCurrent = () => gen === loadGenRef.current && tf === timeframeRef.current;
+      // A failed background refresh keeps what is on screen. Only a load the user is waiting on reports.
+      const reportsFailure = !opts?.revalidate || opts.userRetry === true;
+
+      if (reportsFailure) {
+        setLoadError(null);
+        setFailedSlices([]);
+      }
 
       const fetchOpts = {
         includeTipsFeed: includeTipsFeed && advancedAnalytics,
@@ -400,7 +411,7 @@ export function useBusinessAnalytics(
 
           if (!opts?.quiet) setLoading(false);
 
-          if (opts?.periodSwitch) setTimeframeLoading(false);
+          setTimeframeLoading(false);
 
           return;
 
@@ -455,17 +466,31 @@ export function useBusinessAnalytics(
 
         applyProgressBundle(bundle);
 
+        if (reportsFailure && bundle.failedSlices?.length) {
+          setFailedSlices(bundle.failedSlices);
+          setLoadError(toUserFriendlyMessage(bundle.firstFailure));
+        }
+
       } catch (err) {
+
+        if (isAbortError(err)) return;
 
         logClientError("useBusinessAnalytics", err);
 
+        if (reportsFailure && stillCurrent()) {
+          setFailedSlices(["aboveFold", "deferred", "weekStats", "tipsFeed", "qr"]);
+          setLoadError(toUserFriendlyMessage(err));
+        }
+
       } finally {
 
+        // The layout effect raises timeframeLoading for every load, including the first. Leaving it
+        // set here kept any section whose data never arrived on its skeleton for good.
         if (stillCurrent()) {
 
-          if (opts?.periodSwitch) setTimeframeLoading(false);
+          setTimeframeLoading(false);
 
-          else if (!opts?.quiet) setLoading(false);
+          if (!opts?.quiet) setLoading(false);
 
         }
 
@@ -604,6 +629,10 @@ export function useBusinessAnalytics(
 
   }, []);
 
+  const retry = useCallback(() => {
+    void loadRef.current({ revalidate: true, userRetry: true });
+  }, []);
+
 
 
   const socketReady = useDeferSocketConnect(enabled);
@@ -612,7 +641,7 @@ export function useBusinessAnalytics(
 
 
 
-  useRealtimeFallback(connected, refreshQuiet);
+  useRealtimeFallback(connected, refreshQuiet, undefined, { refreshOnReconnect: false });
 
   useRealtimeReconnect(() => {
 
@@ -742,16 +771,23 @@ export function useBusinessAnalytics(
 
   const bundleFetchInFlight = loading || timeframeLoading;
 
+  const periodStatsFailed = failedSlices.includes("aboveFold");
+  const deferredAnalyticsFailed = failedSlices.includes("deferred");
+  const tipsFeedFailed = failedSlices.includes("tipsFeed");
+  const qrFailed = failedSlices.includes("qr");
+
   const isPeriodStatsLoading = derivePeriodScopedSectionLoading({
     valuesMatchPeriod,
     sliceReady: periodStatsReady,
     fetchInFlight: bundleFetchInFlight,
+    failed: periodStatsFailed,
   });
 
   const isDeferredAnalyticsLoading = derivePeriodScopedSectionLoading({
     valuesMatchPeriod,
     sliceReady: deferredAnalyticsReady,
     fetchInFlight: bundleFetchInFlight,
+    failed: deferredAnalyticsFailed,
   });
 
   const isTipsFeedLoading = wantsTipsFeed
@@ -759,6 +795,7 @@ export function useBusinessAnalytics(
         valuesMatchPeriod,
         sliceReady: tipsFeedReady,
         fetchInFlight: bundleFetchInFlight,
+        failed: tipsFeedFailed,
       })
     : false;
 
@@ -767,6 +804,7 @@ export function useBusinessAnalytics(
         valuesMatchPeriod,
         sliceReady: qrReady,
         fetchInFlight: bundleFetchInFlight,
+        failed: qrFailed,
       })
     : false;
 
@@ -781,6 +819,8 @@ export function useBusinessAnalytics(
     valuesMatchPeriod,
 
     periodStatsReady,
+
+    periodStatsFailed,
 
   });
 
@@ -813,6 +853,18 @@ export function useBusinessAnalytics(
     isInitialAnalyticsLoading,
 
     isAnalyticsRefreshing,
+
+    loadError,
+
+    periodStatsFailed,
+
+    deferredAnalyticsFailed,
+
+    tipsFeedFailed,
+
+    qrFailed,
+
+    retry,
 
     valuesMatchPeriod,
 

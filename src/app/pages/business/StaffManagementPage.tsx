@@ -789,7 +789,9 @@ export function StaffManagementPage() {
       setShowEditModal(false);
       invalidateStaffRosterCaches();
       void fetchEmployees({ quiet: true, revalidate: true });
-      toastOk(t("business.staffPage.toastStaffUpdated"));
+      toastOk(
+        t(updated.emailChangePending ? "business.staffPage.toastEmailChangePending" : "business.staffPage.toastStaffUpdated"),
+      );
     } catch (err) {
       logClientError("StaffManagementPage", err);
       toastErr(toUserFriendlyMessage(err));

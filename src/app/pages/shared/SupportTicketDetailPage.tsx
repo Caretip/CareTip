@@ -34,6 +34,7 @@ import {
   setPageSessionCache,
   PAGE_CACHE_TTL_MEDIUM_MS,
 } from "@/app/lib/pageSessionCache";
+import { toDisplayErrorMessage } from "@/app/lib/errorMessages";
 
 const ADMIN_STATUSES: SupportTicketStatus[] = ["OPEN", "PENDING", "RESOLVED", "CLOSED"];
 
@@ -118,7 +119,7 @@ export function SupportTicketDetailPage() {
       setReply("");
       toast.success(t("support.detail.replySent"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("support.detail.replyError"));
+      toast.error(toDisplayErrorMessage(err, t("support.detail.replyError")));
     } finally {
       setSending(false);
     }
@@ -134,7 +135,7 @@ export function SupportTicketDetailPage() {
       setPageSessionCache(cacheKey, res.ticket);
       toast.success(t("support.detail.statusUpdated"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("support.detail.statusError"));
+      toast.error(toDisplayErrorMessage(err, t("support.detail.statusError")));
     } finally {
       setStatusUpdating(false);
     }

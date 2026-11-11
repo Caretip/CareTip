@@ -59,6 +59,7 @@ export function BusinessMobileSidebar({ isOpen, onClose }: BusinessMobileSidebar
           <button
             type="button"
             onClick={onClose}
+            aria-label={t("nav.closeMenu")}
             className={cn(
               "touch-manipulation inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-xl p-2.5",
               dashboardSidebarIconButtonIdle,
@@ -78,15 +79,16 @@ export function BusinessMobileSidebar({ isOpen, onClose }: BusinessMobileSidebar
         <BusinessSidebarNavShell onNavigate={onClose} showSubscriptionStatus={false} />
       </nav>
 
-      <div className="shrink-0 border-t border-sidebar-border px-3 pt-2 pb-4">
+      <div className="caretip-mobile-drawer-footer shrink-0">
         <BusinessSidebarUpgradeCta />
+        <div className="caretip-mobile-drawer-footer__actions">
         <button
           type="button"
           onClick={() => {
             openGuidelines();
             onClose();
           }}
-          className={cn(dashboardSidebarSignOutButton, "mb-1")}
+          className={dashboardSidebarSignOutButton}
         >
           <Rocket className="h-[1.125rem] w-[1.125rem] shrink-0 opacity-90" aria-hidden />
           <span className="text-sm font-medium">{t("business.dashboard.quickStartNavLabel")}</span>
@@ -113,6 +115,7 @@ export function BusinessMobileSidebar({ isOpen, onClose }: BusinessMobileSidebar
           ) : null}
           <span className="text-sm font-medium">{t("dashboard.signOut")}</span>
         </button>
+        </div>
       </div>
     </MobileDrawer>
   );

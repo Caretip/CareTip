@@ -1,3 +1,4 @@
+import { guestTipRetryPathForSession } from "../../lib/repeatTip";
 import { useNavigate, useSearchParams } from "react-router";
 import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -77,9 +78,13 @@ export function SuccessPage() {
               : toUserFriendlyMessage(verification.phase === "error" ? verification.message : undefined),
         },
       );
-      navigate("/", { replace: true });
+      // Back to that tip screen so the guest can try again; homepage only without a saved checkout.
+      // "error" means the status could not be read — the tip may have gone through, so never invite a
+      // second payment then. Definite outcomes (failed / expired / unpaid) go back to that tip screen.
+      const retryPath = verification.phase === "error" ? null : guestTipRetryPathForSession(sessionId);
+      navigate(retryPath ?? "/", { replace: true });
     }
-  }, [navigate, t, verification]);
+  }, [navigate, sessionId, t, verification]);
 
   const goToRating = () => {
     if (!sessionId) {

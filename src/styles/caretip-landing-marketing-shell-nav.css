@@ -5,7 +5,7 @@
  */
 
 .caretip-marketing-shell--landing {
-  --care-orange: #e9781c;
+  --care-orange: #eb992c;
   --care-ink: #1f2a35;
   --care-cream: #f8f4ed;
   background: var(--care-cream);
@@ -57,7 +57,7 @@
 }
 
 .caretip-marketing-shell--landing .caretip-public-nav-link:hover {
-  color: var(--care-orange, #e9781c);
+  color: var(--care-orange, #eb992c);
   background: transparent;
 }
 
@@ -67,13 +67,13 @@
 }
 
 .caretip-marketing-shell--landing .caretip-public-nav a[class*="caretip-btn-primary"] {
-  color: #fff !important;
-  -webkit-text-fill-color: #fff !important;
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
 }
 
 .caretip-marketing-shell--landing .caretip-public-nav a[href="/join"]:not([class*="caretip-btn"]) {
-  color: var(--care-orange, #e9781c) !important;
-  -webkit-text-fill-color: var(--care-orange, #e9781c) !important;
+  color: var(--care-orange, #eb992c) !important;
+  -webkit-text-fill-color: var(--care-orange, #eb992c) !important;
   font-weight: 700;
 }
 

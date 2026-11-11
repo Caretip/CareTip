@@ -32,13 +32,13 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 70% 55% at 12% 50%, rgba(233, 120, 28, 0.07), transparent 58%),
+    radial-gradient(ellipse 70% 55% at 12% 50%, rgba(235, 153, 44, 0.07), transparent 58%),
     radial-gradient(ellipse 55% 45% at 88% 30%, rgba(15, 23, 42, 0.04), transparent 62%);
 }
 
 html.dark .caretip-landing-motivation .caretip-motivation-ambient {
   background:
-    radial-gradient(ellipse 70% 55% at 12% 50%, rgba(233, 120, 28, 0.12), transparent 58%),
+    radial-gradient(ellipse 70% 55% at 12% 50%, rgba(235, 153, 44, 0.12), transparent 58%),
     radial-gradient(ellipse 55% 45% at 88% 30%, rgba(255, 255, 255, 0.03), transparent 62%);
   opacity: 0.9;
 }
@@ -127,7 +127,7 @@ html.dark .caretip-landing-motivation .caretip-motivation-ambient {
   bottom: clamp(0.875rem, 3.5vw, 1.35rem);
   max-width: min(15.5rem, calc(100% - 2rem));
   padding: 0.65rem 0 0.65rem 0.85rem;
-  border-left: 2px solid rgba(233, 120, 28, 0.92);
+  border-left: 2px solid rgba(235, 153, 44, 0.92);
 }
 
 .caretip-motivation-recognition__amount {
@@ -223,7 +223,7 @@ html.dark .caretip-landing-motivation .caretip-motivation-ambient {
   border-radius: 1.75rem;
   background: radial-gradient(
     ellipse 85% 70% at 50% 45%,
-    rgba(233, 120, 28, 0.1),
+    rgba(235, 153, 44, 0.1),
     transparent 68%
   );
   filter: blur(2px);
@@ -341,17 +341,17 @@ html.dark .caretip-motivation-activity__frame {
 
 .caretip-motivation-activity__card--primary {
   padding: 0.875rem 0.9375rem;
-  border-color: rgba(233, 120, 28, 0.22);
+  border-color: rgba(235, 153, 44, 0.22);
   background: linear-gradient(135deg, rgba(255, 253, 249, 0.98) 0%, hsl(var(--background)) 100%);
   box-shadow:
     0 1px 2px rgba(15, 23, 42, 0.05),
-    0 10px 24px -12px rgba(233, 120, 28, 0.14),
-    0 0 0 1px rgba(233, 120, 28, 0.06);
+    0 10px 24px -12px rgba(235, 153, 44, 0.14),
+    0 0 0 1px rgba(235, 153, 44, 0.06);
 }
 
 html.dark .caretip-motivation-activity__card--primary {
   background: linear-gradient(135deg, rgba(42, 36, 30, 0.55) 0%, hsl(var(--card) / 0.88) 100%);
-  border-color: rgba(233, 120, 28, 0.28);
+  border-color: rgba(235, 153, 44, 0.28);
 }
 
 .caretip-motivation-activity__card--compact {
@@ -410,7 +410,7 @@ html.dark .caretip-motivation-activity__card {
 }
 
 .caretip-motivation-activity__icon--tip {
-  background: rgba(233, 120, 28, 0.12);
+  background: rgba(235, 153, 44, 0.12);
   color: #c2410c;
 }
 

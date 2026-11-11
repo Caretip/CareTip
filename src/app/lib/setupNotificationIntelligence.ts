@@ -13,10 +13,33 @@ import {
 
 export type { SetupPromptKind, SetupPromptEvaluateItem, SetupPromptVisibilityResult };
 
-export async function evaluateSetupPrompts(
+type PendingEvaluation = {
+  items: SetupPromptEvaluateItem[];
+  result: Promise<SetupPromptVisibilityResult[]>;
+};
+
+let pendingEvaluation: PendingEvaluation | null = null;
+
+/**
+ * Prompts mounted in the same commit evaluate together: every dashboard renders more than one, and
+ * each used to send its own POST. Callers pick their own row out of the shared results by kind.
+ */
+export function evaluateSetupPrompts(
   items: SetupPromptEvaluateItem[],
 ): Promise<SetupPromptVisibilityResult[]> {
-  return evaluateSetupPromptsApi(items);
+  if (pendingEvaluation) {
+    pendingEvaluation.items.push(...items);
+    return pendingEvaluation.result;
+  }
+  const batch: PendingEvaluation = {
+    items: [...items],
+    result: Promise.resolve().then(() => {
+      pendingEvaluation = null;
+      return evaluateSetupPromptsApi(batch.items);
+    }),
+  };
+  pendingEvaluation = batch;
+  return batch.result;
 }
 
 export async function dismissSetupPrompt(

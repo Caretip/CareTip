@@ -11,7 +11,7 @@ export const DASHBOARD_WORKSPACE_FLAG = "dashboard-workspace";
 
 export const dashboardWorkspaceUi = {
   eyebrow: `${caretipType.overline} text-muted-foreground`,
-  pageTitle: caretipType.appTitle,
+  pageTitle: `dashboard-page-title ${caretipType.appTitle}`,
   sectionTitle: caretipType.appSubtitle,
   subsectionTitle: caretipType.h4,
   pageDescription: `dashboard-workspace-page-desc mt-1 max-w-prose ${caretipType.smallBody}`,

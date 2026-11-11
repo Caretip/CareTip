@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-08-20T13:12:04.760Z",
+  "generatedAt": "2026-11-07T18:26:20.669Z",
   "stats": {
-    "keysReferenced": 2840,
-    "missingEn": 4,
-    "missingDe": 4,
+    "keysReferenced": 3616,
+    "missingEn": 7,
+    "missingDe": 5,
     "enOnlyInDeGap": 0
   },
   "missingEn": [
@@ -26,9 +26,28 @@
       ]
     },
     {
-      "key": "common.dismiss",
+      "key": "business.qrStudio.print.placeOrder",
       "files": [
-        "src/app/components/business/VerificationPendingBanner.tsx"
+        "src/app/components/business/physical-branding/PrintQrStudio.tsx"
+      ]
+    },
+    {
+      "key": "business.qrStudio.print.placingOrder",
+      "files": [
+        "src/app/components/business/physical-branding/PrintQrStudio.tsx"
+      ]
+    },
+    {
+      "key": "business.qrStudio.print.quantityFor",
+      "files": [
+        "src/app/components/business/physical-branding/PrintQrStudio.tsx",
+        "src/app/components/business/physical-branding/PrintQrStudio.tsx"
+      ]
+    },
+    {
+      "key": "business.qrStudio.print.removeItem",
+      "files": [
+        "src/app/components/business/physical-branding/PrintQrStudio.tsx"
       ]
     }
   ],
@@ -52,9 +71,16 @@
       ]
     },
     {
-      "key": "common.dismiss",
+      "key": "business.qrStudio.print.quantityFor",
       "files": [
-        "src/app/components/business/VerificationPendingBanner.tsx"
+        "src/app/components/business/physical-branding/PrintQrStudio.tsx",
+        "src/app/components/business/physical-branding/PrintQrStudio.tsx"
+      ]
+    },
+    {
+      "key": "business.qrStudio.print.removeItem",
+      "files": [
+        "src/app/components/business/physical-branding/PrintQrStudio.tsx"
       ]
     }
   ],

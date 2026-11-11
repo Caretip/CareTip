@@ -90,7 +90,7 @@ export function PwaInstallPrompt() {
   if (deferred) {
     return (
       <div
-        className="caretip-pwa-install-banner fixed bottom-0 left-0 right-0 z-[100] border-t border-border bg-card/95 p-3 shadow-lg backdrop-blur-sm sm:left-auto sm:right-4 sm:bottom-4 sm:max-w-md sm:rounded-xl sm:border"
+        className="caretip-pwa-install-banner fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-card/95 p-3 shadow-lg backdrop-blur-sm sm:left-auto sm:right-4 sm:bottom-4 sm:max-w-md sm:rounded-xl sm:border"
         role="region"
         aria-label={t("pwaInstall.regionAria")}
       >
@@ -134,7 +134,7 @@ export function PwaInstallPrompt() {
   if (iosHint) {
     return (
       <div
-        className="caretip-pwa-install-banner fixed bottom-0 left-0 right-0 z-[100] border-t border-border bg-card/95 p-3 shadow-lg backdrop-blur-sm sm:left-auto sm:right-4 sm:bottom-4 sm:max-w-md sm:rounded-xl sm:border"
+        className="caretip-pwa-install-banner fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-card/95 p-3 shadow-lg backdrop-blur-sm sm:left-auto sm:right-4 sm:bottom-4 sm:max-w-md sm:rounded-xl sm:border"
         role="region"
         aria-label={t("pwaInstall.iosRegionAria")}
       >

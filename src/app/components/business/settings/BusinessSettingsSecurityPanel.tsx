@@ -14,7 +14,7 @@ import { BusinessSettingsPanelShell } from "./BusinessSettingsPanelShell";
 import { LinkedOAuthAccountsSection } from "./LinkedOAuthAccountsSection";
 import type { useBusinessSettingsData } from "./useBusinessSettingsData";
 
-const TEAL = "#e9781c";
+const TEAL = "#eb992c";
 
 type Props = Pick<
   ReturnType<typeof useBusinessSettingsData>,

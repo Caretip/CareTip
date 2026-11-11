@@ -5,10 +5,10 @@
 
 :root {
   --caretip-warm-dark-bg: linear-gradient(180deg, #161412 0%, #100f0d 42%, #0e0d0b 78%, #0c0b0a 100%);
-  --caretip-warm-dark-border: rgb(233 120 28 / 0.28);
+  --caretip-warm-dark-border: rgb(235 153 44 / 0.28);
   --caretip-warm-dark-glow: radial-gradient(
     ellipse 80% 50% at 50% 0%,
-    rgb(233 120 28 / 0.14) 0%,
+    rgb(235 153 44 / 0.14) 0%,
     transparent 58%
   );
   --caretip-wise-inset-margin: clamp(1.25rem, 4vw, 2.5rem);
@@ -47,7 +47,7 @@
   pointer-events: none;
   background: radial-gradient(
     ellipse 70% 55% at 50% 0%,
-    rgb(233 120 28 / 0.06) 0%,
+    rgb(235 153 44 / 0.06) 0%,
     transparent 68%
   );
   mask-image: linear-gradient(180deg, black 0%, transparent 92%);
@@ -95,8 +95,8 @@
 
 /* —— Shared hero card shell (Pricing standard) —— */
 .caretip-public-page-hero-card {
-  /* Company CTA orange #e9781c (not logo #EB992C) */
-  --caretip-page-hero-card-accent-rgb: 233 120 28;
+  /* Company CTA orange #eb992c (not logo #EB992C) */
+  --caretip-page-hero-card-accent-rgb: 235 153 44;
   --caretip-page-hero-card-dark-rgb: 22 20 18;
   background: linear-gradient(
     180deg,
@@ -119,7 +119,7 @@ html.dark .caretip-public-page-hero-card {
 
 /* —— Shared marketing page hero (Features, About, FAQ, Pricing) —— */
 .caretip-public-marketing-hero-wise {
-  --caretip-marketing-hero-accent-rgb: 233 120 28;
+  --caretip-marketing-hero-accent-rgb: 235 153 44;
   --caretip-marketing-hero-dark-rgb: 22 20 18;
   margin-bottom: 0;
 }
@@ -392,11 +392,11 @@ html.dark .caretip-public-warm-dark-cta {
   align-items: center;
   justify-content: center;
   border-radius: 0.75rem;
-  border: 1px solid rgb(233 120 28 / 0.28);
+  border: 1px solid rgb(235 153 44 / 0.28);
   background: linear-gradient(148deg, #141414 0%, #231810 46%, #0c0806 100%);
   box-shadow:
     0 1px 2px rgb(0 0 0 / 0.18),
-    0 8px 18px -10px rgb(233 120 28 / 0.35),
+    0 8px 18px -10px rgb(235 153 44 / 0.35),
     inset 0 1px 0 rgb(255 255 255 / 0.07);
 }
 
@@ -470,7 +470,7 @@ html.dark .caretip-public-warm-dark-cta {
 }
 
 .caretip-public-warm-dark-trust-strip .caretip-public-hero-pills__list > li > span > span[aria-hidden] {
-  background: var(--caretip-brand-orange, #e9781c);
+  background: var(--caretip-brand-orange, #eb992c);
 }
 
 html.dark .caretip-public-warm-dark-trust-strip .caretip-public-hero-pills__list > li > span {
@@ -523,11 +523,11 @@ html.dark .caretip-public-warm-dark-trust-strip .caretip-public-hero-pills__list
   align-items: center;
   justify-content: center;
   border-radius: 0.625rem;
-  border: 1px solid rgb(233 120 28 / 0.28);
+  border: 1px solid rgb(235 153 44 / 0.28);
   background: linear-gradient(148deg, #141414 0%, #231810 46%, #0c0806 100%);
   box-shadow:
     0 1px 2px rgb(0 0 0 / 0.18),
-    0 6px 14px -8px rgb(233 120 28 / 0.3),
+    0 6px 14px -8px rgb(235 153 44 / 0.3),
     inset 0 1px 0 rgb(255 255 255 / 0.07);
 }
 
@@ -586,10 +586,10 @@ html.dark .caretip-public-warm-dark-trust-strip .caretip-public-hero-pills__list
 }
 
 .caretip-feature-showcase-card--brand:hover {
-  border-color: rgb(233 120 28 / 0.38) !important;
+  border-color: rgb(235 153 44 / 0.38) !important;
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.04),
-    0 20px 48px -16px rgb(233 120 28 / 0.14) !important;
+    0 20px 48px -16px rgb(235 153 44 / 0.14) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

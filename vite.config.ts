@@ -28,6 +28,48 @@ function publicSiteOriginFromEnvValue(raw: string | undefined): string {
   }
 }
 
+/** Tells theme-init.js which files to start early, since their hashed names are only known here. */
+function bootAssetsMetaPlugin() {
+  return {
+    name: 'caretip-boot-assets-meta',
+    transformIndexHtml: {
+      order: 'post' as const,
+      handler(_html: string, ctx: { bundle?: Record<string, { fileName: string; facadeModuleId?: string | null }> }) {
+        const assets: Record<string, string> = {};
+        for (const { fileName, facadeModuleId } of Object.values(ctx.bundle ?? {})) {
+          const locale = /\/i18n\/locales\/(de|en)\.json/.exec(facadeModuleId ?? '');
+          if (locale) assets[locale[1]!] = `/${fileName}`;
+          if (/^assets\/landing-[\w-]+\.css$/.test(fileName)) assets.landingCss = `/${fileName}`;
+        }
+        if (!Object.keys(assets).length) return [];
+        return [
+          {
+            tag: 'meta',
+            attrs: { name: 'caretip-boot-assets', content: JSON.stringify(assets) },
+            injectTo: 'head-prepend' as const,
+          },
+        ];
+      },
+    },
+  };
+}
+
+/**
+ * Dev/preview proxy: when the backend on :3001 is not listening (starting, restarting, crashed),
+ * Vite answers an empty 500, which the app reads as a server bug ("Something went wrong").
+ * Answer 503 instead so the client classifies it as connectivity and keeps the session.
+ * Vite still logs the proxy error in the terminal.
+ */
+function apiProxyUnreachableAs503(proxy: { on: (event: 'error', cb: (err: Error, req: unknown, res: unknown) => void) => void }) {
+  proxy.on('error', (_err, _req, res) => {
+    const out = res as { headersSent?: boolean; writableEnded?: boolean; writeHead?: (s: number, h: Record<string, string>) => { end: (b: string) => void } } | undefined
+    if (!out || typeof out.writeHead !== 'function' || out.headersSent || out.writableEnded) return
+    out
+      .writeHead(503, { 'Content-Type': 'application/json', 'Retry-After': '2' })
+      .end(JSON.stringify({ message: 'Service temporarily unavailable', code: 'API_UNREACHABLE' }))
+  })
+}
+
 export default defineConfig(({ mode }) => {
   const repoRoot = fileURLToPath(new URL('.', import.meta.url))
   const loaded = loadEnv(mode, repoRoot, '')
@@ -72,8 +114,11 @@ export default defineConfig(({ mode }) => {
     target: 'es2022',
     outDir: 'dist',
     chunkSizeWarningLimit: 1500,
-    /** Avoid pulling the modulepreload polyfill (and its chunk deps) into the landing route. */
-    modulePreload: false,
+    /**
+     * Preload declared chunks in parallel. Without this each dependency was found only after its
+     * parent downloaded. No polyfill: it would land in the landing route.
+     */
+    modulePreload: { polyfill: false },
     rollupOptions: {
       output: {
         manualChunks(id) {
@@ -95,7 +140,11 @@ export default defineConfig(({ mode }) => {
           if (id.includes('i18next') || id.includes('react-i18next')) return 'vendor-i18n';
           if (id.includes('socket.io-client') || id.includes('engine.io-client')) return 'vendor-socket';
           if (id.includes('firebase')) return 'vendor-firebase';
-          if (id.includes('motion') && id.includes('node_modules')) return 'vendor-motion';
+          // Named packages only: a substring match also caught remotion, which pulled the video
+          // player into a chunk that every page loads.
+          if (inPackage('motion') || inPackage('framer-motion') || inPackage('motion-dom') || inPackage('motion-utils')) {
+            return 'vendor-motion';
+          }
           if (id.includes('html2canvas')) return 'vendor-html2canvas';
           if (id.includes('@radix-ui')) return 'vendor-radix';
           if (id.includes('react-router') || id.includes('@remix-run/router')) return 'vendor-router';
@@ -109,6 +158,7 @@ export default defineConfig(({ mode }) => {
     // Tailwind is not being actively used – do not remove them
     react(),
     tailwindcss(),
+    bootAssetsMetaPlugin(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: [
@@ -159,14 +209,13 @@ export default defineConfig(({ mode }) => {
          * Keep precache small so refreshes don't "re-download the world".
          * Large marketing/dashboard images live in `dist/assets/*` and should be runtime-cached instead.
          */
-        globPatterns: ['**/*.{js,css,html,ico,svg,woff2,json,webmanifest}'],
-        globIgnores: [
-          '**/assets/*.{png,jpg,jpeg,webp,gif}',
-          '**/vendor-three-*.js',
-          '**/vendor-jspdf-*.js',
-          '**/*HeroAnimation*',
-          '**/*SaasDashboard3D*',
+        globPatterns: [
+          'index.html',
+          '*.{ico,svg,webmanifest}',
+          'assets/index-*.{js,css}',
+          'assets/vendor-react-*.js',
         ],
+        globIgnores: ['**/assets/*.{png,jpg,jpeg,webp,gif}'],
         navigateFallback: 'index.html',
         navigateFallbackDenylist: [
           /^\/api(\/|$)/,
@@ -184,6 +233,16 @@ export default defineConfig(({ mode }) => {
           '/fcm-sw-handler.js',
         ],
         runtimeCaching: [
+          {
+            // Hashed filenames never change, so a stored copy is always correct.
+            urlPattern: ({ url }) => url.pathname.startsWith('/assets/') && /\.(js|css|woff2)$/i.test(url.pathname),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'caretip-route-chunks-v1',
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [200] },
+            },
+          },
           {
             // Hashed Vite assets: prefer network so deploys are not stuck on stale SWR entries.
             // Short timeout keeps offline/repeat visits fast via cache fallback.
@@ -247,6 +306,7 @@ export default defineConfig(({ mode }) => {
         secure: false,
         /** Keep refresh cookie on the Vite dev origin (localhost:5173). */
         cookieDomainRewrite: '',
+        configure: apiProxyUnreachableAs503,
       },
       '/socket.io': {
         target: 'http://localhost:3001',
@@ -269,6 +329,7 @@ export default defineConfig(({ mode }) => {
         secure: false,
         /** Keep refresh cookie on the Vite dev origin (localhost:5173). */
         cookieDomainRewrite: '',
+        configure: apiProxyUnreachableAs503,
       },
       '/socket.io': {
         target: 'http://localhost:3001',

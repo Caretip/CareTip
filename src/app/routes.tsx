@@ -26,6 +26,8 @@ import {
   employeeLayoutLazy,
   forgotPasswordPageLazy,
   resetPasswordPageLazy,
+  emailChangePageLazy,
+  accountRecoveryPageLazy,
   activateEmployeePageLazy,
   verifyEmailPageLazy,
   checkEmailPageLazy,
@@ -45,8 +47,14 @@ import { applyDocumentSeo } from './lib/seo/documentSeo';
 import { resolveForcedNoindexSeo } from './lib/seo/resolveRouteSeo';
 import { useTranslation } from 'react-i18next';
 
+/** Optional prompt at the app root: if its code cannot load, the page must still work. */
 const PwaInstallPrompt = lazy(() =>
-  import('./components/PwaInstallPrompt').then((m) => ({ default: m.PwaInstallPrompt })),
+  import('./components/PwaInstallPrompt')
+    .then((m) => ({ default: m.PwaInstallPrompt }))
+    .catch((err: unknown) => {
+      logClientError('routes.PwaInstallPrompt', err);
+      return { default: () => null };
+    }),
 );
 import { MarketingShellLayout } from './layouts/MarketingShellLayout';
 import { marketingChildRoutes } from './routing/marketingChildRoutes';
@@ -55,13 +63,41 @@ import { RatingPage } from './pages/customer/RatingPage';
 import { SuccessPage } from './pages/customer/SuccessPage';
 import { EmployeeQrEntryPage } from './pages/customer/EmployeeQrEntryPage';
 import { QRLandingPage } from './pages/customer/QRLandingPage';
-import { AuthPage } from './components/AuthPage';
 import { JoinPage } from './pages/JoinPage';
-import { PlatformAdminLoginPage } from './pages/platform/PlatformAdminLoginPage';
 import { AuthLogoutHandoffCover } from "./components/auth/AuthLogoutHandoffCover";
 import { RootSpaRouteHold } from "./routing/RootSpaRouteHold";
+import { authPageLazy, platformAdminLoginPageLazy } from "./routing/routeLazy";
+import { hasClientSessionHint } from "./lib/authSessionHint";
+import { runWhenIdle } from "./lib/runWhenIdle";
 import { LandingHeroPersistenceLayer } from "./components/landing/LandingHeroPersistenceLayer";
 import { isChunkLoadFailure } from "./lib/chunkLoadRecovery";
+
+const AuthPageChunk = lazy(() => authPageLazy().then(({ Component }) => ({ default: Component })));
+const PlatformAdminLoginChunk = lazy(() =>
+  platformAdminLoginPageLazy().then(({ Component }) => ({ default: Component })),
+);
+
+/** Suspends in place, so a sign-out never lands on an empty screen while the chunk loads. */
+function AuthPage() {
+  return (
+    <Suspense fallback={<RootSpaRouteHold />}>
+      <AuthPageChunk />
+    </Suspense>
+  );
+}
+
+function PlatformAdminLoginPage() {
+  return (
+    <Suspense fallback={<RootSpaRouteHold />}>
+      <PlatformAdminLoginChunk />
+    </Suspense>
+  );
+}
+
+// A signed-in visitor will land here on logout: have it ready, after the page has settled.
+if (typeof window !== "undefined" && hasClientSessionHint()) {
+  runWhenIdle(() => void authPageLazy(), 12_000);
+}
 // auth.css: imported by AuthPage / JoinPage / routeLazy auth helpers — not on every cold route.
 
 const LoaderDiagRuntime = import.meta.env.DEV
@@ -119,15 +155,15 @@ function ErrorBoundary() {
     (isChunkLoadFailure(error) ||
       (isRouteErrorResponse(error) && isChunkLoadFailure(error.data)));
   const title = is404
-    ? "Page not found"
+    ? t("common.errorScreen.notFoundTitle")
     : chunkFailed
-      ? "CareTip needs a refresh"
-      : "This page couldn’t load";
+      ? t("common.errorScreen.staleTitle")
+      : t("common.errorScreen.routeTitle");
   const message = is404
-    ? "The page you're looking for doesn't exist or may have been moved."
+    ? t("common.errorScreen.notFoundBody")
     : chunkFailed
-      ? "This version of CareTip is out of date in this browser. Refresh to load the latest screens."
-      : "Navigation hit an unexpected problem. Go home and try again, or refresh if you were in the middle of something.";
+      ? t("common.errorScreen.staleBody")
+      : t("common.errorScreen.routeBody");
 
   return (
     <div
@@ -143,14 +179,14 @@ function ErrorBoundary() {
             className="inline-block px-6 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary-hover transition-colors"
             onClick={() => window.location.reload()}
           >
-            Refresh
+            {t("common.errorScreen.staleAction")}
           </button>
         ) : (
           <a
             href="/"
             className="inline-block px-6 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary-hover transition-colors"
           >
-            Go back home
+            {t("common.errorScreen.homeAction")}
           </a>
         )}
       </div>
@@ -226,7 +262,7 @@ const routes: RouteObject[] = [
   },
   {
     path: '/auth',
-    // Eager with `/login`: RR `lazy` does not suspend Outlet — logout would white-screen.
+    // Not RR `lazy`, which does not suspend Outlet: logout would white-screen. See AuthPage below.
     Component: AuthPage,
     errorElement: <ErrorBoundary />,
   },
@@ -353,6 +389,16 @@ const routes: RouteObject[] = [
   {
     path: '/activate',
     lazy: activateEmployeePageLazy,
+    errorElement: <ErrorBoundary />,
+  },
+  {
+    path: '/account/recovery/:step?',
+    lazy: accountRecoveryPageLazy,
+    errorElement: <ErrorBoundary />,
+  },
+  {
+    path: '/account/email-change/:step',
+    lazy: emailChangePageLazy,
     errorElement: <ErrorBoundary />,
   },
   {
@@ -529,6 +575,7 @@ const routes: RouteObject[] = [
     errorElement: <ErrorBoundary />,
     children: [
       { path: 'dashboard', lazy: routeLazy(() => import('./components/AdminDashboard'), 'AdminDashboard') },
+      { path: 'account-recovery', lazy: routeLazy(() => import('./pages/platform/AccountRecoveryQueuePage'), 'AccountRecoveryQueuePage') },
       { path: 'businesses/all', lazy: routeLazy(() => import('./pages/platform/PlatformAllBusinessesPage'), 'PlatformAllBusinessesPage') },
       { path: 'businesses/onboarding-verification', lazy: routeLazy(() => import('./pages/platform/BusinessVerificationPage'), 'BusinessOnboardingVerificationPage') },
       { path: 'businesses/kyc-verification', lazy: routeLazy(() => import('./pages/platform/BusinessVerificationPage'), 'BusinessKycVerificationPage') },

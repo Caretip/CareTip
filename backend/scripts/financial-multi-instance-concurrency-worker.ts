@@ -20,6 +20,7 @@ export type WorkerRound =
       items: Array<{ employeeId: string; amountCents: number }>;
     }
   | { mode: "instant"; userId: string; key: string; termsVersion: string }
+  | { mode: "instant-business"; businessId: string; userId: string; key: string; termsVersion: string }
   | { mode: "billing-lease" }
   | {
       mode: "payout";
@@ -59,6 +60,7 @@ const { upsertStripeRefundEvent, upsertStripeDisputeEvent } = await import(
 );
 const { createTipDistributionBatch } = await import("../src/services/tipDistribution.service.js");
 const { createEmployeeInstantPayoutForUser } = await import("../src/services/employeeInstantPayout.service.js");
+const { createInstantPayoutForBusiness } = await import("../src/services/stripeConnectInstantPayout.service.js");
 const { handleConnectPayoutEvent } = await import("../src/services/stripeConnectPayout.service.js");
 const { acquireBillingReconciliationRun } = await import("../src/services/subscriptionBillingReconciliation.service.js");
 const { prisma } = await import("../src/prisma.js");
@@ -100,6 +102,16 @@ async function runRound(round: WorkerRound): Promise<string | null> {
         language: "en",
       });
       return payout.status;
+    }
+    case "instant-business": {
+      const { payout } = await createInstantPayoutForBusiness({
+        businessId: round.businessId,
+        userId: round.userId,
+        idempotencyKey: round.key,
+        termsVersion: round.termsVersion,
+        language: "en",
+      });
+      return payout.id;
     }
     case "billing-lease":
       return (await acquireBillingReconciliationRun(new Date()))?.id ?? null;

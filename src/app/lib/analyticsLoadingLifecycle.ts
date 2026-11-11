@@ -18,7 +18,10 @@ export function derivePeriodScopedSectionLoading(opts: {
   valuesMatchPeriod: boolean;
   sliceReady: boolean;
   fetchInFlight: boolean;
+  /** The last fetch for this slice failed: it is not loading, and nothing further will arrive. */
+  failed?: boolean;
 }): boolean {
+  if (opts.failed) return false;
   if (!opts.valuesMatchPeriod) return true;
   return !opts.sliceReady && opts.fetchInFlight;
 }
@@ -35,6 +38,7 @@ export function deriveAnalyticsLoadingLifecycle(opts: {
   valuesMatchPeriod: boolean;
   /** Above-fold period stats committed for the selected period. */
   periodStatsReady: boolean;
+  periodStatsFailed?: boolean;
 }): {
   isInitialAnalyticsLoading: boolean;
   isAnalyticsRefreshing: boolean;
@@ -45,6 +49,7 @@ export function deriveAnalyticsLoadingLifecycle(opts: {
     isTimeframeLoading,
     valuesMatchPeriod,
     periodStatsReady,
+    periodStatsFailed,
   } = opts;
 
   const bundleFetchInFlight = isColdLoading || isTimeframeLoading;
@@ -58,6 +63,7 @@ export function deriveAnalyticsLoadingLifecycle(opts: {
       valuesMatchPeriod,
       sliceReady: periodStatsReady,
       fetchInFlight: bundleFetchInFlight,
+      failed: periodStatsFailed,
     });
 
   return { isInitialAnalyticsLoading, isAnalyticsRefreshing };

@@ -127,7 +127,7 @@ async function main() {
       }
     }
 
-    const apiBase = process.env.RUNTIME_API_BASE?.trim() || "http://localhost:3001";
+    const apiBase = process.env.RUNTIME_API_BASE?.trim() || (process.env.CI ? "http://localhost:3001" : "http://127.0.0.1:9");
     const forgedToken = signAuthJwt({
       userId: registered.user.id,
       id: registered.user.id,

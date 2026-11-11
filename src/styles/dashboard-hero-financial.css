@@ -399,9 +399,8 @@
 }
 
 :is(.business-dashboard-hero, .employee-dashboard-hero) .dashboard-hero-financial-panel .dashboard-hero-financial__zone--primary .dashboard-hero-financial__label-meta {
-  display: block;
-  margin-top: 0.125rem;
-  font-size: 0.625rem;
+  display: inline;
+  font-size: 0.75rem;
   font-weight: 400;
   letter-spacing: 0.01em;
   color: hsl(var(--muted-foreground) / 0.72);

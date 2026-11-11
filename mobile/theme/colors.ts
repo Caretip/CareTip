@@ -3,22 +3,22 @@
  * Palette: Grey / Raenest / Revolut inspired hospitality fintech.
  *
  * Brand orange matches web app CTA primary (`src/styles/caretip-brand.css` /
- * `src/lib/caretipBrand.ts` — `#e9781c`).
+ * `src/lib/caretipBrand.ts` — `#eb992c`).
  *
  * Do not invent a mobile-only CareTip orange. Web tokens are the source of truth:
  *   --caretip-brand-orange-light: #ff9e2d
- *   --caretip-brand-orange:       #e9781c
+ *   --caretip-brand-orange:       #eb992c
  *   --caretip-brand-orange-hover: #ffb04a
  */
 
 export const brand = {
-  orange: "#e9781c",
+  orange: "#eb992c",
   orangeLight: "#ff9e2d",
   orangeHover: "#ffb04a",
-  orangeSoft: "rgba(233, 120, 28, 0.12)",
-  orangeMuted: "rgba(233, 120, 28, 0.22)",
+  orangeSoft: "rgba(235, 153, 44, 0.12)",
+  orangeMuted: "rgba(235, 153, 44, 0.22)",
   /** Tonal shade for dashboard hero/illustration gradients — not the Sign In CTA. */
-  orangeDeep: "#d96810",
+  orangeDeep: "#eb992c",
 } as const;
 
 /**
@@ -36,9 +36,9 @@ export const brand = {
  *     )
  *
  * Token values: `src/styles/caretip-brand.css` / `src/lib/caretipBrand.ts`
- *   light #ff9e2d → base #e9781c
+ *   light #ff9e2d → base #eb992c
  * Direction: 180deg = top → bottom. Two stops only. Colors are fully opaque.
- * Hover (not the resting CTA): 180deg #ffb04a → #e9781c.
+ * Hover (not the resting CTA): 180deg #ffb04a → #eb992c.
  *
  * expo-linear-gradient mapping for 180deg: start {x:0.5,y:0} → end {x:0.5,y:1}.
  */

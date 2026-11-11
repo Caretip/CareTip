@@ -100,7 +100,7 @@ export const LanguageSelectDropdown = memo(function LanguageSelectDropdown({
       <button
         type="button"
         className="caretip-lang-select__trigger touch-manipulation"
-        aria-label={`${ariaLabel}, ${t(active.labelKey)}`}
+        aria-label={`${t(active.labelKey)} ${active.code.toUpperCase()}, ${ariaLabel}`}
         aria-expanded={open}
         aria-haspopup="listbox"
         onClick={() => onOpenChange(!open)}

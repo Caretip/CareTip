@@ -41,6 +41,7 @@ import { isProtectedApiReady } from "@/app/lib/authRestore";
 import { useBusinessPageBoot } from "@/app/lib/useBusinessPageBoot";
 import { withIdleSuppressSync } from "@/app/lib/idleSuppress";
 import { formatVenueDateTime, resolveBusinessTimezone, setCachedBusinessVenueTimezone, venueLocalTodayKey } from "@/app/lib/businessVenueTime";
+import { toDisplayErrorMessage } from "@/app/lib/errorMessages";
 
 type TipsActivityCache = {
   items: TipActivityRow[];
@@ -187,7 +188,7 @@ export function TipsActivityPage({ variant = "default", embedded = false }: Tips
         setItems([]);
         setTotal(0);
         setDataTimezone(null);
-        setError(e instanceof Error ? e.message : copy("loadFailed"));
+        setError(toDisplayErrorMessage(e, copy("loadFailed")));
       }
     } finally {
       if (!quiet && !useCachedFirst) setLoading(false);
@@ -291,6 +292,7 @@ export function TipsActivityPage({ variant = "default", embedded = false }: Tips
           <div className="flex flex-wrap gap-3">
             <div className="relative">
               <select
+                aria-label={copy("statusAll")}
                 value={status}
                 onChange={(e) => {
                   setPage(1);
@@ -308,6 +310,7 @@ export function TipsActivityPage({ variant = "default", embedded = false }: Tips
 
             <div className="relative">
               <select
+                aria-label={copy("rangePickDates")}
                 value={range}
                 onChange={(e) => {
                   setPage(1);
@@ -360,6 +363,7 @@ export function TipsActivityPage({ variant = "default", embedded = false }: Tips
             {canExportCsv ? (
             <Button
               type="button"
+              aria-label={exporting ? t("business.tipsActivity.exporting") : t("business.tipsActivity.export")}
               disabled={exportDisabled}
               onClick={() => {
                 if (items.length === 0) return;
@@ -422,7 +426,10 @@ export function TipsActivityPage({ variant = "default", embedded = false }: Tips
       >
         {showTipsSkeleton ? (
           <div className={cn(ui.tablePanel, dashboardSharedUi.mobileFlatSurface, "dashboard-mobile-flat-surface overflow-hidden")}>
-            <TipsActivityTableSkeleton />
+            {/* The skeleton renders table rows (<tbody>), so it needs a table around it. */}
+            <table className="w-full border-collapse text-sm" aria-hidden>
+              <TipsActivityTableSkeleton />
+            </table>
           </div>
         ) : items.length === 0 ? (
           <div className={cn(ui.tablePanel, dashboardSharedUi.mobileFlatSurface, "dashboard-mobile-flat-surface overflow-hidden")}>

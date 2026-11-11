@@ -200,6 +200,11 @@ async function main() {
       scanType: QR_SCAN_TYPES.EMPLOYEE_LEGACY_SLUG,
       employeeId: fx.employeeId,
       req: mockReq(sessionDedupe, `/api/staff/${fx.employeeSlug}`),
+      dedupeKey: buildScanDedupeKey({
+        businessId: fx.businessId,
+        sessionId: sessionDedupe,
+        at: new Date(),
+      }),
     };
     const dedupeResults = await Promise.all(
       Array.from({ length: 100 }, () => persistQrScanEvent(dedupeInput)),

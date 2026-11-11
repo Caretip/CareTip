@@ -84,7 +84,7 @@ export function ContactSupportForm({ onBack, onSwitchToDemo, className }: Contac
 
       <div className={cn(contactPageUi.layout, "caretip-contact-layout--form")}>
         <aside className={cn(contactPageUi.flowAside, "caretip-contact-flow__aside--editorial")}>
-          <h2 className={contactPageUi.flowTitle}>{t("staticPages.contact.support.title")}</h2>
+          <h1 className={contactPageUi.flowTitle}>{t("staticPages.contact.support.title")}</h1>
           <ul className={contactPageUi.flowList}>
             {bullets.map((item) => (
               <li key={item}>

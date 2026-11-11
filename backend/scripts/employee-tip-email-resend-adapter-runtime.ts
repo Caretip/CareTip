@@ -11,6 +11,9 @@ import { employeeTipEmailCopy } from "../src/services/notifications/employeeTipN
 import { sendLocalizedUserNotificationEmail } from "../src/services/localizedNotificationEmail.service.ts";
 import { sendResendEmailWithOutcome } from "../src/services/resendClient.ts";
 
+// This test replaces fetch, so the real adapter can run without any request leaving the process.
+process.env.CARETIP_RESEND_FETCH_IS_MOCKED = "1";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 type Captured = { url: string; auth: string | null; body: Record<string, unknown> };

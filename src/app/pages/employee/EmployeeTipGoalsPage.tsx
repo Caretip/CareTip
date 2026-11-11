@@ -31,6 +31,7 @@ import {
   writeEmployeeGoalsSnapshot,
 } from "../../lib/employeePageSessionCache";
 import { invalidateEmployeeGoalClientCaches } from "../../lib/employeeGoalClientSync";
+import { toDisplayErrorMessage } from "@/app/lib/errorMessages";
 
 function formatEur(value: number): string {
   try {
@@ -141,7 +142,7 @@ export function EmployeeTipGoalsPage() {
     } catch (e) {
       logClientError("EmployeeTipGoalsPage.refresh", e);
       setGoals([]);
-      setLoadError(e instanceof Error ? e.message : t("employee.tipGoals.loadFailed"));
+      setLoadError(toDisplayErrorMessage(e, t("employee.tipGoals.loadFailed")));
       return null;
     }
   }, [applyGoals, t]);

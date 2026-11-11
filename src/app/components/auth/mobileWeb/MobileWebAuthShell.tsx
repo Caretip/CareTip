@@ -1,11 +1,9 @@
 import { type FormEvent, type ReactNode } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, ChevronDown, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { CareTipLogo } from "@/app/components/CareTipLogo";
 import type { AuthRole } from "@/components/ui/sign-in-card-2";
-import { changeAppLanguage, type AppLanguage } from "@/i18n/i18n";
-import { LanguageFlag } from "@/components/i18n/LanguageFlag";
 import { AuthButton } from "./AuthButton";
 import { AuthCard } from "./AuthCard";
 import { AuthHeader } from "./AuthHeader";
@@ -26,6 +24,28 @@ function MobileWebAuthBackNav() {
         <ArrowLeft className="mw-auth-back__icon" strokeWidth={2.25} aria-hidden />
         <span className="mw-auth-back__label">{label}</span>
       </Link>
+    </div>
+  );
+}
+
+function MobileWebAuthHero({
+  title,
+  subtitle,
+  icon,
+}: {
+  title?: string;
+  subtitle?: string;
+  icon?: ReactNode;
+}) {
+  return (
+    <div className="mw-auth-hero">
+      <div className="mw-auth-hero__bar">
+        <MobileWebAuthBackNav />
+        <div className="mw-auth-brand">
+          <CareTipLogo size="auth" variant="wordmark" tone="white" className="mw-auth-brand__logo" />
+        </div>
+      </div>
+      {title ? <AuthHeader title={title} subtitle={subtitle} icon={icon} /> : null}
     </div>
   );
 }
@@ -91,7 +111,7 @@ export function MobileWebAuthShell({
   merchantLegalAccepted = false,
   onMerchantLegalAcceptedChange,
 }: MobileWebAuthShellProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const isEmployee = authLane === "employee";
   const isLogin = mode === "login";
   const legalGateOk = isLogin || isEmployee || merchantLegalAccepted;
@@ -99,22 +119,12 @@ export function MobileWebAuthShell({
     isLogin ||
     (!isEmployee && merchantLegalAccepted) ||
     (isEmployee && inviteCode.trim().length > 0 && name.trim().length > 0);
-  const activeLang: AppLanguage = i18n.resolvedLanguage?.toLowerCase().startsWith("de")
-    ? "de"
-    : "en";
-
-  const toggleLocale = () => {
-    void changeAppLanguage(activeLang === "de" ? "en" : "de");
-  };
 
   if (sessionBanner) {
     return (
       <div className="mw-auth" data-mw-auth="session">
         <div className="mw-auth__inner">
-          <MobileWebAuthBackNav />
-          <div className="mw-auth-brand">
-            <CareTipLogo size="auth" variant="wordmark" tone="auto" className="mw-auth-brand__logo" />
-          </div>
+          <MobileWebAuthHero />
           <AuthCard>{sessionBanner}</AuthCard>
         </div>
       </div>
@@ -125,17 +135,16 @@ export function MobileWebAuthShell({
     return (
       <div className="mw-auth" data-mw-auth="otp">
         <div className="mw-auth__inner">
-          <MobileWebAuthBackNav />
+          <MobileWebAuthHero
+            title={onResend ? t("auth.mobileWebAuth.otpTitle") : t("auth.page.mfaCodeLabel")}
+            subtitle={onResend ? t("auth.mobileWebAuth.otpSubtitle") : t("auth.page.mfaSubtitle")}
+            icon={
+              <div className="mw-auth-header__icon-badge" aria-hidden>
+                <ShieldCheck className="h-7 w-7" strokeWidth={2.25} />
+              </div>
+            }
+          />
           <AuthCard variant="otp">
-            <AuthHeader
-              title={onResend ? t("auth.mobileWebAuth.otpTitle") : t("auth.page.mfaCodeLabel")}
-              subtitle={onResend ? t("auth.mobileWebAuth.otpSubtitle") : t("auth.page.mfaSubtitle")}
-              icon={
-                <div className="mw-auth-header__icon-badge" aria-hidden>
-                  <ShieldCheck className="h-7 w-7" strokeWidth={2.25} />
-                </div>
-              }
-            />
             <form className="mw-auth-form" onSubmit={onOtpSubmit} noValidate>
               <OTPInput
                 value={otpCode}
@@ -170,31 +179,26 @@ export function MobileWebAuthShell({
   return (
     <div className="mw-auth" data-mw-auth={mode}>
       <div className="mw-auth__inner">
-        <MobileWebAuthBackNav />
-        <div className="mw-auth-brand">
-          <CareTipLogo size="auth" variant="wordmark" tone="auto" className="mw-auth-brand__logo" />
-        </div>
+        <MobileWebAuthHero
+          title={
+            isLogin
+              ? t("auth.mobileWebAuth.loginTitle")
+              : isEmployee
+                ? employeeVenueName
+                  ? t("auth.employeeAuth.titleWelcomeVenue", { venue: employeeVenueName })
+                  : t("auth.employeeAuth.titleJoinTeam")
+                : t("auth.mobileWebAuth.registerTitle")
+          }
+          subtitle={
+            isLogin
+              ? t("auth.mobileWebAuth.loginSubtitle")
+              : isEmployee
+                ? t("auth.employeeAuth.subtitleInviteVerified")
+                : t("auth.mobileWebAuth.registerSubtitle")
+          }
+        />
 
         <AuthCard>
-          <AuthHeader
-            title={
-              isLogin
-                ? t("auth.mobileWebAuth.loginTitle")
-                : isEmployee
-                  ? employeeVenueName
-                    ? t("auth.employeeAuth.titleWelcomeVenue", { venue: employeeVenueName })
-                    : t("auth.employeeAuth.titleJoinTeam")
-                  : t("auth.mobileWebAuth.registerTitle")
-            }
-            subtitle={
-              isLogin
-                ? t("auth.mobileWebAuth.loginSubtitle")
-                : isEmployee
-                  ? t("auth.employeeAuth.subtitleInviteVerified")
-                  : t("auth.mobileWebAuth.registerSubtitle")
-            }
-          />
-
           <form
             className="mw-auth-form"
             onSubmit={(e) => {
@@ -228,50 +232,18 @@ export function MobileWebAuthShell({
               />
             ) : null}
 
-            {isLogin ? (
-              <div className="mw-auth-field">
-                <label className="mw-auth-field__label" htmlFor="mw-auth-email">
-                  {t("auth.page.labelEmail")}
-                </label>
-                <div className="mw-auth-phone-row">
-                  <button
-                    type="button"
-                    className="mw-auth-country"
-                    onClick={toggleLocale}
-                    disabled={busy}
-                    aria-label={t("nav.language")}
-                  >
-                    <LanguageFlag language={activeLang} className="mw-auth-country__flag" />
-                    <span>{activeLang === "de" ? "DE" : "EN"}</span>
-                    <ChevronDown className="mw-auth-country__chevron h-4 w-4" aria-hidden />
-                  </button>
-                  <input
-                    id="mw-auth-email"
-                    name="email"
-                    type="email"
-                    inputMode="email"
-                    autoComplete="email"
-                    placeholder={t("auth.mobileWebAuth.placeholderEmail")}
-                    value={email}
-                    onChange={(e) => onEmailChange(e.target.value)}
-                    disabled={busy}
-                    className="mw-auth-input"
-                  />
-                </div>
-              </div>
-            ) : (
-              <AuthInput
-                label={t("auth.page.labelEmail")}
-                name="email"
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                placeholder={t("auth.mobileWebAuth.placeholderEmail")}
-                value={email}
-                onChange={(e) => onEmailChange(e.target.value)}
-                disabled={busy}
-              />
-            )}
+            <AuthInput
+              label={t("auth.page.labelEmail")}
+              id={isLogin ? "mw-auth-email" : undefined}
+              name="email"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              placeholder={t("auth.mobileWebAuth.placeholderEmail")}
+              value={email}
+              onChange={(e) => onEmailChange(e.target.value)}
+              disabled={busy}
+            />
 
             <AuthInput
               label={t("auth.page.labelPassword")}

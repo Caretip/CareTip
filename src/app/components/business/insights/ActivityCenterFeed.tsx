@@ -178,7 +178,6 @@ export function ActivityCenterFeed({
                 role="tab"
                 onClick={() => onFilterChange(chip.id)}
                 aria-selected={active}
-                aria-pressed={active}
                 className="employee-tip-activity-filter"
               >
                 {t(chip.labelKey)}

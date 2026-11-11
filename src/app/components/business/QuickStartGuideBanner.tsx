@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Rocket, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useBusinessGuidelines } from "@/app/contexts/BusinessGuidelinesContext";
@@ -22,11 +22,8 @@ function readDismissed(): boolean {
 export function QuickStartGuideBanner({ className }: { className?: string }) {
   const { t } = useTranslation();
   const { openGuidelines } = useBusinessGuidelines();
-  const [dismissed, setDismissed] = useState(true);
-
-  useEffect(() => {
-    setDismissed(readDismissed());
-  }, []);
+  // Read on the first render: showing it after paint pushed the whole dashboard down (layout shift).
+  const [dismissed, setDismissed] = useState(readDismissed);
 
   const dismiss = useCallback(() => {
     setDismissed(true);
@@ -69,7 +66,7 @@ export function QuickStartGuideBanner({ className }: { className?: string }) {
             <Button
               type="button"
               size="sm"
-              className="h-8 rounded-lg bg-[#e9781c] px-3 text-xs font-semibold text-white hover:bg-[#d96a14]"
+              className="h-8 rounded-lg bg-primary px-3 text-xs font-semibold text-black hover:bg-primary-hover"
               onClick={openGuidelines}
             >
               {t("business.dashboard.quickStartBannerCta")}

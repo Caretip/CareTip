@@ -48,7 +48,7 @@ export function JoinPage() {
   };
 
   return (
-    <div className="caretip-auth-page font-sans">
+    <div className="caretip-auth-page caretip-auth-join-stage font-sans">
       <AuthSplitLayout
         authLane="employee"
         marketingScene="invite"

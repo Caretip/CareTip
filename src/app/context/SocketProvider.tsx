@@ -40,6 +40,16 @@ type SocketStatusContextValue = {
   connectionStatus: SocketConnectionStatus;
 };
 
+/**
+ * WebSocket only. Long-polling needs every request of a session to reach the same API instance,
+ * and the API runs on several instances without sticky sessions. Where WebSockets are blocked,
+ * screens keep refreshing over REST (useRealtimeFallback).
+ */
+const SOCKET_TRANSPORTS = ["websocket"];
+/** Backoff for recovering after the server refused the token (expired while idle, deploy, ...). */
+const AUTH_RECOVERY_BASE_MS = 5_000;
+const AUTH_RECOVERY_MAX_MS = 5 * 60_000;
+
 const SocketInstanceContext = createContext<SocketInstanceContextValue | null>(null);
 const SocketStatusContext = createContext<SocketStatusContextValue | null>(null);
 
@@ -55,7 +65,16 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const [connected, setConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<SocketConnectionStatus>("idle");
 
+  const authRecoveryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const authRecoveryAttemptRef = useRef(0);
+
+  const clearAuthRecovery = useCallback(() => {
+    if (authRecoveryTimerRef.current) clearTimeout(authRecoveryTimerRef.current);
+    authRecoveryTimerRef.current = null;
+  }, []);
+
   const disconnect = useCallback(() => {
+    clearAuthRecovery();
     const s = socketRef.current;
     if (s) {
       s.removeAllListeners();
@@ -65,9 +84,10 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     setSocket(null);
     setConnected(false);
     setConnectionStatus("idle");
-  }, []);
+  }, [clearAuthRecovery]);
 
   const connect = useCallback(async () => {
+    clearAuthRecovery();
     if (socketRef.current) {
       socketRef.current.removeAllListeners();
       socketRef.current.close();
@@ -86,8 +106,9 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     setConnectionStatus("connecting");
     const { io } = await import("socket.io-client");
     const s = io(url, {
-      auth: { token },
-      transports: ["polling", "websocket"],
+      // Read on every (re)connection attempt, so a reconnect never replays an old access token.
+      auth: (cb) => cb({ token: getMemoryAccessToken() ?? "" }),
+      transports: SOCKET_TRANSPORTS,
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
@@ -101,24 +122,45 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       }
     };
     const onConnect = () => {
+      authRecoveryAttemptRef.current = 0;
       setConnected(true);
       setConnectionStatus("connected");
       dispatchSocketConnected();
+    };
+    /**
+     * The server refused the handshake, so Socket.IO will not retry on its own. Refresh the session
+     * once (a new token reconnects through AUTH_STORAGE_SYNC_EVENT) and retry with backoff.
+     */
+    const scheduleAuthRecovery = () => {
+      if (authRecoveryTimerRef.current) return;
+      const attempt = authRecoveryAttemptRef.current;
+      authRecoveryAttemptRef.current = attempt + 1;
+      const delay = Math.min(AUTH_RECOVERY_MAX_MS, AUTH_RECOVERY_BASE_MS * 2 ** attempt);
+      authRecoveryTimerRef.current = setTimeout(() => {
+        authRecoveryTimerRef.current = null;
+        if (socketRef.current !== s) return;
+        void import("../lib/api")
+          .then(({ refreshSessionAPI }) => refreshSessionAPI())
+          .catch(() => undefined)
+          .finally(() => {
+            // A changed token already replaced this socket; otherwise try again with what we have.
+            if (socketRef.current === s && !s.connected && getMemoryAccessToken()) s.connect();
+          });
+      }, delay);
     };
     const onDisconnect = () => {
       setConnected(false);
       setConnectionStatus("disconnected");
     };
-    const onConnectError = () => {
+    const onConnectError = (err: Error) => {
       setConnected(false);
       setConnectionStatus("disconnected");
+      // Middleware refusals leave the socket inactive. "Forbidden" (no matching profile) stays
+      // down; retrying could not change the answer.
+      if (!s.active && err?.message === "Unauthorized") scheduleAuthRecovery();
     };
     const onReconnectAttempt = () => {
       setConnectionStatus("reconnecting");
-      const fresh = getMemoryAccessToken();
-      if (fresh) {
-        s.auth = { token: fresh };
-      }
     };
     const onReconnect = () => {
       setConnected(true);
@@ -146,7 +188,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
     socketRef.current = s;
     setSocket(s);
-  }, []);
+  }, [clearAuthRecovery]);
 
   const registerInterest = useCallback(() => {
     interestRef.current += 1;

@@ -65,5 +65,5 @@ export function useTipsActivityRealtime({
 
   useSocketCatchUp(catchUp, enabled);
   useDashboardTabRefocus(catchUp, enabled);
-  useRealtimeFallback(connected, catchUp);
+  useRealtimeFallback(connected, catchUp, undefined, { refreshOnReconnect: false });
 }

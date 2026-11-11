@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import { mfaTotpRateLimit } from "../middleware/securityRateLimit.middleware.js";
 import { Router } from "express";
 import { authMiddleware, requireAdminRoleClaim, requirePlatformAdmin } from "../middleware/auth.middleware.js";
 import { auditPlatformAccess } from "../middleware/audit.middleware.js";
@@ -160,6 +161,11 @@ router.post(
   platformController.uploadVerificationDocument,
 );
 router.post("/impersonate", platformController.impersonate);
+router.post("/users/:userId/mfa-reset", mfaTotpRateLimit, platformController.resetUserMfa);
+router.get("/account-recovery", platformController.listAccountRecoveryRequests);
+router.post("/account-recovery/:id/verify-identity", mfaTotpRateLimit, platformController.verifyAccountRecoveryIdentity);
+router.post("/account-recovery/:id/approve", mfaTotpRateLimit, platformController.approveAccountRecovery);
+router.post("/account-recovery/:id/reject", mfaTotpRateLimit, platformController.rejectAccountRecovery);
 router.get("/physical-qr/orders", async (req, res) => {
   const { adminListPhysicalQrOrders } = await import("../controllers/platformPhysicalQr.controller.js");
   return adminListPhysicalQrOrders(req, res);

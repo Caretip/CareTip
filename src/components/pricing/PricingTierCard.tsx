@@ -192,7 +192,7 @@ export function PricingTierCard({
         <h3 className="caretip-pricing-tier-card__name">{tier.name}</h3>
         {isSubscription && isCurrent && !isTrialBadge ? (
           <CheckCircle2
-            className="caretip-pricing-tier-card__current-check size-5 shrink-0 text-[var(--caretip-brand-orange,#e9781c)]"
+            className="caretip-pricing-tier-card__current-check size-5 shrink-0 text-[var(--caretip-brand-orange,#eb992c)]"
             aria-hidden
           />
         ) : null}

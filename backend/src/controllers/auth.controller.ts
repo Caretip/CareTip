@@ -14,6 +14,8 @@ import * as employeeActivationService from "../services/employeeActivation.servi
 import { resolveAuthLinkPlatform } from "../utils/clientPlatform.js";
 import { prisma } from "../prisma.js";
 import speakeasy from "speakeasy";
+import bcrypt from "bcrypt";
+import crypto from "crypto";
 import qrcode from "qrcode";
 import {
   clearRefreshCookie,
@@ -45,10 +47,14 @@ import {
 } from "../services/oauth/facebookOAuthDiagnostic.js";
 import {
   AUTH_INVALID_CREDENTIALS_MESSAGE,
+  AUTH_REGISTER_GENERIC_MESSAGE,
   AUTH_OAUTH_GENERIC_FAILURE_MESSAGE,
   AUTH_OAUTH_SIGN_IN_FAILED_CODE,
 } from "../services/authDisclosureMessages.js";
 import * as auditService from "../services/audit.service.js";
+import * as accountEmailChange from "../services/accountEmailChange.service.js";
+import * as accountRecovery from "../services/accountRecovery.service.js";
+import { ipPrefixForLog, resolveClientIp } from "../lib/clientIp.js";
 import { logRefreshOutcome, storeErrorCode } from "../lib/authRefreshDiagnostics.js";
 import {
   MERCHANT_LEGAL_ACCEPTANCE_CONTEXT,
@@ -164,7 +170,8 @@ function isPrismaInfrastructureError(err: unknown): boolean {
 
 async function verifyTotpWithLockout(
   userId: string,
-  verify: () => boolean,
+  storedSecret: string,
+  code: string,
 ): Promise<"ok" | "invalid" | "locked"> {
   try {
     await assertMfaVerifyAllowed(userId);
@@ -172,12 +179,21 @@ async function verifyTotpWithLockout(
     if (e instanceof MfaVerifyLockedError) return "locked";
     throw e;
   }
-  if (!verify()) {
+  const check = await mfaLoginService.verifyAndConsumeTotp(userId, storedSecret, code);
+  if (check === "unavailable") {
+    throw new Error("MFA replay store unavailable");
+  }
+  if (check !== "ok") {
     await recordMfaVerifyFailure(userId);
     return "invalid";
   }
   await clearMfaVerifyFailures(userId);
   return "ok";
+}
+
+/** An enrolled account must prove its current factor; a password-only challenge can never replace it. */
+function respondMfaAlreadyEnrolled(res: Response) {
+  return res.status(403).json({ message: "Insufficient permissions", code: "MFA_ALREADY_ENROLLED" });
 }
 
 function mfaLockedResponse(res: Response) {
@@ -367,11 +383,49 @@ export async function register(req: Request, res: Response) {
 
     return res.status(400).json({ message: "Invalid role. Use 'business' or 'employee'" });
   } catch (err) {
+    if (err instanceof Error && err.message === AUTH_REGISTER_GENERIC_MESSAGE) {
+      return respondRegisterExistingAccount(req, res);
+    }
     logServerError("auth.register", err);
     return res.status(400).json({
       message: clientSafeMessage(err, CLIENT_FALLBACK.register),
     });
   }
+}
+
+/**
+ * Registration must not reveal whether an address has an account. The caller sees the normal
+ * "check your inbox" result, and the real owner is told someone tried.
+ */
+async function respondRegisterExistingAccount(req: Request, res: Response) {
+  const body = req.body as Record<string, unknown>;
+  const email = authService.normalizeLoginEmail(typeof body.email === "string" ? body.email : "");
+  const employee = String(body.role ?? "").toLowerCase() === "employee";
+  void accountEmailChange.notifySecurityChange("registration_attempt", email).catch(() => undefined);
+  clearRefreshCookie(res);
+  const id = `c${crypto.randomBytes(12).toString("hex")}`;
+  return res.status(201).json({
+    requiresEmailVerification: true,
+    user: {
+      id,
+      email,
+      role: employee ? "EMPLOYEE" : "MANAGER",
+      name: (employee && typeof body.name === "string" && body.name.trim()) || email.split("@")[0] || "User",
+      emailVerified: false,
+      preferredLocale: null,
+      isPlatformAdmin: false,
+      ...(employee
+        ? {}
+        : {
+            hasCompletedOnboarding: false,
+            onboardingStep: 1,
+            businessId: `c${crypto.randomBytes(12).toString("hex")}`,
+            businessVerificationStatus: "pending",
+            onboardingVerificationStatus: "draft",
+            kycVerificationStatus: "not_started",
+          }),
+    },
+  });
 }
 
 export async function login(req: Request, res: Response) {
@@ -474,16 +528,25 @@ export async function loginMfaSetup(req: Request, res: Response) {
     if (!admin) {
       return res.status(403).json({ message: "Insufficient permissions" });
     }
+    if (admin.twoFactorEnabled === true) {
+      void auditService.writeAuditLog({
+        userId: admin.id,
+        action: "mfa.login.setup_refused_enrolled",
+        metadata: JSON.stringify({ path: req.originalUrl ?? req.url }),
+      });
+      return respondMfaAlreadyEnrolled(res);
+    }
 
     const secret = speakeasy.generateSecret({
       name: `CareTip (${admin.email})`,
       length: 20,
     });
 
-    await prisma.user.update({
-      where: { id: admin.id },
-      data: { twoFactorTempSecret: secret.base32 },
+    const staged = await prisma.user.updateMany({
+      where: { id: admin.id, twoFactorEnabled: false },
+      data: { twoFactorTempSecret: mfaLoginService.storableMfaSecret(secret.base32) },
     });
+    if (staged.count !== 1) return respondMfaAlreadyEnrolled(res);
 
     void auditService.writeAuditLog({
       userId: admin.id,
@@ -515,13 +578,19 @@ export async function loginMfaEnable(req: Request, res: Response) {
     if (!admin) {
       return res.status(403).json({ message: "Insufficient permissions" });
     }
+    if (admin.twoFactorEnabled === true) {
+      void auditService.writeAuditLog({
+        userId: admin.id,
+        action: "mfa.login.enable_refused_enrolled",
+        metadata: JSON.stringify({ path: req.originalUrl ?? req.url }),
+      });
+      return respondMfaAlreadyEnrolled(res);
+    }
     const temp = admin.twoFactorTempSecret;
     if (!temp) {
       return res.status(400).json({ message: "2FA setup has not been started" });
     }
-    const outcome = await verifyTotpWithLockout(admin.id, () =>
-      mfaLoginService.verifyTotpCode(temp, code),
-    );
+    const outcome = await verifyTotpWithLockout(admin.id, temp, code);
     if (outcome === "locked") return mfaLockedResponse(res);
     if (outcome === "invalid") {
       void auditService.writeAuditLog({
@@ -538,14 +607,16 @@ export async function loginMfaEnable(req: Request, res: Response) {
     }
     if (consumed !== "consumed") return respondMfaChallengeFailure(res, "invalid");
 
-    await prisma.user.update({
-      where: { id: admin.id },
+    // Compare-and-set: two concurrent enrolments cannot both win, and neither can replace an active factor.
+    const enrolled = await prisma.user.updateMany({
+      where: { id: admin.id, twoFactorEnabled: false, twoFactorTempSecret: temp },
       data: {
         twoFactorEnabled: true,
         twoFactorSecret: temp,
         twoFactorTempSecret: null,
       },
     });
+    if (enrolled.count !== 1) return respondMfaAlreadyEnrolled(res);
 
     void auditService.writeAuditLog({
       userId: admin.id,
@@ -595,9 +666,7 @@ export async function loginMfaVerify(req: Request, res: Response) {
         code: "MFA_SETUP_REQUIRED",
       });
     }
-    const outcome = await verifyTotpWithLockout(mfaUser.id, () =>
-      mfaLoginService.verifyTotpCode(mfaUser.twoFactorSecret!, code),
-    );
+    const outcome = await verifyTotpWithLockout(mfaUser.id, mfaUser.twoFactorSecret, code);
     if (outcome === "locked") return mfaLockedResponse(res);
     if (outcome === "invalid") {
       void auditService.writeAuditLog({
@@ -613,6 +682,8 @@ export async function loginMfaVerify(req: Request, res: Response) {
       return res.status(503).json({ message: MFA_VERIFY_UNAVAILABLE_MESSAGE });
     }
     if (consumed !== "consumed") return respondMfaChallengeFailure(res, "invalid");
+
+    await mfaLoginService.upgradeStoredMfaSecret(mfaUser.id, mfaUser.twoFactorSecret);
 
     void auditService.writeAuditLog({
       userId: mfaUser.id,
@@ -677,7 +748,7 @@ export async function twoFactorSetup(req: Request, res: Response) {
 
     await prisma.user.update({
       where: { id: userId },
-      data: { twoFactorTempSecret: secret.base32 },
+      data: { twoFactorTempSecret: mfaLoginService.storableMfaSecret(secret.base32) },
     });
 
     const otpauthUrl = secret.otpauth_url ?? "";
@@ -707,9 +778,7 @@ export async function twoFactorEnable(req: Request, res: Response) {
     const temp = u?.twoFactorTempSecret ?? null;
     if (!temp) return res.status(400).json({ message: "2FA setup has not been started" });
 
-    const outcome = await verifyTotpWithLockout(userId, () =>
-      mfaLoginService.verifyTotpCode(temp, code),
-    );
+    const outcome = await verifyTotpWithLockout(userId, temp, code);
     if (outcome === "locked") return mfaLockedResponse(res);
     if (outcome === "invalid") {
       return respondInvalidTotp(res, 400);
@@ -718,14 +787,17 @@ export async function twoFactorEnable(req: Request, res: Response) {
     const keepSessionId = await resolveCurrentRefreshSessionId(req, userId);
     if (!keepSessionId) return sessionRequiredForMfaChange(res);
 
-    await prisma.user.update({
-      where: { id: userId },
+    const enrolled = await prisma.user.updateMany({
+      where: { id: userId, twoFactorEnabled: false, twoFactorTempSecret: temp },
       data: {
         twoFactorEnabled: true,
         twoFactorSecret: temp,
         twoFactorTempSecret: null,
       },
     });
+    if (enrolled.count !== 1) {
+      return res.status(409).json({ message: "Two-factor authentication is already enabled." });
+    }
 
     const otherRevoked = await revokeOtherRefreshTokensForUser(userId, keepSessionId);
 
@@ -763,10 +835,7 @@ export async function twoFactorDisable(req: Request, res: Response) {
       return res.json({ enabled: false });
     }
 
-    const secret = u.twoFactorSecret;
-    const outcome = await verifyTotpWithLockout(userId, () =>
-      mfaLoginService.verifyTotpCode(secret, code),
-    );
+    const outcome = await verifyTotpWithLockout(userId, u.twoFactorSecret, code);
     if (outcome === "locked") return mfaLockedResponse(res);
     if (outcome === "invalid") {
       return respondInvalidTotp(res, 400);
@@ -791,6 +860,202 @@ export async function twoFactorDisable(req: Request, res: Response) {
     return res.json({ enabled: false });
   } catch (err) {
     logServerError("auth.twoFactorDisable", err);
+    return res.status(503).json({ message: MFA_VERIFY_UNAVAILABLE_MESSAGE });
+  }
+}
+
+function notifyMfaChanged(_userId: string, email: string): Promise<void> {
+  return accountEmailChange.notifySecurityChange("mfa_changed", email);
+}
+
+function respondEmailChangeError(res: Response, err: unknown) {
+  if (err instanceof accountEmailChange.EmailChangeError) {
+    const status = err.code === "UNAVAILABLE" ? 503 : err.code === "EMAIL_IN_USE" ? 409 : 400;
+    return res.status(status).json({ message: err.message, code: err.code });
+  }
+  logServerError("auth.emailChange", err);
+  return res.status(503).json({ message: SERVICE_UNAVAILABLE_MESSAGE });
+}
+
+function respondRecoveryError(res: Response, err: unknown) {
+  if (err instanceof accountRecovery.AccountRecoveryError) {
+    const status = err.code === "UNAVAILABLE" ? 503 : 400;
+    return res.status(status).json({ message: err.message, code: err.code });
+  }
+  logServerError("auth.accountRecovery", err);
+  return res.status(503).json({ message: SERVICE_UNAVAILABLE_MESSAGE });
+}
+
+/** Same answer whether or not the account exists. */
+export async function requestAccountRecovery(req: Request, res: Response) {
+  try {
+    const body = req.body as { loginEmail?: unknown; replacementEmail?: unknown; statement?: unknown };
+    await accountRecovery.requestAccountRecovery({
+      loginEmail: body?.loginEmail,
+      replacementEmail: body?.replacementEmail,
+      statement: body?.statement,
+      ipPrefix: ipPrefixForLog(resolveClientIp(req)),
+    });
+    return res.status(202).json({ ok: true });
+  } catch (err) {
+    return respondRecoveryError(res, err);
+  }
+}
+
+export async function confirmAccountRecovery(req: Request, res: Response) {
+  try {
+    await accountRecovery.confirmReplacementEmail((req.body as { token?: unknown })?.token);
+    return res.json({ ok: true });
+  } catch (err) {
+    return respondRecoveryError(res, err);
+  }
+}
+
+export async function cancelAccountRecovery(req: Request, res: Response) {
+  try {
+    await accountRecovery.cancelAccountRecovery((req.body as { token?: unknown })?.token);
+    return res.json({ ok: true });
+  } catch (err) {
+    return respondRecoveryError(res, err);
+  }
+}
+
+/** The account owner changes their own login email: proven by session and password. */
+export async function requestOwnEmailChange(req: Request, res: Response) {
+  try {
+    const userId = req.user?.userId ?? req.user?.id;
+    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    if (req.user?.impersonatedBy) return res.status(403).json({ message: "Insufficient permissions" });
+    const body = req.body as { newEmail?: unknown; currentPassword?: unknown };
+    const u = await prisma.user.findUnique({ where: { id: userId }, select: { passwordHash: true } });
+    const password = typeof body?.currentPassword === "string" ? body.currentPassword : "";
+    if (!u?.passwordHash) {
+      // Social-only accounts have no password to prove, so they use the consent link instead.
+      const r = await accountEmailChange.requestEmailChangeForOwnerApproval({
+        userId,
+        newEmail: String(body?.newEmail ?? ""),
+        requestedByUserId: userId,
+      });
+      return res.status(202).json(r);
+    }
+    if (!password || !(await bcrypt.compare(password, u.passwordHash))) {
+      return res.status(401).json({ message: "Current password is incorrect" });
+    }
+    const r = await accountEmailChange.requestOwnEmailChange({ userId, newEmail: String(body?.newEmail ?? "") });
+    return res.status(202).json(r);
+  } catch (err) {
+    return respondEmailChangeError(res, err);
+  }
+}
+
+export async function approveEmailChange(req: Request, res: Response) {
+  try {
+    await accountEmailChange.approveEmailChange((req.body as { token?: unknown })?.token);
+    return res.json({ ok: true });
+  } catch (err) {
+    return respondEmailChangeError(res, err);
+  }
+}
+
+export async function confirmEmailChange(req: Request, res: Response) {
+  try {
+    await accountEmailChange.confirmEmailChange((req.body as { token?: unknown })?.token);
+    return res.json({ ok: true });
+  } catch (err) {
+    return respondEmailChangeError(res, err);
+  }
+}
+
+/**
+ * Step 1 of replacing an active authenticator. Needs a live session, the password when the account
+ * has one, and a current code from the existing device: possession of the password alone never works.
+ */
+export async function twoFactorReplaceStart(req: Request, res: Response) {
+  try {
+    const userId = req.user?.userId ?? req.user?.id;
+    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    if (req.user?.impersonatedBy) return res.status(403).json({ message: "Insufficient permissions" });
+    const body = req.body as { code?: unknown; password?: unknown };
+    const code = mfaLoginService.normalizeLoginTotp(body?.code);
+    if (!code) return respondInvalidTotp(res, 400);
+
+    const u = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, twoFactorEnabled: true, twoFactorSecret: true, passwordHash: true },
+    });
+    if (!u?.twoFactorEnabled || !u.twoFactorSecret) {
+      return res.status(409).json({ message: "2FA setup has not been started" });
+    }
+    if (u.passwordHash) {
+      const password = typeof body?.password === "string" ? body.password : "";
+      if (!password || !(await bcrypt.compare(password, u.passwordHash))) {
+        await recordMfaVerifyFailure(userId);
+        return res.status(401).json({ message: AUTH_INVALID_CREDENTIALS_MESSAGE });
+      }
+    }
+    const outcome = await verifyTotpWithLockout(userId, u.twoFactorSecret, code);
+    if (outcome === "locked") return mfaLockedResponse(res);
+    if (outcome === "invalid") return respondInvalidTotp(res, 400);
+
+    const secret = speakeasy.generateSecret({ name: `CareTip (${u.email})`, length: 20 });
+    await prisma.user.update({
+      where: { id: userId },
+      data: { twoFactorTempSecret: mfaLoginService.storableMfaSecret(secret.base32) },
+    });
+    void auditService.writeAuditLog({
+      userId,
+      action: "mfa.replace_started",
+      metadata: JSON.stringify({ path: req.originalUrl ?? req.url }),
+    });
+    const otpauthUrl = secret.otpauth_url ?? "";
+    const qrDataUrl = otpauthUrl ? await qrcode.toDataURL(otpauthUrl) : "";
+    return res.json({ otpauthUrl, qrDataUrl });
+  } catch (err) {
+    logServerError("auth.twoFactorReplaceStart", err);
+    return res.status(503).json({ message: MFA_VERIFY_UNAVAILABLE_MESSAGE });
+  }
+}
+
+/** Step 2: proves the new device, swaps the secret and ends every other session. */
+export async function twoFactorReplaceConfirm(req: Request, res: Response) {
+  try {
+    const userId = req.user?.userId ?? req.user?.id;
+    if (!userId) return res.status(401).json({ message: "Authentication required" });
+    if (req.user?.impersonatedBy) return res.status(403).json({ message: "Insufficient permissions" });
+    const code = mfaLoginService.normalizeLoginTotp((req.body as { code?: unknown })?.code);
+    if (!code) return respondInvalidTotp(res, 400);
+
+    const u = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, twoFactorEnabled: true, twoFactorTempSecret: true },
+    });
+    if (!u?.twoFactorEnabled || !u.twoFactorTempSecret) {
+      return res.status(400).json({ message: "2FA setup has not been started" });
+    }
+    const temp = u.twoFactorTempSecret;
+    const outcome = await verifyTotpWithLockout(userId, temp, code);
+    if (outcome === "locked") return mfaLockedResponse(res);
+    if (outcome === "invalid") return respondInvalidTotp(res, 400);
+
+    const keepSessionId = await resolveCurrentRefreshSessionId(req, userId);
+    if (!keepSessionId) return sessionRequiredForMfaChange(res);
+
+    const swapped = await prisma.user.updateMany({
+      where: { id: userId, twoFactorEnabled: true, twoFactorTempSecret: temp },
+      data: { twoFactorSecret: temp, twoFactorTempSecret: null },
+    });
+    if (swapped.count !== 1) return res.status(409).json({ message: "2FA setup has not been started" });
+
+    const otherRevoked = await revokeOtherRefreshTokensForUser(userId, keepSessionId);
+    void auditService.writeAuditLog({
+      userId,
+      action: "mfa.replaced",
+      metadata: JSON.stringify({ path: req.originalUrl ?? req.url, otherSessionsRevoked: otherRevoked }),
+    });
+    void notifyMfaChanged(userId, u.email);
+    return res.json({ enabled: true });
+  } catch (err) {
+    logServerError("auth.twoFactorReplaceConfirm", err);
     return res.status(503).json({ message: MFA_VERIFY_UNAVAILABLE_MESSAGE });
   }
 }

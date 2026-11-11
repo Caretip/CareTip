@@ -351,6 +351,7 @@ export async function updateEmployee(req: Request, res: Response) {
       }
     }
     const updated = await employeeService.updateEmployeeForBusiness(business.id, employeeId.trim(), {
+      actorUserId: userId,
       name,
       jobTitle: role ?? jobTitle,
       monthlyGoal:

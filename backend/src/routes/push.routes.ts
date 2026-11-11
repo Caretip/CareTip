@@ -1,28 +1,27 @@
 import { Router } from "express";
-import rateLimit from "express-rate-limit";
+import { sharedRateLimit } from "../middleware/sharedRateLimit.middleware.js";
+import { resolveClientIp } from "../lib/clientIp.js";
 import { authMiddleware, requireVerifiedEmail } from "../middleware/auth.middleware.js";
 import * as pushController from "../controllers/push.controller.js";
 
 const router = Router();
 
-const pushTokenLimiter = rateLimit({
+const pushTokenLimiter = sharedRateLimit({
+  scope: "push-token",
   windowMs: 60 * 60 * 1000,
   max: process.env.NODE_ENV === "production" ? 40 : 200,
-  standardHeaders: true,
-  legacyHeaders: false,
-  keyGenerator: (req) => {
+  key: (req) => {
     const uid = req.user?.userId ?? req.user?.id;
-    return typeof uid === "string" && uid.trim() ? `user:${uid.trim()}` : `ip:${req.ip ?? "unknown"}`;
+    return typeof uid === "string" && uid.trim() ? `user:${uid.trim()}` : `ip:${resolveClientIp(req)}`;
   },
-  message: { message: "Too many push registration attempts. Try again later." },
+  message: "Too many push registration attempts. Try again later.",
 });
 
-const pushTestLimiter = rateLimit({
+const pushTestLimiter = sharedRateLimit({
+  scope: "push-test",
   windowMs: 60 * 60 * 1000,
   max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { message: "Too many test notifications. Try again later." },
+  message: "Too many test notifications. Try again later.",
 });
 
 router.get("/config", pushController.getPushConfig);

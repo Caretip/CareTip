@@ -4,8 +4,9 @@ import {
   type BusinessFinancialSummaryBundle,
   type BusinessFinancialPeriod,
 } from "../lib/api";
-import { toUserFriendlyMessage } from "../lib/errorMessages";
+import { isAbortError, isApiConnectivityError, toUserFriendlyMessage } from "../lib/errorMessages";
 import { markAnalyticsPerformance } from "../lib/businessAnalytics/analyticsPerformanceMarks";
+import { reportDashboardLoadFailure } from "../lib/dashboardLoadDiagnostics";
 
 export type UseBusinessFinancialSummaryOpts = {
   /** Fetch ledger and connect slices in parallel for progressive hero rendering. */
@@ -13,6 +14,42 @@ export type UseBusinessFinancialSummaryOpts = {
   /** Load reconciliation only for analytics surfaces (not hero-critical). */
   includeReconciliation?: boolean;
 };
+
+/**
+ * A response missing a section is a failed load, not an empty one. Screens read these sections
+ * directly, and showing zeros would misstate someone's money.
+ */
+async function loadCompleteSummary(
+  ...args: Parameters<typeof getBusinessFinancialSummary>
+): Promise<BusinessFinancialSummaryBundle> {
+  const bundle = await getBusinessFinancialSummary(...args);
+  if (!bundle?.lifetime || !bundle.periodMetrics || !bundle.routing || !bundle.stripe || !bundle.payouts) {
+    throw new Error("Incomplete financial summary response");
+  }
+  return bundle;
+}
+
+/** Pause before the single automatic retry of a slice that failed to reach the API. */
+const CONNECTIVITY_RETRY_DELAY_MS = 1500;
+
+/**
+ * On first load the dashboard sends many requests at once; a slow backend can drop the last
+ * ones (timeout / unreachable). Retry such a read once, quietly, before showing "unavailable".
+ * Server errors and incomplete responses are not retried: they surface as before.
+ */
+async function loadCompleteSummaryWithConnectivityRetry(
+  stillCurrent: () => boolean,
+  ...args: Parameters<typeof getBusinessFinancialSummary>
+): Promise<BusinessFinancialSummaryBundle> {
+  try {
+    return await loadCompleteSummary(...args);
+  } catch (err) {
+    if (isAbortError(err) || !isApiConnectivityError(err) || !stillCurrent()) throw err;
+    await new Promise((resolve) => setTimeout(resolve, CONNECTIVITY_RETRY_DELAY_MS));
+    if (!stillCurrent()) throw err;
+    return loadCompleteSummary(...args);
+  }
+}
 
 function mergeLedgerSlice(
   base: BusinessFinancialSummaryBundle | null,
@@ -76,6 +113,12 @@ export function useBusinessFinancialSummary(
   const [loading, setLoading] = useState(enabled);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * Each section response zero-fills the other section's fields, so `data` alone cannot say which
+   * values are real. A failed slice must render as unavailable, never as its placeholder zeros.
+   */
+  const [ledgerFailed, setLedgerFailed] = useState(false);
+  const [connectFailed, setConnectFailed] = useState(false);
   const loadGenRef = useRef(0);
   const periodRef = useRef(period);
 
@@ -95,33 +138,43 @@ export function useBusinessFinancialSummary(
           setConnectLoading(true);
           if (includeReconciliation) setReconciliationLoading(true);
         }
+        setLedgerFailed(false);
+        setConnectFailed(false);
       }
       setError(null);
 
       try {
         if (progressive) {
           markAnalyticsPerformance("analytics.financial.request");
-          const ledgerPromise = getBusinessFinancialSummary(requestedPeriod, { section: "ledger" })
+          const ledgerPromise = loadCompleteSummaryWithConnectivityRetry(stillCurrent, requestedPeriod, { section: "ledger" })
             .then((ledgerPart) => {
               if (!stillCurrent() || ledgerPart.period !== requestedPeriod) return;
               setData((prev) => mergeLedgerSlice(prev, ledgerPart, requestedPeriod));
               setLedgerLoading(false);
+              setLedgerFailed(false);
               markAnalyticsPerformance("analytics.financial.ledger.ready");
             })
             .catch((err) => {
               if (!stillCurrent()) return;
+              setLedgerFailed(true);
+              setLedgerLoading(false);
+              reportDashboardLoadFailure("financialSummary", err, { section: "ledger" });
               throw err;
             });
 
-          const connectPromise = getBusinessFinancialSummary(requestedPeriod, { section: "connect" })
+          const connectPromise = loadCompleteSummaryWithConnectivityRetry(stillCurrent, requestedPeriod, { section: "connect" })
             .then((connectPart) => {
               if (!stillCurrent()) return;
               setData((prev) => mergeConnectSlice(prev, connectPart, requestedPeriod));
               setConnectLoading(false);
+              setConnectFailed(false);
               markAnalyticsPerformance("analytics.financial.connect.ready");
             })
             .catch((err) => {
               if (!stillCurrent()) return;
+              setConnectFailed(true);
+              setConnectLoading(false);
+              reportDashboardLoadFailure("financialSummary", err, { section: "connect" });
               throw err;
             });
 
@@ -130,7 +183,7 @@ export function useBusinessFinancialSummary(
               ? Promise.all([ledgerPromise, connectPromise])
                   .then(() => {
                     if (!stillCurrent()) return;
-                    return getBusinessFinancialSummary(requestedPeriod, { section: "reconciliation" });
+                    return loadCompleteSummary(requestedPeriod, { section: "reconciliation" });
                   })
                   .then((reconciliationPart) => {
                     if (!reconciliationPart || !stillCurrent()) return;
@@ -144,23 +197,33 @@ export function useBusinessFinancialSummary(
                   })
               : Promise.resolve();
 
-          await Promise.all([ledgerPromise, connectPromise]);
           void reconciliationPromise.catch(() => {
             if (!stillCurrent()) return;
             setReconciliationLoading(false);
           });
+          // allSettled: a failed slice must not end the other slice's loading state early.
+          const settled = await Promise.allSettled([ledgerPromise, connectPromise]);
+          const rejected = settled.find((r) => r.status === "rejected");
+          if (rejected) throw rejected.reason;
         } else {
-          const bundle = await getBusinessFinancialSummary(requestedPeriod, {
+          const bundle = await loadCompleteSummaryWithConnectivityRetry(stillCurrent, requestedPeriod, {
             includeReconciliation,
           });
           if (!stillCurrent() || bundle.period !== requestedPeriod) return;
           setData(bundle);
           setLedgerLoading(false);
           setConnectLoading(false);
+          setLedgerFailed(false);
+          setConnectFailed(false);
         }
       } catch (err) {
         if (!stillCurrent()) return;
         setError(toUserFriendlyMessage(err));
+        if (!progressive) {
+          setLedgerFailed(true);
+          setConnectFailed(true);
+          reportDashboardLoadFailure("financialSummary", err, { section: "bundle" });
+        }
         setLedgerLoading(false);
         setConnectLoading(false);
         setReconciliationLoading(false);
@@ -188,6 +251,8 @@ export function useBusinessFinancialSummary(
       setReconciliationLoading(false);
       setLoading(false);
       setRefreshing(false);
+      setLedgerFailed(false);
+      setConnectFailed(false);
       return;
     }
     void load();
@@ -199,8 +264,12 @@ export function useBusinessFinancialSummary(
     data,
     valuesMatchPeriod,
     loading: progressive ? ledgerLoading || connectLoading : loading,
-    ledgerLoading: progressive ? ledgerLoading || !valuesMatchPeriod : loading || !valuesMatchPeriod,
-    connectLoading: progressive ? connectLoading || !valuesMatchPeriod : loading || !valuesMatchPeriod,
+    ledgerLoading:
+      (progressive ? ledgerLoading : loading) || (!valuesMatchPeriod && !ledgerFailed),
+    connectLoading:
+      (progressive ? connectLoading : loading) || (!valuesMatchPeriod && !connectFailed),
+    ledgerFailed,
+    connectFailed,
     reconciliationLoading:
       progressive && includeReconciliation
         ? reconciliationLoading || !valuesMatchPeriod
@@ -208,5 +277,7 @@ export function useBusinessFinancialSummary(
     refreshing,
     error,
     reload: () => load({ quiet: true }),
+    /** User-initiated retry after a failure: shows loading again rather than the failed state. */
+    retry: () => load(),
   };
 }

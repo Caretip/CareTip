@@ -118,6 +118,12 @@ router.get("/verify-email", authController.verifyEmail);
 router.post("/forgot-password", forgotPasswordRateLimit, authController.forgotPassword);
 router.post("/reset-password", resetPasswordRateLimit, authController.resetPassword);
 router.post("/change-password", authMiddleware, changePasswordRateLimit, authController.changePassword);
+router.post("/email-change/request", authMiddleware, changePasswordRateLimit, authController.requestOwnEmailChange);
+router.post("/account-recovery/request", forgotPasswordRateLimit, requireTrustedOrigin, authController.requestAccountRecovery);
+router.post("/account-recovery/confirm", resetPasswordRateLimit, requireTrustedOrigin, authController.confirmAccountRecovery);
+router.post("/account-recovery/cancel", resetPasswordRateLimit, requireTrustedOrigin, authController.cancelAccountRecovery);
+router.post("/email-change/approve", resetPasswordRateLimit, requireTrustedOrigin, authController.approveEmailChange);
+router.post("/email-change/confirm", resetPasswordRateLimit, requireTrustedOrigin, authController.confirmEmailChange);
 router.patch("/me", authMiddleware, requireVerifiedEmail, authController.patchMe);
 
 // 2FA (TOTP) management (does not change login flow by itself)
@@ -125,5 +131,7 @@ router.get("/2fa/status", authMiddleware, authController.twoFactorStatus);
 router.post("/2fa/setup", authMiddleware, mfaTotpRateLimit, authController.twoFactorSetup);
 router.post("/2fa/enable", authMiddleware, mfaTotpRateLimit, authController.twoFactorEnable);
 router.post("/2fa/disable", authMiddleware, mfaTotpRateLimit, authController.twoFactorDisable);
+router.post("/2fa/replace/start", authMiddleware, mfaTotpRateLimit, authController.twoFactorReplaceStart);
+router.post("/2fa/replace/confirm", authMiddleware, mfaTotpRateLimit, authController.twoFactorReplaceConfirm);
 
 export default router;

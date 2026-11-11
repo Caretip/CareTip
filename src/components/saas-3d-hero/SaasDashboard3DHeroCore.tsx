@@ -40,7 +40,7 @@ export function SaasDashboard3DHeroCore({
         className={cn("relative isolate w-full overflow-hidden rounded-xl", className)}
         style={{
           background:
-            "radial-gradient(ellipse 120% 80% at 50% -20%, rgba(233,120,28,0.24) 0%, transparent 58%), linear-gradient(180deg, #090909 0%, #050505 48%, #000000 100%)",
+            "radial-gradient(ellipse 120% 80% at 50% -20%, rgba(235,153,44,0.24) 0%, transparent 58%), linear-gradient(180deg, #090909 0%, #050505 48%, #000000 100%)",
         }}
       >
         <div className="caretip-hero-ambient pointer-events-none absolute inset-0 z-[0]" aria-hidden />
@@ -94,7 +94,7 @@ export function SaasDashboard3DHeroCore({
       className={cn("relative isolate overflow-hidden", className)}
       style={{
         background:
-          "radial-gradient(ellipse 120% 80% at 50% -20%, rgba(233,120,28,0.24) 0%, transparent 58%), linear-gradient(180deg, #090909 0%, #050505 48%, #000000 100%)",
+          "radial-gradient(ellipse 120% 80% at 50% -20%, rgba(235,153,44,0.24) 0%, transparent 58%), linear-gradient(180deg, #090909 0%, #050505 48%, #000000 100%)",
       }}
     >
       <div className="caretip-hero-ambient pointer-events-none absolute inset-0 z-[0]" aria-hidden />

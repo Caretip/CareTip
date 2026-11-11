@@ -73,18 +73,84 @@ export function getCachedIfFresh<T>(key: string): T | undefined {
   return undefined;
 }
 
-export function invalidateCacheKey(key: string): void {
+export type CacheInvalidation = { key?: string; prefix?: string };
+
+/**
+ * Each API instance has its own cache, so an invalidation must reach the others too, or they keep
+ * serving the old value until it expires (up to 10 minutes for the dashboard context). Batched
+ * per tick: one write handler can invalidate a dozen keys.
+ */
+let invalidationBroadcaster: ((ops: CacheInvalidation[]) => void) | null = null;
+let pendingBroadcast: CacheInvalidation[] = [];
+let broadcastScheduled = false;
+const MAX_OPS_PER_BROADCAST = 200;
+
+export function setCacheInvalidationBroadcaster(fn: ((ops: CacheInvalidation[]) => void) | null): void {
+  invalidationBroadcaster = fn;
+}
+
+function queueBroadcast(op: CacheInvalidation): void {
+  if (!invalidationBroadcaster) return;
+  pendingBroadcast.push(op);
+  if (broadcastScheduled) return;
+  broadcastScheduled = true;
+  setImmediate(() => {
+    broadcastScheduled = false;
+    const ops = pendingBroadcast;
+    pendingBroadcast = [];
+    const send = invalidationBroadcaster;
+    if (!send) return;
+    for (let i = 0; i < ops.length; i += MAX_OPS_PER_BROADCAST) {
+      try {
+        send(ops.slice(i, i + MAX_OPS_PER_BROADCAST));
+      } catch {
+        // Best effort: the entry still expires on its TTL.
+      }
+    }
+  });
+}
+
+function invalidateLocalKey(key: string): void {
   cache.delete(key);
   inflight.delete(key);
 }
 
-export function invalidateCacheKeyPrefix(prefix: string): void {
+function invalidateLocalPrefix(prefix: string): void {
   for (const key of cache.keys()) {
     if (key.startsWith(prefix)) cache.delete(key);
   }
   for (const key of inflight.keys()) {
     if (key.startsWith(prefix)) inflight.delete(key);
   }
+}
+
+/** Apply invalidations received from another instance (never re-broadcast). */
+export function applyRemoteCacheInvalidations(ops: unknown): number {
+  if (!Array.isArray(ops)) return 0;
+  let applied = 0;
+  for (const op of ops.slice(0, MAX_OPS_PER_BROADCAST)) {
+    if (!op || typeof op !== "object") continue;
+    const { key, prefix } = op as CacheInvalidation;
+    if (typeof key === "string" && key.length > 0 && key.length <= 300) {
+      invalidateLocalKey(key);
+      applied++;
+    } else if (typeof prefix === "string" && prefix.length >= 8 && prefix.length <= 300) {
+      // A short prefix ("b", "") would wipe most of the cache; real prefixes carry an id.
+      invalidateLocalPrefix(prefix);
+      applied++;
+    }
+  }
+  return applied;
+}
+
+export function invalidateCacheKey(key: string): void {
+  invalidateLocalKey(key);
+  queueBroadcast({ key });
+}
+
+export function invalidateCacheKeyPrefix(prefix: string): void {
+  invalidateLocalPrefix(prefix);
+  queueBroadcast({ prefix });
 }
 
 export { sweepExpiredCacheEntries };

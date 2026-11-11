@@ -33,7 +33,6 @@ export function EmployeeViewInStripeButton({ className }: { className?: string }
       type="button"
       disabled={busy}
       aria-busy={busy}
-      aria-label={t("employee.payouts.history.viewInStripeAria")}
       onClick={() => void onOpen()}
       className={cn(
         "shrink-0 text-sm font-medium text-primary underline-offset-2 hover:underline",

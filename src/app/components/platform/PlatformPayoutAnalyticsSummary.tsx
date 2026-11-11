@@ -26,7 +26,7 @@ type PlatformPayoutAnalyticsSummaryProps = {
 };
 
 const PAYOUT_CHART_CONFIG: ChartConfig = {
-  business: { label: "Business", color: "#e9781c" },
+  business: { label: "Business", color: "#eb992c" },
   employee: { label: "Employee", color: "#22d3ee" },
 };
 

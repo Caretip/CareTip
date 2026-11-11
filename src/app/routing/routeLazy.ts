@@ -67,6 +67,19 @@ export const forgotPasswordPageLazy = async (): Promise<LazyRouteResult> => {
   );
   return { Component: mod.ForgotPasswordPage as ComponentType<object> };
 };
+export const accountRecoveryPageLazy = async (): Promise<LazyRouteResult> => {
+  const [, mod] = await loadRouteModuleWithRetry(() =>
+    Promise.all([import("@/styles/bundles/auth.css"), import("../pages/AccountRecoveryPage")]),
+  );
+  return { Component: mod.AccountRecoveryPage as ComponentType<object> };
+};
+export const emailChangePageLazy = async (): Promise<LazyRouteResult> => {
+  const [, mod] = await loadRouteModuleWithRetry(() =>
+    Promise.all([import("@/styles/bundles/auth.css"), import("../pages/EmailChangePage")]),
+  );
+  return { Component: mod.EmailChangePage as ComponentType<object> };
+};
+
 export const resetPasswordPageLazy = async (): Promise<LazyRouteResult> => {
   const [, mod] = await loadRouteModuleWithRetry(() =>
     Promise.all([import("@/styles/bundles/auth.css"), import("../pages/ResetPasswordPage")]),

@@ -6,6 +6,8 @@
  *  - same distribution key on 3 instances → one batch; competing keys → no over-allocation;
  *    opposite employee order → no deadlock
  *  - same Instant Payout key on 3 instances → one Stripe create, row never marked failed
+ *  - different Instant Payout keys on 3 instances (employee and business) → one Stripe create,
+ *    the others refused as in progress (the Stripe mock never runs out of balance)
  *  - billing reconciliation started on 3 instances → one run holds the (pooler-safe) lease
  *  - out-of-order payout events racing on a new payout → newest snapshot wins, no unique errors
  *
@@ -33,6 +35,7 @@ import { prisma } from "../src/prisma.js";
 import { createEmployeeTipPayableForSuccessfulTip } from "../src/services/employeeTipPayable.service.js";
 import { listTipDistributionEmployeesForBusiness } from "../src/services/tipDistribution.service.js";
 import {
+  INSTANT_PAYOUT_TERMS_CONTEXT_BUSINESS,
   INSTANT_PAYOUT_TERMS_CONTEXT_EMPLOYEE,
   getInstantPayoutTermsRequirement,
 } from "../src/lib/instantPayoutTerms.js";
@@ -186,6 +189,8 @@ const e1Remaining = remainingBefore.get(e1) ?? 0;
 assert.ok(e1Remaining > 200, `seeded distributable remaining (${e1Remaining})`);
 
 const termsVersion = (await getInstantPayoutTermsRequirement(INSTANT_PAYOUT_TERMS_CONTEXT_EMPLOYEE, "en")).version;
+const businessTermsVersion = (await getInstantPayoutTermsRequirement(INSTANT_PAYOUT_TERMS_CONTEXT_BUSINESS, "en"))
+  .version;
 const payoutBase = Math.floor(Date.now() / 1000);
 const PAYOUT_ROUNDS = 4;
 const payoutVariants = [
@@ -243,6 +248,15 @@ function roundsFor(i: number): WorkerRound[] {
         amountCents: 2500,
       };
     }),
+    // Different keys, same account, same moment: only the account-wide guard can stop a second payout.
+    { mode: "instant", userId: empUser.id, key: `mi-instant-diff-${i}-${s}`, termsVersion },
+    {
+      mode: "instant-business",
+      businessId: holdBiz.id,
+      userId: holdManager.id,
+      key: `mi-instant-biz-diff-${i}-${s}`,
+      termsVersion: businessTermsVersion,
+    },
   ];
 }
 
@@ -394,11 +408,16 @@ assert.ok(
   `instant results ${JSON.stringify(inst)}`,
 );
 assert.ok(inst.some((r) => r.ok));
-const instRows = await prisma.employeeInstantPayoutRequest.findMany({ where: { employeeId: holdEmp.id } });
+// Scoped to this key: a later round races different keys on the same employee.
+const instRows = await prisma.employeeInstantPayoutRequest.findMany({
+  where: { employeeId: holdEmp.id, idempotencyKey: { contains: `mi-instant-key-${s}` } },
+});
 assert.equal(instRows.length, 1);
 assert.equal(instRows[0]!.status, StripeConnectInstantPayoutRequestStatus.submitted);
 assert.ok(instRows[0]!.stripePayoutId?.startsWith("po_mock_"));
-assert.equal(readJsonl(instantCreatesPath(stateDir)).length, 1, "one Stripe payout create");
+const sameKeyHash = instRows[0]!.stripePayoutId!.slice("po_mock_".length);
+const sameKeyCreates = () => readJsonl(instantCreatesPath(stateDir)).filter((c) => c.keyHash === sameKeyHash).length;
+assert.equal(sameKeyCreates(), 1, "one Stripe payout create");
 const { createEmployeeInstantPayoutForUser } = await import("../src/services/employeeInstantPayout.service.js");
 const replay = await createEmployeeInstantPayoutForUser({
   userId: empUser.id,
@@ -407,7 +426,7 @@ const replay = await createEmployeeInstantPayoutForUser({
   language: "en",
 });
 assert.equal(replay.payout.status, "submitted");
-assert.equal(readJsonl(instantCreatesPath(stateDir)).length, 1);
+assert.equal(sameKeyCreates(), 1);
 pass("instant-payout-same-key", "3 instances → 1 Stripe create, row submitted (never failed), replay idempotent");
 
 // Round 6: billing reconciliation run lease (replaces a session advisory lock).
@@ -443,6 +462,37 @@ for (const [r, payoutId] of payoutIds.entries()) {
   assert.equal(row.lastStripeEventCreated, payoutBase + 200, `payout ${r} newest event wins`);
 }
 pass("payout-event-order", `${PAYOUT_ROUNDS} payouts × 3 racing events → newest snapshot, no unique violations`);
+
+// Different Instant Payout keys racing on one account (employee, then business).
+const createsBeforeDiff = 1;
+const empDiff = roundResults(7 + PAYOUT_ROUNDS);
+assert.equal(empDiff.filter((x) => x.ok).length, 1, `employee different-key results ${JSON.stringify(empDiff)}`);
+assert.ok(
+  empDiff.filter((x) => !x.ok).every((x) => x.errorCode === "INSTANT_PAYOUT_IN_PROGRESS"),
+  `losers refused as in progress ${JSON.stringify(empDiff)}`,
+);
+const empDiffRows = await prisma.employeeInstantPayoutRequest.findMany({
+  where: { employeeId: holdEmp.id, idempotencyKey: { contains: "mi-instant-diff-" } },
+});
+assert.equal(empDiffRows.length, 1, "one ledger row for the winning key only");
+assert.equal(empDiffRows[0]!.status, StripeConnectInstantPayoutRequestStatus.submitted);
+pass("instant-payout-different-keys", "employee: 3 instances, 3 keys → 1 payout, 2 refused (INSTANT_PAYOUT_IN_PROGRESS)");
+
+const bizDiff = roundResults(8 + PAYOUT_ROUNDS);
+assert.equal(bizDiff.filter((x) => x.ok).length, 1, `business different-key results ${JSON.stringify(bizDiff)}`);
+assert.ok(
+  bizDiff.filter((x) => !x.ok).every((x) => x.errorCode === "INSTANT_PAYOUT_IN_PROGRESS"),
+  `losers refused as in progress ${JSON.stringify(bizDiff)}`,
+);
+const bizDiffRows = await prisma.stripeConnectInstantPayoutRequest.findMany({ where: { businessId: holdBiz.id } });
+assert.equal(bizDiffRows.length, 1, "one business ledger row");
+assert.equal(bizDiffRows[0]!.status, StripeConnectInstantPayoutRequestStatus.submitted);
+assert.equal(
+  readJsonl(instantCreatesPath(stateDir)).length,
+  createsBeforeDiff + 2,
+  "exactly one Stripe create per account for the different-key race",
+);
+pass("instant-payout-different-keys", "business: 3 instances, 3 keys → 1 payout, 2 refused (INSTANT_PAYOUT_IN_PROGRESS)");
 
 rmSync(stateDir, { recursive: true, force: true });
 await prisma.$disconnect();

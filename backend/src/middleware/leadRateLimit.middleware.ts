@@ -1,9 +1,8 @@
-import rateLimit from "express-rate-limit";
+import { sharedRateLimit } from "./sharedRateLimit.middleware.js";
 
-export const leadSubmissionLimiter = rateLimit({
+export const leadSubmissionLimiter = sharedRateLimit({
+  scope: "lead",
   windowMs: 15 * 60 * 1000,
   max: 8,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { message: "Too many submissions. Please wait a moment and try again." },
+  message: "Too many submissions. Please wait a moment and try again.",
 });

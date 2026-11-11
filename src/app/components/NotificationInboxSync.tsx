@@ -66,7 +66,7 @@ export function NotificationInboxSync() {
     void catchUp();
   }, enabled);
 
-  useRealtimeFallback(connected, catchUp, 30_000);
+  useRealtimeFallback(connected, catchUp, 30_000, { refreshOnReconnect: false });
 
   useEffect(() => {
     if (!enabled) return;

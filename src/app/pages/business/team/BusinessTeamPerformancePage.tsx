@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router";
 import { useRequireAuth } from "../../../hooks/useRequireAuth";
 import { useBusinessEntitlementsContext } from "../../../contexts/BusinessEntitlementsContext";
 import { useSubscriptionEntitlements } from "../../../hooks/useSubscriptionEntitlements";
+import { DashboardLoadErrorNotice } from "../../../components/dashboard/DashboardLoadErrorNotice";
 import { useBusinessIntelligenceData } from "../../../hooks/useBusinessIntelligenceData";
 import { useBusinessTipsModuleData } from "../../../hooks/useBusinessTipsModuleData";
 import { BusinessExecutivePerformance } from "../../../components/business/BusinessExecutivePerformance";
@@ -47,6 +48,10 @@ export function BusinessTeamPerformancePage() {
     tab === "leaderboard" ? leaderboardData.isInitialAnalyticsLoading : insightsData.isInitialAnalyticsLoading,
   );
 
+  const activeData = tab === "leaderboard" ? leaderboardData : insightsData;
+  // Both views are built from these slices, so without them they would show zeros that look real.
+  const contentUnavailable = activeData.periodStatsFailed || activeData.deferredAnalyticsFailed;
+
   return (
     <div className="space-y-4 pt-2 sm:space-y-5 sm:pt-4">
       <Tabs
@@ -79,14 +84,23 @@ export function BusinessTeamPerformancePage() {
             </Button>
           ) : null}
         </div>
+        {activeData.loadError ? (
+          <div className="mt-4">
+            <DashboardLoadErrorNotice message={activeData.loadError} onRetry={activeData.retry} />
+          </div>
+        ) : null}
         <TabsContent value="overview" className="mt-4">
-          <BusinessExecutivePerformance data={{ ...insightsData, loading: showInitialSkeleton && tab === "overview" }} />
+          {contentUnavailable ? null : (
+            <BusinessExecutivePerformance data={{ ...insightsData, loading: showInitialSkeleton && tab === "overview" }} />
+          )}
         </TabsContent>
         <TabsContent value="leaderboard" className="mt-4">
-          <BusinessTeamLeaderboardPanel
-            data={leaderboardData}
-            showInitialSkeleton={showInitialSkeleton && tab === "leaderboard"}
-          />
+          {contentUnavailable ? null : (
+            <BusinessTeamLeaderboardPanel
+              data={leaderboardData}
+              showInitialSkeleton={showInitialSkeleton && tab === "leaderboard"}
+            />
+          )}
         </TabsContent>
       </Tabs>
     </div>

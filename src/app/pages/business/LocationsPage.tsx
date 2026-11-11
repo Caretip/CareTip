@@ -57,7 +57,7 @@ import { BusinessModuleWorkspaceHeader } from "../../components/business/Busines
 import { QR_STUDIO_BASE } from "../../components/business/businessDashboardNav";
 import { LockedFeatureCard } from "../../components/subscription/LockedFeatureCard";
 
-const ACTION_TEAL = "#e9781c";
+const ACTION_TEAL = "#eb992c";
 const TABLES_QR_HREF = `${QR_STUDIO_BASE}/tables`;
 
 type VenueBundle = { locations: LocationDTO[]; tables: TableDTO[] };

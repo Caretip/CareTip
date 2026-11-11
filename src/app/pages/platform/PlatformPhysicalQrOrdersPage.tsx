@@ -17,6 +17,7 @@ import { platformUi } from "../../components/platform/platformDashboardUi";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { toDisplayErrorMessage } from "@/app/lib/errorMessages";
 
 const FILTERS = [
   "all",
@@ -50,7 +51,7 @@ export function PlatformPhysicalQrOrdersPage() {
   useEffect(() => {
     void reload()
       .catch((err) => {
-        setError(err instanceof Error ? err.message : t("admin.physicalQr.loadError"));
+        setError(toDisplayErrorMessage(err, t("admin.physicalQr.loadError")));
       })
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -74,7 +75,7 @@ export function PlatformPhysicalQrOrdersPage() {
             onClick={() => {
               setFilter(id);
               void reload(id, q).catch((err) =>
-                toast.error(err instanceof Error ? err.message : t("admin.physicalQr.loadError")),
+                toast.error(toDisplayErrorMessage(err, t("admin.physicalQr.loadError"))),
               );
             }}
           >
@@ -90,7 +91,7 @@ export function PlatformPhysicalQrOrdersPage() {
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               void reload(filter, q).catch((err) =>
-                toast.error(err instanceof Error ? err.message : t("admin.physicalQr.loadError")),
+                toast.error(toDisplayErrorMessage(err, t("admin.physicalQr.loadError"))),
               );
             }
           }}

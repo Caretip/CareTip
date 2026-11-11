@@ -12,7 +12,7 @@
 .caretip-about-page,
 .caretip-contact-page,
 .caretip-legal-document-page {
-  --font-hero-display: "Roboto", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-hero-display: "Roboto", "Roboto Fallback", "Inter", ui-sans-serif, system-ui, sans-serif;
   --caretip-marketing-display: "Roboto", "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -133,8 +133,8 @@
 .caretip-legal-document-page h1 .bg-clip-text,
 .caretip-legal-document-page h2 .bg-clip-text {
   background-image: none !important;
-  color: #e9781c !important;
-  -webkit-text-fill-color: #e9781c !important;
+  color: #eb992c !important;
+  -webkit-text-fill-color: #eb992c !important;
   font-style: italic;
   font-weight: 500 !important;
 }

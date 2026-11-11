@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../prisma.js";
 import { businessUtcRangeForTimeframe, sanitizeIanaTimezone } from "../../utils/businessTime.js";
+import { getCachedOrLoad, invalidateCacheKeyPrefix } from "../../utils/shortLivedCache.js";
 import { sqlNaiveUtcColumnAsLocal } from "../../utils/sqlNaiveUtcToLocal.js";
 import { buildBusinessDailyTipDistribution } from "../../utils/tipChartBuckets.js";
 
@@ -70,7 +71,37 @@ async function queryQrScanDailyCounts(opts: {
   return m;
 }
 
-export async function getBusinessQrAnalytics(
+type QrScanGroupRow = {
+  location_id: string | null;
+  employee_id: string | null;
+  table_id: string | null;
+  qr_slug: string | null;
+  device_type: string | null;
+  grouping_id: number;
+  total: number;
+};
+
+/** GROUPING() bitmasks, in the column order of the query: a set bit means "not grouped by this". */
+const QR_GROUP = { location: 15, employee: 23, table: 27, slug: 29, device: 30, total: 31 } as const;
+
+/** Matches the dashboard stats cache: each load scans every scan row in the period. */
+const QR_ANALYTICS_CACHE_TTL_MS = 30_000;
+
+/** Drop cached QR analytics so a new scan shows on the next read rather than after the TTL. */
+export function invalidateBusinessQrAnalyticsCache(businessId: string): void {
+  invalidateCacheKeyPrefix(`qr-analytics:${businessId}:`);
+}
+
+export function getBusinessQrAnalytics(
+  businessId: string,
+  timeframe: QrAnalyticsTimeframe,
+): Promise<BusinessQrAnalyticsDto> {
+  return getCachedOrLoad(`qr-analytics:${businessId}:${timeframe}`, QR_ANALYTICS_CACHE_TTL_MS, () =>
+    loadBusinessQrAnalytics(businessId, timeframe),
+  );
+}
+
+async function loadBusinessQrAnalytics(
   businessId: string,
   timeframe: QrAnalyticsTimeframe,
 ): Promise<BusinessQrAnalyticsDto> {
@@ -88,39 +119,29 @@ export async function getBusinessQrAnalytics(
     scannedAt: { gte: startUtc, lte: endUtc },
   };
 
-  const [totalScans, sessionGroups, locationGroups, employeeGroups, tableGroups, slugGroups, deviceGroups, dailyByYmd, recentRows] =
+  const [groupRows, uniqueSessionRows, dailyByYmd, recentRows] =
     await Promise.all([
-      prisma.qrScanEvent.count({ where }),
-      prisma.qrScanEvent.groupBy({
-        by: ["sessionId"],
-        where,
-        _count: { _all: true },
-      }),
-      prisma.qrScanEvent.groupBy({
-        by: ["locationId"],
-        where: { ...where, locationId: { not: null } },
-        _count: { _all: true },
-      }),
-      prisma.qrScanEvent.groupBy({
-        by: ["employeeId"],
-        where: { ...where, employeeId: { not: null } },
-        _count: { _all: true },
-      }),
-      prisma.qrScanEvent.groupBy({
-        by: ["tableId"],
-        where: { ...where, tableId: { not: null } },
-        _count: { _all: true },
-      }),
-      prisma.qrScanEvent.groupBy({
-        by: ["qrSlug"],
-        where: { ...where, qrSlug: { not: null } },
-        _count: { _all: true },
-      }),
-      prisma.qrScanEvent.groupBy({
-        by: ["deviceType"],
-        where,
-        _count: { _all: true },
-      }),
+      // One pass over the period. Separate count and groupBy calls each rescanned the same rows,
+      // and with a connection pool of five they queued behind each other.
+      prisma.$queryRaw<QrScanGroupRow[]>(Prisma.sql`
+        SELECT
+          location_id, employee_id, table_id, qr_slug, device_type,
+          GROUPING(location_id, employee_id, table_id, qr_slug, device_type)::int AS grouping_id,
+          COUNT(*)::int AS total
+        FROM qr_scan_events
+        WHERE business_id = ${businessId}
+          AND scanned_at >= ${startUtc}
+          AND scanned_at <= ${endUtc}
+        GROUP BY GROUPING SETS ((location_id), (employee_id), (table_id), (qr_slug), (device_type), ())
+      `),
+      // Counted in Postgres: grouping returned one row per session just to take the length.
+      prisma.$queryRaw<Array<{ unique_sessions: number }>>(Prisma.sql`
+        SELECT COUNT(DISTINCT session_id)::int AS unique_sessions
+        FROM qr_scan_events
+        WHERE business_id = ${businessId}
+          AND scanned_at >= ${startUtc}
+          AND scanned_at <= ${endUtc}
+      `),
       queryQrScanDailyCounts({ businessId, startUtc, endUtc, tz }),
       prisma.qrScanEvent.findMany({
         where,
@@ -137,7 +158,27 @@ export async function getBusinessQrAnalytics(
       }),
     ]);
 
-  const uniqueScans = sessionGroups.length;
+  const rowsFor = (groupingId: number) => groupRows.filter((row) => row.grouping_id === groupingId);
+  const countOf = (row: QrScanGroupRow) => ({ _all: Number(row.total) });
+  const totalScans = Number(rowsFor(QR_GROUP.total)[0]?.total ?? 0);
+  const locationGroups = rowsFor(QR_GROUP.location)
+    .filter((row) => row.location_id != null)
+    .map((row) => ({ locationId: row.location_id, _count: countOf(row) }));
+  const employeeGroups = rowsFor(QR_GROUP.employee)
+    .filter((row) => row.employee_id != null)
+    .map((row) => ({ employeeId: row.employee_id, _count: countOf(row) }));
+  const tableGroups = rowsFor(QR_GROUP.table)
+    .filter((row) => row.table_id != null)
+    .map((row) => ({ tableId: row.table_id, _count: countOf(row) }));
+  const slugGroups = rowsFor(QR_GROUP.slug)
+    .filter((row) => row.qr_slug != null)
+    .map((row) => ({ qrSlug: row.qr_slug, _count: countOf(row) }));
+  const deviceGroups = rowsFor(QR_GROUP.device).map((row) => ({
+    deviceType: row.device_type as string,
+    _count: countOf(row),
+  }));
+
+  const uniqueScans = Number(uniqueSessionRows[0]?.unique_sessions ?? 0);
   const repeatScans = Math.max(0, totalScans - uniqueScans);
 
   const locationIds = locationGroups.map((g) => g.locationId!).filter(Boolean);

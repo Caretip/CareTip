@@ -43,8 +43,8 @@ async function main() {
     if (initial.kycUiStatus === "PENDING_UPLOAD") pass("initial status PENDING_UPLOAD");
     else fail(`initial status expected PENDING_UPLOAD got ${initial.kycUiStatus}`);
 
-    if (initial.timeline.length >= 1) pass("timeline has entries");
-    else fail("timeline empty on fresh business");
+    if (initial.timeline.length === 0) pass("timeline empty before any KYC event");
+    else fail(`fresh business timeline should be empty, got ${initial.timeline.length}`);
 
     const docs = {
       registration: "/uploads/kyc/test-reg.pdf",

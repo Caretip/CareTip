@@ -173,7 +173,7 @@ export function PlatformUserManagementPage() {
                         type="button"
                         disabled={busyId !== null}
                         onClick={() => void impersonate(b)}
-                        className="inline-flex min-h-[44px] touch-manipulation items-center gap-1.5 rounded-xl bg-accent px-3 py-2 text-xs font-medium text-accent-foreground hover:bg-accent/90 disabled:opacity-50"
+                        className="platform-admin-row-action inline-flex min-h-[44px] touch-manipulation items-center gap-1.5 px-3 py-2 text-xs disabled:opacity-50"
                       >
                         <UserCog className="h-3.5 w-3.5" aria-hidden />
                         {busyId === b.id

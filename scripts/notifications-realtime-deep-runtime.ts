@@ -72,10 +72,27 @@ if (
 }
 
 const socketProvider = read("src/app/context/SocketProvider.tsx");
-if (socketProvider.includes("s.auth = { token: fresh }") && socketProvider.includes("AUTH_STORAGE_SYNC_EVENT")) {
+// auth is a callback: Socket.IO calls it on every (re)connection attempt, so no stale token is replayed.
+if (
+  socketProvider.includes("auth: (cb) => cb({ token: getMemoryAccessToken()") &&
+  socketProvider.includes("AUTH_STORAGE_SYNC_EVENT")
+) {
   pass("Socket refreshes handshake token on reconnect and auth sync");
 } else {
   fail("Socket reconnect is missing fresh JWT handshake");
+}
+
+// Long-polling needs sticky sessions, which multiple API instances do not have.
+const publicSocket = read("src/app/hooks/usePublicSocket.ts");
+if (
+  socketProvider.includes('const SOCKET_TRANSPORTS = ["websocket"]') &&
+  !socketProvider.includes('"polling"') &&
+  publicSocket.includes('transports: ["websocket"]') &&
+  publicSocket.includes("auth: (cb) =>")
+) {
+  pass("Dashboard and guest sockets are WebSocket-only and fetch a fresh handshake per attempt");
+} else {
+  fail("A socket client allows long-polling (breaks without sticky sessions) or reuses a stale room token");
 }
 
 const dashboardDedupe = read("src/app/components/business/BusinessDashboardRealtimeSync.tsx");

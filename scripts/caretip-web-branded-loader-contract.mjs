@@ -72,21 +72,27 @@ if (
 if (
   polish.includes("app-branded-loader__indeterminate") &&
   polish.includes("caretip-brand-loader-orbit") &&
-  polish.includes("conic-gradient") &&
+  polish.includes("stroke-dashoffset") &&
+  polish.includes("app-branded-loader__shine") &&
+  polish.includes("app-branded-loader__steps") &&
+  polish.includes("--caretip-loader-trace: #eb992c") &&
   polish.includes("prefers-reduced-motion") &&
   polish.includes("muted-foreground") &&
   !polish.includes("app-branded-loader__spinner") &&
   !polish.includes("app-branded-loader__icon-wrap::before")
 ) {
-  pass("React CSS uses muted grey orbit arc + reduced-motion (no glow, no legacy spinner)");
+  pass("React CSS: brand-orange contour trace, glass sweep, diamond steps + reduced-motion (no legacy spinner)");
 } else fail("React branded loader CSS incomplete");
 
 if (
-  html.includes("--caretip-loader-arc: #a8a29e") &&
+  html.includes("--caretip-loader-trace: #eb992c") &&
+  html.includes("caretip-html-boot__shine") &&
+  html.includes("caretip-html-boot__steps") &&
+  html.includes('viewBox="0 0 465 465"') &&
   !html.includes("caretip-html-boot__icon-wrap::before")
 ) {
-  pass("HTML cold-boot arc is muted neutral with no glow");
-} else fail("HTML cold-boot arc still orange or has glow");
+  pass("HTML cold boot mirrors the React mark (contour trace, sweep, diamond steps)");
+} else fail("HTML cold-boot mark out of sync with React loader");
 
 if (globals.includes("prefers-reduced-motion") && globals.includes(".app-setup-loading--exiting")) {
   pass("Overlay fade respects reduced-motion");

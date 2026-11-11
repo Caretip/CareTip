@@ -53,6 +53,7 @@ import leadRoutes from "./routes/lead.routes.js";
 import legalRoutes from "./routes/legal.routes.js";
 import { initSocketServer } from "./socket/socketServer.js";
 import { errorHandler } from "./middleware/errorHandler.middleware.js";
+import { requestIdMiddleware } from "./middleware/requestId.middleware.js";
 import { jsonParseErrorHandler } from "./middleware/jsonParseError.middleware.js";
 import { getImageUploadStorageDiagnostics } from "./services/upload.service.js";
 import { blockSensitiveStaticUploadPaths } from "./middleware/blockSensitiveStaticUploads.middleware.js";
@@ -68,22 +69,44 @@ import {
 import { getObservabilityHealthDiagnostics } from "./config/observabilityEnv.js";
 import { securityHeadersMiddleware } from "./middleware/securityHeaders.middleware.js";
 import { authenticatedApiRateLimit } from "./middleware/securityRateLimit.middleware.js";
+import { configureTrustProxy, noteForwardedChain } from "./lib/clientIp.js";
+import { closeSocketServer, socketAdapterReady } from "./socket/socketServer.js";
+import { closeRateLimitStore, warmRateLimitStore } from "./utils/rateLimitStore.js";
+import { checkPersistentRedisOutage, getRedisHealthSnapshot } from "./lib/redisHealth.js";
+import { isProcessDraining, markProcessDraining, shutdownDrainMs } from "./lib/processLifecycle.js";
+import { safeSecretEqual } from "./lib/safeCompare.js";
+import { mfaKeyFingerprint } from "./lib/mfaSecretCrypto.js";
+import { reviewProductionConfig } from "./config/productionConfig.js";
 import socketRoutes from "./routes/socket.routes.js";
 import internalJobsRoutes from "./routes/internalJobs.routes.js";
 import * as healthController from "./controllers/health.controller.js";
+
+/** Optional so a checkout that has not reinstalled yet still starts. */
+async function enableResponseCompression(target: express.Express): Promise<void> {
+  const moduleName: string = "compression";
+  const loaded = (await import(moduleName).catch(() => null)) as { default: (o?: { threshold?: number }) => express.RequestHandler } | null;
+  if (loaded) target.use(loaded.default({ threshold: 1024 }));
+}
 
 const app = express();
 const PORT = process.env.PORT ?? 3001;
 
 app.disable("x-powered-by");
 
-if (process.env.NODE_ENV === "production") {
-  app.set("trust proxy", 1);
-}
+configureTrustProxy(app);
 
+app.use(requestIdMiddleware);
 app.use(securityHeadersMiddleware);
 
 async function assertEnvForAuth(): Promise<void> {
+  const configReview = reviewProductionConfig();
+  for (const warning of configReview.warnings) console.warn(`[config] ${warning}`);
+  const mfaKeyId = mfaKeyFingerprint();
+  if (mfaKeyId) console.info(`[config] MFA key fingerprint ${mfaKeyId}`);
+  if (configReview.fatal.length > 0) {
+    for (const problem of configReview.fatal) console.error(`FATAL: ${problem}`);
+    process.exit(1);
+  }
   const jwt = process.env.JWT_SECRET?.trim();
   if (!jwt) {
     console.error(
@@ -147,6 +170,7 @@ app.use("/api/webhook", express.raw({ type: "application/json" }), stripeWebhook
 app.use("/api/webhooks", express.raw({ type: "application/json" }), stripeWebhookRoutes);
 
 app.use(cors(corsMiddlewareOptions));
+await enableResponseCompression(app);
 app.use(
   express.json({
     verify(req, _res, buf) {
@@ -176,6 +200,10 @@ app.get("/.well-known/apple-developer-domain-association.txt", (_req, res) => {
   res.send(content);
 });
 
+app.use("/api", (req, _res, next) => {
+  noteForwardedChain(req);
+  next();
+});
 app.use("/api", authenticatedApiRateLimit);
 
 app.use(blockSensitiveStaticUploadPaths);
@@ -192,7 +220,7 @@ app.use(
   }),
 );
 
-if (process.env.NODE_ENV !== "production") {
+if (process.env.NODE_ENV !== "production" && !process.env.RENDER) {
   app.use("/api/test", testRoutes);
 }
 app.use("/api/auth", authRoutes);
@@ -251,7 +279,7 @@ app.get("/health", (req, res) => {
   const secret = process.env.HEALTH_CHECK_SECRET?.trim();
   const detailed =
     !isProd ||
-    (Boolean(secret) && req.get("x-health-secret") === secret);
+    (Boolean(secret) && safeSecretEqual(req.get("x-health-secret"), secret));
 
   if (!detailed) {
     return res.json({ status: "ok" });
@@ -266,6 +294,8 @@ app.get("/health", (req, res) => {
     email,
     observability,
     uploads,
+    redis: getRedisHealthSnapshot(),
+    instance: process.env.RENDER_INSTANCE_ID?.trim() || "local",
   });
 });
 
@@ -290,7 +320,59 @@ app.use(errorHandler);
 const httpServer = createServer(app);
 initSocketServer(httpServer);
 
-void assertEnvForAuth().then(() => {
+const SHUTDOWN_DRAIN_MS = shutdownDrainMs();
+const REDIS_HEALTH_CHECK_INTERVAL_MS = 60_000;
+/** Startup never waits longer than this for Redis; it is reported and retried, not required. */
+const REDIS_STARTUP_WAIT_MS = 6_000;
+let redisHealthTimer: ReturnType<typeof setInterval> | null = null;
+
+/**
+ * Stop taking work, let requests in progress finish, then release Redis and the database.
+ * Health reports 503 from the first moment, and the process exits after SHUTDOWN_DRAIN_MS at the
+ * latest, so a deploy can never hang on a stuck request.
+ */
+function shutdownGracefully(signal: string): void {
+  if (isProcessDraining()) return;
+  markProcessDraining();
+  console.info(`[server] ${signal}: draining (up to ${SHUTDOWN_DRAIN_MS}ms)`);
+  if (redisHealthTimer) clearInterval(redisHealthTimer);
+  let finished = false;
+  const finish = (reason: string) => {
+    if (finished) return;
+    finished = true;
+    console.info(`[server] shutdown: ${reason}`);
+    void Promise.allSettled([closeRateLimitStore(), prisma.$disconnect()]).finally(() => process.exit(0));
+  };
+  const forced = setTimeout(() => finish("drain timeout reached, exiting with requests still open"), SHUTDOWN_DRAIN_MS);
+  forced.unref();
+  // Socket.IO closes the HTTP listener too; its callback runs once every open request has ended.
+  httpServer.once("close", () => {
+    clearTimeout(forced);
+    finish("all requests finished");
+  });
+  void closeSocketServer()
+    .catch(() => undefined)
+    .finally(() => {
+      if (httpServer.listening) httpServer.close();
+    });
+}
+process.once("SIGTERM", () => shutdownGracefully("SIGTERM"));
+process.once("SIGINT", () => shutdownGracefully("SIGINT"));
+
+async function waitForRedisBeforeListening(): Promise<void> {
+  await Promise.race([
+    Promise.allSettled([socketAdapterReady(), warmRateLimitStore()]),
+    new Promise((resolve) => setTimeout(resolve, REDIS_STARTUP_WAIT_MS).unref()),
+  ]);
+  redisHealthTimer = setInterval(() => {
+    checkPersistentRedisOutage();
+    // Reconnects the rate-limit store after an outage even when no limited request arrives.
+    void warmRateLimitStore().catch(() => undefined);
+  }, REDIS_HEALTH_CHECK_INTERVAL_MS);
+  redisHealthTimer.unref();
+}
+
+void assertEnvForAuth().then(waitForRedisBeforeListening).then(() => {
   httpServer.listen(PORT, () => {
     console.log(`Caretip API running on http://localhost:${PORT}`);
     const billingOn = process.env.SUBSCRIPTION_BILLING_ENABLED?.trim().toLowerCase();

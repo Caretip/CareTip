@@ -187,7 +187,7 @@
   width: var(--caretip-marketing-icon-size);
   height: var(--caretip-marketing-icon-size);
   border-radius: var(--caretip-marketing-icon-radius);
-  background: var(--caretip-marketing-icon-chip-bg, rgb(233 120 28));
+  background: var(--caretip-marketing-icon-chip-bg, rgb(235 153 44));
   color: var(--caretip-marketing-icon-chip-fg, rgb(24 24 27));
   border: none;
   box-shadow: none;
@@ -203,7 +203,7 @@
 
 html.dark .caretip-landing #features .caretip-landing-feature-icon:not(.caretip-landing-feature-icon--obsidian),
 html.dark .caretip-landing #payments-trust .caretip-landing-feature-icon:not(.caretip-landing-feature-icon--obsidian) {
-  background: var(--caretip-marketing-icon-chip-bg, rgb(233 120 28));
+  background: var(--caretip-marketing-icon-chip-bg, rgb(235 153 44));
   color: var(--caretip-marketing-icon-chip-fg, rgb(24 24 27));
   border-color: transparent;
   box-shadow: none;
@@ -260,7 +260,7 @@ html.dark .caretip-landing #payments-trust .caretip-landing-feature-icon:not(.ca
   border-radius: 2rem;
   background: radial-gradient(
     ellipse 80% 70% at 50% 55%,
-    rgba(233, 120, 28, 0.06) 0%,
+    rgba(235, 153, 44, 0.06) 0%,
     transparent 68%
   );
 }

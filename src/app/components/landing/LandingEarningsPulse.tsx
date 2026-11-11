@@ -53,7 +53,7 @@ export function LandingEarningsPulse({ className }: LandingEarningsPulseProps) {
     >
       <div className="flex items-start gap-2 sm:gap-2.5">
         <span
-          className="mt-1 flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_0_2px_rgba(233,120,28,0.28)] sm:mt-1.5 sm:h-2 sm:w-2 sm:shadow-[0_0_0_3px_rgba(233,120,28,0.25)]"
+          className="mt-1 flex h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_0_2px_rgba(235,153,44,0.28)] sm:mt-1.5 sm:h-2 sm:w-2 sm:shadow-[0_0_0_3px_rgba(235,153,44,0.25)]"
           aria-hidden
         />
         <div className="min-w-0">

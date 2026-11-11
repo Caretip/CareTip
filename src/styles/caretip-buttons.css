@@ -2,62 +2,20 @@
  * Global primary/secondary buttons — matches landing `.caretip-cta-primary`.
  */
 
-html:not(.dark) .caretip-btn-primary,
-html:not(.dark) .caretip-cta-primary {
+/* One flat brand orange in every theme: no gradient or shadow to shift the colour. */
+.caretip-btn-primary,
+.caretip-cta-primary {
   border: 0;
-  color: #fff;
-  background: linear-gradient(
-    180deg,
-    var(--caretip-brand-orange-light) 0%,
-    var(--caretip-brand-orange) 100%
-  ) !important;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.16) inset,
-    0 1px 2px rgba(15, 23, 42, 0.08) !important;
+  color: #000;
+  background: hsl(var(--primary)) !important;
+  box-shadow: none !important;
 }
 
-html:not(.dark) .caretip-btn-primary:hover,
-html:not(.dark) .caretip-cta-primary:hover {
-  color: #fff;
-  background: linear-gradient(
-    180deg,
-    var(--caretip-brand-orange-hover) 0%,
-    var(--caretip-brand-orange) 100%
-  ) !important;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.18) inset,
-    0 2px 6px rgba(15, 23, 42, 0.1) !important;
-}
-
-html:not(.dark) .caretip-btn-primary--compact,
-html:not(.dark) .caretip-cta-primary--compact {
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.14) inset,
-    0 1px 2px rgba(15, 23, 42, 0.08) !important;
-}
-
-.dark .caretip-btn-primary,
-.dark .caretip-cta-primary {
-  border: 0;
-  color: #fff;
-  background: linear-gradient(
-    180deg,
-    var(--caretip-brand-orange-light) 0%,
-    var(--caretip-brand-orange) 100%
-  ) !important;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.08) inset,
-    0 1px 2px rgba(0, 0, 0, 0.2) !important;
-}
-
-.dark .caretip-btn-primary:hover,
-.dark .caretip-cta-primary:hover {
-  color: #fff;
-  background: linear-gradient(
-    180deg,
-    var(--caretip-brand-orange-hover) 0%,
-    var(--caretip-brand-orange) 100%
-  ) !important;
+.caretip-btn-primary:hover,
+.caretip-cta-primary:hover {
+  color: #000;
+  background: hsl(var(--primary-hover)) !important;
+  box-shadow: none !important;
 }
 
 /* Secondary — base + hover */

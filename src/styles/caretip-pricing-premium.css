@@ -5,7 +5,7 @@
 .caretip-pricing-page {
   --caretip-pricing-card-min-h: 26rem;
   --caretip-pricing-warm-dark-bg: var(--caretip-premium-gradient);
-  --caretip-pricing-warm-dark-border: rgba(233, 120, 28, 0.32);
+  --caretip-pricing-warm-dark-border: rgba(235, 153, 44, 0.32);
   --caretip-pricing-warm-dark-glow: var(--caretip-premium-glow);
   position: relative;
   background: linear-gradient(
@@ -34,7 +34,7 @@ html.dark .caretip-pricing-page {
   height: 36rem;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 80% 55% at 50% -8%, rgb(233 120 28 / 0.08) 0%, transparent 58%),
+    radial-gradient(ellipse 80% 55% at 50% -8%, rgb(235 153 44 / 0.08) 0%, transparent 58%),
     linear-gradient(180deg, rgb(255 251 245 / 0.85) 0%, transparent 100%);
   mask-image: linear-gradient(180deg, black 0%, transparent 92%);
   opacity: 0.9;
@@ -69,7 +69,7 @@ html.dark .caretip-pricing-page::before {
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--caretip-brand-orange, #e9781c);
+  color: var(--caretip-brand-orange, #eb992c);
 }
 
 /* —— Hero (Features-style wise inset edges) —— */
@@ -100,7 +100,7 @@ html.dark .caretip-pricing-page::before {
   border-radius: 9999px;
   background: radial-gradient(
     ellipse at center,
-    rgb(233 120 28 / 0.1) 0%,
+    rgb(235 153 44 / 0.1) 0%,
     rgb(255 237 213 / 0.22) 40%,
     transparent 72%
   );
@@ -110,8 +110,8 @@ html.dark .caretip-pricing-page::before {
 html.dark .caretip-pricing-hero-v2__glow {
   background: radial-gradient(
     ellipse at center,
-    rgb(233 120 28 / 0.14) 0%,
-    rgb(233 120 28 / 0.05) 42%,
+    rgb(235 153 44 / 0.14) 0%,
+    rgb(235 153 44 / 0.05) 42%,
     transparent 72%
   );
 }
@@ -161,7 +161,7 @@ html.dark .caretip-pricing-hero-v2__glow {
   gap: 0.375rem;
   margin-bottom: 0;
   border-radius: 9999px;
-  border: 1px solid rgb(233 120 28 / 0.22);
+  border: 1px solid rgb(235 153 44 / 0.22);
   background: linear-gradient(135deg, rgb(255 255 255 / 0.92) 0%, rgb(255 248 240) 100%);
   padding: 0.4375rem 0.9375rem;
   font-size: 0.6875rem;
@@ -170,12 +170,12 @@ html.dark .caretip-pricing-hero-v2__glow {
   text-transform: uppercase;
   color: rgb(180 83 9);
   box-shadow:
-    0 1px 2px rgb(233 120 28 / 0.08),
-    0 6px 18px -8px rgb(233 120 28 / 0.28);
+    0 1px 2px rgb(235 153 44 / 0.08),
+    0 6px 18px -8px rgb(235 153 44 / 0.28);
 }
 
 html.dark .caretip-pricing-hero-v2__badge {
-  border-color: rgb(233 120 28 / 0.35);
+  border-color: rgb(235 153 44 / 0.35);
   background: linear-gradient(135deg, rgb(69 26 3 / 0.85) 0%, rgb(120 53 15 / 0.55) 100%);
   color: rgb(253 186 116);
 }
@@ -337,10 +337,10 @@ html.dark .caretip-pricing-hero-v2__features--flat .caretip-pricing-hero-v2__fea
 
 .caretip-pricing-hero-v2__feature:hover {
   transform: translateY(-2px);
-  border-color: rgb(233 120 28 / 0.28);
+  border-color: rgb(235 153 44 / 0.28);
   box-shadow:
     0 4px 12px rgb(15 23 42 / 0.06),
-    0 16px 36px -12px rgb(233 120 28 / 0.18);
+    0 16px 36px -12px rgb(235 153 44 / 0.18);
 }
 
 html.dark .caretip-pricing-hero-v2__feature {
@@ -350,7 +350,7 @@ html.dark .caretip-pricing-hero-v2__feature {
 }
 
 html.dark .caretip-pricing-hero-v2__feature:hover {
-  border-color: rgb(233 120 28 / 0.35);
+  border-color: rgb(235 153 44 / 0.35);
 }
 
 .caretip-pricing-hero-v2__feature-icon {
@@ -452,7 +452,7 @@ html.dark .caretip-pricing-hero-v2__trust-item {
   margin-top: 0.125rem;
   font-size: 0.75rem;
   font-weight: 700;
-  color: rgb(233 120 28);
+  color: rgb(235 153 44);
 }
 
 .caretip-pricing-plans-section--after-hero {
@@ -581,7 +581,7 @@ html.dark .caretip-pricing-plans-intro__subtitle {
   width: 0.375rem;
   height: 0.375rem;
   border-radius: 9999px;
-  background: rgb(233 120 28 / 0.85);
+  background: rgb(235 153 44 / 0.85);
 }
 
 html.dark .caretip-pricing-plans-intro__bullets li {
@@ -771,8 +771,8 @@ html.dark .caretip-pricing-controls__label {
 }
 
 .caretip-pricing-select-trigger:focus-visible {
-  border-color: rgb(233 120 28 / 0.45);
-  box-shadow: 0 0 0 3px rgb(233 120 28 / 0.12);
+  border-color: rgb(235 153 44 / 0.45);
+  box-shadow: 0 0 0 3px rgb(235 153 44 / 0.12);
 }
 
 html.dark .caretip-pricing-select-trigger {
@@ -814,8 +814,8 @@ html.dark .caretip-pricing-select-trigger {
 }
 
 .caretip-pricing-billing-toggle[data-cycle="yearly"] {
-  border-color: rgb(233 120 28 / 0.38);
-  background: linear-gradient(180deg, rgb(233 120 28 / 0.07), rgb(233 120 28 / 0.03));
+  border-color: rgb(235 153 44 / 0.38);
+  background: linear-gradient(180deg, rgb(235 153 44 / 0.07), rgb(235 153 44 / 0.03));
 }
 
 .caretip-pricing-billing-toggle--in-panel {
@@ -854,8 +854,8 @@ html.dark .caretip-pricing-billing-toggle[data-cycle="monthly"] {
 }
 
 html.dark .caretip-pricing-billing-toggle[data-cycle="yearly"] {
-  border-color: rgb(233 120 28 / 0.42);
-  background: linear-gradient(180deg, rgb(233 120 28 / 0.14), rgb(233 120 28 / 0.06));
+  border-color: rgb(235 153 44 / 0.42);
+  background: linear-gradient(180deg, rgb(235 153 44 / 0.14), rgb(235 153 44 / 0.06));
 }
 
 .caretip-pricing-billing-toggle__indicator {
@@ -881,9 +881,9 @@ html.dark .caretip-pricing-billing-toggle[data-cycle="yearly"] {
   background: linear-gradient(
     135deg,
     var(--caretip-brand-orange-light, #ff9e2d) 0%,
-    var(--caretip-brand-orange, #e9781c) 100%
+    var(--caretip-brand-orange, #eb992c) 100%
   );
-  box-shadow: 0 4px 16px -4px rgb(233 120 28 / 0.55);
+  box-shadow: 0 4px 16px -4px rgb(235 153 44 / 0.55);
 }
 
 html.dark .caretip-pricing-billing-toggle[data-cycle="monthly"] .caretip-pricing-billing-toggle__indicator {
@@ -895,9 +895,9 @@ html.dark .caretip-pricing-billing-toggle[data-cycle="yearly"] .caretip-pricing-
   background: linear-gradient(
     135deg,
     var(--caretip-brand-orange-light, #ff9e2d) 0%,
-    var(--caretip-brand-orange, #e9781c) 100%
+    var(--caretip-brand-orange, #eb992c) 100%
   );
-  box-shadow: 0 4px 18px -4px rgb(233 120 28 / 0.5);
+  box-shadow: 0 4px 18px -4px rgb(235 153 44 / 0.5);
 }
 
 .caretip-pricing-billing-toggle__option {
@@ -920,7 +920,7 @@ html.dark .caretip-pricing-billing-toggle[data-cycle="yearly"] .caretip-pricing-
 }
 
 .caretip-pricing-billing-toggle[data-cycle="monthly"] .caretip-pricing-billing-toggle__option--active {
-  color: var(--caretip-brand-orange, #e9781c);
+  color: var(--caretip-brand-orange, #eb992c);
 }
 
 .caretip-pricing-billing-toggle[data-cycle="yearly"] .caretip-pricing-billing-toggle__option--active {
@@ -948,7 +948,7 @@ html.dark .caretip-pricing-billing-toggle[data-cycle="yearly"] .caretip-pricing-
   display: inline-flex;
   align-items: center;
   border-radius: 9999px;
-  background: rgb(233 120 28 / 0.14);
+  background: rgb(235 153 44 / 0.14);
   padding: 0.125rem 0.4375rem;
   font-size: 0.625rem;
   font-weight: 700;
@@ -966,7 +966,7 @@ html.dark .caretip-pricing-billing-toggle[data-cycle="yearly"] .caretip-pricing-
 }
 
 html.dark .caretip-pricing-save-badge {
-  background: rgb(233 120 28 / 0.22);
+  background: rgb(235 153 44 / 0.22);
   color: rgb(251 191 36);
 }
 
@@ -1008,8 +1008,8 @@ html.dark .caretip-pricing-save-badge--soon {
 }
 
 .caretip-pricing-audience-toggle[data-audience="midwives_freelancers"] {
-  border-color: rgb(233 120 28 / 0.38);
-  background: linear-gradient(180deg, rgb(233 120 28 / 0.07), rgb(233 120 28 / 0.03));
+  border-color: rgb(235 153 44 / 0.38);
+  background: linear-gradient(180deg, rgb(235 153 44 / 0.07), rgb(235 153 44 / 0.03));
 }
 
 .caretip-pricing-audience-toggle--in-panel {
@@ -1028,8 +1028,8 @@ html.dark .caretip-pricing-audience-toggle[data-audience="hotels_logistics"] {
 }
 
 html.dark .caretip-pricing-audience-toggle[data-audience="midwives_freelancers"] {
-  border-color: rgb(233 120 28 / 0.42);
-  background: linear-gradient(180deg, rgb(233 120 28 / 0.14), rgb(233 120 28 / 0.06));
+  border-color: rgb(235 153 44 / 0.42);
+  background: linear-gradient(180deg, rgb(235 153 44 / 0.14), rgb(235 153 44 / 0.06));
 }
 
 .caretip-pricing-audience-toggle__indicator {
@@ -1055,9 +1055,9 @@ html.dark .caretip-pricing-audience-toggle[data-audience="midwives_freelancers"]
   background: linear-gradient(
     135deg,
     var(--caretip-brand-orange-light, #ff9e2d) 0%,
-    var(--caretip-brand-orange, #e9781c) 100%
+    var(--caretip-brand-orange, #eb992c) 100%
   );
-  box-shadow: 0 4px 16px -4px rgb(233 120 28 / 0.55);
+  box-shadow: 0 4px 16px -4px rgb(235 153 44 / 0.55);
 }
 
 html.dark .caretip-pricing-audience-toggle[data-audience="hotels_logistics"] .caretip-pricing-audience-toggle__indicator {
@@ -1069,9 +1069,9 @@ html.dark .caretip-pricing-audience-toggle[data-audience="midwives_freelancers"]
   background: linear-gradient(
     135deg,
     var(--caretip-brand-orange-light, #ff9e2d) 0%,
-    var(--caretip-brand-orange, #e9781c) 100%
+    var(--caretip-brand-orange, #eb992c) 100%
   );
-  box-shadow: 0 4px 18px -4px rgb(233 120 28 / 0.5);
+  box-shadow: 0 4px 18px -4px rgb(235 153 44 / 0.5);
 }
 
 .caretip-pricing-audience-toggle__option {
@@ -1095,7 +1095,7 @@ html.dark .caretip-pricing-audience-toggle[data-audience="midwives_freelancers"]
 }
 
 .caretip-pricing-audience-toggle[data-audience="hotels_logistics"] .caretip-pricing-audience-toggle__option--active {
-  color: var(--caretip-brand-orange, #e9781c);
+  color: var(--caretip-brand-orange, #eb992c);
 }
 
 .caretip-pricing-audience-toggle[data-audience="midwives_freelancers"] .caretip-pricing-audience-toggle__option--active {
@@ -1247,7 +1247,7 @@ html.dark .caretip-pricing-trust--in-shell {
 .caretip-pricing-trust--subtle .caretip-pricing-trust__icon {
   width: 1.25rem;
   height: 1.25rem;
-  background: rgb(233 120 28 / 0.08);
+  background: rgb(235 153 44 / 0.08);
   color: rgb(194 65 12);
 }
 
@@ -1256,7 +1256,7 @@ html.dark .caretip-pricing-trust--subtle .caretip-pricing-trust__item {
 }
 
 html.dark .caretip-pricing-trust--subtle .caretip-pricing-trust__icon {
-  background: rgb(233 120 28 / 0.14);
+  background: rgb(235 153 44 / 0.14);
   color: rgb(251 191 36);
 }
 
@@ -1300,14 +1300,14 @@ html.dark .caretip-pricing-trust--subtle .caretip-pricing-trust__icon {
   inset-inline: 0;
   top: -1rem;
   height: 20rem;
-  background: radial-gradient(ellipse 70% 55% at 50% 0%, rgb(233 120 28 / 0.1), transparent 72%);
+  background: radial-gradient(ellipse 70% 55% at 50% 0%, rgb(235 153 44 / 0.1), transparent 72%);
 }
 
 /* —— Tier cards (Framer structure + Stripe fee clarity) —— */
 .caretip-pricing-tiers {
   --caretip-pricing-card-min-h: 22.5rem;
   --caretip-pricing-warm-dark-bg: var(--caretip-premium-gradient);
-  --caretip-pricing-warm-dark-border: rgba(233, 120, 28, 0.32);
+  --caretip-pricing-warm-dark-border: rgba(235, 153, 44, 0.32);
   --caretip-pricing-warm-dark-glow: var(--caretip-premium-glow);
 }
 
@@ -1363,12 +1363,12 @@ html.dark .caretip-pricing-trust--subtle .caretip-pricing-trust__icon {
 
 .caretip-pricing-tier-card--featured {
   --pricing-card-y: -0.625rem;
-  border-color: rgb(233 120 28 / 0.42);
+  border-color: rgb(235 153 44 / 0.42);
   background: linear-gradient(180deg, rgb(255 255 255) 0%, rgb(255 252 248) 100%);
   padding: 3rem 1.75rem 1.875rem;
   box-shadow:
-    0 4px 8px rgb(233 120 28 / 0.08),
-    0 28px 64px -18px rgb(233 120 28 / 0.32),
+    0 4px 8px rgb(235 153 44 / 0.08),
+    0 28px 64px -18px rgb(235 153 44 / 0.32),
     0 16px 40px -20px rgb(15 23 42 / 0.12);
 }
 
@@ -1416,7 +1416,7 @@ html.dark .caretip-pricing-tier-card {
 }
 
 html.dark .caretip-pricing-tier-card--featured {
-  border-color: rgb(233 120 28 / 0.45);
+  border-color: rgb(235 153 44 / 0.45);
   background: linear-gradient(180deg, rgb(28 24 20) 0%, rgb(23 23 23) 100%);
 }
 
@@ -1475,7 +1475,7 @@ html.dark .caretip-pricing-tier-card--enterprise {
   align-items: center;
   gap: 0.25rem;
   border-radius: 9999px;
-  background: linear-gradient(135deg, rgb(255 158 45), rgb(233 120 28));
+  background: linear-gradient(135deg, rgb(255 158 45), rgb(235 153 44));
   padding: 0.25rem 0.625rem;
   font-size: 0.625rem;
   font-weight: 700;
@@ -1484,7 +1484,7 @@ html.dark .caretip-pricing-tier-card--enterprise {
   text-transform: uppercase;
   color: white;
   border: 1px solid rgb(255 255 255 / 0.28);
-  box-shadow: 0 2px 8px -2px rgb(233 120 28 / 0.45);
+  box-shadow: 0 2px 8px -2px rgb(235 153 44 / 0.45);
 }
 
 .caretip-pricing-tier-card__header {
@@ -1504,7 +1504,7 @@ html.dark .caretip-pricing-tier-card--enterprise {
   font-size: clamp(0.8125rem, 1.2vw, 0.9375rem);
   font-weight: 400;
   line-height: 1.35;
-  color: var(--caretip-brand-orange, #e9781c);
+  color: var(--caretip-brand-orange, #eb992c);
 }
 
 .caretip-pricing-tier-card__transaction-fee-notice-link {
@@ -1525,7 +1525,7 @@ html.dark .caretip-pricing-tier-card--enterprise {
 }
 
 .caretip-pricing-tier-card--enterprise .caretip-pricing-tier-card__transaction-fee-notice {
-  color: var(--caretip-brand-orange, #e9781c);
+  color: var(--caretip-brand-orange, #eb992c);
 }
 
 html.dark .caretip-pricing-tier-card__transaction-fee-notice {
@@ -1604,7 +1604,7 @@ html.dark .caretip-pricing-tier-card__fee {
 }
 
 .caretip-pricing-tier-card__fee-note-link:hover {
-  color: var(--caretip-brand-orange, #e9781c);
+  color: var(--caretip-brand-orange, #eb992c);
 }
 
 .caretip-pricing-grid-legal-note {
@@ -1632,7 +1632,7 @@ html.dark .caretip-pricing-tier-card__fee {
 }
 
 .caretip-pricing-grid-legal-note__link:hover {
-  color: var(--caretip-brand-orange, #e9781c);
+  color: var(--caretip-brand-orange, #eb992c);
 }
 
 .caretip-pricing-tiers--billing .caretip-pricing-grid-legal-note {
@@ -1736,12 +1736,12 @@ html.dark .caretip-pricing-tier-features__item {
   justify-content: center;
   margin-top: 0.15rem;
   border-radius: 9999px;
-  background: rgb(233 120 28 / 0.12);
+  background: rgb(235 153 44 / 0.12);
   color: rgb(217 119 6);
 }
 
 .caretip-pricing-tier-card--enterprise .caretip-pricing-tier-features__check {
-  background: rgb(233 120 28 / 0.12);
+  background: rgb(235 153 44 / 0.12);
   color: rgb(217 119 6);
 }
 
@@ -1824,7 +1824,7 @@ html.dark .caretip-pricing-faq__item {
 }
 
 .caretip-pricing-faq__trigger:hover {
-  color: var(--caretip-brand-orange, #e9781c);
+  color: var(--caretip-brand-orange, #eb992c);
 }
 
 .caretip-pricing-faq__question {
@@ -1835,7 +1835,7 @@ html.dark .caretip-pricing-faq__item {
 }
 
 .caretip-pricing-faq__trigger:hover .caretip-pricing-faq__question {
-  color: var(--caretip-brand-orange, #e9781c);
+  color: var(--caretip-brand-orange, #eb992c);
 }
 
 html.dark .caretip-pricing-faq__question {
@@ -1852,7 +1852,7 @@ html.dark .caretip-pricing-faq__question {
 
 .caretip-pricing-faq__chevron--open {
   transform: rotate(180deg);
-  color: var(--caretip-brand-orange, #e9781c);
+  color: var(--caretip-brand-orange, #eb992c);
 }
 
 .caretip-pricing-faq__answer {
@@ -2091,7 +2091,7 @@ html.dark .caretip-pricing-tier-card__subscription-line--muted {
   height: 2rem;
   flex-shrink: 0;
   border-radius: 0.625rem;
-  background: rgb(233 120 28 / 0.12);
+  background: rgb(235 153 44 / 0.12);
   color: rgb(217 119 6);
 }
 
@@ -2111,12 +2111,12 @@ html.dark .caretip-pricing-tier-card__subscription-line--muted {
 }
 
 .caretip-pricing-tier-card--current {
-  border-color: rgb(233 120 28 / 0.58);
+  border-color: rgb(235 153 44 / 0.58);
   background: linear-gradient(180deg, rgb(255 255 255) 0%, rgb(255 250 245) 100%);
   box-shadow:
-    0 0 0 1px rgb(233 120 28 / 0.12),
-    0 4px 8px rgb(233 120 28 / 0.08),
-    0 24px 56px -20px rgb(233 120 28 / 0.22);
+    0 0 0 1px rgb(235 153 44 / 0.12),
+    0 4px 8px rgb(235 153 44 / 0.08),
+    0 24px 56px -20px rgb(235 153 44 / 0.22);
 }
 
 @media (min-width: 768px) {
@@ -2130,32 +2130,32 @@ html.dark .caretip-pricing-tier-card__subscription-line--muted {
 }
 
 html.dark .caretip-pricing-tier-card--current {
-  border-color: rgb(233 120 28 / 0.52);
+  border-color: rgb(235 153 44 / 0.52);
   background: linear-gradient(180deg, rgb(32 26 22) 0%, rgb(23 23 23) 100%);
   box-shadow:
-    0 0 0 1px rgb(233 120 28 / 0.18),
-    0 24px 56px -20px rgb(233 120 28 / 0.28);
+    0 0 0 1px rgb(235 153 44 / 0.18),
+    0 24px 56px -20px rgb(235 153 44 / 0.28);
 }
 
 .caretip-pricing-tier-card__badge--current {
-  background: linear-gradient(135deg, rgb(255 158 45), rgb(233 120 28));
+  background: linear-gradient(135deg, rgb(255 158 45), rgb(235 153 44));
   border-color: rgb(255 255 255 / 0.28);
-  box-shadow: 0 4px 14px -4px rgb(233 120 28 / 0.55);
+  box-shadow: 0 4px 14px -4px rgb(235 153 44 / 0.55);
 }
 
 .caretip-pricing-tiers--billing .caretip-pricing-tier-card:hover {
-  border-color: rgb(233 120 28 / 0.32);
+  border-color: rgb(235 153 44 / 0.32);
   box-shadow:
     0 2px 6px rgb(15 23 42 / 0.05),
-    0 22px 52px -18px rgb(233 120 28 / 0.16);
+    0 22px 52px -18px rgb(235 153 44 / 0.16);
 }
 
 .caretip-pricing-tiers--billing .caretip-pricing-tier-card--current:hover {
-  border-color: rgb(233 120 28 / 0.68);
+  border-color: rgb(235 153 44 / 0.68);
   box-shadow:
-    0 0 0 1px rgb(233 120 28 / 0.16),
-    0 6px 12px rgb(233 120 28 / 0.1),
-    0 28px 60px -18px rgb(233 120 28 / 0.28);
+    0 0 0 1px rgb(235 153 44 / 0.16),
+    0 6px 12px rgb(235 153 44 / 0.1),
+    0 28px 60px -18px rgb(235 153 44 / 0.28);
 }
 
 .caretip-pricing-tiers--billing {
@@ -2192,7 +2192,7 @@ html.dark .billing-subscription-summary--empty {
 }
 
 .billing-subscription-summary--sponsored {
-  border-color: rgb(233 120 28 / 0.35);
+  border-color: rgb(235 153 44 / 0.35);
   background: linear-gradient(180deg, rgb(255 252 248) 0%, rgb(255 247 237 / 0.65) 100%);
 }
 
@@ -2301,7 +2301,7 @@ html.dark .billing-subscription-summary__meta-row dd {
   padding: 0;
   font: inherit;
   font-weight: 600;
-  color: var(--caretip-brand-orange, #e9781c);
+  color: var(--caretip-brand-orange, #eb992c);
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: pointer;
@@ -2314,8 +2314,8 @@ html.dark .billing-subscription-summary__meta-row dd {
   align-items: center;
   justify-content: center;
   border-radius: 0.625rem;
-  border: 1px solid rgb(233 120 28 / 0.35);
-  background: rgb(233 120 28 / 0.08);
+  border: 1px solid rgb(235 153 44 / 0.35);
+  background: rgb(235 153 44 / 0.08);
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
   font-weight: 600;
@@ -2325,7 +2325,7 @@ html.dark .billing-subscription-summary__meta-row dd {
 }
 
 .billing-subscription-summary__support-link:hover {
-  background: rgb(233 120 28 / 0.14);
+  background: rgb(235 153 44 / 0.14);
 }
 
 /* —— Billing trial promo —— */
@@ -2376,7 +2376,7 @@ html.dark .billing-trial-promo {
 
 .billing-trial-expired {
   border-radius: 1rem;
-  border: 1px solid rgb(233 120 28 / 0.35);
+  border: 1px solid rgb(235 153 44 / 0.35);
   background: linear-gradient(180deg, rgb(255 251 247) 0%, rgb(255 255 255) 100%);
   padding: 1.25rem 1.375rem;
 }

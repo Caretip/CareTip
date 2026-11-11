@@ -190,7 +190,7 @@
   height: 0.875rem;
   margin-top: 0.05rem;
   flex: 0 0 auto;
-  color: var(--caretip-brand-orange, #e9781c);
+  color: var(--caretip-brand-orange, #eb992c);
 }
 
 .caretip-dashboard-shell.business-dashboard .business-period-summary__value {
@@ -756,7 +756,7 @@
   .employee-period-chart__empty,
   .employee-analytics-mini-chart
 ) .dashboard-workspace-empty svg {
-  color: var(--caretip-brand-orange, #e9781c) !important;
+  color: var(--caretip-brand-orange, #eb992c) !important;
 }
 
 /* Mobile hero metrics: one shared label row and one shared value row per pair. */

@@ -142,7 +142,7 @@ if (weekRange && monthRange && yearRange) {
 const qrService = read("backend/src/services/qr/qrAnalytics.service.ts");
 assert(qrService.includes("businessId"), "QR analytics scoped by businessId");
 assert(qrService.includes("repeatScans = Math.max(0, totalScans - uniqueScans)"), "return scans = total − unique sessions");
-assert(qrService.includes("groupBy") && qrService.includes("sessionId"), "unique visitors = session groups");
+assert(qrService.includes("COUNT(DISTINCT session_id)"), "unique visitors = distinct sessions");
 
 const tipSql = read("backend/src/utils/tipChartBuckets.ts");
 assert(tipSql.includes("status = 'success'"), "analytics SQL counts success tips only");

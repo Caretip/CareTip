@@ -12,7 +12,7 @@ import { checkoutSessionBoundToBusiness } from "../src/lib/subscription/checkout
 type Result = { id: string; pass: boolean; detail: string };
 const results: Result[] = [];
 const backendRoot = process.cwd();
-const API = (process.env.RUNTIME_API_BASE ?? "http://localhost:3001").replace(/\/$/, "");
+const API = (process.env.RUNTIME_API_BASE ?? (process.env.CI ? "http://localhost:3001" : "http://127.0.0.1:9")).replace(/\/$/, "");
 
 const pass = (id: string, detail: string) => results.push({ id, pass: true, detail });
 const fail = (id: string, detail: string) => results.push({ id, pass: false, detail });

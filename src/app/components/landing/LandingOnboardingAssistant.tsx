@@ -6,6 +6,7 @@ import { MessageCircle, Send, X, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { postLandingAiChat, type LandingChatMessage } from "../../lib/landingAiApi";
 import { trackLandingAiEvent } from "../../lib/landingAiAnalytics";
+import { toDisplayErrorMessage } from "@/app/lib/errorMessages";
 
 export const LANDING_AI_PROMPT_IDS = [
   "how_it_works",
@@ -126,7 +127,7 @@ export function LandingOnboardingAssistant({
         ]);
       } catch (e) {
         if (controller.signal.aborted) return;
-        setError(e instanceof Error ? e.message : t("landing.assistant.error"));
+        setError(toDisplayErrorMessage(e, t("landing.assistant.error")));
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }

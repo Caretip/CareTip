@@ -1,13 +1,12 @@
 /**
  * Canonical business financial metrics from CareTip ledger (not Stripe).
  */
-import { EmployeeTipChargeModel, EmployeeTipPayoutMode, EmployeeTipPayableStatus, Prisma } from "@prisma/client";
+import { EmployeeTipPayoutMode, Prisma } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import {
   businessDistributionRemainingObligationForBusiness,
   type BusinessDistributionObligationSnapshot,
 } from "./tipDistribution.service.js";
-import { remainingPayableCents } from "./employeeTipPayable.service.js";
 import type { BusinessTimeframe } from "../utils/businessTime.js";
 import { businessUtcRangeForTimeframe, sanitizeIanaTimezone } from "../utils/businessTime.js";
 
@@ -51,7 +50,9 @@ export async function loadBusinessFinancialMetrics(
       ? Promise.resolve(opts.distributionObligation)
       : businessDistributionRemainingObligationForBusiness(businessId);
 
-  const [tipRows, payables, obligation] = await Promise.all([
+  // Summed in Postgres: this runs on every dashboard load, and a business accumulates one payable
+  // per tip forever, so reading the rows into Node blocked the event loop for every other request.
+  const [tipRows, payableGroups, obligation] = await Promise.all([
     prisma.$queryRaw<Array<{ gross: number; tip_count: number }>>(Prisma.sql`
       SELECT
         COALESCE(SUM(amount), 0)::float AS gross,
@@ -61,21 +62,20 @@ export async function loadBusinessFinancialMetrics(
         AND status = 'success'
         ${period !== "all" && periodStart && periodEnd ? Prisma.sql`AND created_at >= ${periodStart} AND created_at <= ${periodEnd}` : Prisma.empty}
     `),
-    prisma.employeeTipPayable.findMany({
-      where: {
-        businessId,
-        ...(period !== "all" && periodStart && periodEnd
-          ? { transaction: { createdAt: { gte: periodStart, lte: periodEnd } } }
-          : {}),
-      },
-      select: {
-        routingMode: true,
-        chargeModel: true,
-        grossCents: true,
-        platformFeeCents: true,
-        transactionId: true,
-      },
-    }),
+    prisma.$queryRaw<
+      Array<{ routing_mode: EmployeeTipPayoutMode; gross_cents: number; fee_cents: number; row_count: number }>
+    >(Prisma.sql`
+      SELECT
+        p.routing_mode::text AS routing_mode,
+        COALESCE(SUM(p.gross_cents), 0)::float AS gross_cents,
+        COALESCE(SUM(p.platform_fee_cents), 0)::float AS fee_cents,
+        COUNT(*)::int AS row_count
+      FROM employee_tip_payables p
+      ${period !== "all" && periodStart && periodEnd ? Prisma.sql`JOIN tips t ON t.id = p.transaction_id` : Prisma.empty}
+      WHERE p.business_id = ${businessId}
+        ${period !== "all" && periodStart && periodEnd ? Prisma.sql`AND t.created_at >= ${periodStart} AND t.created_at <= ${periodEnd}` : Prisma.empty}
+      GROUP BY p.routing_mode
+    `),
     obligationPromise,
   ]);
 
@@ -83,22 +83,23 @@ export async function loadBusinessFinancialMetrics(
   let bizDistGrossCents = 0;
   let feeCents = 0;
   let feeRows = 0;
-  const payableTxIds = new Set<string>();
 
-  for (const row of payables) {
-    if (row.transactionId) payableTxIds.add(row.transactionId);
-    feeCents += row.platformFeeCents;
-    feeRows += 1;
-    if (row.routingMode === EmployeeTipPayoutMode.direct_to_employee) {
-      directGrossCents += row.grossCents;
-    } else if (row.routingMode === EmployeeTipPayoutMode.business_distribution) {
-      bizDistGrossCents += row.grossCents;
+  for (const group of payableGroups) {
+    feeCents += group.fee_cents;
+    feeRows += group.row_count;
+    if (group.routing_mode === EmployeeTipPayoutMode.direct_to_employee) {
+      directGrossCents += group.gross_cents;
+    } else if (group.routing_mode === EmployeeTipPayoutMode.business_distribution) {
+      bizDistGrossCents += group.gross_cents;
     }
   }
 
   const tipCount = Number(tipRows[0]?.tip_count ?? 0);
-  /** Exact when every successful tip in scope has a payable with frozen platformFeeCents. */
-  const feesExact = tipCount > 0 && feeRows === tipCount && payableTxIds.size === tipCount;
+  /**
+   * Exact when every successful tip in scope has a payable with frozen platformFeeCents.
+   * transaction_id is unique on payables, so the row count is also the distinct transaction count.
+   */
+  const feesExact = tipCount > 0 && feeRows === tipCount;
 
   return {
     totalCustomerTipsEur: Number(tipRows[0]?.gross ?? 0),

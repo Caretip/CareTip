@@ -192,7 +192,7 @@ async function main(): Promise<void> {
     : null;
 
   console.log("\n=== TENANT ISOLATION (localhost API) ===");
-  const api = "http://localhost:3001/api/payments/create-tip-session";
+  const api = `${process.env.RUNTIME_API_BASE ?? (process.env.CI ? "http://localhost:3001" : "http://127.0.0.1:9")}/api/payments/create-tip-session`;
   async function postTip(body: Record<string, unknown>, extraHeaders: Record<string, string> = {}) {
     const res = await fetch(api, {
       method: "POST",

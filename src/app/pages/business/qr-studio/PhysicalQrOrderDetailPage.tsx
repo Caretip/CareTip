@@ -37,6 +37,7 @@ import { Button } from "@/components/ui/button";
 import { QR_STUDIO_BASE } from "../../../components/business/businessDashboardNav";
 import { businessUi } from "../../../components/business/businessDashboardUi";
 import { cn } from "@/lib/utils";
+import { toDisplayErrorMessage } from "@/app/lib/errorMessages";
 
 export function PhysicalQrOrderDetailPage() {
   const { user } = useRequireAuth();
@@ -85,7 +86,7 @@ export function PhysicalQrOrderDetailPage() {
       })
       .catch((err) => {
         if (!cancelled && !readPhysicalQrOrderSnapshot(businessId, orderId)) {
-          setLoadError(err instanceof Error ? err.message : t("business.qrStudio.physical.loadError"));
+          setLoadError(toDisplayErrorMessage(err, t("business.qrStudio.physical.loadError")));
         }
       });
     return () => {
@@ -128,7 +129,7 @@ export function PhysicalQrOrderDetailPage() {
       const redirected = performExternalStripeRedirect(session.url, "checkout");
       if (!redirected.ok) throw new Error(t("business.qrStudio.physical.orderError"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("business.qrStudio.physical.orderError"));
+      toast.error(toDisplayErrorMessage(err, t("business.qrStudio.physical.orderError")));
       setPaying(false);
     }
   }

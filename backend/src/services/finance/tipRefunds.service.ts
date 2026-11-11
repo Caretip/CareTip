@@ -125,6 +125,27 @@ export async function upsertStripeRefundEvent(input: {
   if (!handled) await recordRefund(prisma);
 }
 
+/** Catches refunds whose webhook arrived before the tip existed and was skipped. Safe to repeat. */
+export async function applyExistingStripeRefundsAfterSuccessfulTip(input: {
+  paymentIntentId: string;
+  listRefunds: () => Promise<Stripe.Refund[]>;
+}): Promise<number> {
+  const refunds = await input.listRefunds();
+  for (const refund of refunds) {
+    await upsertStripeRefundEvent({
+      stripeRefundId: refund.id,
+      stripePaymentIntentId: input.paymentIntentId,
+      stripeChargeId: typeof refund.charge === "string" ? refund.charge : refund.charge?.id ?? null,
+      amountCents: refund.amount,
+      currency: refund.currency,
+      status: refund.status ?? "pending",
+      reason: refund.reason,
+      occurredAt: new Date(refund.created * 1000),
+    });
+  }
+  return refunds.length;
+}
+
 function mapStripeDisputeStatus(statusRaw: string): TipRefundStatus {
   const s = String(statusRaw).toLowerCase();
   if (s === "won" || s === "warning_closed") return TipRefundStatus.won;

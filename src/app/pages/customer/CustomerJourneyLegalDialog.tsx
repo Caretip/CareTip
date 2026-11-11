@@ -1,13 +1,19 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { fetchLegalDocument, type LegalDocumentKind, type LegalDocumentResponse } from "@/app/lib/legalApi";
-import { SafeLegalHtmlContent } from "@/components/public/legal/SafeLegalHtmlContent";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/app/components/ui/dialog";
+import { toDisplayErrorMessage } from "@/app/lib/errorMessages";
+
+const SafeLegalHtmlContent = lazy(() =>
+  import("@/components/public/legal/SafeLegalHtmlContent").then((module) => ({
+    default: module.SafeLegalHtmlContent,
+  })),
+);
 
 type CustomerJourneyLegalDialogProps = {
   kind: LegalDocumentKind;
@@ -33,7 +39,7 @@ export function CustomerJourneyLegalDialog({ kind, open, onOpenChange }: Custome
       .catch((err: unknown) => {
         if (!cancelled) {
           setDoc(null);
-          setError(err instanceof Error ? err.message : t("legal.loadError"));
+          setError(toDisplayErrorMessage(err, t("legal.loadError")));
         }
       })
       .finally(() => {
@@ -58,7 +64,9 @@ export function CustomerJourneyLegalDialog({ kind, open, onOpenChange }: Custome
           ) : error ? (
             <p className="text-sm text-destructive" role="alert">{error}</p>
           ) : doc ? (
-            <SafeLegalHtmlContent html={doc.contentHtml} pageTitle={title} />
+            <Suspense fallback={<p className="text-sm text-muted-foreground">{t("legal.loading")}</p>}>
+              <SafeLegalHtmlContent html={doc.contentHtml} pageTitle={title} />
+            </Suspense>
           ) : null}
         </div>
       </DialogContent>

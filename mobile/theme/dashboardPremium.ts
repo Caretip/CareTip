@@ -1,6 +1,6 @@
 /**
  * Premium minimalist dashboard tokens — Apple Wallet / Stripe / Revolut inspired.
- * Brand accents use the web CareTip CTA orange (`#e9781c`), not Tailwind amber.
+ * Brand accents use the web CareTip CTA orange (`#eb992c`), not Tailwind amber.
  */
 
 import { Platform, type ViewStyle } from "react-native";

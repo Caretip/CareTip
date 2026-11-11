@@ -3,14 +3,10 @@ import { isDemoEmailVerificationBypassEnabled } from "./emailVerificationBypass.
 
 export { isDemoEmailVerificationBypassEnabled };
 
-/** Case-insensitive first-name allowlist (plus optional env). */
-const HARDCODED_BYPASS_FIRST_NAMES = new Set(["genevive", "genevieve", "bobby"]);
-
-function mergeEnvFirstNames(base: Set<string>): Set<string> {
-  const raw = process.env.EMAIL_VERIFICATION_BYPASS_FIRST_NAMES?.trim();
-  if (!raw) return base;
-  const out = new Set(base);
-  for (const part of raw.split(/[,;]/)) {
+/** Case-insensitive first-name allowlist, from env only: a user can choose their own display name. */
+function bypassFirstNames(): Set<string> {
+  const out = new Set<string>();
+  for (const part of (process.env.EMAIL_VERIFICATION_BYPASS_FIRST_NAMES ?? "").split(/[,;]/)) {
     const t = part.trim().toLowerCase();
     if (t) out.add(t);
   }
@@ -31,10 +27,6 @@ function bypassEmails(): Set<string> {
     if (t) s.add(t);
   }
   return s;
-}
-
-function bypassFirstNames(): Set<string> {
-  return mergeEnvFirstNames(new Set(HARDCODED_BYPASS_FIRST_NAMES));
 }
 
 export function firstNameTokenLower(displayName: string | null | undefined): string {

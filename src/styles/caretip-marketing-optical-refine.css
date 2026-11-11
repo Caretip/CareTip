@@ -136,11 +136,11 @@ html.dark .caretip-features-page .caretip-landing-feature-card {
 
 @media (hover: hover) {
   .caretip-features-page .caretip-landing-feature-card:hover {
-    border-color: rgb(233 120 28 / 0.26);
+    border-color: rgb(235 153 44 / 0.26);
     box-shadow:
       0 1px 2px rgb(15 23 42 / 0.04),
       0 14px 32px -18px rgb(15 23 42 / 0.12),
-      0 8px 20px -16px rgb(233 120 28 / 0.12);
+      0 8px 20px -16px rgb(235 153 44 / 0.12);
     transform: translateY(-1px);
   }
 }
@@ -477,7 +477,7 @@ html.dark .caretip-industry-page__final-cta-secondary:hover {
 }
 
 .caretip-landing .caretip-trust-strip__check {
-  color: rgb(233 120 28);
+  color: rgb(235 153 44);
 }
 
 /* —— How It Works rail —— */

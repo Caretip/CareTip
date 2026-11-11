@@ -44,6 +44,7 @@ function toStoredSessionUser(user: MockAuthRefreshBody["user"]) {
     emailVerified,
     isVerified: emailVerified,
     hasCompletedOnboarding: role === "business" ? (user.hasCompletedOnboarding ?? false) : true,
+    isPlatformAdmin: role === "platform_admin",
     businessId: user.businessId,
     employeeId: user.employeeId,
   };
@@ -70,10 +71,12 @@ export async function installMockAuthRefresh(page: Page, body: MockAuthRefreshBo
       await route.continue();
       return;
     }
+    const role = mapMockApiRole(body.user.role);
     await route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify(body),
+      // The real API sends this flag for platform admins, and the route guard requires it.
+      body: JSON.stringify({ ...body, user: { ...body.user, isPlatformAdmin: role === "platform_admin" } }),
     });
   });
 }

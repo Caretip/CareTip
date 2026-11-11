@@ -1,10 +1,10 @@
 /**
  * Generates splash assets — white CareTip icon on a fully transparent canvas.
- * Orange fill comes from app.json / splashscreen_background (#e9781c), not the PNG.
+ * Orange fill comes from app.json / splashscreen_background (#eb992c), not the PNG.
  *
  * Android 12 shows `splashscreen_logo` inside a circular/rounded icon mask.
  * A baked orange fill (historically #EB992C) reads as a lighter-orange card
- * on the #e9781c window. Keep these PNGs transparent so the hierarchy is:
+ * on the #eb992c window. Keep these PNGs transparent so the hierarchy is:
  *   solid CareTip orange → white logo
  *
  * Outputs:

@@ -49,7 +49,7 @@ export function useBusinessQrAnalytics(
   const socketReady = useDeferSocketConnect(enabled);
   const { socket, connected } = useSocket(socketReady);
 
-  useRealtimeFallback(connected, load);
+  useRealtimeFallback(connected, load, undefined, { refreshOnReconnect: false });
   useRealtimeReconnect(load, enabled);
 
   useEffect(() => {

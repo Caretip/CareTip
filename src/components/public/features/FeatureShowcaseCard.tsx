@@ -34,7 +34,7 @@ export function FeatureShowcaseCard({
       className={cn(
         "caretip-feature-showcase-card group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/80 bg-card/95 shadow-[0_2px_8px_rgba(15,23,42,0.04),0_14px_40px_-18px_rgba(15,23,42,0.12)] transition-[box-shadow,border-color,transform] duration-300",
         !brandAccent &&
-          "hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[0_8px_32px_-12px_rgba(233,120,28,0.18)]",
+          "hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[0_8px_32px_-12px_rgba(235,153,44,0.18)]",
         featured && "lg:min-h-[22rem]",
         brandAccent && "caretip-feature-showcase-card--brand",
         !featured && reveal.className,
@@ -43,7 +43,7 @@ export function FeatureShowcaseCard({
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-[radial-gradient(circle,rgba(233,120,28,0.12),transparent_70%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-[radial-gradient(circle,rgba(235,153,44,0.12),transparent_70%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100"
       />
 
       <FeatureProductVisual variant={visual} featured={featured} className="m-3 mb-0 sm:m-4 sm:mb-0" />

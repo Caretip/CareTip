@@ -1,7 +1,7 @@
 import { createDashboardSwrStore, DASHBOARD_SWR_METRICS_TTL_MS } from "../dashboardSwrCache";
 import { getAuthUser } from "../authUserStore";
 import { analyticsStoreKey } from "./analyticsPeriodMetrics";
-import { bundleHasAboveFoldStats, bundleHasDeferredStats } from "./businessAnalyticsService";
+import { bundleHasAboveFoldStats, bundleHasDeferredStats } from "./bundleStatsSlices";
 import type { AnalyticsTimeframe, BusinessAnalyticsBundle } from "./types";
 
 const bundleStore = createDashboardSwrStore<BusinessAnalyticsBundle>();

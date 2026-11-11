@@ -120,7 +120,7 @@ html:not(.dark) .caretip-landing.caretip-landing--premium .caretip-hero-section:
   z-index: 0;
   background: radial-gradient(
     ellipse 72% 52% at 78% 22%,
-    rgba(233, 120, 28, 0.055) 0%,
+    rgba(235, 153, 44, 0.055) 0%,
     transparent 62%
   );
 }
@@ -134,7 +134,7 @@ html:not(.dark) .caretip-landing.caretip-landing--premium #recognition::after {
   z-index: 0;
   background: radial-gradient(
     ellipse 60% 44% at 88% 18%,
-    rgba(233, 120, 28, 0.04) 0%,
+    rgba(235, 153, 44, 0.04) 0%,
     transparent 58%
   );
 }
@@ -147,7 +147,7 @@ html:not(.dark) .caretip-landing.caretip-landing--premium #payments-trust::befor
   z-index: 0;
   background: radial-gradient(
     ellipse 55% 40% at 12% 72%,
-    rgba(233, 120, 28, 0.038) 0%,
+    rgba(235, 153, 44, 0.038) 0%,
     transparent 56%
   );
 }

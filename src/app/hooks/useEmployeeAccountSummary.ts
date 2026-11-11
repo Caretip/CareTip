@@ -41,6 +41,7 @@ export function useEmployeeAccountSummary(enabled: boolean) {
   );
   const [loading, setLoading] = useState(() => !accountSwrStore.peek(ACCOUNT_SWR_KEY));
   const [isRevalidating, setIsRevalidating] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
   const [dataRevision, setDataRevision] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
@@ -94,6 +95,7 @@ export function useEmployeeAccountSummary(enabled: boolean) {
         setLastUpdatedAt(Date.now());
         setDataRevision((n) => n + 1);
         setLoading(false);
+        setLoadFailed(false);
         devSetHydrationPhase("hero", "ready");
         markDashboardLiveSettled(hasSettledLiveUiRef);
       } catch (err) {
@@ -103,6 +105,7 @@ export function useEmployeeAccountSummary(enabled: boolean) {
         }
         devSetHydrationPhase("hero", "error");
         setLoading(false);
+        setLoadFailed(true);
       } finally {
         if (!controller.signal.aborted) setIsRevalidating(false);
       }
@@ -163,5 +166,6 @@ export function useEmployeeAccountSummary(enabled: boolean) {
     lastUpdatedAt,
     refreshQuiet,
     refetchLive,
+    loadFailed,
   };
 }

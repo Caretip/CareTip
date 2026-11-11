@@ -2,6 +2,7 @@ export type {
   AnalyticsPeriodSnapshot,
   AnalyticsTimeframe,
   BusinessAnalyticsBundle,
+  BusinessAnalyticsSlice,
   BusinessAnalyticsDTO,
   BusinessIntelligenceAggregate,
   FetchBusinessAnalyticsOptions,

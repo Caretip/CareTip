@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import { Prisma, type BusinessVerificationStatus, type Role, type User } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import { validatePassword } from "../utils/passwordValidation.js";
@@ -104,7 +105,7 @@ function jwtExpiresIn() {
 }
 
 function impersonationJwtExpiresIn() {
-  return (process.env.JWT_IMPERSONATION_EXPIRES_IN?.trim() || "12h") as import("jsonwebtoken").SignOptions["expiresIn"];
+  return (process.env.JWT_IMPERSONATION_EXPIRES_IN?.trim() || "1h") as import("jsonwebtoken").SignOptions["expiresIn"];
 }
 
 /** Exported for security regression scripts that simulate client JWT misuse. */
@@ -369,7 +370,7 @@ export async function authResultForUserId(
   ctx?: AuthSessionContext,
 ): Promise<AuthResult> {
   const user = await loadUserForAuthResult(userId);
-  if (!user || user.isActive !== true) {
+  if (!user || user.isActive !== true || user.accountStatus !== "active") {
     throw new Error("Authentication required");
   }
   if (
@@ -410,7 +411,7 @@ async function sendVerificationEmailBestEffort(
       userId,
     });
   } catch (e) {
-    console.error("[auth] Failed to enqueue email verification", { userId, email }, e);
+    console.error("[auth] Failed to enqueue email verification", { userId }, e);
   }
 }
 
@@ -433,6 +434,7 @@ export async function registerBusiness(
 
   const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
   if (existing) {
+    await burnPasswordCheckTime(input.password);
     throw new Error(AUTH_REGISTER_GENERIC_MESSAGE);
   }
 
@@ -517,6 +519,7 @@ export async function registerEmployee(
 
   const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
   if (existing) {
+    await burnPasswordCheckTime(input.password);
     throw new Error(AUTH_REGISTER_GENERIC_MESSAGE);
   }
 
@@ -563,6 +566,13 @@ export async function registerEmployee(
   return pendingVerificationResultForUserRecord(withEmployee);
 }
 
+/** Same work as a real password check, so response time does not reveal whether an account exists. */
+let timingDecoyHash: Promise<string> | null = null;
+async function burnPasswordCheckTime(password: unknown): Promise<void> {
+  timingDecoyHash ??= bcrypt.hash(crypto.randomUUID(), 10);
+  await bcrypt.compare(typeof password === "string" ? password : "", await timingDecoyHash);
+}
+
 export async function validateLoginCredentials(input: LoginInput): Promise<UserForAuthResult> {
   const email = normalizeLoginEmail(input.email);
   let user = await prisma.user.findUnique({
@@ -573,17 +583,20 @@ export async function validateLoginCredentials(input: LoginInput): Promise<UserF
     },
   });
 
-  if (!user || user.isActive !== true) {
+  if (!user || user.isActive !== true || user.accountStatus !== "active") {
+    await burnPasswordCheckTime(input.password);
     throw new Error(AUTH_INVALID_CREDENTIALS_MESSAGE);
   }
 
   // Super Admin without platform flag: same message as bad credentials (no account-type oracle).
   if (user.role === "SUPER_ADMIN" && !user.isPlatformAdmin) {
+    await burnPasswordCheckTime(input.password);
     throw new Error(AUTH_INVALID_CREDENTIALS_MESSAGE);
   }
 
   // OAuth-only / missing password: same message as wrong password (no method disclosure).
   if (!user.passwordHash) {
+    await burnPasswordCheckTime(input.password);
     throw new Error(AUTH_INVALID_CREDENTIALS_MESSAGE);
   }
 

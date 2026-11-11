@@ -1025,7 +1025,7 @@ export function AuthPage() {
                               getPasswordStrength(password).strength === 'strong'
                                 ? '#111827'
                                 : getPasswordStrength(password).strength === 'fair'
-                                  ? '#e9781c'
+                                  ? '#eb992c'
                                   : '#6B7280',
                             opacity: getPasswordStrength(password).strength === 'weak' ? 0.45 : 1,
                           }}
@@ -1082,7 +1082,7 @@ export function AuthPage() {
                       <li key={key} className={`flex items-center gap-1.5 ${met ? 'text-primary' : ''}`}>
                         <span
                           className={`flex h-3 w-3 flex-shrink-0 items-center justify-center rounded-full ${
-                            met ? 'bg-primary text-white' : 'bg-neutral-200 dark:bg-neutral-800'
+                            met ? 'bg-primary text-black' : 'bg-neutral-200 dark:bg-neutral-800'
                           }`}
                         >
                           {met ? <Check className="h-2 w-2" strokeWidth={3} /> : null}

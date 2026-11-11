@@ -92,7 +92,7 @@
     background: radial-gradient(
       ellipse 72% 62% at 50% 46%,
       rgba(255, 236, 210, 0.32) 0%,
-      rgba(233, 120, 28, 0.07) 42%,
+      rgba(235, 153, 44, 0.07) 42%,
       transparent 70%
     );
   }
@@ -100,8 +100,8 @@
   html.dark .caretip-landing .caretip-hero-warm-ambience {
     background: radial-gradient(
       ellipse 72% 62% at 50% 46%,
-      rgba(233, 120, 28, 0.14) 0%,
-      rgba(233, 120, 28, 0.04) 38%,
+      rgba(235, 153, 44, 0.14) 0%,
+      rgba(235, 153, 44, 0.04) 38%,
       transparent 68%
     );
   }

@@ -17,10 +17,3 @@ export const prisma = new PrismaClient({
   log: isProd ? ["error"] : ["warn", "error"],
 });
 
-if (isProd) {
-  const shutdown = () => {
-    void prisma.$disconnect().catch(() => undefined);
-  };
-  process.once("SIGTERM", shutdown);
-  process.once("SIGINT", shutdown);
-}

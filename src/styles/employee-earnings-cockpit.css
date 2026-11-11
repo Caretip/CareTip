@@ -187,7 +187,7 @@
   width: 0.875rem;
   height: 0.875rem;
   flex: 0 0 auto;
-  color: var(--caretip-brand-orange, #e9781c);
+  color: var(--caretip-brand-orange, #eb992c);
 }
 
 .caretip-dashboard-shell.employee-dashboard .employee-work-location__body {
@@ -289,7 +289,7 @@
   height: 0.875rem;
   margin-top: 0.05rem;
   flex: 0 0 auto;
-  color: var(--caretip-brand-orange, #e9781c);
+  color: var(--caretip-brand-orange, #eb992c);
 }
 
 .caretip-dashboard-shell.employee-dashboard .employee-period-card__value {

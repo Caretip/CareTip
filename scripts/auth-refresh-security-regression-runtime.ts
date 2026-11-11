@@ -114,7 +114,7 @@ function forgeMaliciousCaretipUser(): void {
 async function resolveApiBase(): Promise<string | null> {
   const fromEnv = process.env.VITE_API_URL?.trim() || process.env.API_URL?.trim() || "";
   if (fromEnv && /^https?:\/\//i.test(fromEnv)) return fromEnv.replace(/\/+$/, "");
-  const candidates = ["http://localhost:3001", "http://127.0.0.1:3001"];
+  const candidates = [process.env.RUNTIME_API_BASE ?? (process.env.CI ? "http://localhost:3001" : "http://127.0.0.1:9")];
   for (const base of candidates) {
     try {
       const res = await fetch(`${base}/api/health`, { method: "GET" });

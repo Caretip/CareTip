@@ -39,6 +39,7 @@ const baseAdmin = (overrides: Partial<MockAuthUser> = {}) => ({
     id: "e2e-admin-1",
     email: "admin@e2e.local",
     role: "platform_admin",
+    isPlatformAdmin: true,
     name: "E2E Admin",
     emailVerified: true,
     hasCompletedOnboarding: true,

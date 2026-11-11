@@ -27,6 +27,8 @@ import type { OverviewLeaderboardPreviewRow, TipPerformanceChartRow } from "../.
 
 export type BusinessDashboardAnalyticsChartsProps = {
   showChartsLoading: boolean;
+  /** The request failed: an empty chart here would wrongly read as "no tips". */
+  unavailable?: boolean;
   hasTipActivityInPeriod: boolean;
   tipDistributionChartData: TipPerformanceChartRow[];
   tipDistributionTotal: number;
@@ -40,6 +42,7 @@ const CHART_SLOT_EMPTY_MIN_HEIGHT = "min-h-0";
 
 export const BusinessDashboardAnalyticsCharts = memo(function BusinessDashboardAnalyticsCharts({
   showChartsLoading,
+  unavailable = false,
   hasTipActivityInPeriod,
   tipDistributionChartData,
   leaderboardPreview,
@@ -61,8 +64,9 @@ export const BusinessDashboardAnalyticsCharts = memo(function BusinessDashboardA
         ? t("dashboard.filter_year")
         : t("dashboard.filter_month");
 
-  const tipsChartEmpty = !hasTipActivityInPeriod;
+  const tipsChartEmpty = !hasTipActivityInPeriod || unavailable;
   const leaderboardEmpty = leaderboardPreview.length === 0;
+  const unavailableLabel = t("business.hero.financial.metricUnavailable");
 
   return (
     <div className={businessUi.analyticsChartsGrid}>
@@ -80,8 +84,8 @@ export const BusinessDashboardAnalyticsCharts = memo(function BusinessDashboardA
               {tipsChartEmpty ? (
                 <BusinessDashboardAnalyticsEmpty
                   icon={<CareIcon name="analytics" size="lg" className="text-muted-foreground" />}
-                  title={t("emptyState.chart.title")}
-                  description={t("emptyState.chart.description")}
+                  title={unavailable ? unavailableLabel : t("emptyState.chart.title")}
+                  description={unavailable ? undefined : t("emptyState.chart.description")}
                 />
               ) : (
                 <DeferredContentFade show={!showChartsLoading}>

@@ -9,6 +9,7 @@
 import type Stripe from "stripe";
 import { StripeConnectInstantPayoutRequestStatus } from "@prisma/client";
 import { prisma } from "../prisma.js";
+import { instantPayoutInFlightCutoff, withInstantPayoutAccountLock } from "../lib/instantPayoutInFlightGuard.js";
 import { logServerError } from "../utils/httpErrors.js";
 import { runSerializedByKey } from "../utils/serializedByKey.js";
 import { isPrismaUniqueViolation } from "../utils/prismaErrors.js";
@@ -567,24 +568,40 @@ export async function createInstantPayoutForBusiness(args: {
       idempotencyKey: ledgerKey,
     });
 
+    const currency = snap.currency;
+    // A retry of the same key continues its own request. A different key while another request for
+    // this business is still pending is refused, on every instance (see instantPayoutInFlightGuard).
     const request =
       existing ??
-      (await prisma.stripeConnectInstantPayoutRequest
-        .create({
+      (await withInstantPayoutAccountLock(`business.${args.businessId}`, async (tx) => {
+        const sameKey = await tx.stripeConnectInstantPayoutRequest.findUnique({
+          where: { idempotencyKey: ledgerKey },
+        });
+        if (sameKey) return sameKey;
+        const inFlight = await tx.stripeConnectInstantPayoutRequest.findFirst({
+          where: {
+            businessId: args.businessId,
+            status: StripeConnectInstantPayoutRequestStatus.pending,
+            createdAt: { gte: instantPayoutInFlightCutoff() },
+          },
+          select: { id: true },
+        });
+        if (inFlight) throw instantPayoutInFlightError();
+        return tx.stripeConnectInstantPayoutRequest.create({
           data: {
             businessId: args.businessId,
             idempotencyKey: ledgerKey,
             amountCents,
-            currency: snap.currency,
+            currency,
             status: StripeConnectInstantPayoutRequestStatus.pending,
           },
-        })
-        .catch(async (err: unknown) => {
-          if (!isPrismaUniqueViolation(err)) throw err;
-          return prisma.stripeConnectInstantPayoutRequest.findUniqueOrThrow({
-            where: { idempotencyKey: ledgerKey },
-          });
-        }));
+        });
+      }).catch(async (err: unknown) => {
+        if (!isPrismaUniqueViolation(err)) throw err;
+        return prisma.stripeConnectInstantPayoutRequest.findUniqueOrThrow({
+          where: { idempotencyKey: ledgerKey },
+        });
+      }));
 
     if (
       request.status === StripeConnectInstantPayoutRequestStatus.submitted &&

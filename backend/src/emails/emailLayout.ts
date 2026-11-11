@@ -6,8 +6,8 @@
 import { resolveCareTipEmailLogoRemoteUrl } from "./emailLogo.js";
 
 export const EMAIL = {
-  brandOrange: "#e9781c",
-  brandOrangeHover: "#d96a14",
+  brandOrange: "#eb992c",
+  brandOrangeHover: "#eb992c",
   text: "#111111",
   textSecondary: "#52525b",
   textMuted: "#71717a",

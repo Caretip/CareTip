@@ -4,7 +4,7 @@ import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../hooks/useAuth";
 import { CareTipLogo } from "./CareTipLogo";
-import { BusinessLogoMark } from "./business/BusinessLogoMark";
+import { BusinessLogoMark, initialsFromName } from "./business/BusinessLogoMark";
 import { EmployeeProfilePhoto, ProfileAvatar } from "./ui/profile-avatar";
 import { useBusinessVenueBrand } from "../hooks/useBusinessVenueBrand";
 import { NotificationBell } from "@/app/components/notifications/NotificationBell";
@@ -142,13 +142,30 @@ function DashboardHeaderBar({
           ) : null}
 
           {isBusinessManager ? (
+            <>
+            <DashboardHeaderMobileProfile
+              displayName={venueName}
+              displayEmail={displayEmail}
+              settingsHref="/dashboard/settings?section=business"
+              className="caretip-dashboard-header-business-identity lg:!hidden"
+              renderMark={(place) => (
+                <BusinessLogoMark
+                  logoPathOrUrl={businessLogo}
+                  businessName={venueName}
+                  size={place === "sheet" ? "md" : "dashboardHeader"}
+                  fallbackTone="muted"
+                  imageLoading="eager"
+                  rounded="rounded-lg"
+                />
+              )}
+            />
             <Link
               to="/dashboard/settings?section=business"
               className={cn(
                 headerIconBtn,
-                "caretip-dashboard-header-business-identity",
+                "caretip-dashboard-header-business-identity max-lg:!hidden",
               )}
-              aria-label={t("shell.header.businessLogoSettingsAria", { name: venueName })}
+              aria-label={`${t("shell.header.businessLogoSettingsAria", { name: venueName })}${businessLogo ? "" : ` (${initialsFromName(venueName)})`}`}
             >
               <BusinessLogoMark
                 key={`${businessLogo ?? "no-logo"}-${venueName}`}
@@ -160,6 +177,7 @@ function DashboardHeaderBar({
                 rounded="rounded-lg"
               />
             </Link>
+            </>
           ) : showProfileCluster ? (
             <>
               <DashboardHeaderMobileProfile

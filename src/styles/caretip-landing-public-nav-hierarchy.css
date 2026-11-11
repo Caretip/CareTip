@@ -126,14 +126,14 @@
 }
 
 .caretip-marketing-shell--landing .caretip-public-nav-join {
-  color: var(--care-orange, #e9781c);
-  -webkit-text-fill-color: var(--care-orange, #e9781c);
+  color: var(--care-orange, #eb992c);
+  -webkit-text-fill-color: var(--care-orange, #eb992c);
 }
 
 .caretip-marketing-shell--landing .caretip-public-nav-join:hover {
-  color: var(--care-orange, #e9781c);
-  -webkit-text-fill-color: var(--care-orange, #e9781c);
-  background: rgba(233, 120, 28, 0.08);
+  color: var(--care-orange, #eb992c);
+  -webkit-text-fill-color: var(--care-orange, #eb992c);
+  background: rgba(235, 153, 44, 0.08);
 }
 
 .caretip-public-nav .caretip-public-nav__cta-primary {

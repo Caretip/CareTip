@@ -32,7 +32,7 @@ async function main() {
   const direct = await renderBrandedQrPngBuffer(emp.businessId, targetUrl, "employee");
   console.log("[smoke] direct render OK", { bytes: direct.buffer.length, etag: direct.etag });
 
-  const apiBase = (process.env.API_BASE_URL ?? "http://localhost:3001").replace(/\/+$/, "");
+  const apiBase = (process.env.API_BASE_URL ?? (process.env.CI ? "http://localhost:3001" : "http://127.0.0.1:9")).replace(/\/+$/, "");
   const res = await fetch(`${apiBase}/api/employees/me/qr/branded`, {
     headers: { Authorization: `Bearer ${loginResult.token}` },
   });

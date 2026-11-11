@@ -3,7 +3,8 @@ import jwt from "jsonwebtoken";
 import speakeasy from "speakeasy";
 import type { User } from "@prisma/client";
 import { prisma } from "../prisma.js";
-import { signJwt, verifyJwt } from "../lib/jwtConfig.js";
+import { signPurposeJwt, verifyPurposeJwt } from "../lib/jwtConfig.js";
+import { needsMfaReseal, openMfaSecret, sealMfaSecret } from "../lib/mfaSecretCrypto.js";
 
 export const MFA_LOGIN_PENDING_PURPOSE = "mfa_login_pending";
 const MFA_CHALLENGE_TTL_MS = 10 * 60 * 1000;
@@ -29,7 +30,8 @@ export function mfaSetupRequiredForLogin(
 }
 
 export function signPendingMfaLoginToken(userId: string): string {
-  return signJwt(
+  return signPurposeJwt(
+    MFA_LOGIN_PENDING_PURPOSE,
     {
       userId,
       purpose: MFA_LOGIN_PENDING_PURPOSE,
@@ -49,7 +51,7 @@ export function parsePendingMfaLoginToken(token: string): PendingMfaParse {
   const raw = String(token ?? "").trim();
   if (!raw) return { ok: false, reason: "invalid" };
   try {
-    const decoded = verifyJwt<{ userId?: string; purpose?: string; jti?: string }>(raw);
+    const decoded = verifyPurposeJwt<{ userId?: string; purpose?: string; jti?: string }>(MFA_LOGIN_PENDING_PURPOSE, raw);
     if (decoded.purpose !== MFA_LOGIN_PENDING_PURPOSE) return { ok: false, reason: "invalid" };
     const userId = decoded.userId?.trim();
     const jti = decoded.jti?.trim();
@@ -139,18 +141,63 @@ export async function loadUserForMfaVerify(userId: string) {
   return row;
 }
 
-export function verifyTotpCode(secret: string, code: string): boolean {
+const TOTP_STEP_SECONDS = 30;
+
+/** Returns the time step the code matched, or null. Accepts sealed or legacy plain secrets. */
+export function matchTotpStep(storedSecret: string, code: string): number | null {
   const token = normalizeLoginTotp(code);
-  if (!token) return false;
-  return speakeasy.totp.verify({
-    secret,
+  if (!token) return null;
+  const match = speakeasy.totp.verifyDelta({
+    secret: openMfaSecret(storedSecret),
     encoding: "base32",
     token,
     window: 1,
     digits: 6,
-    step: 30,
+    step: TOTP_STEP_SECONDS,
     algorithm: "sha1",
   });
+  if (!match) return null;
+  return Math.floor(Date.now() / 1000 / TOTP_STEP_SECONDS) + match.delta;
+}
+
+export function verifyTotpCode(storedSecret: string, code: string): boolean {
+  return matchTotpStep(storedSecret, code) !== null;
+}
+
+export type TotpCheck = "ok" | "invalid" | "replayed" | "unavailable";
+
+/**
+ * Verifies a code and burns its time step, so one code cannot be used twice for this account
+ * even across fresh login challenges. The first use wins across all API instances.
+ */
+export async function verifyAndConsumeTotp(
+  userId: string,
+  storedSecret: string,
+  code: string,
+): Promise<TotpCheck> {
+  const step = matchTotpStep(storedSecret, code);
+  if (step === null) return "invalid";
+  // Per secret: a new device's first code can share a time step with the old device's last one.
+  const secretId = crypto.createHash("sha256").update(openMfaSecret(storedSecret)).digest("hex").slice(0, 10);
+  const consumed = await consumeMfaChallengeJti(`totp:${userId}:${secretId}:${step}`);
+  if (consumed === "unavailable") return "unavailable";
+  return consumed === "consumed" ? "ok" : "replayed";
+}
+
+/** Upgrades a legacy plaintext secret once a key is configured. Best effort, never blocks login. */
+export async function upgradeStoredMfaSecret(userId: string, storedSecret: string): Promise<void> {
+  if (!needsMfaReseal(storedSecret)) return;
+  await prisma.user
+    .updateMany({
+      where: { id: userId, twoFactorSecret: storedSecret },
+      data: { twoFactorSecret: sealMfaSecret(openMfaSecret(storedSecret)) },
+    })
+    .catch(() => undefined);
+}
+
+/** A newly generated secret, in the form it is stored. */
+export function storableMfaSecret(base32: string): string {
+  return sealMfaSecret(base32);
 }
 
 export async function assertPlatformAdminMfaSessionAllowed(

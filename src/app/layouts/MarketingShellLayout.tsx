@@ -1,8 +1,11 @@
+import { useEffect, useState } from "react";
 import { Outlet, useMatch, useNavigation } from "react-router";
 import "@/styles/bundles/marketing-shell.css";
 import { Navigation } from "../components/Navigation";
 import { MarketingShellProvider } from "../context/MarketingShellContext";
 import { RouteChunkBoundary } from "../routing/RouteChunkBoundary";
+import { RootSpaRouteHold } from "../routing/RootSpaRouteHold";
+import { landingStylesLoaded, loadLandingStyles } from "../lib/landingStyles";
 import { cn } from "@/lib/utils";
 
 /**
@@ -13,6 +16,22 @@ export function MarketingShellLayout() {
   const onLanding = useMatch({ path: "/", end: true }) != null;
   const navigation = useNavigation();
   const outletBusy = navigation.state === "loading";
+  const [stylesReady, setStylesReady] = useState(landingStylesLoaded);
+
+  // Arriving from a dashboard or a guest page: these styles have not been needed until now.
+  useEffect(() => {
+    if (stylesReady) return;
+    let active = true;
+    const release = () => {
+      if (active) setStylesReady(true);
+    };
+    void loadLandingStyles().then(release, release);
+    return () => {
+      active = false;
+    };
+  }, [stylesReady]);
+
+  if (!stylesReady) return <RootSpaRouteHold />;
 
   return (
     <MarketingShellProvider>

@@ -23,7 +23,7 @@ html:not(.dark) .caretip-landing .caretip-landing-ecosystem-dark::before {
   pointer-events: none;
   background: radial-gradient(
     ellipse 85% 55% at 50% 0%,
-    rgba(233, 120, 28, 0.1) 0%,
+    rgba(235, 153, 44, 0.1) 0%,
     transparent 58%
   );
   opacity: 0.9;
@@ -60,7 +60,7 @@ html:not(.dark) .caretip-landing .caretip-landing-ecosystem-dark .caretip-landin
 
 @media (hover: hover) {
   html:not(.dark) .caretip-landing .caretip-landing-ecosystem-dark .caretip-landing-ecosystem-card:hover {
-    border-color: rgba(233, 120, 28, 0.28);
+    border-color: rgba(235, 153, 44, 0.28);
     box-shadow:
       0 1px 2px rgba(0, 0, 0, 0.22),
       0 18px 40px rgba(0, 0, 0, 0.35);

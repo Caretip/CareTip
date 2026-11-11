@@ -193,7 +193,7 @@ if (
 }
 
 const inboxSync = read("src/app/components/NotificationInboxSync.tsx");
-if (inboxSync.includes("useRealtimeFallback(connected, catchUp, 30_000)")) {
+if (inboxSync.includes("useRealtimeFallback(connected, catchUp, 30_000, { refreshOnReconnect: false })")) {
   pass("In-app inbox fallback polling stays at 30s when the socket is down");
 } else {
   fail("Notification polling interval drifted");

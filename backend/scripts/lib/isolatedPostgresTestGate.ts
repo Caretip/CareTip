@@ -18,6 +18,10 @@ const BLOCKED_HOST_FRAGMENTS = ["supabase.co", "supabase.com", "pooler.supabase"
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "host.docker.internal"]);
 
 function loadEnvFilesForIsolatedKeyOnly(): void {
+  // scripts/safe-test.mjs already supplies the isolated URL and blanks every name from the env
+  // files. Loading backend/.env with override here would put the real values (API keys, PORT)
+  // back into the process, exactly what the wrapper exists to prevent.
+  if (process.env.CARETIP_TEST_ISOLATION === "1") return;
   if (existsSync(rootEnv)) {
     config({ path: rootEnv, quiet: true });
   }

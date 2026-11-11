@@ -23,7 +23,7 @@ export function HeroSectionSpline() {
       >
         <div className="mt-8 flex flex-col gap-4 sm:flex-row">
           <Link to="/auth">
-            <span className="inline-flex touch-manipulation items-center gap-2 rounded-xl bg-accent px-8 py-4 font-semibold text-white shadow-[0_8px_22px_rgba(233,120,28,0.28)] transition-[colors,opacity,box-shadow] hover:bg-accent/90 active:opacity-90">
+            <span className="inline-flex touch-manipulation items-center gap-2 rounded-xl bg-accent px-8 py-4 font-semibold text-white shadow-[0_8px_22px_rgba(235,153,44,0.28)] transition-[colors,opacity,box-shadow] hover:bg-accent/90 active:opacity-90">
               Get Started Free
             </span>
           </Link>

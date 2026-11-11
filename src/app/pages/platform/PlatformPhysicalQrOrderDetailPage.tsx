@@ -36,6 +36,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/app/components/ui/textarea";
 import { Package } from "lucide-react";
+import { toDisplayErrorMessage } from "@/app/lib/errorMessages";
 
 export function PlatformPhysicalQrOrderDetailPage() {
   const { t, i18n } = useTranslation();
@@ -63,7 +64,7 @@ export function PlatformPhysicalQrOrderDetailPage() {
 
   useEffect(() => {
     void reload().catch((err) => {
-      setLoadError(err instanceof Error ? err.message : t("admin.physicalQr.loadError"));
+      setLoadError(toDisplayErrorMessage(err, t("admin.physicalQr.loadError")));
     });
   }, [reload, t]);
 
@@ -82,7 +83,7 @@ export function PlatformPhysicalQrOrderDetailPage() {
           : t("admin.physicalQr.downloadAllPdfsDone", { count: pages }),
       );
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("admin.physicalQr.downloadPdfError"));
+      toast.error(toDisplayErrorMessage(err, t("admin.physicalQr.downloadPdfError")));
     } finally {
       setDownloadingPdf(false);
       setDownloadingItemId(null);
@@ -95,7 +96,7 @@ export function PlatformPhysicalQrOrderDetailPage() {
       await fn();
       await reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("admin.physicalQr.actionError"));
+      toast.error(toDisplayErrorMessage(err, t("admin.physicalQr.actionError")));
     } finally {
       setBusy(false);
     }

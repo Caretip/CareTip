@@ -60,8 +60,9 @@ export function resolveEmployeeTipDeliveryChannels(
 export function employeeTipEmailCopy(locale: "de" | "en"): { title: string; bodyText: string } {
   if (locale === "de") {
     return {
-      title: "Sie haben ein neues Trinkgeld erhalten",
-      bodyText: "Ein neues Trinkgeld wurde in CareTip erfasst. Öffnen Sie CareTip, um es anzusehen.",
+      title: "Du hast ein neues Trinkgeld erhalten",
+      bodyText:
+        "auf CareTip ist ein neues Trinkgeld für dich eingegangen.\n\nÖffne die App, um die Details zu sehen.",
     };
   }
   return {

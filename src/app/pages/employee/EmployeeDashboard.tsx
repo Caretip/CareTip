@@ -126,6 +126,8 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
     displayAccount: heroAccountSnapshot,
     loading: heroAccountLoading,
     isRevalidating: heroAccountRefreshing,
+    loadFailed: heroAccountLoadFailed,
+    refetchLive: retryHeroAccount,
   } = useEmployeeAccountSummary(dashboardDataReady);
 
   const showMetricsLoading = showMetricsSkeleton;
@@ -513,6 +515,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
                 className="dashboard-hero-financial-panel"
                 loading={showHeroMetricsSkeleton}
                 refreshing={heroAccountRefreshing || analyticsPeriodRefreshing}
+                onRetry={heroAccountLoadFailed ? retryHeroAccount : undefined}
                 metrics={
                   displayAccountSummary.loaded
                     ? {

@@ -86,7 +86,8 @@
 }
 
 .caretip-dashboard-shell .premium-workspace-header__title,
-.caretip-dashboard-shell .dashboard-workspace-module-header h1 {
+.caretip-dashboard-shell .dashboard-workspace-module-header h1,
+.caretip-dashboard-shell .dashboard-page-title {
   font-size: 1.5rem;
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -802,13 +803,13 @@
 
 .caretip-dashboard-shell .pro-upgrade-card__cta--primary {
   border: none;
-  background: var(--caretip-premium-cta-gradient, linear-gradient(180deg, #ff9e2d 0%, #e9781c 48%, #d96f18 100%));
-  color: #fff;
-  box-shadow: var(--caretip-premium-cta-shadow, 0 1px 0 rgba(255, 255, 255, 0.28) inset, 0 8px 20px -6px rgba(233, 120, 28, 0.4));
+  background: hsl(var(--primary));
+  color: #000;
+  box-shadow: none;
 }
 
 .caretip-dashboard-shell .pro-upgrade-card__cta--primary:hover {
-  filter: brightness(1.04);
+  background: hsl(var(--primary-hover));
 }
 
 .caretip-dashboard-shell .pro-upgrade-card__cta--primary:active {
@@ -965,5 +966,17 @@
   .caretip-dashboard-shell.platform-dashboard .platform-dashboard-section__content[data-state="open"],
   .caretip-dashboard-shell.platform-dashboard .platform-dashboard-section__content[data-state="closed"] {
     animation: none;
+  }
+}
+
+/* Keep the footer below the fold while a page is loading: a short loading state used to pull it
+   into view and push it back out (layout shift on every in-app navigation). Header: 61px / 85px. */
+.caretip-dashboard-shell > main.caretip-dashboard-page-enter {
+  min-height: calc(100dvh - 3.8125rem);
+}
+
+@media (min-width: 1024px) {
+  .caretip-dashboard-shell > main.caretip-dashboard-page-enter {
+    min-height: calc(100dvh - 5.3125rem);
   }
 }

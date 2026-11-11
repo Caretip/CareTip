@@ -14,6 +14,13 @@
   gap: 0.375rem;
 }
 
+/* Desktop: the sidebar already lists these sections, so the switcher stays hidden. */
+@media (min-width: 1024px) {
+  .caretip-dashboard-shell.business-dashboard .qr-studio-mobile-section {
+    display: none;
+  }
+}
+
 .caretip-dashboard-shell.business-dashboard .qr-studio-mobile-section__label {
   font-size: 0.6875rem;
   font-weight: 600;

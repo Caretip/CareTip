@@ -62,12 +62,12 @@ function VerificationAccessPanel({
         aria-labelledby="qr-studio-access-verification-title"
       >
         <XCircle className="mx-auto h-12 w-12 text-destructive/80" aria-hidden />
-        <h2
+        <h1
           id="qr-studio-access-verification-title"
           className="mt-5 text-xl font-semibold tracking-tight text-foreground sm:text-2xl"
         >
           {t("business.qrStudio.access.verificationRejectedTitle")}
-        </h2>
+        </h1>
         <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
           {t("business.qrStudio.access.verificationRejectedBody")}
         </p>
@@ -89,12 +89,12 @@ function VerificationAccessPanel({
       aria-labelledby="qr-studio-access-verification-title"
     >
       <ShieldCheck className="mx-auto h-12 w-12 text-primary/75" aria-hidden />
-      <h2
+      <h1
         id="qr-studio-access-verification-title"
         className="mt-5 text-xl font-semibold tracking-tight text-foreground sm:text-2xl"
       >
         {t("business.qrStudio.access.verificationTitle")}
-      </h2>
+      </h1>
       <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
         {t("business.qrStudio.access.verificationBody")}
       </p>
@@ -121,12 +121,12 @@ export function QrStudioAccessPanel({ reason, onboardingVerificationStatus, clas
         aria-labelledby="qr-studio-access-subscription-title"
       >
         <QrCode className="mx-auto h-12 w-12 text-primary/70" aria-hidden />
-        <h2
+        <h1
           id="qr-studio-access-subscription-title"
           className="mt-5 text-xl font-semibold tracking-tight text-foreground sm:text-2xl"
         >
           {t("business.qrStudio.access.subscriptionTitle")}
-        </h2>
+        </h1>
         <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
           {t("business.qrStudio.access.subscriptionBody")}
         </p>
@@ -169,12 +169,12 @@ export function QrStudioAccessPanel({ reason, onboardingVerificationStatus, clas
       )}
       aria-labelledby="qr-studio-access-checklist-title"
     >
-      <h2
+      <h1
         id="qr-studio-access-checklist-title"
         className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl"
       >
         {t("business.qrStudio.access.checklistTitle")}
-      </h2>
+      </h1>
       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
         {t("business.qrStudio.access.checklistBody")}
       </p>

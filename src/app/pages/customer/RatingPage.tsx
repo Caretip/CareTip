@@ -7,6 +7,7 @@ import { useTipFlow } from "../../context/TipFlowContext";
 import { submitTipFeedback } from "../../lib/api";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { logClientError } from "../../lib/clientLog";
+import { guestTipRetryPathForSession } from "../../lib/repeatTip";
 import { DEV_BYPASS_ENABLED, DEV_MOCK } from "../../lib/devCustomerBypass";
 import { clearCustomerFlowEntry } from "../../lib/customerFlowGuard";
 import { CareTipPageLoader } from "../../components/CareTipPageLoader";
@@ -75,7 +76,8 @@ export function RatingPage() {
               : t("tipFlow.completion.notVerifiedDesc"),
         },
       );
-      navigate("/", { replace: true });
+      // Back to that tip screen so the guest can try again; homepage only without a saved checkout.
+      navigate(guestTipRetryPathForSession(effectiveSessionId) ?? "/", { replace: true });
       return;
     }
     if (verification.phase === "timeout") {
@@ -83,7 +85,7 @@ export function RatingPage() {
         description: t("tipFlow.completion.confirmDelayedDesc"),
       });
     }
-  }, [navigate, t, verification.phase]);
+  }, [effectiveSessionId, navigate, t, verification.phase]);
 
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");

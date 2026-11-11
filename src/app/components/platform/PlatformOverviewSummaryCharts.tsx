@@ -83,11 +83,11 @@ export function PlatformOverviewSummaryCharts({
   }, [subscriptionMonitoring?.overview, t]);
 
   const tipsConfig: ChartConfig = {
-    tipsEur: { label: t("admin.overview.charts.tipsVolume"), color: "#e9781c" },
+    tipsEur: { label: t("admin.overview.charts.tipsVolume"), color: "#eb992c" },
   };
 
   const subsConfig: ChartConfig = {
-    count: { label: t("admin.overview.charts.subscriptions"), color: "hsl(var(--foreground) / 0.55)" },
+    count: { label: t("admin.overview.charts.subscriptions"), color: "#a8a29e" },
   };
 
   const tipsEmpty = !loading && tipsData.every((row) => row.tipsEur === 0);
@@ -133,7 +133,7 @@ export function PlatformOverviewSummaryCharts({
                     <AreaChart data={tipsData} margin={{ left: 4, right: 4, top: 8, bottom: 4 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
                       <XAxis dataKey="date" tickMargin={8} minTickGap={20} tick={{ fontSize: 11 }} />
-                      <YAxis tickFormatter={formatCompact} width={36} tick={{ fontSize: 11 }} />
+                      <YAxis tickFormatter={formatCompact} width={52} tick={{ fontSize: 11 }} />
                       <ChartTooltip
                         content={
                           <ChartTooltipContent

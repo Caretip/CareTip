@@ -13,6 +13,8 @@ import {
   verifyJwt,
 } from "../lib/jwtConfig.js";
 import { isPendingMfaLoginJwt } from "../services/mfaLogin.service.js";
+import { isWriteBlockedDuringImpersonation } from "../lib/impersonationPolicy.js";
+import { writeAuditLog } from "../services/audit.service.js";
 
 export interface JwtPayload {
   /** Canonical subject (user id). */
@@ -251,6 +253,24 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
 
       req.authUser = userRow;
       req.user = payload;
+
+      if (payload.impersonatedBy) {
+        const path = req.originalUrl ?? req.url;
+        const blocked = isWriteBlockedDuringImpersonation(req.method, path);
+        if (req.method !== "GET" && req.method !== "HEAD") {
+          // Every write in support view is attributed to the admin, not just to the customer.
+          res.once("finish", () => {
+            void writeAuditLog({
+              userId: payload.impersonatedBy ?? null,
+              action: "platform.impersonation.write",
+              metadata: JSON.stringify({ method: req.method, path, targetUserId: payload.sub, status: res.statusCode }),
+            });
+          });
+        }
+        if (blocked) {
+          return res.status(403).json({ message: "Insufficient permissions", code: "IMPERSONATION_FORBIDDEN" });
+        }
+      }
       next();
     } catch (err) {
       return invalidTokenResponse(res, err);

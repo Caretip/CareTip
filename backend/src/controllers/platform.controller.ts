@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import * as accountRecovery from "../services/accountRecovery.service.js";
 import * as platformService from "../services/platform.service.js";
 import * as businessService from "../services/business.service.js";
 import { prisma } from "../prisma.js";
@@ -774,6 +775,96 @@ export async function sendAnnouncement(req: Request, res: Response) {
     return res.status(400).json({
       message: clientSafeMessage(err, "We couldn't send that announcement. Try again."),
     });
+  }
+}
+
+function respondRecoveryReviewError(res: Response, err: unknown) {
+  if (err instanceof accountRecovery.AccountRecoveryError) {
+    const status = { FORBIDDEN: 403, NOT_FOUND: 404, CONFLICT: 409, TOO_EARLY: 409, UNAVAILABLE: 503 }[err.code as string] ?? 400;
+    return res.status(status).json({ message: err.message, code: err.code });
+  }
+  logServerError("platform.accountRecovery", err);
+  return res.status(503).json({ message: "Please try again." });
+}
+
+/** Support view must never reach a review action: the reviewer must be themselves. */
+function reviewerId(req: Request): string | null {
+  if (req.user?.impersonatedBy) return null;
+  return req.user?.userId ?? req.user?.id ?? null;
+}
+
+export async function listAccountRecoveryRequests(req: Request, res: Response) {
+  try {
+    const status = typeof req.query.status === "string" ? req.query.status : undefined;
+    return res.json({ requests: await accountRecovery.listAccountRecoveryRequests(status) });
+  } catch (err) {
+    return respondRecoveryReviewError(res, err);
+  }
+}
+
+export async function verifyAccountRecoveryIdentity(req: Request, res: Response) {
+  const adminUserId = reviewerId(req);
+  if (!adminUserId) return res.status(403).json({ message: "Insufficient permissions" });
+  try {
+    const body = req.body as { code?: unknown; method?: unknown; evidenceRef?: unknown };
+    await accountRecovery.recordIdentityVerification({
+      requestId: String(req.params.id ?? ""),
+      adminUserId,
+      code: body?.code,
+      method: body?.method,
+      evidenceRef: body?.evidenceRef,
+    });
+    return res.json({ ok: true });
+  } catch (err) {
+    return respondRecoveryReviewError(res, err);
+  }
+}
+
+export async function approveAccountRecovery(req: Request, res: Response) {
+  const adminUserId = reviewerId(req);
+  if (!adminUserId) return res.status(403).json({ message: "Insufficient permissions" });
+  try {
+    const body = req.body as { code?: unknown; reason?: unknown };
+    await accountRecovery.approveAccountRecovery({ requestId: String(req.params.id ?? ""), adminUserId, code: body?.code, reason: body?.reason });
+    return res.json({ ok: true });
+  } catch (err) {
+    return respondRecoveryReviewError(res, err);
+  }
+}
+
+export async function rejectAccountRecovery(req: Request, res: Response) {
+  const adminUserId = reviewerId(req);
+  if (!adminUserId) return res.status(403).json({ message: "Insufficient permissions" });
+  try {
+    await accountRecovery.rejectAccountRecovery({ requestId: String(req.params.id ?? ""), adminUserId, reason: (req.body as { reason?: unknown })?.reason });
+    return res.json({ ok: true });
+  } catch (err) {
+    return respondRecoveryReviewError(res, err);
+  }
+}
+
+export async function resetUserMfa(req: Request, res: Response) {
+  try {
+    const adminUserId = req.user?.userId ?? req.user?.id;
+    if (!adminUserId) return res.status(401).json({ message: "Authentication required" });
+    if (req.user?.impersonatedBy) return res.status(403).json({ message: "Insufficient permissions" });
+    const body = req.body as { code?: unknown; reason?: unknown };
+    const reason = typeof body?.reason === "string" ? body.reason.trim() : "";
+    const adminCode = typeof body?.code === "string" ? body.code : "";
+    if (!reason || !adminCode) return res.status(400).json({ message: "code and reason are required" });
+    await platformService.resetUserMfaAsPlatformAdmin({
+      adminUserId,
+      adminCode,
+      targetUserId: String(req.params.userId ?? ""),
+      reason,
+    });
+    return res.json({ ok: true });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "";
+    if (msg === "Forbidden") return res.status(403).json({ message: "Insufficient permissions" });
+    if (msg === "User not found") return res.status(404).json({ message: msg });
+    logServerError("platform.resetUserMfa", err);
+    return res.status(503).json({ message: "Please try again." });
   }
 }
 

@@ -151,7 +151,7 @@ test.describe("Employee dashboard mobile overflow", () => {
       await installEmployeeDashboardMocks(page);
       await waitForEmployeeDashboardShell(page);
 
-      await expect(page.locator(".employee-dashboard-stats-grid")).toBeVisible({ timeout: 15_000 });
+      await expect(page.locator(".caretip-dashboard-shell.employee-dashboard")).toBeVisible({ timeout: 15_000 });
       await page.waitForTimeout(400);
 
       await assertHeaderLeadingContained(page, width);

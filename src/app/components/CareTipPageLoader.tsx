@@ -40,8 +40,23 @@ export function CareTipLoadingTitle({
 }
 
 /**
- * Shared CareTip branded loader mark — app icon + orange progress arc + optional tagline.
- * App-level layout: mark → one loading sentence.
+ * Orange light tracing the contour of the CareTip tile (same 465 viewBox as the icon art;
+ * the tile spans 66.4–398.6, the trace runs 28 units outside it).
+ */
+function CareTipLoaderTrace() {
+  const rect = { x: 38.43, y: 38.42, width: 388.14, height: 388.14, rx: 103.92 };
+  return (
+    <svg className="app-branded-loader__track" viewBox="0 0 465 465" aria-hidden focusable="false">
+      <rect className="app-branded-loader__track-line" {...rect} />
+      <rect className="app-branded-loader__indeterminate app-branded-loader__indeterminate--tail" pathLength={100} {...rect} />
+      <rect className="app-branded-loader__indeterminate" pathLength={100} {...rect} />
+    </svg>
+  );
+}
+
+/**
+ * Shared CareTip branded loader mark — the app icon with a light tracing its contour, a glass
+ * sweep and a gentle breath; full-size loaders add three diamond steps, then one loading sentence.
  * Never pair this sentence with a second line of copy on the same screen.
  */
 export function CareTipBrandedLoaderMark({
@@ -78,13 +93,19 @@ export function CareTipBrandedLoaderMark({
       )}
     >
       <div className="app-branded-loader__icon-wrap" aria-hidden>
-        <CareTipLoadingTitle compact={compact} className="app-branded-loader__title" />
-        {calm ? null : (
-          <span className="app-branded-loader__track">
-            <span className="app-branded-loader__indeterminate" />
-          </span>
-        )}
+        <span className="app-branded-loader__lift">
+          <CareTipLoadingTitle compact={compact} className="app-branded-loader__title" />
+          {calm ? null : <span className="app-branded-loader__shine" />}
+        </span>
+        {calm ? null : <CareTipLoaderTrace />}
       </div>
+      {!compact && !calm ? (
+        <span className="app-branded-loader__steps" aria-hidden>
+          <i />
+          <i />
+          <i />
+        </span>
+      ) : null}
       {withTagline ? (
         <p className="app-branded-loader__tagline">{tagline}</p>
       ) : null}

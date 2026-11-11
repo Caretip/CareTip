@@ -290,7 +290,6 @@ export async function getTipSessionContext(req: Request, res: Response) {
         tipCreatedAt: tx.createdAt.toISOString(),
         businessId: tx.businessId,
         employeeId: tx.employeeId,
-        customerName: ctx.customerName,
         elapsedMs: Date.now() - lookupStarted,
       });
 

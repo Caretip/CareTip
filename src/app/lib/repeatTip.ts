@@ -156,6 +156,20 @@ export function promotePendingTipToRepeatTip(opts: {
   return next;
 }
 
+/**
+ * Where a guest can try again after a checkout that did not complete: the amount screen for the same
+ * team member, from the pending tip saved just before the Stripe redirect. Presentation only — the
+ * payment status itself always comes from the server.
+ */
+export function guestTipRetryPathForSession(sessionId: string): string | null {
+  const pending = safeParseJson<PendingTipDataV1>(safeLocalStorageGet(KEY_PENDING_TIP_DATA));
+  if (!pending || pending.v !== 1 || pending.sessionId !== sessionId) return null;
+  if (typeof pending.employeeId !== "string" || !pending.employeeId.trim()) return null;
+  // A stale record (over a day old) should not steer a later visit.
+  if (!Number.isFinite(pending.timestamp) || Date.now() - pending.timestamp > 24 * 60 * 60 * 1000) return null;
+  return `/tip-amount?employeeId=${encodeURIComponent(pending.employeeId.trim())}`;
+}
+
 export function clearRepeatTipData(): void {
   safeLocalStorageRemove(KEY_REPEAT_TIP_DATA);
 }

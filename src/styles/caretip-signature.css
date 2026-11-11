@@ -1,0 +1,1077 @@
+/*
+ * CareTip signature layer. Visual polish on the existing design: no copy, images or layouts change.
+ * Each numbered section stands alone, so any section can be deleted without affecting the others.
+ * The brand orange stays #EB992C, and buttons stay flat with black text.
+ *
+ * Two ideas carry the look: the ink card (the footer's warm near-black, used for the moments that
+ * matter) and the arc (the curve from the sign-in screen, repeated as a quiet motif).
+ */
+
+:root {
+  --ct-orange: #eb992c;
+  --ct-ink: #171411;
+  --ct-ink-raised: #221d18;
+  --ct-ink-line: rgb(255 255 255 / 0.1);
+  --ct-on-ink: #fff;
+  --ct-on-ink-soft: rgb(255 255 255 / 0.7);
+  --ct-line: rgb(23 20 17 / 0.08);
+  --ct-lift: 0 1px 2px rgb(23 20 17 / 0.04), 0 10px 24px -14px rgb(23 20 17 / 0.12);
+  --ct-lift-hover: 0 2px 4px rgb(23 20 17 / 0.05), 0 18px 32px -16px rgb(23 20 17 / 0.18);
+  --ct-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ---------- 1. Dashboard hero: the ink card ---------- */
+
+html body .caretip-dashboard-shell.caretip-dashboard-shell :is(.business-dashboard-hero, .employee-dashboard-hero).premium-page-hero .premium-page-hero__content {
+  position: relative !important;
+  isolation: isolate;
+  overflow: hidden !important;
+  padding: clamp(1.125rem, 2.2vw, 2rem) !important;
+  border-radius: 24px !important;
+  background: var(--ct-ink) !important;
+  color: var(--ct-on-ink);
+  --foreground: 0 0% 100%;
+  --muted-foreground: 0 0% 74%;
+  --border: 30 8% 34%;
+}
+
+/* The arc: two hairline rings and a soft glow, behind the content. */
+html body .caretip-dashboard-shell.caretip-dashboard-shell :is(.business-dashboard-hero, .employee-dashboard-hero).premium-page-hero .premium-page-hero__content::before,
+html body .caretip-dashboard-shell.caretip-dashboard-shell :is(.business-dashboard-hero, .employee-dashboard-hero).premium-page-hero .premium-page-hero__content::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+html body .caretip-dashboard-shell.caretip-dashboard-shell :is(.business-dashboard-hero, .employee-dashboard-hero).premium-page-hero .premium-page-hero__content::before {
+  top: -22rem;
+  right: -20rem;
+  width: 52rem;
+  height: 52rem;
+  border: 1px solid rgb(235 153 44 / 0.34);
+  background: radial-gradient(closest-side, rgb(235 153 44 / 0.1), transparent);
+}
+
+html body .caretip-dashboard-shell.caretip-dashboard-shell :is(.business-dashboard-hero, .employee-dashboard-hero).premium-page-hero .premium-page-hero__content::after {
+  top: -12rem;
+  right: -10rem;
+  width: 32rem;
+  height: 32rem;
+  border: 1px solid rgb(235 153 44 / 0.2);
+}
+
+/* On small screens the text fills the card, so the arc steps back to the corner. */
+@media (max-width: 1023px) {
+  html body .caretip-dashboard-shell.caretip-dashboard-shell :is(.business-dashboard-hero, .employee-dashboard-hero).premium-page-hero .premium-page-hero__content::before {
+    top: -14rem;
+    right: -14rem;
+    width: 24rem;
+    height: 24rem;
+  }
+
+  html body .caretip-dashboard-shell.caretip-dashboard-shell :is(.business-dashboard-hero, .employee-dashboard-hero).premium-page-hero .premium-page-hero__content::after {
+    display: none;
+  }
+}
+
+html body .premium-page-hero :is(.business-hero-title, .employee-hero-title, .business-dashboard-mobile-hero__title) {
+  color: var(--ct-on-ink) !important;
+  letter-spacing: -0.025em;
+}
+
+html body .caretip-dashboard-shell.caretip-dashboard-shell .premium-page-hero .dashboard-formal-greeting-badge.dashboard-formal-greeting-badge {
+  margin-inline: 0 !important;
+  padding-inline: 0 !important;
+  color: var(--ct-orange) !important;
+  font-weight: 600;
+}
+
+html body .premium-page-hero .dashboard-hero-financial__value,
+html body .premium-page-hero .dashboard-hero-financial__value > * {
+  color: var(--ct-on-ink) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+html body .premium-page-hero :is(
+  .dashboard-hero-financial__label,
+  .dashboard-hero-financial__label-meta,
+  .dashboard-hero-financial__hint,
+  .dashboard-hero-financial__zone-title,
+  .text-muted-foreground
+) {
+  color: var(--ct-on-ink-soft) !important;
+}
+
+/* The total leads; everything else sits in one calm tray beneath it. */
+html body .premium-page-hero .dashboard-hero-financial__zone--payout {
+  margin-top: 0.875rem !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+html body .premium-page-hero .dashboard-hero-financial__payout-grid {
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--ct-ink-line);
+  border-radius: 16px;
+  background: rgb(255 255 255 / 0.05);
+}
+
+html body .premium-page-hero :is(.dashboard-hero-financial, .dashboard-hero-financial-panel, .business-hero-cta-block, .employee-hero-cta-block) {
+  border-color: transparent !important;
+}
+
+html body .premium-page-hero summary {
+  color: var(--ct-on-ink);
+}
+
+/* The image is untouched: it just gets a cleaner frame. */
+html body :is(.business-hero-illustration-card, .employee-hero-illustration-card, .business-dashboard-mobile-hero__visual-frame) {
+  overflow: hidden;
+  border: 1px solid var(--ct-ink-line) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 24px 48px -24px rgb(0 0 0 / 0.7) !important;
+}
+
+.dark .caretip-dashboard-shell :is(.business-dashboard-hero, .employee-dashboard-hero) .premium-page-hero__content {
+  outline: 1px solid var(--ct-ink-line);
+  outline-offset: -1px;
+}
+
+/* ---------- 2. Dashboard surfaces: one card language ---------- */
+
+html body .caretip-dashboard-shell main .rounded-lg.border.bg-card:not(a, button, input),
+html body .caretip-dashboard-shell.caretip-dashboard-shell.caretip-dashboard-shell .business-card.business-card,
+html body .caretip-dashboard-shell .business-overview-goals-panel,
+html body .caretip-dashboard-shell .caretip-feedback-dashboard-panel,
+html body .caretip-dashboard-shell .business-period-summary__metric,
+html body .caretip-dashboard-shell.employee-dashboard .employee-period-card {
+  border-color: var(--ct-line) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--ct-lift) !important;
+}
+
+html body .caretip-dashboard-shell .business-period-summary__metric {
+  padding: 0.875rem 1rem !important;
+  transition: box-shadow 200ms ease, transform 200ms var(--ct-ease);
+}
+
+html body .caretip-dashboard-shell .business-period-summary__metric:hover {
+  box-shadow: var(--ct-lift-hover) !important;
+  transform: translateY(-1px);
+}
+
+html body .caretip-dashboard-shell .business-period-summary__value {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* Empty states read as one centred block. */
+html body .dashboard-workspace-empty {
+  align-items: center !important;
+  width: 100%;
+  text-align: center;
+}
+
+.dark .caretip-dashboard-shell main .rounded-lg.border.bg-card:not(a, button, input),
+.dark .caretip-dashboard-shell .business-period-summary__metric {
+  border-color: hsl(var(--border)) !important;
+  box-shadow: none !important;
+}
+
+/* ---------- 3. Sidebar: the current page joins the ink card ---------- */
+
+html body .caretip-dashboard-shell:is(.business-dashboard, .employee-dashboard) :is(.business-dash-nav-link--active, .employee-dash-nav-link--active),
+html body :is(.business-sidebar, .caretip-mobile-drawer-panel) :is(.business-dash-nav-link--active, .employee-dash-nav-link--active),
+html body .employee-dash-nav-link--active.employee-dash-nav-link--active {
+  width: calc(100% - 1.25rem) !important;
+  margin-block: 2px;
+  margin-inline: 0.625rem;
+  border-radius: 12px !important;
+  background: var(--ct-ink) !important;
+  color: var(--ct-on-ink) !important;
+  box-shadow: none !important;
+}
+
+html body :is(.business-dash-nav-link--active, .employee-dash-nav-link--active) :is(svg, span) {
+  color: inherit !important;
+}
+
+html body :is(.business-dash-nav-link--active, .employee-dash-nav-link--active) svg {
+  color: var(--ct-orange) !important;
+}
+
+.dark .caretip-dashboard-shell:is(.business-dashboard, .employee-dashboard) :is(.business-dash-nav-link--active, .employee-dash-nav-link--active) {
+  background: rgb(255 255 255 / 0.1) !important;
+}
+
+/* ---------- 4. Guest tip page ---------- */
+
+html body .customer-flow {
+  background-image: radial-gradient(90% 300px at 50% -60px, rgb(235 153 44 / 0.14), transparent 70%);
+  background-repeat: no-repeat;
+}
+
+html body .customer-flow-tip-preset {
+  border: 1px solid var(--ct-line);
+  border-radius: 16px !important;
+  background: hsl(var(--card));
+  box-shadow: var(--ct-lift);
+  transition: transform 160ms var(--ct-ease), box-shadow 160ms ease, background-color 160ms ease;
+}
+
+html body .customer-flow-tip-preset:hover {
+  box-shadow: var(--ct-lift-hover);
+  transform: translateY(-1px);
+}
+
+html body .customer-flow-tip-preset:active {
+  transform: scale(0.98);
+}
+
+/* The chosen amount is unmistakable: black on brand orange, like the buttons. */
+html body .customer-flow-tip-preset.ring-2 {
+  border-color: var(--ct-orange);
+  background: var(--ct-orange);
+  --tw-ring-color: transparent;
+}
+
+html body .customer-flow-tip-preset.ring-2 span {
+  color: #000 !important;
+}
+
+/* ---------- 5. Cookie banner on phones: the same choices, less of the page ---------- */
+
+@media (max-width: 767px) {
+  html body .cookie-consent-panel--banner {
+    left: 8px;
+    right: 8px;
+    bottom: max(8px, env(safe-area-inset-bottom, 0px));
+    width: auto;
+    max-width: none;
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  html body .cookie-consent-panel--banner .cookie-consent-panel__title {
+    margin-bottom: 0.125rem;
+    font-size: 0.875rem;
+  }
+
+  html body .cookie-consent-panel--banner .cookie-consent-panel__body {
+    font-size: 0.75rem;
+    line-height: 1.35;
+  }
+
+  html body .cookie-consent-panel--banner .cookie-consent-panel__body + .cookie-consent-panel__body {
+    margin-top: 0.25rem;
+  }
+
+  html body .cookie-consent-panel--banner .cookie-consent-panel__privacy {
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+  }
+
+  html body .cookie-consent-panel--banner .cookie-consent-panel__actions {
+    gap: 0.375rem;
+  }
+
+  html body .cookie-consent-panel--banner .cookie-consent-panel__action {
+    min-height: 2.5rem;
+    padding-block: 0.375rem;
+  }
+}
+
+/* ---------- 6. Sign-in: true brand orange, with the arc ---------- */
+
+html body .caretip-auth-curved-blob {
+  overflow: hidden;
+  background: var(--ct-orange) !important;
+  opacity: 1 !important;
+}
+
+/* Thin light rings only: nothing here may darken the brand orange. */
+html body .caretip-auth-curved-blob::before,
+html body .caretip-auth-curved-blob::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgb(255 255 255 / 0.3);
+  pointer-events: none;
+}
+
+html body .caretip-auth-curved-blob::before {
+  inset: 7rem;
+}
+
+html body .caretip-auth-curved-blob::after {
+  inset: 14rem;
+  border-color: rgb(255 255 255 / 0.18);
+}
+
+/* Black on orange, matching the buttons. White on this orange is hard to read. */
+html body .caretip-auth-marketing :is(.caretip-auth-marketing__headline, .caretip-auth-marketing__body, .caretip-auth-back-home__link) {
+  color: #000 !important;
+  opacity: 1;
+  text-shadow: none;
+}
+
+/* ---------- 7. Marketing typography and alignment ---------- */
+
+html body .caretip-landing h1.caretip-hero-headline {
+  letter-spacing: -0.04em !important;
+}
+
+html body .caretip-landing :is(#final-cta h2, .caretip-features-cta-wise__title) {
+  letter-spacing: -0.04em !important;
+}
+
+/* Small orange text on white is hard to read, so small text goes near-black. */
+html body .caretip-public-nav-join {
+  color: var(--ct-ink);
+}
+
+html body a[href="/forgot-password"],
+html body .cookie-consent-panel__privacy-link {
+  color: var(--ct-ink) !important;
+  text-decoration: underline;
+  text-decoration-color: var(--ct-orange);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.dark .caretip-public-nav-join,
+.dark a[href="/forgot-password"],
+.dark .cookie-consent-panel__privacy-link {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* ---------- 8. Marketing surfaces ---------- */
+
+html body .caretip-features-optical-rail > div:first-child > div:first-child {
+  justify-content: center;
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+
+html body .caretip-landing :is(.caretip-industry-photo-card, .caretip-feature-showcase-card) {
+  transition: transform 260ms var(--ct-ease), box-shadow 260ms ease;
+}
+
+html body .caretip-landing :is(.caretip-industry-photo-card, .caretip-feature-showcase-card):hover {
+  transform: translateY(-3px);
+  box-shadow: var(--ct-lift-hover);
+}
+
+/* The arc closes the page: quiet rings in the closing band. */
+html body .caretip-landing #final-cta {
+  position: relative;
+  overflow: hidden;
+}
+
+html body .caretip-landing #final-cta::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44rem;
+  height: 44rem;
+  border: 1px solid rgb(0 0 0 / 0.08);
+  border-radius: 50%;
+  box-shadow: 0 0 0 4rem rgb(0 0 0 / 0.012), 0 0 0 4.06rem rgb(0 0 0 / 0.06);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body :is(.business-period-summary__metric, .customer-flow-tip-preset, .caretip-industry-photo-card, .caretip-feature-showcase-card) {
+    transition: none;
+  }
+
+  html body :is(.business-period-summary__metric, .customer-flow-tip-preset, .caretip-industry-photo-card, .caretip-feature-showcase-card):hover {
+    transform: none;
+  }
+}
+
+/* ---------- 9. Inner pages: one canvas, one header ---------- */
+
+/* Pages sit on the same warm canvas, instead of a white band that stops short. */
+html body .caretip-dashboard-shell main :is(.caretip-route-outlet, .business-module-page, .business-page, .dashboard-inbox-page) {
+  background: transparent !important;
+}
+
+html body .caretip-dashboard-shell.caretip-dashboard-shell .business-module-workspace-header,
+html body .caretip-dashboard-shell.caretip-dashboard-shell .employee-page-header--surface {
+  position: relative;
+  overflow: hidden;
+  padding-inline: 0 !important;
+}
+
+/* The arc belongs to the dark dashboard hero only; white page headers stay clean. */
+
+html body .caretip-dashboard-shell .business-module-workspace-header > *,
+html body .caretip-dashboard-shell .employee-page-header--surface > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Employee pages: back link on its own line, then the title, aligned left like every other page. */
+@media (min-width: 640px) {
+  html body .employee-page-header--subtle > div {
+    width: 100%;
+    max-width: none;
+    flex-flow: row wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  html body .employee-page-header--subtle .employee-page-header__back--subtle {
+    flex: 0 0 100%;
+  }
+
+  html body .employee-page-header--subtle > div > .min-w-0 {
+    flex: 1 1 0;
+    text-align: left;
+  }
+}
+
+/* ---------- 10. Inbox ---------- */
+
+html body .caretip-dashboard-shell.caretip-dashboard-shell.caretip-dashboard-shell .dashboard-inbox-page .inbox-feed-panel {
+  overflow: hidden;
+  border: 1px solid var(--ct-line) !important;
+  border-radius: 20px !important;
+  background: hsl(var(--card)) !important;
+  box-shadow: var(--ct-lift);
+}
+
+html body .inbox-feed-panel article {
+  transition: background-color 160ms ease;
+}
+
+html body .inbox-feed-panel article > div:first-child {
+  border-radius: 14px;
+}
+
+.dark .caretip-dashboard-shell.caretip-dashboard-shell.caretip-dashboard-shell .dashboard-inbox-page .inbox-feed-panel {
+  border-color: hsl(var(--border)) !important;
+  box-shadow: none;
+}
+
+/* ---------- 11. Settings: sections become cards ---------- */
+
+html body .caretip-dashboard-shell.caretip-dashboard-shell .employee-settings-section,
+html body .caretip-dashboard-shell.caretip-dashboard-shell.caretip-dashboard-shell .employee-settings-section:first-of-type,
+html body .caretip-dashboard-shell.caretip-dashboard-shell.caretip-dashboard-shell .business-settings-section.business-settings-section,
+html body .caretip-dashboard-shell.caretip-dashboard-shell .business-settings-plain {
+  margin-block: 0 1rem !important;
+  padding: clamp(1.125rem, 2vw, 1.5rem) !important;
+  border: 1px solid var(--ct-line) !important;
+  border-radius: 18px !important;
+  background: hsl(var(--card)) !important;
+  box-shadow: var(--ct-lift);
+}
+
+html body .caretip-dashboard-shell.caretip-dashboard-shell .employee-settings-section--danger {
+  border-color: rgb(220 38 38 / 0.24) !important;
+  box-shadow: none;
+}
+
+.dark .caretip-dashboard-shell.caretip-dashboard-shell :is(.employee-settings-section, .business-settings-section, .business-settings-plain) {
+  border-color: hsl(var(--border)) !important;
+  box-shadow: none;
+}
+
+/* ---------- 12. Tables and summary tiles ---------- */
+
+html body .caretip-dashboard-shell :is(.dashboard-table-panel, .team-employees-invite, .team-employees-kpi-strip > *) {
+  border: 1px solid var(--ct-line) !important;
+  border-radius: 16px !important;
+  background: hsl(var(--card)) !important;
+  box-shadow: var(--ct-lift) !important;
+}
+
+html body .caretip-dashboard-shell .dashboard-table-panel {
+  overflow: hidden;
+}
+
+html body .caretip-dashboard-shell .team-employees-kpi-strip {
+  gap: 0.75rem;
+  border: 0 !important;
+}
+
+html body .caretip-dashboard-shell .team-employees-kpi-strip > * {
+  padding: 0.875rem 1rem !important;
+}
+
+html body .caretip-dashboard-shell :is(.dashboard-table-panel, .team-employees-roster) tbody tr {
+  transition: background-color 140ms ease;
+}
+
+html body .caretip-dashboard-shell :is(.dashboard-table-panel, .team-employees-roster) tbody tr:hover {
+  background-color: rgb(235 153 44 / 0.05);
+}
+
+html body .caretip-dashboard-shell :is(.team-employees-tips, .team-employees-table__num, .dashboard-table-panel td) {
+  font-variant-numeric: tabular-nums;
+}
+
+.dark .caretip-dashboard-shell :is(.dashboard-table-panel, .team-employees-invite, .team-employees-kpi-strip > *) {
+  border-color: hsl(var(--border)) !important;
+  box-shadow: none !important;
+}
+
+/* ---------- 13. Form controls ---------- */
+
+html body .caretip-dashboard-shell main :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]), textarea, select) {
+  border-radius: 12px;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+html body .caretip-dashboard-shell main :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]), textarea, select):focus-visible {
+  border-color: var(--ct-orange) !important;
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(235 153 44 / 0.28) !important;
+}
+
+/* Card lists are the phone/tablet view of a table; on desktop only the table shows (no duplicate records). */
+@media (max-width: 1023.98px) {
+  html body .caretip-dashboard-shell .business-mobile-list {
+    display: grid;
+    gap: 0.5rem;
+  }
+}
+
+/* ---------- 14. Charts: brand orange in place of grey ---------- */
+
+html body .business-analytics-report .recharts-bar-rectangle path,
+html body .business-analytics-report .recharts-pie-sector:first-child path {
+  fill: var(--ct-orange);
+}
+
+/* The first legend dot matches the first slice. */
+html body .business-analytics-report li:first-child > span.h-2\.5.w-2\.5.rounded-full {
+  background-color: var(--ct-orange) !important;
+}
+
+/* ---------- 15. Landing benefit marker: the brand diamond ---------- */
+
+.caretip-landing-benefit-mark {
+  display: inline-flex;
+  flex: none;
+  width: 1.125rem;
+  height: 1.375rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.caretip-landing-benefit-mark__gem {
+  width: 0.8125rem;
+  height: 0.8125rem;
+  fill: var(--ct-orange);
+}
+
+/* Audience cards: the icon and its label read as one badge. */
+html body .caretip-landing .caretip-audience-benefits__lockup {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 1.125rem;
+}
+
+html body .caretip-landing .caretip-audience-benefits__lockup .caretip-audience-benefits__icon {
+  flex: none;
+  width: 2.125rem !important;
+  height: 2.125rem !important;
+  margin: 0 !important;
+  border-radius: 9999px !important;
+}
+
+html body .caretip-landing .caretip-audience-benefits__lockup .caretip-audience-benefits__icon svg {
+  width: 1.0625rem !important;
+  height: 1.0625rem !important;
+}
+
+html body .caretip-landing .caretip-audience-benefits__lockup .caretip-audience-benefits__role {
+  margin: 0 !important;
+  color: hsl(var(--foreground)) !important;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1.2;
+}
+
+/* ---------- 16. Landing sections ---------- */
+
+/* Hero: crisp type. The wide blurred shadow made small text look smudged over the photo. */
+html body .caretip-landing .caretip-hero-section--full-bg .caretip-hero-copy :is(h1, h1 *, p, span) {
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.32);
+}
+
+/* Industry cards: a deeper foot so the small category label stays readable on any photo. */
+html body .caretip-landing .caretip-industry-photo-card__overlay {
+  background: linear-gradient(to top, rgb(16 12 8 / 0.86) 0%, rgb(16 12 8 / 0.58) 32%, rgb(16 12 8 / 0) 62%);
+}
+
+html body .caretip-landing .caretip-industry-photo-card {
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+@media (hover: hover) {
+  html body .caretip-landing .caretip-industry-photo-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 34px rgb(23 20 17 / 0.18);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body .caretip-landing .caretip-industry-photo-card,
+  html body .caretip-landing .caretip-industry-photo-card:hover {
+    transition: none;
+    transform: none;
+  }
+}
+
+html body .caretip-landing .caretip-landing-dashboard-showcase__leaderboard-name {
+  text-align: left;
+}
+
+/* Closing call to action: ink on the brand orange. White on #EB992C was hard to read. */
+html body .caretip-landing.caretip-landing--premium #final-cta :is(.caretip-features-cta-wise__title, .caretip-features-cta-wise__title *, h2, h2 *, p) {
+  color: var(--ct-ink) !important;
+  -webkit-text-fill-color: var(--ct-ink) !important;
+  text-shadow: none !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #final-cta .caretip-features-cta-wise__actions > a:last-child {
+  color: var(--ct-ink) !important;
+  -webkit-text-fill-color: var(--ct-ink) !important;
+  border-color: rgb(23 20 17 / 0.6) !important;
+}
+
+/* ---------- 17. Phones: public pages ---------- */
+
+@media (max-width: 639px) {
+  /* Footer: two tidy columns rather than one very long list. */
+  html body .caretip-site-footer .caretip-site-footer-link-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2rem 1rem;
+  }
+
+  html body .caretip-landing .caretip-landing-section-cta a {
+    width: 100%;
+  }
+
+  html body .caretip-landing .business-period-summary__label,
+  html body .caretip-landing .caretip-landing-dashboard-showcase__leaderboard-tips-count {
+    font-size: 0.625rem;
+  }
+
+  .caretip-site-footer-link {
+    min-height: 2.5rem;
+  }
+
+  .caretip-pricing-billing-toggle__option {
+    min-height: 2.5rem;
+  }
+}
+
+/* ---------- 18. Phones: dashboards and the notification panel ---------- */
+
+@media (max-width: 639px) {
+  /* The hero sat inside the page padding and its own, leaving the numbers a narrow column. */
+  html body .caretip-dashboard-shell.caretip-dashboard-shell :is(.business-dashboard-hero, .employee-dashboard-hero) {
+    width: calc(100% + 1.75rem);
+    max-width: none;
+    margin-inline: -0.875rem;
+  }
+
+  /* Larger touch areas with no visual change. */
+  .caretip-notification-panel--premium .caretip-notification-panel__mark-all {
+    position: relative;
+  }
+
+  .caretip-notification-panel--premium .caretip-notification-panel__mark-all::after,
+  .fix-prompt__dismiss::after,
+  .mw-auth-input__toggle::after {
+    content: "";
+    position: absolute;
+    inset: -0.75rem;
+  }
+
+  .caretip-notification-panel--premium .caretip-notification-panel__close {
+    min-height: 2.75rem;
+  }
+
+  /* A long inbox scrolls inside the panel and never runs off the screen. */
+  .caretip-notification-panel--premium .caretip-notification-panel__scroll {
+    max-height: min(26rem, calc(100dvh - 15rem));
+    overscroll-behavior: contain;
+  }
+}
+
+/* ---------- 19. Landing section mark: line, diamond, label, diamond, line ---------- */
+
+html body .caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow] {
+  display: flex;
+  width: 100% !important;
+  max-width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  padding: 0;
+}
+
+html body .caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow]::before,
+html body .caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow]::after {
+  content: "";
+  flex: 0 1 3.5rem;
+  min-width: 1rem;
+  height: 1px;
+}
+
+html body .caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow]::before {
+  background: linear-gradient(to right, rgb(235 153 44 / 0), rgb(235 153 44 / 0.8));
+}
+
+html body .caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow]::after {
+  background: linear-gradient(to left, rgb(235 153 44 / 0), rgb(235 153 44 / 0.8));
+}
+
+html body .caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow] [data-accent-dot],
+html body .caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow] .caretip-landing-accent-text::after,
+html body .caretip-landing.caretip-landing--premium .caretip-hero-brand-tagline__accent {
+  flex: none;
+  width: 0.5rem !important;
+  height: 0.5rem !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: var(--ct-orange) !important;
+  box-shadow: none !important;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  animation: none !important;
+}
+
+html body .caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow] .caretip-landing-accent-text {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.45rem;
+  color: hsl(var(--foreground)) !important;
+  font-size: 0.6875rem !important;
+  font-weight: 650 !important;
+  letter-spacing: clamp(0.13em, 0.6vw + 0.1em, 0.2em) !important;
+  line-height: 1.3 !important;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+html body .caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow] .caretip-landing-accent-text::after {
+  content: "";
+  display: inline-block;
+}
+
+@media (max-width: 374px) {
+  html body .caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow] {
+    gap: 0.4375rem;
+  }
+
+  html body .caretip-landing.caretip-landing--premium [data-landing-accent-eyebrow] .caretip-landing-accent-text {
+    letter-spacing: 0.14em !important;
+  }
+}
+
+/* Left-aligned sections: the mark starts at the margin and one line runs out to the right. */
+@media (min-width: 1024px) {
+  html body .caretip-landing.caretip-landing--premium :is(#how-it-works, #recognition) [data-landing-accent-eyebrow] {
+    justify-content: flex-start;
+  }
+
+  html body .caretip-landing.caretip-landing--premium :is(#how-it-works, #recognition) [data-landing-accent-eyebrow]::before,
+  html body .caretip-landing.caretip-landing--premium :is(#how-it-works, #recognition) [data-landing-accent-eyebrow] .caretip-landing-accent-text::after {
+    display: none;
+  }
+
+  html body .caretip-landing.caretip-landing--premium :is(#how-it-works, #recognition) [data-landing-accent-eyebrow]::after {
+    flex: 0 0 4.5rem;
+  }
+}
+
+/* Hero: the same mark over the photo, with a line trailing into the image. */
+html body .caretip-landing.caretip-landing--premium .caretip-hero-brand-tagline {
+  gap: 0.625rem;
+}
+
+html body .caretip-landing.caretip-landing--premium .caretip-hero-brand-tagline::after {
+  content: "";
+  flex: none;
+  width: 3.5rem;
+  height: 1px;
+  background: linear-gradient(to right, rgb(235 153 44 / 0.9), rgb(235 153 44 / 0));
+}
+
+html body .caretip-landing.caretip-landing--premium .caretip-hero-brand-tagline__text {
+  color: rgb(255 248 240) !important;
+  font-size: 0.6875rem !important;
+  font-weight: 650 !important;
+  letter-spacing: 0.2em !important;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ---------- 20. Landing vertical rhythm ---------- */
+
+html body .caretip-landing.caretip-landing--premium .caretip-landing-headline-stack {
+  gap: clamp(0.875rem, 1.4vw, 1.125rem);
+}
+
+html body .caretip-landing.caretip-landing--premium .caretip-landing-headline-stack > h2,
+html body .caretip-landing.caretip-landing--premium .caretip-payments-trust__content h2 {
+  text-wrap: balance;
+}
+
+html body .caretip-landing.caretip-landing--premium :is(.caretip-section-intro, .caretip-customerjourney__intro) p {
+  text-wrap: pretty;
+}
+
+/* The guest intro ran straight into its headline. */
+html body .caretip-landing.caretip-landing--premium .caretip-customerjourney__headline-stack {
+  margin-bottom: clamp(0.875rem, 1.6vw, 1.25rem);
+}
+
+html body .caretip-landing.caretip-landing--premium .caretip-live-minutes-intro h2 {
+  margin-bottom: clamp(0.875rem, 1.4vw, 1.125rem);
+}
+
+/* ---------- 21. Landing payment methods: one white bar ---------- */
+
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-trust__content {
+  gap: clamp(1.75rem, 4vw, 2.5rem);
+}
+
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-trust__title {
+  max-width: 38rem;
+  color: hsl(var(--foreground)) !important;
+  -webkit-text-fill-color: hsl(var(--foreground));
+  font-size: clamp(1.5rem, 2.9vw, 2.25rem) !important;
+  line-height: 1.18;
+  text-align: center;
+  text-wrap: balance;
+}
+
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-trust__marks {
+  margin-top: 0;
+}
+
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-accepted {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.125rem;
+}
+
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-accepted__methods {
+  display: grid;
+  width: 100%;
+  max-width: 42rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: clamp(0.875rem, 2.4vw, 1.5rem) clamp(0.75rem, 3vw, 2rem);
+  border-radius: 1.25rem;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px rgb(23 20 17 / 0.06), 0 18px 40px -28px rgb(23 20 17 / 0.28);
+  list-style: none;
+}
+
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-accepted__item {
+  display: flex;
+  height: 3.25rem;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-accepted__logo {
+  display: block;
+  width: auto !important;
+  max-width: 100%;
+  height: auto !important;
+  margin: 0;
+  transform: none !important;
+}
+
+/* Equal visual weight: some official files carry built-in padding, so each gets its own height. */
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-accepted__logo--visa {
+  max-height: clamp(1rem, 3.4vw, 1.5rem);
+}
+
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-accepted__logo--mastercard,
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-accepted__logo--google-pay {
+  max-height: clamp(2.25rem, 7vw, 3.25rem);
+}
+
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-accepted__logo--apple-pay {
+  max-height: clamp(1.5rem, 4.8vw, 2.25rem);
+}
+
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-accepted__stripe {
+  display: inline-flex;
+  margin: 0;
+  padding: 0;
+}
+
+html body .caretip-landing.caretip-landing--premium #payments-trust .caretip-payments-accepted__stripe-badge {
+  display: block;
+  width: auto;
+  height: 1.5rem;
+}
+
+/* ---------- 22. Landing setup steps: large numerals, warm tint on the active step ---------- */
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-steps {
+  gap: 0.375rem;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step {
+  display: block;
+  padding: 0.875rem 1rem !important;
+  border: 0 !important;
+  border-radius: 1.125rem;
+  background: transparent !important;
+  box-shadow: none !important;
+  transition: background-color 220ms ease;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step::before,
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step::after {
+  display: none !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step__rail,
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step__sep {
+  display: none !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-steps::before,
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-steps::after {
+  display: none !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step__content,
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step--active .caretip-process-step__content,
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step:hover .caretip-process-step__content {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 3.5rem minmax(0, 1fr);
+  column-gap: 0.75rem;
+  align-items: start;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step__content::before,
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step__content::after {
+  display: none !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step__head {
+  display: contents;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step-number {
+  grid-row: 1 / span 3;
+  grid-column: 1;
+  color: rgb(23 20 17 / 0.26) !important;
+  font-size: 2.25rem !important;
+  font-weight: 300 !important;
+  letter-spacing: -0.04em !important;
+  line-height: 1 !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step-title,
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step-desc,
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step__current {
+  grid-column: 2;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step-title {
+  font-size: 1rem !important;
+  font-weight: 650 !important;
+  line-height: 1.3 !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step-desc {
+  margin-top: 0.25rem !important;
+  font-size: 0.875rem !important;
+  line-height: 1.5 !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step--past .caretip-process-step-number {
+  color: rgb(235 153 44 / 0.7) !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step--active {
+  background: rgb(235 153 44 / 0.1) !important;
+  box-shadow: none !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step--active .caretip-process-step-number {
+  color: var(--ct-orange) !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step--active .caretip-process-step-title {
+  color: hsl(var(--foreground)) !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step--active .caretip-process-step-desc {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step__current {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  margin-top: 0.5rem;
+  color: hsl(var(--foreground)) !important;
+  font-size: 0.625rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.18em !important;
+}
+
+html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step__current::before {
+  content: "";
+  width: 0.4375rem;
+  height: 0.4375rem;
+  background: var(--ct-orange);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+
+@media (hover: hover) {
+  html body .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step:not(.caretip-process-step--active):hover {
+    background: rgb(235 153 44 / 0.08) !important;
+  }
+}
+
+html.dark .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step-number {
+  color: rgb(255 255 255 / 0.28) !important;
+}
+
+html.dark .caretip-landing.caretip-landing--premium #how-it-works .caretip-process-step--active .caretip-process-step-number {
+  color: var(--ct-orange) !important;
+}
+
+/* Landing styles arrive after this page's own, so its intro keeps the measure it was designed with. */
+html body .caretip-features-page.caretip-landing.caretip-landing--premium .caretip-section-intro > p {
+  max-width: 36rem;
+}

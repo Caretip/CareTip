@@ -18,7 +18,9 @@ import {
   markSessionBootstrapSettled,
 } from "../lib/authSessionBootstrap";
 import { bumpSessionEpoch, getSessionEpoch } from "../lib/authSessionEpoch";
-import { setAuthUser } from "../lib/authUserStore";
+import { getAuthUser, setAuthUser } from "../lib/authUserStore";
+import { publishSessionEnded, subscribeSessionEnded } from "../lib/authSessionBroadcast";
+import { captureLogoutSnapshot, performClientLogoutCleanup } from "../lib/clientLogout";
 import { setMemoryAccessToken } from "../lib/accessTokenStore";
 
 import { authDebug } from "../lib/authDebugLog";
@@ -31,7 +33,7 @@ import {
   warnLoaderStuck,
 } from "../lib/loadingStateDiagnostics";
 
-import { SERVICE_UNAVAILABLE_CLIENT_MESSAGE } from "../lib/errorMessages";
+import { SERVICE_UNAVAILABLE_CLIENT_MESSAGE, userFacingErrorCopy } from "../lib/errorMessages";
 import { isDefinitiveRefreshFailure } from "../lib/authRefreshFailureClassification";
 
 import type { SessionBootstrapResult } from "../lib/authSessionBootstrap";
@@ -96,6 +98,7 @@ function forceDefinitiveLogout(reason: string): SessionBootstrapResult {
   recordAuthSessionDiagnostic("AUTH_BOOTSTRAP_REDIRECT_REASON", { reason });
   clearStoredSession();
   markClientSessionRevoked();
+  publishSessionEnded("expired");
   setAuthUser(null);
   markSessionBootstrapSettled();
   traceSessionValidationCompleted(true);
@@ -147,9 +150,31 @@ function applyBootstrapResult(result: SessionBootstrapResult, epochAtStart: numb
 }
 
 /**
+ * Another tab's session ended. Logout is certain, so follow it. Expiry is that tab's report, so
+ * verify with this tab's own coordinated refresh: a refusal clears the session through the normal
+ * path, and a network error leaves the user signed in.
+ */
+function onSessionEndedInAnotherTab(reason: "logout" | "expired"): void {
+  if (!getAuthUser()) return;
+  if (reason === "logout") {
+    performClientLogoutCleanup(captureLogoutSnapshot());
+    return;
+  }
+  void refreshSessionAPI()
+    .then((data) => {
+      setAuthUser(persistAuthResponse(data));
+    })
+    .catch((err) => {
+      authDebug("session_ended_verify_failed", { definitive: isDefinitiveRefreshFailure(err) });
+    });
+}
+
+/**
  * Runs once at app root — restores session from storage + POST /api/auth/refresh before route guards redirect.
  */
 export function useAuthInitializer(): void {
+  useEffect(() => subscribeSessionEnded(onSessionEndedInAnotherTab), []);
+
   useEffect(() => {
     let transientRetryTimer: number | null = null;
     let transientSettleTimer: number | null = null;
@@ -244,7 +269,7 @@ export function useAuthInitializer(): void {
 
         if (refresh.kind === "transient_error") {
           if (hadLocalSession) {
-            toast.error(SERVICE_UNAVAILABLE_CLIENT_MESSAGE, { id: "caretip-auth-refresh-503" });
+            toast.error(userFacingErrorCopy(SERVICE_UNAVAILABLE_CLIENT_MESSAGE), { id: "caretip-auth-refresh-503" });
             authDebug("session_bootstrap", { outcome: "transient_error" });
             logClientError(
               "useAuthInitializer.sessionBootstrap.transient",
@@ -263,6 +288,7 @@ export function useAuthInitializer(): void {
           });
           clearStoredSession();
           markClientSessionRevoked();
+          publishSessionEnded("expired");
         } else {
           authDebug("session_bootstrap", { outcome: "anonymous_no_refresh_session" });
         }

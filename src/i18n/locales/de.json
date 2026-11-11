@@ -1,4 +1,27 @@
 {
+  "platformAccountRecovery": {
+    "title": "Kontowiederherstellung",
+    "intro": "Jede Anfrage braucht eine Person für die Identitätsprüfung und eine andere für die Freigabe.",
+    "yourCode": "Ihr Authenticator-Code",
+    "method": "Verwendete Identitätsprüfung",
+    "note": "Nachweis-Referenz oder Grund",
+    "empty": "Keine offenen Anfragen.",
+    "eligible": "Freigabe möglich ab {{when}}",
+    "verify": "Identitätsprüfung erfassen",
+    "approve": "Freigeben",
+    "reject": "Ablehnen",
+    "status": {
+      "awaiting_email_proof": "Wartet auf die neue Adresse",
+      "awaiting_identity_review": "Identitätsprüfung erforderlich",
+      "awaiting_approval": "Freigabe durch zweite Person erforderlich"
+    },
+    "methods": {
+      "video_call": "Videoanruf",
+      "government_id_check": "Ausweisprüfung",
+      "employer_confirmation": "Bestätigung durch Arbeitgeber",
+      "other_documented": "Andere dokumentierte Prüfung"
+    }
+  },
   "nav": {
     "howItWorks": "So funktioniert CareTip",
     "features": "Funktionen",
@@ -188,7 +211,22 @@
       }
     },
     "copied": "Kopiert",
-    "unableToCopy": "Kopieren nicht möglich"
+    "unableToCopy": "Kopieren nicht möglich",
+    "errorScreen": {
+      "crashTitle": "Diese Ansicht konnte nicht angezeigt werden",
+      "crashBody": "Bitte laden Sie die Seite neu. Wenn das Problem weiterhin besteht, wenden Sie sich an den Support und beschreiben Sie kurz, was Sie gerade getan haben.",
+      "crashAction": "Seite neu laden",
+      "notFoundTitle": "Seite nicht gefunden",
+      "notFoundBody": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
+      "staleTitle": "CareTip muss aktualisiert werden",
+      "staleBody": "In diesem Browser ist eine ältere Version von CareTip geladen. Laden Sie die Seite neu, um die aktuelle Version zu erhalten.",
+      "staleAction": "Neu laden",
+      "routeTitle": "Diese Seite konnte nicht geladen werden",
+      "routeBody": "Bitte versuchen Sie es erneut oder kehren Sie zur Startseite zurück.",
+      "homeAction": "Zur Startseite"
+    },
+    "tryAgain": "Erneut versuchen",
+    "dismiss": "Schließen"
   },
   "mobileWebHandoff": {
     "errorTitle": "Abrechnung konnte nicht geöffnet werden",
@@ -1707,6 +1745,40 @@
       "sending": "Wird gesendet…",
       "errorInvalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein."
     },
+    "accountRecovery": {
+      "forgotLink": "Kein Zugriff mehr auf Ihre E-Mail?",
+      "requestTitle": "Konto wiederherstellen",
+      "requestBody": "Für Mitarbeitende, die ihre Anmelde-E-Mail nicht mehr erreichen. Der Support prüft Ihre Identität, bevor sich etwas ändert.",
+      "loginEmail": "Ihre aktuelle Anmelde-E-Mail",
+      "replacementEmail": "Neue E-Mail-Adresse",
+      "statement": "Was ist passiert?",
+      "requestAction": "Anfrage senden",
+      "requestDone": "Falls dies zu einem Konto passt, haben wir einen Link an die neue Adresse gesendet. Öffnen Sie ihn, um fortzufahren.",
+      "confirmTitle": "Neue Adresse bestätigen",
+      "confirmBody": "Bestätigen Sie diese Adresse, damit der Support Ihre Anfrage prüfen kann.",
+      "confirmAction": "Adresse bestätigen",
+      "confirmDone": "Danke. Der Support prüft Ihre Anfrage und meldet sich an dieser Adresse.",
+      "cancelTitle": "Wiederherstellung abbrechen",
+      "cancelBody": "Diese Anfrage stoppen. Ihr Konto bleibt unverändert.",
+      "cancelAction": "Anfrage abbrechen",
+      "cancelDone": "Die Anfrage wurde abgebrochen. Es wurde nichts geändert.",
+      "toSignIn": "Zur Anmeldung",
+      "invalidLink": "Dieser Link ist ungültig oder abgelaufen.",
+      "working": "Wird bearbeitet"
+    },
+    "emailChange": {
+      "approveTitle": "E-Mail-Änderung prüfen",
+      "approveBody": "Eine Änderung Ihrer Anmelde-E-Mail wurde angefordert. Stimmen Sie nur zu, wenn Sie das erwartet haben.",
+      "approveAction": "Änderung zustimmen",
+      "approveDone": "Zugestimmt. Wir haben einen Bestätigungslink an die neue Adresse gesendet.",
+      "confirmTitle": "Neue E-Mail bestätigen",
+      "confirmBody": "Bestätigen Sie diese Adresse, um sich damit anzumelden.",
+      "confirmAction": "E-Mail bestätigen",
+      "confirmDone": "Ihre Anmelde-E-Mail wurde geändert. Bitte melden Sie sich erneut an.",
+      "toSignIn": "Zur Anmeldung",
+      "invalidLink": "Dieser Link ist ungültig oder abgelaufen.",
+      "working": "Wird bearbeitet"
+    },
     "reset": {
       "invalidToken": "Dieser Zurücksetzen-Link ist ungültig.",
       "requestNewLink": "Neuen Link anfordern",
@@ -2015,7 +2087,8 @@
       "homeAria": "Startseite",
       "back": "Zurück",
       "confirmingRecipient": "Empfänger wird bestätigt",
-      "poweredByCareTip": "Digitales Trinkgeld powered by CareTip"
+      "poweredByCareTip": "Digitales Trinkgeld powered by CareTip",
+      "goHome": "Zur Startseite"
     },
     "header": {
       "chooseAmountFor": "Trinkgeldbetrag für {{name}} wählen",
@@ -5581,6 +5654,7 @@
       "toastNameEmailRequired": "Name und E-Mail sind erforderlich.",
       "toastMonthlyGoalInvalid": "Monatsziel muss eine gültige Zahl sein.",
       "toastStaffUpdated": "Mitarbeitende aktualisiert.",
+      "toastEmailChangePending": "E-Mail-Änderung angefordert. Die Person muss sie über ihre aktuelle E-Mail bestätigen.",
       "toastStaffRemoved": "Mitarbeitende entfernt.",
       "toastActiveOn": "Profil ist jetzt aktiv.",
       "toastActiveOff": "Profil deaktiviert. QR-Links sind deaktiviert.",
@@ -7243,7 +7317,8 @@
           "summaryError": "Auszahlungssummen konnten nicht geladen werden.",
           "retrySummary": "Summen erneut laden",
           "mixedCurrency": "Summen gelten für die primäre Auszahlungswährung."
-        }
+        },
+        "openStripeFailed": "Stripe konnte gerade nicht geöffnet werden. Bitte versuchen Sie es erneut."
       }
     },
     "billing": {

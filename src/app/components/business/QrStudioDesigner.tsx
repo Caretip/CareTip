@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, lazy, Suspense } from "react";
+import { dashboardWorkspaceUi } from "../dashboard/dashboardWorkspaceUi";
 import { useTranslation } from "react-i18next";
 import {
   Brush,
@@ -235,9 +236,7 @@ export function QrStudioDesigner({
   return (
     <div className="qr-studio-designer min-w-0 w-full max-w-full space-y-5 overflow-x-clip sm:space-y-6">
       <header className="min-w-0 space-y-1">
-        <h2 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
-          {t("business.qrStudio.design.title")}
-        </h2>
+        <h1 className={dashboardWorkspaceUi.pageTitle}>{t("business.qrStudio.design.title")}</h1>
         <p className="max-w-2xl text-sm text-muted-foreground">{t("business.qrStudio.design.subtitle")}</p>
       </header>
 
@@ -491,7 +490,7 @@ export function QrStudioDesigner({
                           <Button
                             type="button"
                             size="sm"
-                            className="h-9 shrink-0 gap-1.5 rounded-lg bg-[#e9781c] px-3.5 text-sm font-semibold text-white shadow-sm hover:bg-[#d96a14]"
+                            className="h-9 shrink-0 gap-1.5 rounded-lg bg-primary px-3.5 text-sm font-semibold text-black shadow-none hover:bg-primary-hover"
                             onClick={() => {
                               setEditingVenueName(true);
                               requestAnimationFrame(() => venueNameInputRef.current?.focus());
@@ -519,7 +518,7 @@ export function QrStudioDesigner({
                               <Button
                                 type="button"
                                 size="sm"
-                                className="h-9 rounded-lg bg-[#e9781c] px-3.5 font-semibold text-white hover:bg-[#d96a14]"
+                                className="h-9 rounded-lg bg-primary px-3.5 font-semibold text-black hover:bg-primary-hover"
                                 onClick={() => setEditingVenueName(false)}
                               >
                                 {t("business.qrStudio.design.doneEditingVenueName")}

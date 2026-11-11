@@ -18,7 +18,7 @@ import {
   snoozeMsFor,
 } from "../src/services/notifications/notificationIntelligence.service.js";
 
-const API = (process.env.RUNTIME_API_BASE ?? "http://localhost:3001").replace(/\/$/, "");
+const API = (process.env.RUNTIME_API_BASE ?? (process.env.CI ? "http://localhost:3001" : "http://127.0.0.1:9")).replace(/\/$/, "");
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 
 const results: string[] = [];

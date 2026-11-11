@@ -660,22 +660,20 @@ export async function employeeTipHoldObservabilityForBusiness(businessId: string
   heldPlatformCents: number;
   heldRowCount: number;
 }> {
-  const rows = await prisma.employeeTipPayable.findMany({
-    where: { businessId, status: EmployeeTipPayableStatus.held_platform },
-    select: {
-      payableCents: true,
-      transferredCents: true,
-      reversedCents: true,
-      refundedCents: true,
-      disputedOpenCents: true,
-      disputedLostCents: true,
-    },
-  });
-  let heldPlatformCents = 0;
-  for (const row of rows) {
-    heldPlatformCents += remainingPayableCents(row);
-  }
-  return { heldPlatformCents, heldRowCount: rows.length };
+  // Same arithmetic as remainingPayableCents, per row and floored at zero, summed in Postgres.
+  const rows = await prisma.$queryRaw<Array<{ held_cents: number; row_count: number }>>(Prisma.sql`
+    SELECT
+      COALESCE(SUM(GREATEST(
+        payable_cents - transferred_cents - reversed_cents - refunded_cents
+          - disputed_open_cents - disputed_lost_cents,
+        0
+      )), 0)::float AS held_cents,
+      COUNT(*)::int AS row_count
+    FROM employee_tip_payables
+    WHERE business_id = ${businessId}
+      AND status = 'held_platform'
+  `);
+  return { heldPlatformCents: Number(rows[0]?.held_cents ?? 0), heldRowCount: Number(rows[0]?.row_count ?? 0) };
 }
 
 export function routingModeFromClient(value: unknown): EmployeeTipPayoutMode | null {
