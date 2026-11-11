@@ -76,6 +76,12 @@ export function resolveClientIp(req: Pick<Request, "ip"> & Partial<Pick<Request,
   return netlifySignedClientIp(req) ?? normalizeIp(req.ip) ?? "unknown";
 }
 
+/** The same address, or null when there isn't one. Network-level only, not an identity or a location. */
+export function trustedClientIp(req: Pick<Request, "ip"> & Partial<Pick<Request, "headers">>): string | null {
+  const ip = resolveClientIp(req);
+  return ip === "unknown" ? null : ip;
+}
+
 /** How many entries the forwarded chain has: shows the real proxy depth without logging addresses. */
 export function forwardedChainDepth(req: Pick<Request, "headers">): number {
   const raw = req.headers["x-forwarded-for"];

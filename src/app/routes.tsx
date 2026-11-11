@@ -16,6 +16,7 @@ import { AuthLogoutTransitionRegistrar } from "./components/AuthLogoutTransition
 import { LanguageChangeLoadingRegistrar } from "./components/LanguageChangeLoadingRegistrar";
 import { RouteNavigationLoadingRegistrar } from "./components/RouteNavigationLoadingRegistrar";
 import { IdleSessionController } from "./components/IdleSessionController";
+import { DeployUpdateRouteObserver } from "./components/DeployUpdateRouteObserver";
 import { useMarkAppShellReadyOptional } from "./context/AppLoadingSplashContext";
 import { useCompleteHtmlBootAfterPublicPaint } from "./context/AppLoadingManager";
 import { RouteChunkBoundary } from "./routing/RouteChunkBoundary";
@@ -71,6 +72,7 @@ import { hasClientSessionHint } from "./lib/authSessionHint";
 import { runWhenIdle } from "./lib/runWhenIdle";
 import { LandingHeroPersistenceLayer } from "./components/landing/LandingHeroPersistenceLayer";
 import { isChunkLoadFailure } from "./lib/chunkLoadRecovery";
+import { handleChunkLoadFailure } from "./lib/deployUpdate/runtime";
 
 const AuthPageChunk = lazy(() => authPageLazy().then(({ Component }) => ({ default: Component })));
 const PlatformAdminLoginChunk = lazy(() =>
@@ -154,6 +156,11 @@ function ErrorBoundary() {
     !is404 &&
     (isChunkLoadFailure(error) ||
       (isRouteErrorResponse(error) && isChunkLoadFailure(error.data)));
+  const chunkError = chunkFailed ? (isRouteErrorResponse(error) ? error.data : error) : null;
+  useEffect(() => {
+    if (chunkError) handleChunkLoadFailure(chunkError);
+  }, [chunkError]);
+
   const title = is404
     ? t("common.errorScreen.notFoundTitle")
     : chunkFailed
@@ -210,6 +217,7 @@ function RootLayout() {
         </React.Suspense>
       ) : null}
       <IdleSessionController />
+      <DeployUpdateRouteObserver />
       <ScrollToTop />
       <CareTipRouteSeo />
       <SignInHandoffCover />

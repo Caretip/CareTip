@@ -132,7 +132,12 @@
   --pfc-brand-muted: color-mix(in oklab, #eb992c 42%, hsl(var(--muted)));
   width: min(31.25rem, calc(100vw - 2rem));
   min-height: min(36rem, 88vh);
+  min-height: min(36rem, 88dvh);
   max-height: min(40rem, 92vh);
+  max-height: min(40rem, 92dvh);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border-radius: 1.25rem;
   border: 1px solid color-mix(in oklab, hsl(var(--border)) 88%, var(--pfc-brand) 12%);
   background: hsl(var(--background));
@@ -496,15 +501,61 @@
   .product-feedback-modal-dialog {
     width: 100%;
     min-height: auto;
+    max-height: 92vh;
+    max-height: 92dvh;
     border-radius: 1.25rem 1.25rem 0 0;
   }
 
+  .product-feedback-modal-dialog > button.absolute {
+    top: 0.875rem;
+    right: 0.875rem;
+  }
+
   .product-feedback-modal__shell {
-    padding: 1.5rem 1.25rem 1.5rem;
+    padding: 1.25rem 1.125rem calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .product-feedback-modal__header {
+    padding-right: 2.25rem;
+  }
+
+  .product-feedback-modal__title {
+    font-size: 1.125rem;
+  }
+
+  .product-feedback-modal__subtitle {
+    font-size: 0.8125rem;
+  }
+
+  .product-feedback-modal__rating,
+  .product-feedback-modal__comment {
+    margin-top: 1.25rem;
+  }
+
+  .product-feedback-modal__stars {
+    margin-top: 0.625rem;
+  }
+
+  .product-feedback-modal .product-feedback-stars {
+    gap: 0.25rem;
+  }
+
+  .product-feedback-modal .product-feedback-star__icon {
+    width: 1.75rem;
+    height: 1.75rem;
   }
 
   .product-feedback-modal__textarea {
-    min-height: 7.5rem;
+    min-height: 6.5rem;
+    font-size: 1rem;
+  }
+
+  .product-feedback-modal__submit {
+    margin-top: 1rem;
+  }
+
+  .product-feedback-modal__success {
+    min-height: 14rem;
   }
 }
 

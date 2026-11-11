@@ -25,9 +25,9 @@ export function ProductFeedbackModal() {
       <DialogContent
         overlayClassName="product-feedback-modal-overlay"
         className={cn(
-          "product-feedback-modal-dialog gap-0 overflow-hidden border p-0 sm:max-w-none",
+          "product-feedback-modal-dialog gap-0 overflow-y-auto overscroll-contain border p-0 sm:max-w-none",
           isMobile &&
-            "top-auto bottom-0 left-[50%] max-h-[min(92vh,680px)] w-[calc(100%-1rem)] max-w-none translate-x-[-50%] translate-y-0 rounded-b-none data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
+            "top-auto bottom-0 left-[50%] w-full max-w-none translate-x-[-50%] translate-y-0 rounded-b-none data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
           !isMobile && "rounded-[1.25rem]",
         )}
         aria-describedby={undefined}

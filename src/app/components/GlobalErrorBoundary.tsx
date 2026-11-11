@@ -1,6 +1,7 @@
 import React, { Component, type ErrorInfo, type ReactNode } from "react";
 import { captureClientException } from "../lib/sentry";
-import { isChunkLoadFailure, recoverStaleChunkOnce } from "../lib/chunkLoadRecovery";
+import { isChunkLoadFailure } from "../lib/chunkLoadRecovery";
+import { handleChunkLoadFailure } from "../lib/deployUpdate/runtime";
 import i18n from "@/i18n/i18n";
 
 interface Props {
@@ -29,7 +30,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
       componentStack: errorInfo.componentStack,
     });
     if (isChunkLoadFailure(error)) {
-      recoverStaleChunkOnce();
+      handleChunkLoadFailure(error);
     }
   }
 

@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { deployVersionPlugin, readLocalGitSha, resolveDeployBuildInfo } from './scripts/deploy-build-version.mjs'
 
 /** Normalize BASE_URL / *_APP_URL values into `https://host` (no path). Used only at config time. */
 function publicSiteOriginFromEnvValue(raw: string | undefined): string {
@@ -70,12 +71,19 @@ function apiProxyUnreachableAs503(proxy: { on: (event: 'error', cb: (err: Error,
   })
 }
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
   const repoRoot = fileURLToPath(new URL('.', import.meta.url))
   const loaded = loadEnv(mode, repoRoot, '')
   const injectedOrigin = publicSiteOriginFromEnvValue(
     loaded.BASE_URL || loaded.VITE_BASE_URL || loaded.NEXT_PUBLIC_APP_URL || loaded.VITE_APP_URL,
   )
+  const deployBuild =
+    command === 'build'
+      ? resolveDeployBuildInfo({
+          env: { COMMIT_REF: loaded.COMMIT_REF, BUILD_ID: loaded.BUILD_ID, DEPLOY_ID: loaded.DEPLOY_ID },
+          gitSha: loaded.COMMIT_REF ? '' : readLocalGitSha(repoRoot),
+        })
+      : { version: 'dev', buildTime: '' }
 
   return {
   /** Required for correct asset URLs on Vercel and other static hosts. */
@@ -108,6 +116,9 @@ export default defineConfig(({ mode }) => {
   define: {
     /** Baked at build/dev start from BASE_URL (preferred) or other public URL envs — see appPublicUrl.ts */
     'import.meta.env.VITE_CARETIP_APP_ORIGIN': JSON.stringify(injectedOrigin),
+    /** Deployment id compared against `/version.json` by the update coordinator. */
+    __CARETIP_BUILD_VERSION__: JSON.stringify(deployBuild.version),
+    __CARETIP_BUILD_TIME__: JSON.stringify(deployBuild.buildTime),
   },
   build: {
     /** esbuild 0.28+ no longer downlevels destructuring for legacy targets (see GHSA-gv7w-rqvm-qjhr override). */
@@ -159,6 +170,7 @@ export default defineConfig(({ mode }) => {
     react(),
     tailwindcss(),
     bootAssetsMetaPlugin(),
+    deployVersionPlugin(deployBuild),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: [
@@ -215,7 +227,12 @@ export default defineConfig(({ mode }) => {
           'assets/index-*.{js,css}',
           'assets/vendor-react-*.js',
         ],
-        globIgnores: ['**/assets/*.{png,jpg,jpeg,webp,gif}'],
+        globIgnores: [
+          /** Must always come from the network so open tabs can see a new deploy. */
+          'version.json',
+          '404.html',
+          '**/assets/*.{png,jpg,jpeg,webp,gif}',
+        ],
         navigateFallback: 'index.html',
         navigateFallbackDenylist: [
           /^\/api(\/|$)/,

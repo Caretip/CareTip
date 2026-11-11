@@ -108,7 +108,7 @@ export function EmployeeAnalyticsPage() {
 
   const periodOptions = useMemo(
     () =>
-      (["today", "week", "month", "year", "all"] as EmployeeAnalyticsPeriod[]).map((id) => ({
+      (["today", "week", "month", "year"] as EmployeeAnalyticsPeriod[]).map((id) => ({
         id,
         label: t(`employee.analytics.period.${id}`),
         loading: refreshing && period === id,
@@ -210,7 +210,7 @@ export function EmployeeAnalyticsPage() {
           </div>
           <p className="employee-analytics-period-note text-xs text-muted-foreground">
             {t("employee.analytics.periodBasis", { basis: t("employee.analytics.periodBasisTipDate") })}
-            {period !== "all" ? ` · ${t("employee.analytics.paidPendingLifetime")}` : ""}
+            {` · ${t("employee.analytics.paidPendingLifetime")}`}
           </p>
         </section>
 

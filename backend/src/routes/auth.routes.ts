@@ -108,6 +108,15 @@ router.post(
   requireTrustedOrigin,
   authController.refresh,
 );
+/** API-hostname migration: exchange a validated session for a cookie issued by this host. */
+router.post(
+  "/session/migrate",
+  oauthRateLimit,
+  requireCaretipClientHeader,
+  requireTrustedOrigin,
+  authMiddleware,
+  authController.migrateSessionHost,
+);
 router.post(
   "/logout",
   requireCaretipClientHeader,

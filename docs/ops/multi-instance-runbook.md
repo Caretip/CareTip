@@ -43,8 +43,9 @@ Prisma uses the **transaction pooler** (port 6543) with `connection_limit = DATA
 
 ## Netlify
 
-- `VITE_API_URL` must point straight at the Render API (`https://caretip.onrender.com` or your custom domain). `public/_redirects` proxies only `/api/*`. There is no `/socket.io` rule, so sockets only work against the API host directly.
-- Check under Site settings, Environment variables. No change is needed if it is already set (session cookies are `SameSite=None`, which implies a cross-origin API).
+- `VITE_API_URL` must point straight at the Render API. Since the first-party API domain migration that is `https://api.caretip.de` (a Render custom domain on the same web service); `VITE_LEGACY_API_URL` may still name `https://caretip.onrender.com` while old sessions move over. `public/_redirects` proxies only `/api/*` and has no `/socket.io` rule, so sockets only work against the API host directly, which this setup does.
+- `public/_headers` already allows `wss://*.caretip.de` in `connect-src`, which the WebSocket-only clients need.
+- Check under Site settings, Environment variables. Both instances serve the same custom domain, so nothing changes there when scaling.
 
 ## Environment variables on the Render web service
 
