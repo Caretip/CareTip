@@ -1,6 +1,24 @@
 import { lazy, Suspense, useEffect, useMemo, useState, memo } from "react";
 import { Link, Navigate } from "react-router";
 import { useTranslation } from "react-i18next";
+import { format } from "date-fns";
+import { de, enUS } from "date-fns/locale";
+import {
+  Activity,
+  ArrowRight,
+  BadgeCheck,
+  Building2,
+  CircleCheck,
+  CreditCard,
+  Euro,
+  Package,
+  Receipt,
+  ShieldAlert,
+  Sparkles,
+  TrendingUp,
+  UserCheck,
+  Users,
+} from "lucide-react";
 import {
   fetchPlatformHealth,
   fetchPlatformStats,
@@ -10,46 +28,53 @@ import {
   fetchPlatformAuditLogs,
   fetchPlatformCommercialIntelligence,
   fetchPlatformAnalytics,
+  fetchPlatformPhysicalQrOrders,
   type PlatformHealthResponse,
   type PlatformGlobalStats,
   type PlatformBusinessRow,
   type OnboardingQueueMetrics,
   type PlatformAnalytics,
   type PlatformSubscriptionMonitoring,
+  type PhysicalQrAdminOrder,
 } from "../lib/api";
 import { useAuth } from "../hooks/useAuth";
 import { logClientError } from "../lib/clientLog";
-import { PlatformOverviewTeaserCard } from "./platform/PlatformOverviewTeaserCard";
-import {
-  PlatformAdminSection,
-  PlatformAdminMetricStrip,
-  PlatformAdminMetricCell,
-  PlatformAdminFreshnessIndicator,
-} from "./platform/PlatformPageChrome";
-import { PlatformBusinessMobileCard } from "./platform/PlatformBusinessMobileCard";
-import { PlatformAdminOverviewHero } from "./platform/PlatformAdminOverviewHero";
 import { DashboardChartsIdleMount } from "./dashboard/DashboardChartsIdleMount";
 import { DashboardLoadErrorNotice } from "./dashboard/DashboardLoadErrorNotice";
+import { DashboardChartSkeleton } from "./dashboard/DashboardAnalyticsLoader";
 import { toUserFriendlyMessage } from "../lib/errorMessages";
-import { AdminDashboardAnalyticsChartsFallback } from "./AdminDashboardAnalyticsChartsFallback";
-import {
-  PlatformAdminAttentionAlerts,
-  type PlatformAdminAlert,
-} from "./platform/PlatformAdminAttentionAlerts";
-import { platformUi } from "./platform/platformDashboardUi";
+import { PlatformAdminFreshnessIndicator } from "./platform/PlatformPageChrome";
 import {
   PLATFORM_BUSINESS_BASE,
+  PLATFORM_BRANDING_ORDERS_BASE,
   PLATFORM_REVENUE_BASE,
   PLATFORM_REPORTS_BASE,
   PLATFORM_SYSTEM_BASE,
 } from "./platform/platformAdminNav";
 import { formatEur } from "../lib/formatEur";
-
-/** Display only: thousands separators for overview counts. */
-function formatAdminCount(n: number): string {
-  return new Intl.NumberFormat("de-DE").format(n);
-}
-import { cn } from "@/lib/utils";
+import { formatDashboardFormalGreeting } from "../lib/dashboardFormalGreeting";
+import { isPhysicalQrFulfillable } from "../lib/physicalQrOrderUi";
+import {
+  CONSOLE_CHART,
+  ConsoleAttentionList,
+  ConsoleAvatar,
+  ConsoleCallout,
+  ConsoleCard,
+  ConsoleDot,
+  ConsoleEmpty,
+  ConsoleHeader,
+  ConsoleKpi,
+  ConsoleKpiGrid,
+  ConsoleKv,
+  ConsoleList,
+  ConsoleListRow,
+  ConsolePage,
+  ConsoleSkeletonRows,
+  ConsoleSplitBar,
+  ConsoleStatus,
+  type ConsoleAttentionItem,
+} from "./platform/console/AdminConsole";
+import { formatCount, formatPercent, formatRelative, humanizeAuditAction } from "./platform/console/consoleFormat";
 import {
   useDashboardKpiProfile,
   useDashboardPageFullyLoaded,
@@ -63,7 +88,7 @@ const PlatformOverviewSummaryCharts = lazy(() =>
 );
 
 const VERIFICATION_TEASER_LIMIT = 3;
-const RECENT_ACTIVITY_LIMIT = 4;
+const RECENT_ACTIVITY_LIMIT = 6;
 
 function onboardingTeaserPriority(status: PlatformBusinessRow["onboardingVerificationStatus"]): number {
   if (status === "submitted") return 0;
@@ -75,8 +100,28 @@ function computeNewBusinessesThisWeek(analytics: PlatformAnalytics | null): numb
   return (analytics?.growth ?? []).slice(-7).reduce((sum, row) => sum + row.newBusinesses, 0);
 }
 
+type QrQueueSummary = { readyToFulfil: number; onHold: number; inTransit: number };
+
+function summarizeQrOrders(orders: PhysicalQrAdminOrder[]): QrQueueSummary {
+  let readyToFulfil = 0;
+  let onHold = 0;
+  let inTransit = 0;
+  for (const o of orders) {
+    const fulfillable = isPhysicalQrFulfillable(o.paymentStatus, o.holdReleasedAt);
+    if (["PAID", "PROCESSING", "PRINTING"].includes(o.fulfillmentStatus)) {
+      if (fulfillable) readyToFulfil += 1;
+      else if (["IN_REVIEW", "PARTIALLY_REFUNDED", "DISPUTED"].includes(o.paymentStatus)) onHold += 1;
+    } else if (o.paymentStatus === "IN_REVIEW") {
+      onHold += 1;
+    }
+    if (o.fulfillmentStatus === "SHIPPED") inTransit += 1;
+  }
+  return { readyToFulfil, onHold, inTransit };
+}
+
 export const AdminDashboard = memo(function AdminDashboard() {
   const { t, i18n } = useTranslation();
+  const lang = i18n.language;
   const { user, authHydrated, sessionValidated } = useAuth();
   const [health, setHealth] = useState<PlatformHealthResponse | null>(null);
   const [stats, setStats] = useState<PlatformGlobalStats | null>(null);
@@ -84,6 +129,7 @@ export const AdminDashboard = memo(function AdminDashboard() {
   const [onboardingTeaser, setOnboardingTeaser] = useState<PlatformBusinessRow[]>([]);
   const [onboardingMetrics, setOnboardingMetrics] = useState<OnboardingQueueMetrics | null>(null);
   const [subscriptionMonitoring, setSubscriptionMonitoring] = useState<PlatformSubscriptionMonitoring | null>(null);
+  const [qrSummary, setQrSummary] = useState<QrQueueSummary | null>(null);
   const [commercialSummary, setCommercialSummary] = useState<{
     upgrades: number;
     trials: number;
@@ -93,7 +139,7 @@ export const AdminDashboard = memo(function AdminDashboard() {
 
   /** Stage 1 — health + stats (KPI / hero). */
   const [criticalLoading, setCriticalLoading] = useState(true);
-  /** Stage 2 — onboarding metrics, recent businesses, audit logs. */
+  /** Stage 2 — onboarding metrics, recent businesses, audit logs, print-order queue. */
   const [secondaryLoading, setSecondaryLoading] = useState(true);
   /** Stage 3 — commercial intelligence, subscriptions, 30d analytics. */
   const [heavyLoading, setHeavyLoading] = useState(true);
@@ -153,7 +199,7 @@ export const AdminDashboard = memo(function AdminDashboard() {
     const loadSecondary = async () => {
       setSecondaryLoading(true);
       try {
-        const [onboardingRes, onboardingSubmittedRes, logsRes] = await Promise.all([
+        const [onboardingRes, onboardingSubmittedRes, logsRes, qrRes] = await Promise.all([
           fetchOnboardingQueueMetrics().catch(noteFailure("loadOnboardingMetrics", () => setStatsFailed(true))),
           fetchPlatformBusinesses({
             workflow: "onboarding",
@@ -168,10 +214,16 @@ export const AdminDashboard = memo(function AdminDashboard() {
             noteFailure("loadAuditLogs")(err);
             return { items: [], total: 0 };
           }),
+          // Print-order queue is a secondary signal: a failure hides the card instead of showing zeros.
+          fetchPlatformPhysicalQrOrders().catch((err: unknown) => {
+            logClientError("AdminDashboard.loadQrOrders", err);
+            return null;
+          }),
         ]);
         if (cancelled) return;
 
         if (onboardingRes) setOnboardingMetrics(onboardingRes);
+        setQrSummary(qrRes ? summarizeQrOrders(qrRes.orders ?? []) : null);
 
         const onboardingQueue = (onboardingSubmittedRes.businesses ?? [])
           .sort(
@@ -256,8 +308,22 @@ export const AdminDashboard = memo(function AdminDashboard() {
   const newBusinessesWeek = useMemo(() => computeNewBusinessesThisWeek(analytics), [analytics]);
   const failedPaymentsToday = subscriptionMonitoring?.widgets?.failedPaymentsToday ?? 0;
 
-  const attentionAlerts = useMemo((): PlatformAdminAlert[] => {
-    const alerts: PlatformAdminAlert[] = [];
+  const tipsWindow = useMemo(() => {
+    const rows = analytics?.tipVolume ?? [];
+    const volume = rows.reduce((s, r) => s + r.tipsEur, 0);
+    const count = rows.reduce((s, r) => s + r.tipCount, 0);
+    return { volume, count, avg: rows.length ? volume / rows.length : 0 };
+  }, [analytics?.tipVolume]);
+
+  const platformStatus: "operational" | "degraded" | "checking" = !health
+    ? "checking"
+    : health.database === "online" && health.stripe === "online"
+      ? "operational"
+      : "degraded";
+
+  const attentionAlerts = useMemo((): ConsoleAttentionItem[] => {
+    const alerts: ConsoleAttentionItem[] = [];
+    const review = t("admin.overview.alerts.review");
 
     if (health && (health.database !== "online" || health.stripe !== "online")) {
       alerts.push({
@@ -265,6 +331,8 @@ export const AdminDashboard = memo(function AdminDashboard() {
         message: t("admin.overview.alerts.systemHealth"),
         href: `${PLATFORM_SYSTEM_BASE}/health`,
         severity: "critical",
+        cta: review,
+        icon: ShieldAlert,
       });
     }
 
@@ -274,6 +342,19 @@ export const AdminDashboard = memo(function AdminDashboard() {
         message: t("admin.overview.alerts.pendingOnboarding", { count: pendingOnboardingCount }),
         href: `${PLATFORM_BUSINESS_BASE}/onboarding-verification`,
         severity: "warning",
+        cta: review,
+        icon: UserCheck,
+      });
+    }
+
+    if (!secondaryLoading && (qrSummary?.onHold ?? 0) > 0) {
+      alerts.push({
+        id: "qr-hold",
+        message: `${t("admin.physicalQr.holdTitle")} · ${qrSummary?.onHold ?? 0}`,
+        href: PLATFORM_BRANDING_ORDERS_BASE,
+        severity: "warning",
+        cta: review,
+        icon: Package,
       });
     }
 
@@ -285,6 +366,8 @@ export const AdminDashboard = memo(function AdminDashboard() {
         }),
         href: `${PLATFORM_BUSINESS_BASE}/subscriptions?filter=failed`,
         severity: "warning",
+        cta: review,
+        icon: CreditCard,
       });
     }
 
@@ -294,6 +377,8 @@ export const AdminDashboard = memo(function AdminDashboard() {
         message: t("admin.overview.alerts.atRiskSubscriptions", { count: commercialSummary?.atRisk ?? 0 }),
         href: `${PLATFORM_REPORTS_BASE}/commercial`,
         severity: "warning",
+        cta: review,
+        icon: TrendingUp,
       });
     }
 
@@ -304,6 +389,7 @@ export const AdminDashboard = memo(function AdminDashboard() {
     health,
     heavyLoading,
     pendingOnboardingCount,
+    qrSummary?.onHold,
     secondaryLoading,
     t,
   ]);
@@ -311,209 +397,381 @@ export const AdminDashboard = memo(function AdminDashboard() {
   if (!authHydrated || !sessionValidated || !user) return null;
   if (user.role !== "platform_admin") return <Navigate to="/unauthorized" replace />;
 
-  const kpiGridBusy = criticalLoading || secondaryLoading;
+  const dateLocale = lang?.toLowerCase().startsWith("de") ? de : enUS;
+  const nowLabel = format(new Date(), dateLocale === de ? "EEEE, d. MMMM · HH:mm" : "EEEE, MMMM d · h:mm a", {
+    locale: dateLocale,
+  });
+  const allSettled = !criticalLoading && !secondaryLoading && !heavyLoading;
+  const overview = subscriptionMonitoring?.overview;
+  const widgets = subscriptionMonitoring?.widgets;
 
   return (
-    <div className={cn(platformUi.page, "platform-dashboard-overview overflow-x-hidden")}>
-      <div className={cn(platformUi.pageInner, "platform-dashboard-body", platformUi.overviewSection, "pt-3 sm:pt-4")}>
-        <PlatformAdminOverviewHero health={health} adminName={user.name} locale={i18n.language} />
+    <ConsolePage className="platform-dashboard-overview">
+      <ConsoleHeader
+        crumbs={[{ label: formatDashboardFormalGreeting(t, user.name) }]}
+        title={t("admin.overview.title")}
+        description={t("admin.overview.hero.summary")}
+        meta={
+          <>
+            <span className="inline-flex items-center gap-1.5">
+              <Activity className="h-3.5 w-3.5" aria-hidden />
+              <time dateTime={new Date().toISOString()}>{nowLabel}</time>
+            </span>
+            <PlatformAdminFreshnessIndicator
+              generatedAt={stats?.generatedAt}
+              cacheTtlSeconds={stats?.cacheTtlSeconds}
+              locale={lang}
+            />
+          </>
+        }
+        actions={
+          <Link to={`${PLATFORM_SYSTEM_BASE}/health`} className="ac-pulse" aria-label={t("admin.overview.hero.statusLinkAria")}>
+            <ConsoleDot
+              tone={platformStatus === "operational" ? "success" : platformStatus === "degraded" ? "failure" : "neutral"}
+            />
+            {platformStatus === "operational"
+              ? t("admin.overview.hero.statusOperational")
+              : platformStatus === "degraded"
+                ? t("admin.overview.hero.statusDegraded")
+                : t("admin.overview.hero.statusChecking")}
+          </Link>
+        }
+      />
 
-        <PlatformAdminAttentionAlerts alerts={attentionAlerts} />
+      {loadError ? (
+        <DashboardLoadErrorNotice message={loadError} onRetry={() => setReloadCount((n) => n + 1)} />
+      ) : null}
 
-        {loadError ? (
-          <DashboardLoadErrorNotice message={loadError} onRetry={() => setReloadCount((n) => n + 1)} />
-        ) : null}
-
-        {statsFailed ? null : (
-        <PlatformAdminSection
-          id="platform-kpis"
-          title={t("admin.overview.kpisTitle")}
-          className={cn("platform-overview-kpis", kpiGridBusy && "platform-admin-stat-grid--loading")}
+      {/* 1 · What needs a decision right now */}
+      {attentionAlerts.length > 0 ? (
+        <ConsoleCard
+          id="overview-attention"
+          tone={attentionAlerts.some((a) => a.severity === "critical") ? "danger" : "accent"}
+          title={t("admin.overview.alerts.title")}
+          actions={
+            <ConsoleStatus tone={attentionAlerts.some((a) => a.severity === "critical") ? "failure" : "attention"}>
+              {t("admin.console.overview.openItems", { count: attentionAlerts.length })}
+            </ConsoleStatus>
+          }
+          flush
         >
-          <PlatformAdminMetricStrip aria-label={t("admin.overview.kpisTitle")}>
-            <PlatformAdminMetricCell
-              label={t("admin.overview.kpi.activeBusinesses")}
-              hint={t("admin.overview.kpi.activeBusinessesHelp")}
-              value={formatAdminCount(activeBusinessesCount)}
-              loading={secondaryLoading}
-            />
-            <PlatformAdminMetricCell
-              label={t("admin.overview.kpi.totalBusinesses")}
-              value={formatAdminCount(stats?.businessesCount ?? 0)}
-              loading={criticalLoading}
-            />
-            <PlatformAdminMetricCell
-              label={t("admin.overview.kpi.staff")}
-              value={formatAdminCount(stats?.employeesCount ?? 0)}
-              loading={criticalLoading}
-            />
-            <PlatformAdminMetricCell
-              label={t("admin.overview.kpi.transactions")}
-              value={formatAdminCount(stats?.successTransactionCount ?? 0)}
-              loading={criticalLoading}
-            />
-            <PlatformAdminMetricCell
+          <ConsoleAttentionList items={attentionAlerts} />
+        </ConsoleCard>
+      ) : allSettled && !loadError ? (
+        <ConsoleCallout tone="success" icon={CircleCheck} title={t("admin.console.overview.allClearTitle")}>
+          {t("admin.console.overview.allClearBody")}
+        </ConsoleCallout>
+      ) : null}
+
+      {/* 2 · Platform KPIs */}
+      {statsFailed ? null : (
+        <section aria-labelledby="platform-kpis-title" className="flex flex-col gap-3">
+          <h2 id="platform-kpis-title" className="ac-section-label">
+            {t("admin.overview.kpisTitle")}
+          </h2>
+          <ConsoleKpiGrid columns={4} label={t("admin.overview.kpisTitle")}>
+            <ConsoleKpi
+              icon={Euro}
+              tone="attention"
               label={t("admin.overview.kpi.tipVolume")}
               value={
                 typeof stats?.totalVolumeEur === "number"
                   ? formatEur(stats.totalVolumeEur)
                   : (stats?.totalVolumeEurFormatted ?? formatEur(0))
               }
-              loading={criticalLoading}
-            />
-            <PlatformAdminMetricCell
-              label={t("admin.overview.kpi.pendingOnboarding")}
-              value={formatAdminCount(pendingOnboardingCount)}
-              loading={secondaryLoading}
-              featured={pendingOnboardingCount > 0}
-            />
-          </PlatformAdminMetricStrip>
-          <PlatformAdminFreshnessIndicator
-            generatedAt={stats?.generatedAt}
-            cacheTtlSeconds={stats?.cacheTtlSeconds}
-            locale={i18n.language}
-          />
-        </PlatformAdminSection>
-        )}
-
-        {chartsFailed ? null : (
-        <DashboardChartsIdleMount
-          whenVisible
-          fallback={<AdminDashboardAnalyticsChartsFallback chartCount={2} />}
-        >
-          <Suspense fallback={<AdminDashboardAnalyticsChartsFallback chartCount={2} />}>
-            <PlatformOverviewSummaryCharts
-              analytics={analytics}
-              subscriptionMonitoring={subscriptionMonitoring}
-              loading={heavyLoading}
-            />
-          </Suspense>
-        </DashboardChartsIdleMount>
-        )}
-
-        <section aria-labelledby="platform-teasers-heading" className="platform-overview-teasers">
-          <h2 id="platform-teasers-heading" className="sr-only">
-            {t("admin.overview.teasersTitle")}
-          </h2>
-          <div className={platformUi.overviewTeaserGrid}>
-            <PlatformOverviewTeaserCard
-              title={t("admin.overview.businessGrowth.title")}
-              viewAllHref={`${PLATFORM_BUSINESS_BASE}/all`}
-              viewAllLabel={t("admin.overview.viewAll")}
-              loading={criticalLoading}
-              metrics={[
-                { label: t("admin.overview.kpi.totalBusinesses"), value: String(stats?.businessesCount ?? 0) },
-                {
-                  label: t("admin.overview.businessGrowth.newThisWeek"),
-                  value: heavyLoading ? "—" : String(newBusinessesWeek),
-                },
-                {
-                  label: t("admin.overview.kpi.staff"),
-                  value: String(stats?.employeesCount ?? 0),
-                },
-              ]}
-            />
-
-            <PlatformOverviewTeaserCard
-              title={t("admin.sections.verificationQueue.title")}
-              viewAllHref={`${PLATFORM_BUSINESS_BASE}/onboarding-verification`}
-              viewAllLabel={t("admin.verificationTeaser.viewAll")}
-              loading={secondaryLoading}
-              metrics={[
-                {
-                  label: t("admin.onboardingVerificationPage.kpi.submitted"),
-                  value: String(pendingOnboardingCount),
-                },
-                {
-                  label: t("admin.onboardingVerificationPage.kpi.rejected"),
-                  value: String(onboardingMetrics?.rejected ?? 0),
-                },
-              ]}
-            >
-              {secondaryLoading ? (
-                <p className="text-sm text-muted-foreground">{t("admin.overview.verification.empty")}</p>
-              ) : onboardingTeaser.length === 0 ? (
-                <p className="text-sm text-muted-foreground">{t("admin.overview.verification.empty")}</p>
-              ) : (
-                <>
-                  <ul className="hidden divide-y divide-border/60 sm:block">
-                    {onboardingTeaser.map((b) => (
-                      <li key={b.id}>
-                        <Link
-                          to={`${PLATFORM_BUSINESS_BASE}/${b.id}`}
-                          className="flex items-center justify-between py-2.5 text-sm transition-colors hover:text-foreground"
-                        >
-                          <span className="font-medium text-foreground">{b.name}</span>
-                          <span className="text-xs text-muted-foreground">{b.ownerEmail}</span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="divide-y divide-border/60 sm:hidden">
-                    {onboardingTeaser.map((b) => (
-                      <PlatformBusinessMobileCard
-                        key={b.id}
-                        business={b}
-                        className="rounded-none border-0 bg-transparent p-0 py-2.5 shadow-none"
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
-            </PlatformOverviewTeaserCard>
-
-            <PlatformOverviewTeaserCard
-              title={t("admin.sections.commercialIntelligence.title")}
-              viewAllHref={`${PLATFORM_REPORTS_BASE}/commercial`}
-              viewAllLabel={t("admin.overview.viewAll")}
-              loading={heavyLoading}
-              metrics={
-                commercialSummary
-                  ? [
-                      { label: t("admin.overview.commercial.upgrades"), value: String(commercialSummary.upgrades) },
-                      { label: t("admin.overview.commercial.trials"), value: String(commercialSummary.trials) },
-                      { label: t("admin.overview.commercial.atRisk"), value: String(commercialSummary.atRisk) },
-                    ]
-                  : []
+              hint={
+                heavyLoading
+                  ? undefined
+                  : `${t("admin.console.overview.last30Volume")}: ${formatEur(tipsWindow.volume)}`
               }
+              loading={criticalLoading}
+              href={`${PLATFORM_REVENUE_BASE}/transactions`}
             />
-          </div>
+            <ConsoleKpi
+              icon={Receipt}
+              label={t("admin.overview.kpi.transactions")}
+              value={formatCount(stats?.successTransactionCount, lang)}
+              hint={
+                heavyLoading ? undefined : `${t("admin.console.overview.last30Count")}: ${formatCount(tipsWindow.count, lang)}`
+              }
+              loading={criticalLoading}
+            />
+            <ConsoleKpi
+              icon={Building2}
+              label={t("admin.overview.kpi.totalBusinesses")}
+              value={formatCount(stats?.businessesCount, lang)}
+              hint={`${t("admin.overview.kpi.activeBusinesses")}: ${formatCount(activeBusinessesCount, lang)} · ${t("admin.overview.businessGrowth.newThisWeek")}: ${heavyLoading ? "—" : formatCount(newBusinessesWeek, lang)}`}
+              loading={criticalLoading || secondaryLoading}
+              href={`${PLATFORM_BUSINESS_BASE}/all`}
+            />
+            <ConsoleKpi
+              icon={Users}
+              label={t("admin.overview.kpi.staff")}
+              value={formatCount(stats?.employeesCount, lang)}
+              hint={`${t("admin.console.overview.locations")}: ${formatCount(stats?.locationsCount, lang)} · ${t("admin.console.overview.activeUsers")}: ${formatCount(stats?.activeUsersCount, lang)}`}
+              loading={criticalLoading}
+            />
+          </ConsoleKpiGrid>
         </section>
+      )}
 
-        <PlatformOverviewTeaserCard
-          title={t("admin.overview.recentActivity.title")}
-          viewAllHref={`${PLATFORM_REPORTS_BASE}/audit-logs`}
-          viewAllLabel={t("admin.overview.viewAll")}
-          metrics={[]}
-          loading={secondaryLoading}
-          className="w-full max-w-none"
-        >
-          {secondaryLoading ? (
-            <p className="text-sm text-muted-foreground">{t("admin.overview.recentActivity.empty")}</p>
-          ) : recentLogs.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("admin.overview.recentActivity.empty")}</p>
-          ) : (
-            <ul className="divide-y divide-border/60">
-              {recentLogs.map((row, i) => (
-                <li
-                  key={`${row.action}-${row.at}-${i}`}
-                  className="flex flex-col gap-0.5 py-2.5 text-sm sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <span className="font-medium text-foreground">{row.action}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {row.email ? `${row.email} · ` : ""}
-                    {new Date(row.at).toLocaleString()}
-                  </span>
-                </li>
+      {/* 3 · Trends: money in + subscription health */}
+      {chartsFailed ? null : (
+        <div className="ac-grid ac-grid--wide-narrow">
+          <ConsoleCard
+            id="overview-tips"
+            title={t("admin.overview.charts.tipsTitle")}
+            description={t("admin.overview.charts.tipsDesc")}
+            actions={
+              <Link to={`${PLATFORM_REVENUE_BASE}/transactions`} className="ac-link">
+                {t("admin.overview.viewAll")}
+                <ArrowRight aria-hidden />
+              </Link>
+            }
+          >
+            <dl className="mb-4 grid grid-cols-3 gap-3 border-b border-border/60 pb-4">
+              {[
+                [t("admin.console.overview.last30Volume"), formatEur(tipsWindow.volume)],
+                [t("admin.console.overview.last30Count"), formatCount(tipsWindow.count, lang)],
+                [t("admin.console.overview.dailyAverage"), formatEur(tipsWindow.avg)],
+              ].map(([label, value]) => (
+                <div key={label} className="min-w-0">
+                  <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
+                  <dd className="mt-1 text-base font-bold tabular-nums sm:text-lg">{heavyLoading ? "—" : value}</dd>
+                </div>
               ))}
-            </ul>
-          )}
-        </PlatformOverviewTeaserCard>
+            </dl>
+            <div className="ac-chart">
+              <DashboardChartsIdleMount whenVisible fallback={<DashboardChartSkeleton />}>
+                <Suspense fallback={<DashboardChartSkeleton />}>
+                  <PlatformOverviewSummaryCharts analytics={analytics} loading={heavyLoading} />
+                </Suspense>
+              </DashboardChartsIdleMount>
+            </div>
+          </ConsoleCard>
 
-        <p className="text-center text-xs leading-relaxed text-muted-foreground lg:text-left">
-          {t("admin.overview.footerHint")}
-        </p>
-      </div>
-    </div>
+          <ConsoleCard
+            id="overview-subscriptions"
+            title={t("admin.overview.charts.subscriptionsTitle")}
+            description={t("admin.overview.charts.subscriptionsDesc")}
+            actions={
+              <Link to={`${PLATFORM_BUSINESS_BASE}/subscriptions`} className="ac-link">
+                {t("admin.overview.viewAll")}
+                <ArrowRight aria-hidden />
+              </Link>
+            }
+          >
+            {heavyLoading || !overview ? (
+              <ConsoleSkeletonRows rows={6} />
+            ) : (
+              <div className="flex flex-col gap-5">
+                <div>
+                  <p className="ac-big-number">{formatPercent(widgets?.successRatePercent, lang, 1)}</p>
+                  <p className="ac-small ac-muted mt-1">{t("admin.subscriptions.widgets.successRate")}</p>
+                </div>
+                <ConsoleSplitBar
+                  label={t("admin.subscriptions.overviewTitle")}
+                  parts={[
+                    { key: "active", label: t("admin.subscriptions.kpi.active"), value: overview.active, color: CONSOLE_CHART.success },
+                    { key: "trialing", label: t("admin.subscriptions.kpi.trialing"), value: overview.trialing, color: CONSOLE_CHART.info },
+                    { key: "failed", label: t("admin.subscriptions.kpi.failed"), value: overview.failed, color: CONSOLE_CHART.failure },
+                    { key: "cancelled", label: t("admin.overview.charts.cancelled"), value: overview.cancelled, color: CONSOLE_CHART.neutral },
+                    { key: "expired", label: t("admin.overview.charts.expired"), value: overview.expired, color: "#57534e" },
+                  ]}
+                />
+                <ConsoleKv
+                  items={[
+                    { label: t("admin.subscriptions.widgets.failedToday"), value: formatCount(widgets?.failedPaymentsToday, lang) },
+                    { label: t("admin.subscriptions.widgets.failedWeek"), value: formatCount(widgets?.failedPaymentsThisWeek, lang) },
+                    { label: t("admin.subscriptions.widgets.trialsEndingSoon"), value: formatCount(widgets?.trialsEndingSoon, lang) },
+                    { label: t("admin.subscriptions.widgets.renewalsDueToday"), value: formatCount(widgets?.renewalsDueToday, lang) },
+                  ]}
+                />
+              </div>
+            )}
+          </ConsoleCard>
+        </div>
+      )}
+
+      {/* 4 · Work queues */}
+      <section aria-labelledby="platform-queues-title" className="flex flex-col gap-3">
+        <div>
+          <h2 id="platform-queues-title" className="ac-section-label" style={{ marginBottom: 0 }}>
+            {t("admin.console.overview.workQueues")}
+          </h2>
+        </div>
+        <div className="ac-grid ac-grid--3">
+          <ConsoleCard
+            id="overview-verification"
+            icon={BadgeCheck}
+            title={t("admin.sections.verificationQueue.title")}
+            actions={
+              <Link to={`${PLATFORM_BUSINESS_BASE}/onboarding-verification`} className="ac-link">
+                {t("admin.verificationTeaser.viewAll")}
+              </Link>
+            }
+            flush
+          >
+            <div className="grid grid-cols-2 border-b border-border/60">
+              <QueueStat
+                label={t("admin.onboardingVerificationPage.kpi.submitted")}
+                value={secondaryLoading ? "—" : formatCount(pendingOnboardingCount, lang)}
+                tone={pendingOnboardingCount > 0 ? "attention" : undefined}
+              />
+              <QueueStat
+                label={t("admin.onboardingVerificationPage.kpi.rejected")}
+                value={secondaryLoading ? "—" : formatCount(onboardingMetrics?.rejected, lang)}
+                divider
+              />
+            </div>
+            {secondaryLoading ? (
+              <ConsoleSkeletonRows rows={3} />
+            ) : onboardingTeaser.length === 0 ? (
+              <ConsoleEmpty compact icon={BadgeCheck} title={t("admin.overview.verification.empty")} />
+            ) : (
+              <ConsoleList>
+                {onboardingTeaser.map((b) => (
+                  <ConsoleListRow
+                    key={b.id}
+                    href={`${PLATFORM_BUSINESS_BASE}/${b.id}`}
+                    leading={<ConsoleAvatar name={b.name} size="sm" />}
+                    title={b.name}
+                    subtitle={b.ownerEmail}
+                  />
+                ))}
+              </ConsoleList>
+            )}
+          </ConsoleCard>
+
+          {qrSummary || secondaryLoading ? (
+            <ConsoleCard
+              id="overview-qr"
+              icon={Package}
+              title={t("admin.physicalQr.title")}
+              actions={
+                <Link to={PLATFORM_BRANDING_ORDERS_BASE} className="ac-link">
+                  {t("admin.overview.viewAll")}
+                </Link>
+              }
+              footer={t("admin.console.overview.qrDesc")}
+              flush
+            >
+              <div className="grid grid-cols-3">
+                <QueueStat
+                  label={t("admin.console.overview.qrReadyToFulfil")}
+                  value={secondaryLoading ? "—" : formatCount(qrSummary?.readyToFulfil, lang)}
+                  tone={(qrSummary?.readyToFulfil ?? 0) > 0 ? "attention" : undefined}
+                />
+                <QueueStat
+                  label={t("admin.console.overview.qrOnHold")}
+                  value={secondaryLoading ? "—" : formatCount(qrSummary?.onHold, lang)}
+                  tone={(qrSummary?.onHold ?? 0) > 0 ? "failure" : undefined}
+                  divider
+                />
+                <QueueStat
+                  label={t("admin.console.overview.qrInTransit")}
+                  value={secondaryLoading ? "—" : formatCount(qrSummary?.inTransit, lang)}
+                  divider
+                />
+              </div>
+            </ConsoleCard>
+          ) : null}
+
+          <ConsoleCard
+            id="overview-commercial"
+            icon={Sparkles}
+            title={t("admin.sections.commercialIntelligence.title")}
+            actions={
+              <Link to={`${PLATFORM_REPORTS_BASE}/commercial`} className="ac-link">
+                {t("admin.overview.viewAll")}
+              </Link>
+            }
+            footer={t("admin.overview.commercial.desc")}
+            flush
+          >
+            <div className="grid grid-cols-3">
+              <QueueStat
+                label={t("admin.overview.commercial.upgrades")}
+                value={heavyLoading || !commercialSummary ? "—" : formatCount(commercialSummary.upgrades, lang)}
+              />
+              <QueueStat
+                label={t("admin.overview.commercial.trials")}
+                value={heavyLoading || !commercialSummary ? "—" : formatCount(commercialSummary.trials, lang)}
+                divider
+              />
+              <QueueStat
+                label={t("admin.overview.commercial.atRisk")}
+                value={heavyLoading || !commercialSummary ? "—" : formatCount(commercialSummary.atRisk, lang)}
+                tone={(commercialSummary?.atRisk ?? 0) > 0 ? "failure" : undefined}
+                divider
+              />
+            </div>
+          </ConsoleCard>
+        </div>
+      </section>
+
+      {/* 5 · Audit trail */}
+      <ConsoleCard
+        id="overview-activity"
+        title={t("admin.overview.recentActivity.title")}
+        description={t("admin.overview.recentActivity.desc")}
+        actions={
+          <Link to={`${PLATFORM_REPORTS_BASE}/audit-logs`} className="ac-link">
+            {t("admin.overview.viewAll")}
+            <ArrowRight aria-hidden />
+          </Link>
+        }
+        flush
+      >
+        {secondaryLoading ? (
+          <ConsoleSkeletonRows rows={4} />
+        ) : recentLogs.length === 0 ? (
+          <ConsoleEmpty compact title={t("admin.overview.recentActivity.empty")} />
+        ) : (
+          <ConsoleList>
+            {recentLogs.map((row, i) => (
+              <ConsoleListRow
+                key={`${row.action}-${row.at}-${i}`}
+                leading={<ConsoleAvatar name={row.email ?? row.action} size="sm" />}
+                title={humanizeAuditAction(row.action)}
+                subtitle={
+                  <>
+                    <span className="ac-mono">{row.action}</span>
+                    {row.email ? ` · ${row.email}` : ""}
+                  </>
+                }
+                end={
+                  <time dateTime={row.at} title={new Date(row.at).toLocaleString()}>
+                    {formatRelative(row.at, lang)}
+                  </time>
+                }
+              />
+            ))}
+          </ConsoleList>
+        )}
+      </ConsoleCard>
+    </ConsolePage>
   );
 });
+
+function QueueStat({
+  label,
+  value,
+  tone,
+  divider = false,
+}: {
+  label: string;
+  value: string;
+  tone?: "attention" | "failure";
+  divider?: boolean;
+}) {
+  return (
+    <div className={divider ? "min-w-0 border-l border-border/60 px-4 py-4 sm:px-5" : "min-w-0 px-4 py-4 sm:px-5"}>
+      <p className="flex items-center gap-1.5 text-2xl font-bold tabular-nums tracking-tight">
+        {tone ? <ConsoleDot tone={tone} /> : null}
+        {value}
+      </p>
+      <p className="mt-1 text-xs font-medium leading-snug text-muted-foreground">{label}</p>
+    </div>
+  );
+}

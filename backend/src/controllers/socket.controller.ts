@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { prisma } from "../prisma.js";
+import { PUBLIC_BUSINESS_WHERE } from "../lib/publicBusinessAvailability.js";
 import { kycStatusToLegacyMirror } from "../lib/verificationWorkflow.js";
 import { hasBusinessVerificationCapability } from "../config/businessVerificationCapabilities.js";
 import { signPublicSocketRoomToken } from "../services/publicSocketToken.service.js";
@@ -21,12 +22,12 @@ export async function getPublicRoomToken(req: Request, res: Response) {
     }
 
     const business = businessId
-      ? await prisma.business.findUnique({
-          where: { id: businessId },
+      ? await prisma.business.findFirst({
+          where: { id: businessId, ...PUBLIC_BUSINESS_WHERE },
           select: { id: true, kycVerificationStatus: true, onboardingVerificationStatus: true },
         })
       : await prisma.business.findFirst({
-          where: { slug: businessSlug },
+          where: { slug: businessSlug, ...PUBLIC_BUSINESS_WHERE },
           select: { id: true, kycVerificationStatus: true, onboardingVerificationStatus: true },
         });
 

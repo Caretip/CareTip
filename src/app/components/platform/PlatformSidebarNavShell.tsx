@@ -160,6 +160,8 @@ function SidebarGroup({
           isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
         )}
         aria-hidden={!isExpanded}
+        // Collapsed links must not be keyboard-focusable while hidden from assistive tech (axe aria-hidden-focus).
+        {...(isExpanded ? {} : { inert: "" })}
       >
         <ul className="overflow-hidden">
           {entry.children.map((child) => (

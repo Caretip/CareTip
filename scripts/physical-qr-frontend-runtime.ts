@@ -439,7 +439,10 @@ if (
 
 if (
   platformOrders.includes("platform-physical-qr") &&
-  platformOrders.includes("whitespace-normal") &&
+  // Admin console: filter chips scroll horizontally; table rows stack into labelled cards under 768px.
+  platformOrders.includes("ConsoleSegments") &&
+  platformOrders.includes("ConsoleTable") &&
+  platformOrders.includes("data-label=") &&
   platformOrders.includes("break-words") &&
   platformOrders.includes("min-w-0")
 ) {
@@ -448,10 +451,11 @@ if (
 
 if (
   adminDetail.includes("platform-physical-qr") &&
-  adminDetail.includes("lg:hidden") &&
-  adminDetail.includes("hidden") &&
-  adminDetail.includes("lg:block") &&
-  adminDetail.includes("whitespace-normal") &&
+  // Admin console: main column + summary rail collapse to one column; item rows stack into cards.
+  adminDetail.includes("ac-grid--main-aside") &&
+  adminDetail.includes("ConsoleTable") &&
+  adminDetail.includes("data-label=") &&
+  adminDetail.includes("flex-wrap") &&
   adminDetail.includes("break-words")
 ) {
   pass("Admin physical branding order detail stacks items and wraps actions on mobile");

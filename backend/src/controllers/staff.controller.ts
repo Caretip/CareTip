@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../prisma.js";
+import { PUBLIC_BUSINESS_WHERE } from "../lib/publicBusinessAvailability.js";
 import { isOnboardingApprovedForPublicGoLive } from "../lib/verificationWorkflow.js";
 import { logServerError, clientSafeMessage, CLIENT_FALLBACK } from "../utils/httpErrors.js";
 import { absolutizePublicMediaPath } from "../utils/publicMediaUrl.js";
@@ -19,7 +20,7 @@ export async function listActiveEmployeesByBusinessSlug(req: Request, res: Respo
       return res.status(400).json({ message: "Slug is required" });
     }
     const business = await prisma.business.findFirst({
-      where: { slug: raw },
+      where: { slug: raw, ...PUBLIC_BUSINESS_WHERE },
       select: {
         ...BUSINESS_BRANDING_SELECT,
         slug: true,
@@ -120,13 +121,14 @@ async function findActiveStaffBySlug(trimmedSlug: string): Promise<StaffBySlugRo
     business: { select: { ...BUSINESS_BRANDING_SELECT, slug: true, onboardingVerificationStatus: true } },
   } as const;
   try {
-    return prisma.employee.findFirst({
+    return await prisma.employee.findFirst({
       where: {
         slug: trimmedSlug,
         isDeleted: false,
         isActive: true,
         activationStatus: "active",
         user: { is: { emailVerified: true } },
+        business: { is: PUBLIC_BUSINESS_WHERE },
       },
       select: full,
     });
@@ -139,6 +141,7 @@ async function findActiveStaffBySlug(trimmedSlug: string): Promise<StaffBySlugRo
           isActive: true,
           activationStatus: "active",
           user: { is: { emailVerified: true } },
+          business: { is: PUBLIC_BUSINESS_WHERE },
         },
         select: {
           id: true,
@@ -189,7 +192,7 @@ export async function getStaffByBusinessAndEmployeeSlug(req: Request, res: Respo
       return res.status(400).json({ message: "Business and employee slugs are required" });
     }
     const business = await prisma.business.findFirst({
-      where: { slug: businessSlug },
+      where: { slug: businessSlug, ...PUBLIC_BUSINESS_WHERE },
       select: { id: true, onboardingVerificationStatus: true },
     });
     if (!business) {

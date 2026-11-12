@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { prisma } from "../prisma.js";
+import { PUBLIC_BUSINESS_WHERE } from "../lib/publicBusinessAvailability.js";
 import { isOnboardingApprovedForPublicGoLive } from "../lib/verificationWorkflow.js";
 import { clientSafeMessage, logServerError, CLIENT_FALLBACK } from "../utils/httpErrors.js";
 import { MissingScanSessionError } from "../services/qr/qrScanRequestContext.js";
@@ -50,8 +51,8 @@ export async function recordGuestScan(req: Request, res: Response): Promise<void
     }
     const scanType = scanTypeRaw as QrScanType;
 
-    const business = await prisma.business.findUnique({
-      where: { id: businessId },
+    const business = await prisma.business.findFirst({
+      where: { id: businessId, ...PUBLIC_BUSINESS_WHERE },
       select: { id: true, onboardingVerificationStatus: true },
     });
     if (!business) {

@@ -95,6 +95,12 @@ assert.equal(
 );
 // A financial GET is a read: limits must not block viewing balances as if it were a payout.
 assert.equal(classifyApiTraffic({ method: "GET", path: "/api/me/billing" }), "dashboardRead");
+// SEC-2026-11-01: case / slash variants reach the same Express route, so they must keep the strict class.
+assert.equal(classifyApiTraffic({ method: "POST", path: "/API/ME/CONNECT/INSTANT-PAYOUT" }), "instantPayout");
+assert.equal(classifyApiTraffic({ method: "POST", path: "/api/me/Connect/instant-payout/" }), "instantPayout");
+assert.equal(classifyApiTraffic({ method: "PATCH", path: "/api/ME/connect/bank-payout-schedule" }), "financialWrite");
+assert.equal(classifyApiTraffic({ method: "POST", path: "/api/me//billing/cancel" }), "financialWrite");
+assert.equal(classifyApiTraffic({ method: "POST", path: "/API/AUTH/REFRESH" }), "sessionRefresh");
 
 // Every money-moving write declared in the route files must land in a protected class.
 const routesDir = join(dirname(fileURLToPath(import.meta.url)), "../src/routes");

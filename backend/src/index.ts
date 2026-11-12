@@ -110,7 +110,7 @@ async function assertEnvForAuth(): Promise<void> {
   const jwt = process.env.JWT_SECRET?.trim();
   if (!jwt) {
     console.error(
-      'FATAL: JWT_SECRET is missing or empty. Set JWT_SECRET="your_super_secret_key" in backend/.env (non-empty string).'
+      "FATAL: JWT_SECRET is missing or empty. Generate one with: node -e \"console.log(require('crypto').randomBytes(48).toString('base64url'))\" and set it in backend/.env."
     );
     process.exit(1);
   }

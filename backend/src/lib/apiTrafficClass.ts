@@ -1,3 +1,4 @@
+import { normalizeRequestPathForPolicy } from "./requestPathPolicy.js";
 /**
  * Classifies an API request for rate limiting. Each class has its own buckets so that, for example,
  * public tipping on venue Wi-Fi cannot use up the allowance a logged-in manager needs on that IP.
@@ -64,7 +65,8 @@ export function classifyApiTraffic(req: {
   path: string;
   query?: Record<string, unknown>;
 }): ApiTrafficClass {
-  const path = req.path.replace(/\/+$/, "") || "/";
+  // Same canonical form Express routing effectively uses (case-insensitive, trailing slash tolerant).
+  const path = normalizeRequestPathForPolicy(req.path);
   const isRead = req.method === "GET" || req.method === "HEAD";
 
   if (path === "/api/auth/refresh") return "sessionRefresh";

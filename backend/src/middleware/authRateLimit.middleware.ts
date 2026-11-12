@@ -403,3 +403,43 @@ export const mobileWebHandoffConsumeRateLimitWithAudit: RequestHandler = (req, r
   }) as typeof res.json;
   mobileWebHandoffConsumeRateLimit(req, res, next);
 };
+
+/**
+ * Google redirect-mode `login_uri` (top-level form POST from accounts.google.com).
+ * - Own bucket at the login IP budget: it must not spend the registration budget that real sign-ups
+ *   on shared venue Wi-Fi depend on.
+ * - When limited, the browser is redirected to the SPA error page via `onLimited` instead of being
+ *   shown a raw JSON body as a full page.
+ */
+export function googleRedirectRateLimit(onLimited: (res: Response) => void): RequestHandler {
+  const limiter = createSyncLimiter(
+    (req) => [{ name: "ip", key: keyIp("google-redirect", clientIp(req)), ...authRateLimits.login.ip }],
+    LOGIN_MSG,
+    "google-redirect",
+  );
+  return (req, res, next) => {
+    const originalStatus = res.status.bind(res);
+    const originalJson = res.json.bind(res);
+    let limited = false;
+    const restore = () => {
+      res.status = originalStatus;
+      res.json = originalJson;
+    };
+    res.status = ((code: number) => {
+      if (code === 429) limited = true;
+      return originalStatus(code);
+    }) as typeof res.status;
+    res.json = ((body: unknown) => {
+      restore();
+      if (limited) {
+        onLimited(res);
+        return res;
+      }
+      return originalJson(body);
+    }) as typeof res.json;
+    limiter(req, res, (err?: unknown) => {
+      restore();
+      next(err as Parameters<NextFunction>[0]);
+    });
+  };
+}

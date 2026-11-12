@@ -7,12 +7,12 @@ import { ADMIN_FINANCIAL_TIMEZONE, formatAdminFinancialDateTime } from "../../li
 export type PlatformAdminStatusTone = "success" | "pending" | "attention" | "failure" | "neutral" | "dispute";
 
 const STATUS_TONE_CLASS: Record<PlatformAdminStatusTone, string> = {
-  success: "platform-admin-status-badge--success",
-  pending: "platform-admin-status-badge--pending",
-  attention: "platform-admin-status-badge--attention",
-  failure: "platform-admin-status-badge--failure",
-  neutral: "platform-admin-status-badge--neutral",
-  dispute: "platform-admin-status-badge--dispute",
+  success: "ac-status--success",
+  pending: "ac-status--info",
+  attention: "ac-status--attention",
+  failure: "ac-status--failure",
+  neutral: "ac-status--neutral",
+  dispute: "ac-status--dispute",
 };
 
 export function PlatformAdminStatusBadge({
@@ -27,16 +27,14 @@ export function PlatformAdminStatusBadge({
   className?: string;
 }) {
   return (
-    <span
-      className={cn("platform-admin-status-badge", STATUS_TONE_CLASS[tone], className)}
-      title={label}
-    >
-      {icon ? <span className="platform-admin-status-badge__icon" aria-hidden>{icon}</span> : null}
-      <span className="platform-admin-status-badge__label">{label}</span>
+    <span className={cn("ac-status", STATUS_TONE_CLASS[tone], className)} title={label}>
+      {icon ? <span className="inline-flex [&_svg]:h-3 [&_svg]:w-3" aria-hidden>{icon}</span> : null}
+      <span>{label}</span>
     </span>
   );
 }
 
+/** KPI tile (renders inside PlatformAdminMetricStrip). */
 export function PlatformAdminMetricCell({
   label,
   value,
@@ -55,18 +53,13 @@ export function PlatformAdminMetricCell({
   return (
     <div
       role="listitem"
-      className={cn(
-        "platform-admin-metric-cell",
-        loading && "platform-admin-metric-cell--loading",
-        featured && "platform-admin-metric-cell--featured",
-        className,
-      )}
+      className={cn("ac-kpi", featured && "ac-kpi--attention", loading && "ac-kpi--loading", className)}
     >
-      <p className="platform-admin-metric-cell__label">{label}</p>
-      <p className="platform-admin-metric-cell__value tabular-nums text-foreground" aria-busy={loading || undefined}>
+      <p className="ac-kpi__label">{label}</p>
+      <p className="ac-kpi__value" aria-busy={loading || undefined}>
         {loading ? "—" : value}
       </p>
-      {hint ? <p className="platform-admin-metric-cell__hint">{hint}</p> : null}
+      {hint ? <p className="ac-kpi__hint">{hint}</p> : null}
     </div>
   );
 }

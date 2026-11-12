@@ -578,14 +578,47 @@ function getAuthHeadersOnly(): HeadersInit {
   return headers;
 }
 
-async function handleRes<T>(res: Response, opts?: { silent?: boolean }): Promise<T> {
+const INVALID_API_RESPONSE_MESSAGE =
+  "We received an unexpected response from the server. Please try again in a moment.";
+
+async function handleRes<T>(res: Response, opts?: { silent?: boolean; method?: string }): Promise<T> {
   const ct = res.headers.get("content-type") ?? "";
   let data: unknown = {};
+  /** A 2xx whose body is not usable JSON must not be handed to callers as data (they render
+   *  misleading empty states, e.g. "No active subscription", or crash on missing fields). */
+  let invalidSuccessBody = false;
+  let emptyBody = false;
   if (ct.includes("application/json")) {
-    data = await res.json().catch(() => ({}));
+    const text = await res.text().catch(() => "");
+    emptyBody = !text.trim();
+    if (text.trim()) {
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = {};
+        invalidSuccessBody = true;
+      }
+    }
   } else {
     const text = await res.text().catch(() => "");
-    data = text.trim() ? { message: text.trim().slice(0, 300) } : {};
+    const trimmed = text.trim();
+    emptyBody = !trimmed;
+    data = trimmed ? { message: trimmed.slice(0, 300) } : {};
+    // SPA fallback / proxy error pages answered with 200 instead of reaching the API.
+    if (/^<(!doctype|html)/i.test(trimmed)) invalidSuccessBody = true;
+  }
+  // Reads always return a body in this API; an empty 200 to a GET is a broken response, not "no data".
+  // Writes may legitimately answer with an empty body, so they keep returning {}.
+  if (res.ok && emptyBody && res.status !== 204 && (opts?.method ?? "").toUpperCase() === "GET") {
+    invalidSuccessBody = true;
+  }
+  if (res.ok && invalidSuccessBody) {
+    logClientError("api.handleRes.invalidBody", new Error("Invalid API response body"), {
+      status: res.status,
+      url: res.url,
+      contentType: ct,
+    });
+    throw new ApiRequestError(INVALID_API_RESPONSE_MESSAGE, res.status, "INVALID_API_RESPONSE");
   }
   if (!res.ok) {
     const refreshPath = typeof res.url === "string" && res.url.includes(AUTH_REFRESH_PATHNAME);
@@ -953,7 +986,10 @@ async function apiRequestOnce<T>(url: string, init?: RequestInit): Promise<T> {
   }
 
   try {
-    const out = await handleRes<T>(res, { silent: initFlags?.caretipSilentErrors === true });
+    const out = await handleRes<T>(res, {
+      silent: initFlags?.caretipSilentErrors === true,
+      method: (init?.method ?? "GET").toUpperCase(),
+    });
     if (devDebug) devTrackEnd(devDebug.group, devDebug.key, "completed");
     return out;
   } catch (err) {
@@ -2396,9 +2432,8 @@ export interface EmployeeItem {
   name: string;
   role: string;
   avatar: string | null;
-  rating: number | null;
-  tips: number;
-  topRated: boolean;
+  /** Successful tip count — present only when the signed-in manager owns the business. */
+  tips?: number;
 }
 
 export async function getEmployees(businessId: string): Promise<EmployeeItem[]> {

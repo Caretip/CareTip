@@ -45,7 +45,9 @@ export function StaffLandingPage() {
   const [showRepeatPrompt, setShowRepeatPrompt] = useState(false);
   const [repeatAmount, setRepeatAmount] = useState<number | null>(null);
   const [checkingOut, setCheckingOut] = useState(false);
-  usePublicHtmlBootHandoff(phase === "ready" && Boolean(staff));
+  // Hand off on any settled state: an error (stale QR, unknown slug, network) must not sit behind
+  // the boot overlay until its safety timeout.
+  usePublicHtmlBootHandoff((phase === "ready" && Boolean(staff)) || phase === "error");
 
   useEffect(() => {
     if (!slugParam?.trim()) {

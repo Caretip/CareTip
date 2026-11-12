@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Building2 } from "lucide-react";
+import { BadgeCheck, Building2, ChevronRight, CircleSlash, FileClock, XCircle } from "lucide-react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import {
   fetchPlatformBusinesses,
+  fetchOnboardingQueueMetrics,
+  type OnboardingQueueMetrics,
   updatePlatformBusinessOperationalStatus,
   type PlatformBusinessOperationalAction,
   type PlatformBusinessRow,
@@ -23,7 +25,14 @@ import {
   BusinessOperationalStatusChip,
   OnboardingVerificationStatusChip,
 } from "../../components/verification/VerificationWorkflowStatusChip";
-import { PlatformBusinessMobileCard } from "../../components/platform/PlatformBusinessMobileCard";
+import {
+  ConsoleAvatar,
+  ConsoleKpi,
+  ConsoleKpiGrid,
+  useRowLink,
+} from "../../components/platform/console/AdminConsole";
+import { formatCount } from "../../components/platform/console/consoleFormat";
+import { PLATFORM_BUSINESS_BASE } from "../../components/platform/platformAdminNav";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { ListFilterLoadError } from "../../components/shared/ListFilterLoadError";
 import { classifyFetchError } from "../../lib/listFilterUx";
@@ -37,7 +46,7 @@ import {
 } from "../../hooks/useBusinessVerificationFilters";
 
 export function PlatformAllBusinessesPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const {
     filters,
     debouncedQ,
@@ -53,6 +62,20 @@ export function PlatformAllBusinessesPage() {
   const [loadErrorKind, setLoadErrorKind] = useState<ReturnType<typeof classifyFetchError>>("api");
   const [processingIds, setProcessingIds] = useState<Set<string>>(() => new Set());
   const loadGenRef = useRef(0);
+  const [metrics, setMetrics] = useState<OnboardingQueueMetrics | null>(null);
+  const rowLink = useRowLink();
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchOnboardingQueueMetrics()
+      .then((m) => {
+        if (!cancelled) setMetrics(m);
+      })
+      .catch((e) => logClientError("PlatformAllBusinessesPage.metrics", e));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const listParams = useMemo(
     () => ({
@@ -166,9 +189,10 @@ export function PlatformAllBusinessesPage() {
   const renderOperationalActions = (b: PlatformBusinessRow) => {
     const busy = isRowProcessing(b.id);
     return (
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        <Link to={`/platform-admin/businesses/${b.id}`} className="text-xs text-accent hover:underline">
+      <div className="flex flex-wrap items-center justify-end gap-2 lg:flex-nowrap">
+        <Link to={`${PLATFORM_BUSINESS_BASE}/${b.id}`} className="ac-btn ac-btn--ghost ac-btn--sm">
           {t("admin.view")}
+          <ChevronRight aria-hidden />
         </Link>
         {canSuspend(b) ? (
           <button
@@ -182,7 +206,7 @@ export function PlatformAllBusinessesPage() {
                 "admin.allBusinessesPage.toastSuspended",
               )
             }
-            className="rounded border border-amber-600 px-2 py-1 text-xs font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50 dark:text-amber-400 dark:hover:bg-amber-950/40"
+            className="ac-btn ac-btn--secondary ac-btn--sm"
           >
             {t("admin.allBusinessesPage.btnSuspend")}
           </button>
@@ -199,7 +223,7 @@ export function PlatformAllBusinessesPage() {
                 "admin.allBusinessesPage.toastReactivated",
               )
             }
-            className="rounded bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
+            className="ac-btn ac-btn--primary ac-btn--sm"
           >
             {t("admin.allBusinessesPage.btnReactivate")}
           </button>
@@ -216,7 +240,7 @@ export function PlatformAllBusinessesPage() {
                 "admin.allBusinessesPage.toastDeactivated",
               )
             }
-            className="rounded border border-destructive px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50"
+            className="ac-btn ac-btn--secondary ac-btn--sm !text-[color:var(--ac-failure-dot)]"
           >
             {t("admin.allBusinessesPage.btnDeactivate")}
           </button>
@@ -240,7 +264,7 @@ export function PlatformAllBusinessesPage() {
             type="button"
             disabled={filters.page === 0 || loading}
             onClick={() => setFilters({ page: filters.page - 1 }, { resetPage: false })}
-            className="min-h-[40px] rounded-lg border border-border px-3 text-xs font-medium text-foreground disabled:opacity-50"
+            className="ac-btn ac-btn--secondary ac-btn--sm"
           >
             {t("admin.businessVerificationPage.prevPage")}
           </button>
@@ -251,7 +275,7 @@ export function PlatformAllBusinessesPage() {
             type="button"
             disabled={filters.page + 1 >= pageCount || loading}
             onClick={() => setFilters({ page: filters.page + 1 }, { resetPage: false })}
-            className="min-h-[40px] rounded-lg border border-border px-3 text-xs font-medium text-foreground disabled:opacity-50"
+            className="ac-btn ac-btn--secondary ac-btn--sm"
           >
             {t("admin.businessVerificationPage.nextPage")}
           </button>
@@ -275,6 +299,39 @@ export function PlatformAllBusinessesPage() {
         subtitle={t("admin.allBusinessesPage.subtitle")}
       />
 
+      <ConsoleKpiGrid columns={4} label={t("admin.allBusinessesPage.title")}>
+        <ConsoleKpi
+          icon={BadgeCheck}
+          tone="success"
+          label={t("admin.businessDetailPage.onboardingStatus.approved")}
+          value={formatCount(metrics?.approved, i18n.language)}
+          loading={!metrics}
+          href={`${PLATFORM_BUSINESS_BASE}/all?status=approved`}
+        />
+        <ConsoleKpi
+          icon={FileClock}
+          tone={(metrics?.submitted ?? 0) > 0 ? "attention" : undefined}
+          label={t("admin.businessDetailPage.onboardingStatus.submitted")}
+          value={formatCount(metrics?.submitted, i18n.language)}
+          loading={!metrics}
+          href={`${PLATFORM_BUSINESS_BASE}/onboarding-verification`}
+          cta={(metrics?.submitted ?? 0) > 0 ? t("admin.overview.alerts.review") : undefined}
+        />
+        <ConsoleKpi
+          icon={CircleSlash}
+          label={t("admin.businessDetailPage.onboardingStatus.draft")}
+          value={formatCount(metrics?.draft, i18n.language)}
+          loading={!metrics}
+        />
+        <ConsoleKpi
+          icon={XCircle}
+          tone={(metrics?.rejected ?? 0) > 0 ? "failure" : undefined}
+          label={t("admin.businessDetailPage.onboardingStatus.rejected")}
+          value={formatCount(metrics?.rejected, i18n.language)}
+          loading={!metrics}
+        />
+      </ConsoleKpiGrid>
+
       <PlatformBusinessListFilters
         workflow="all"
         filters={filters}
@@ -287,7 +344,7 @@ export function PlatformAllBusinessesPage() {
       />
 
       {!loadError && !showTableLoading ? (
-        <p className="mb-4 text-sm font-medium text-foreground" role="status">
+        <p className="text-sm font-semibold text-foreground" role="status">
           {filterSummary}
         </p>
       ) : null}
@@ -344,8 +401,8 @@ export function PlatformAllBusinessesPage() {
                 <th className={platformUi.tableTh}>{t("admin.colOwner")}</th>
                 <th className={platformUi.tableTh}>{t("admin.allBusinessesPage.colOnboardingVerification")}</th>
                 <th className={platformUi.tableTh}>{t("admin.allBusinessesPage.colOperationalStatus")}</th>
-                <th className={platformUi.tableTh}>{t("admin.colTipsEur")}</th>
-                <th className={platformUi.tableTh}>{t("admin.colActions")}</th>
+                <th className="ac-num">{t("admin.colTipsEur")}</th>
+                <th className="ac-actions">{t("admin.colActions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -385,10 +442,15 @@ export function PlatformAllBusinessesPage() {
                 </tr>
               ) : (
                 rows.map((b) => (
-                  <tr key={b.id} className={platformUi.tableRow}>
-                    <td className={platformUi.tableTd}>
-                      <div className="font-medium">{b.name}</div>
-                      <div className="font-mono text-xs text-muted-foreground">{b.slug}</div>
+                  <tr key={b.id} {...rowLink(`${PLATFORM_BUSINESS_BASE}/${b.id}`)}>
+                    <td>
+                      <div className="flex items-center gap-3">
+                        <ConsoleAvatar name={b.name} />
+                        <div className="min-w-0">
+                          <div className="ac-cell-primary">{b.name}</div>
+                          <div className="ac-mono ac-muted">{b.slug}</div>
+                        </div>
+                      </div>
                     </td>
                     <td className={platformUi.tableTd}>{b.ownerEmail}</td>
                     <td className={platformUi.tableTd}>
@@ -397,7 +459,7 @@ export function PlatformAllBusinessesPage() {
                     <td className={platformUi.tableTd}>
                       <BusinessOperationalStatusChip status={b.operationalStatus} />
                     </td>
-                    <td className={platformUi.tableTd}>{formatEur(b.totalTipsEur ?? 0)}</td>
+                    <td className="ac-num font-semibold">{formatEur(b.totalTipsEur ?? 0)}</td>
                     <td className={platformUi.tableTd}>{renderOperationalActions(b)}</td>
                   </tr>
                 ))

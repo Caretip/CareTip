@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { employeeTipChannelColumnsReady } from "./notifications/employeeTipChannelColumns.js";
 import { employeeTipPrefsBeforeChannelColumns } from "./notifications/employeeTipNotificationPrefs.js";
 import { prisma } from "../prisma.js";
+import { PUBLIC_BUSINESS_WHERE } from "../lib/publicBusinessAvailability.js";
 import { generateSlug, ensureUniqueSlug } from "../utils/slug.js";
 import { kycStatusToLegacyMirror } from "../lib/verificationWorkflow.js";
 import { emitBusinessDataChanged } from "../socket/socketEmitters.js";
@@ -120,9 +121,11 @@ export interface EmployeeListItem {
   role: string;
   avatar: string | null;
   isActive: boolean;
-  rating: number | null;
-  tips: number;
-  topRated: boolean;
+  /**
+   * Successful tip count. Only returned to the managing owner of the business (dashboard / QR studio).
+   * Public guest responses omit it (SEC-05) — there is no public rating or "top rated" signal.
+   */
+  tips?: number;
 }
 
 type EmployeeRosterAggRow = {
@@ -135,8 +138,14 @@ type EmployeeRosterAggRow = {
   tip_count: number;
 };
 
-/** Dashboard / manager list: read filter only — does not change database rows. */
-export async function getEmployeesByBusinessId(businessId: string): Promise<EmployeeListItem[]> {
+/**
+ * Employee roster for a business: read filter only — does not change database rows.
+ * `includeTipCounts` must only be true for the business's managing owner (SEC-05).
+ */
+export async function getEmployeesByBusinessId(
+  businessId: string,
+  options: { includeTipCounts?: boolean } = {},
+): Promise<EmployeeListItem[]> {
   const rows = await prisma.$queryRaw<EmployeeRosterAggRow[]>(Prisma.sql`
     SELECT
       e.id,
@@ -159,18 +168,16 @@ export async function getEmployeesByBusinessId(businessId: string): Promise<Empl
   `);
 
   return rows.map((emp) => {
-    const tipCount = Number(emp.tip_count ?? 0);
-    return {
+    const item: EmployeeListItem = {
       id: emp.id,
       slug: emp.slug,
       name: emp.name,
       role: emp.job_title,
       avatar: absolutizePublicMediaPath(emp.avatar),
       isActive: emp.is_active,
-      rating: tipCount > 0 ? 4.8 : null,
-      tips: tipCount,
-      topRated: tipCount > 200,
     };
+    if (options.includeTipCounts) item.tips = Number(emp.tip_count ?? 0);
+    return item;
   });
 }
 
@@ -195,8 +202,8 @@ export interface EmployeeDetail {
 }
 
 export async function getEmployeeById(employeeId: string): Promise<EmployeeDetail | null> {
-  const emp = await prisma.employee.findUnique({
-    where: { id: employeeId },
+  const emp = await prisma.employee.findFirst({
+    where: { id: employeeId, business: { is: PUBLIC_BUSINESS_WHERE } },
     select: {
       id: true,
       name: true,

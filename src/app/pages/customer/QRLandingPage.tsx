@@ -78,7 +78,9 @@ export function QRLandingPage() {
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  usePublicHtmlBootHandoff(!loading && !error && Boolean(businessData));
+  // Hand off on any settled state: an error (stale QR, unknown slug, network) must not sit behind
+  // the boot overlay until its safety timeout.
+  usePublicHtmlBootHandoff(!loading && (Boolean(error) || Boolean(businessData)));
 
   /** Public staff list when business has a directory slug (general business QR). */
   const [poolEmployees, setPoolEmployees] = useState<BusinessDirectoryEmployee[] | null>(null);

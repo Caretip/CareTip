@@ -45,7 +45,9 @@ export function EmployeeQrEntryPage() {
   const [repeatAmount, setRepeatAmount] = useState<number | null>(null);
   const [repeatDismissed, setRepeatDismissed] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
-  usePublicHtmlBootHandoff(phase === "ready" && Boolean(emp));
+  // Hand off on any settled state: an error (stale QR, unknown slug, network) must not sit behind
+  // the boot overlay until its safety timeout.
+  usePublicHtmlBootHandoff((phase === "ready" && Boolean(emp)) || phase === "error");
 
   useEffect(() => {
     const raw = employeeId?.trim();

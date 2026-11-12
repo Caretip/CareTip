@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
-import { Loader2, Search } from "lucide-react";
+import { ChevronRight, HeartPulse, Layers, Loader2 } from "lucide-react";
 import {
   fetchPlatformSubscriptionActivity,
   fetchPlatformSubscriptionMonitoring,
@@ -14,21 +14,25 @@ import {
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
 import { formatEur } from "../../lib/formatEur";
 import { subscriptionPlanDisplayName } from "../../lib/subscriptionPlanDisplayName";
-import { billingStatusStyles } from "../business/settings/billing/billingUi";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 import { platformUi } from "./platformDashboardUi";
 import {
-  PlatformAdminSection,
-  PlatformAdminMetricStrip,
-  PlatformAdminMetricCell,
-} from "./PlatformPageChrome";
+  CONSOLE_CHART,
+  ConsoleCallout,
+  ConsoleCard,
+  ConsoleDot,
+  ConsoleEmpty,
+  ConsoleKv,
+  ConsolePager,
+  ConsoleSearch,
+  ConsoleSegments,
+  ConsoleSkeletonRows,
+  ConsoleSplitBar,
+  ConsoleStatus,
+  ConsoleToolbar,
+  useRowLink,
+  type ConsoleTone,
+} from "./console/AdminConsole";
+import { formatCount, formatPercent, formatRelative } from "./console/consoleFormat";
 
 const ACTIVITY_FILTERS: PlatformSubscriptionActivityFilter[] = [
   "all",
@@ -60,69 +64,34 @@ function formatAmountCents(cents: number | null): string {
   return formatEur(cents / 100);
 }
 
+const SUBSCRIPTION_TONE: Record<SubscriptionStatus, ConsoleTone> = {
+  active: "success",
+  trialing: "info",
+  past_due: "attention",
+  canceled: "neutral",
+  unpaid: "failure",
+  incomplete: "failure",
+};
+
 function subscriptionStatusBadge(status: SubscriptionStatus, t: ReturnType<typeof useTranslation>["t"]) {
-  const emoji: Record<SubscriptionStatus, string> = {
-    active: "🟢",
-    trialing: "🟡",
-    past_due: "🟠",
-    canceled: "⚪",
-    unpaid: "🔴",
-    incomplete: "🔴",
-  };
-  const styles = billingStatusStyles(status);
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset",
-        styles.badge,
-      )}
-    >
-      <span aria-hidden>{emoji[status]}</span>
-      {t(`business.billing.status.${status}`)}
-    </span>
-  );
+  return <ConsoleStatus tone={SUBSCRIPTION_TONE[status] ?? "neutral"}>{t(`business.billing.status.${status}`)}</ConsoleStatus>;
 }
+
+const PAYMENT_TONE: Record<PlatformSubscriptionPaymentStatus, ConsoleTone> = {
+  succeeded: "success",
+  failed: "failure",
+  pending: "info",
+  none: "neutral",
+};
 
 function paymentStatusBadge(
   paymentStatus: PlatformSubscriptionPaymentStatus,
   t: ReturnType<typeof useTranslation>["t"],
 ) {
-  const config: Record<
-    PlatformSubscriptionPaymentStatus,
-    { emoji: string; className: string; labelKey: string }
-  > = {
-    succeeded: {
-      emoji: "🟢",
-      className: "bg-emerald-50 text-emerald-800 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-200 dark:ring-emerald-500/30",
-      labelKey: "admin.subscriptions.paymentStatus.succeeded",
-    },
-    failed: {
-      emoji: "🔴",
-      className: "bg-red-50 text-red-800 ring-red-600/20 dark:bg-red-950/40 dark:text-red-200 dark:ring-red-500/30",
-      labelKey: "admin.subscriptions.paymentStatus.failed",
-    },
-    pending: {
-      emoji: "🟡",
-      className: "bg-sky-50 text-sky-800 ring-sky-600/20 dark:bg-sky-950/40 dark:text-sky-200 dark:ring-sky-500/30",
-      labelKey: "admin.subscriptions.paymentStatus.pending",
-    },
-    none: {
-      emoji: "⚪",
-      className: "bg-muted text-muted-foreground ring-border/40",
-      labelKey: "admin.subscriptions.paymentStatus.none",
-    },
-  };
-  const item = config[paymentStatus];
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset",
-        item.className,
-      )}
-    >
-      <span aria-hidden>{item.emoji}</span>
-      {t(item.labelKey)}
-    </span>
+    <ConsoleStatus tone={PAYMENT_TONE[paymentStatus] ?? "neutral"}>
+      {t(`admin.subscriptions.paymentStatus.${paymentStatus}`)}
+    </ConsoleStatus>
   );
 }
 
@@ -274,131 +243,125 @@ export function PlatformSubscriptionMonitoringSection({
   const pageCount = Math.max(1, Math.ceil(activityTotal / PAGE_SIZE));
   const overview = monitoring?.overview;
   const widgets = monitoring?.widgets;
+  const rowLink = useRowLink();
 
-  const kpiCards = useMemo(
-    () =>
-      [
-        { key: "active", label: t("admin.subscriptions.kpi.active"), value: overview?.active },
-        { key: "trialing", label: t("admin.subscriptions.kpi.trialing"), value: overview?.trialing },
-        { key: "successful", label: t("admin.subscriptions.kpi.successful"), value: overview?.successful },
-        { key: "failed", label: t("admin.subscriptions.kpi.failed"), value: overview?.failed },
-        { key: "cancelled", label: t("admin.subscriptions.kpi.cancelled"), value: overview?.cancelled },
-        { key: "expired", label: t("admin.subscriptions.kpi.expired"), value: overview?.expired },
-      ] as const,
-    [overview, t],
-  );
+  const n = (v: number | undefined) => (monitoringLoading || v == null ? "—" : formatCount(v, locale));
 
   const overviewBody = showOverview ? (
-    <>
-      {monitoringError ? (
-        <p className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-          {monitoringError}
-        </p>
-      ) : null}
+    <div className="ac-stack ac-stack--lg">
+      {monitoringError ? <ConsoleCallout tone="failure">{monitoringError}</ConsoleCallout> : null}
 
-      <PlatformAdminSection title={t("admin.subscriptions.overviewTitle")} className="!pt-0">
-        <PlatformAdminMetricStrip aria-label={t("admin.subscriptions.overviewTitle")}>
-          {kpiCards.map((card) => (
-            <PlatformAdminMetricCell
-              key={card.key}
-              label={card.label}
-              value={card.value != null ? String(card.value) : "—"}
-              loading={monitoringLoading}
-            />
-          ))}
-        </PlatformAdminMetricStrip>
-      </PlatformAdminSection>
+      <div className="ac-grid ac-grid--2">
+        <ConsoleCard icon={Layers} title={t("admin.subscriptions.overviewTitle")}>
+          {monitoringLoading || !overview ? (
+            <ConsoleSkeletonRows rows={4} />
+          ) : (
+            <div className="flex flex-col gap-5">
+              <div className="flex items-end gap-6">
+                <div>
+                  <p className="ac-big-number">{n(overview.active)}</p>
+                  <p className="ac-small ac-muted mt-1">{t("admin.subscriptions.kpi.active")}</p>
+                </div>
+                <div>
+                  <p className="text-xl font-bold tabular-nums">{n(overview.successful)}</p>
+                  <p className="ac-small ac-muted mt-1">{t("admin.subscriptions.kpi.successful")}</p>
+                </div>
+              </div>
+              <ConsoleSplitBar
+                label={t("admin.subscriptions.overviewTitle")}
+                parts={[
+                  { key: "active", label: t("admin.subscriptions.kpi.active"), value: overview.active, color: CONSOLE_CHART.success },
+                  { key: "trialing", label: t("admin.subscriptions.kpi.trialing"), value: overview.trialing, color: CONSOLE_CHART.info },
+                  { key: "failed", label: t("admin.subscriptions.kpi.failed"), value: overview.failed, color: CONSOLE_CHART.failure },
+                  { key: "cancelled", label: t("admin.subscriptions.kpi.cancelled"), value: overview.cancelled, color: CONSOLE_CHART.neutral },
+                  { key: "expired", label: t("admin.subscriptions.kpi.expired"), value: overview.expired, color: "#57534e" },
+                ]}
+              />
+            </div>
+          )}
+        </ConsoleCard>
 
-      <PlatformAdminSection title={t("admin.subscriptions.healthTitle")} className="mt-6">
-        <PlatformAdminMetricStrip aria-label={t("admin.subscriptions.healthTitle")}>
-          <PlatformAdminMetricCell
-            label={t("admin.subscriptions.widgets.successRate")}
-            value={monitoringLoading ? "—" : `${widgets?.successRatePercent ?? 0}%`}
-            loading={monitoringLoading}
-          />
-          <PlatformAdminMetricCell
-            label={t("admin.subscriptions.widgets.failedToday")}
-            value={monitoringLoading ? "—" : String(widgets?.failedPaymentsToday ?? 0)}
-            loading={monitoringLoading}
-            featured={(widgets?.failedPaymentsToday ?? 0) > 0}
-          />
-          <PlatformAdminMetricCell
-            label={t("admin.subscriptions.widgets.failedWeek")}
-            value={monitoringLoading ? "—" : String(widgets?.failedPaymentsThisWeek ?? 0)}
-            loading={monitoringLoading}
-          />
-          <PlatformAdminMetricCell
-            label={t("admin.subscriptions.widgets.trialsEndingSoon")}
-            value={monitoringLoading ? "—" : String(widgets?.trialsEndingSoon ?? 0)}
-            loading={monitoringLoading}
-          />
-          <PlatformAdminMetricCell
-            label={t("admin.subscriptions.widgets.renewalsDueToday")}
-            value={monitoringLoading ? "—" : String(widgets?.renewalsDueToday ?? 0)}
-            loading={monitoringLoading}
-          />
-        </PlatformAdminMetricStrip>
-      </PlatformAdminSection>
-    </>
+        <ConsoleCard icon={HeartPulse} title={t("admin.subscriptions.healthTitle")}>
+          {monitoringLoading ? (
+            <ConsoleSkeletonRows rows={4} />
+          ) : (
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-8">
+              <div className="shrink-0">
+                <p className="ac-big-number">{formatPercent(widgets?.successRatePercent, locale, 1)}</p>
+                <p className="ac-small ac-muted mt-1">{t("admin.subscriptions.widgets.successRate")}</p>
+              </div>
+              <div className="min-w-0 flex-1">
+                <ConsoleKv
+                  items={[
+                    {
+                      label: t("admin.subscriptions.widgets.failedToday"),
+                      value: (
+                        <span className="inline-flex items-center gap-1.5">
+                          {(widgets?.failedPaymentsToday ?? 0) > 0 ? <ConsoleDot tone="failure" /> : null}
+                          {n(widgets?.failedPaymentsToday)}
+                        </span>
+                      ),
+                    },
+                    { label: t("admin.subscriptions.widgets.failedWeek"), value: n(widgets?.failedPaymentsThisWeek) },
+                    { label: t("admin.subscriptions.widgets.trialsEndingSoon"), value: n(widgets?.trialsEndingSoon) },
+                    { label: t("admin.subscriptions.widgets.renewalsDueToday"), value: n(widgets?.renewalsDueToday) },
+                  ]}
+                />
+              </div>
+            </div>
+          )}
+        </ConsoleCard>
+      </div>
+    </div>
   ) : null;
 
   const activityBody = showActivity ? (
-    <>
-      <div className="space-y-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-          <div className={cn(platformUi.searchWrap, "w-full sm:max-w-xs")}>
-            <Search className={platformUi.searchIcon} aria-hidden />
-            <input
-              type="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={t("admin.subscriptions.searchPlaceholder")}
-              className={platformUi.searchInput}
-              aria-label={t("admin.subscriptions.searchPlaceholder")}
+    <ConsoleCard
+      title={part === "full" ? t("admin.subscriptions.activityTitle") : undefined}
+      flush
+      footer={
+        activityTotal > PAGE_SIZE ? undefined : activityTotal > 0 ? (
+          t("admin.subscriptions.pagination", { from: 1, to: activityTotal, total: activityTotal })
+        ) : undefined
+      }
+    >
+      <ConsoleToolbar
+        start={
+          !hideActivityFilters ? (
+            <ConsoleSegments
+              label={t("admin.subscriptions.colStatus")}
+              options={visibleFilters.map((chip) => ({ value: chip, label: t(`admin.subscriptions.filters.${chip}`) }))}
+              value={filter}
+              onChange={(chip) => {
+                setFilter(chip);
+                onFilterChange?.(chip);
+              }}
             />
-          </div>
-        </div>
-
-        {!hideActivityFilters ? (
-          <div className="flex gap-2 overflow-x-auto pb-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {visibleFilters.map((chip) => {
-              const active = filter === chip;
-              return (
-                <button
-                  key={chip}
-                  type="button"
-                  onClick={() => {
-                    setFilter(chip);
-                    onFilterChange?.(chip);
-                  }}
-                  className={cn(
-                    "inline-flex min-h-[40px] shrink-0 touch-manipulation items-center rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
-                    active
-                      ? "border-primary/40 bg-primary text-primary-foreground shadow-sm"
-                      : "border-border/80 bg-background text-muted-foreground hover:border-border hover:text-foreground",
-                  )}
-                >
-                  {t(`admin.subscriptions.filters.${chip}`)}
-                </button>
-              );
-            })}
-          </div>
-        ) : null}
-      </div>
+          ) : null
+        }
+        end={
+          <ConsoleSearch
+            value={search}
+            onChange={setSearch}
+            placeholder={t("admin.subscriptions.searchPlaceholder")}
+            label={t("admin.subscriptions.searchPlaceholder")}
+          />
+        }
+      />
 
       {activityError ? (
-        <p className="mt-4 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-          {activityError}
-        </p>
+        <div className="p-4">
+          <ConsoleCallout tone="failure">{activityError}</ConsoleCallout>
+        </div>
       ) : null}
 
       {activityLoading && activity.length === 0 ? (
-        <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
+        <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground" role="status" aria-busy="true">
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
           {t("admin.subscriptions.activityLoading")}
         </div>
       ) : activity.length === 0 ? (
-        <p className={platformUi.emptyState}>{t("admin.subscriptions.activityEmpty")}</p>
+        <ConsoleEmpty icon={Layers} title={t("admin.subscriptions.activityEmpty")} />
       ) : (
         <>
           <div className={platformUi.mobileList}>
@@ -409,50 +372,41 @@ export function PlatformSubscriptionMonitoringSection({
           <div className={platformUi.tableWrap}>
             <table className={platformUi.table}>
               <thead>
-                <tr className={platformUi.tableHeadRow}>
-                  <th className={platformUi.tableTh}>{t("admin.subscriptions.colBusiness")}</th>
-                  <th className={platformUi.tableTh}>{t("admin.subscriptions.colPlan")}</th>
-                  <th className={platformUi.tableTh}>{t("admin.subscriptions.colStatus")}</th>
-                  <th className={platformUi.tableTh}>{t("admin.subscriptions.colPaymentStatus")}</th>
-                  <th className={platformUi.tableTh}>{t("admin.subscriptions.colAmount")}</th>
-                  <th className={platformUi.tableTh}>{t("admin.subscriptions.colBillingPeriod")}</th>
-                  <th className={platformUi.tableTh}>{t("admin.subscriptions.colDate")}</th>
-                  <th className={platformUi.tableTh}>{t("admin.subscriptions.colLastPaymentAttempt")}</th>
-                  <th className={cn(platformUi.tableTh, "text-right")}>{t("admin.colActions")}</th>
+                <tr>
+                  <th>{t("admin.subscriptions.colBusiness")}</th>
+                  <th>{t("admin.subscriptions.colPlan")}</th>
+                  <th>{t("admin.subscriptions.colStatus")}</th>
+                  <th>{t("admin.subscriptions.colPaymentStatus")}</th>
+                  <th className="ac-num">{t("admin.subscriptions.colAmount")}</th>
+                  <th>{t("admin.subscriptions.colBillingPeriod")}</th>
+                  <th>{t("admin.subscriptions.colDate")}</th>
+                  <th>{t("admin.subscriptions.colLastPaymentAttempt")}</th>
+                  <th className="ac-actions">
+                    <span className="sr-only">{t("admin.colActions")}</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {activity.map((row) => (
-                  <tr key={`${row.businessId}-${row.activityAt}`} className={platformUi.tableRow}>
-                    <td className={platformUi.tableTd}>
-                      <div className="font-medium text-foreground">{row.businessName}</div>
-                      {row.contactEmail ? (
-                        <div className="text-xs text-muted-foreground">{row.contactEmail}</div>
-                      ) : null}
+                  <tr key={`${row.businessId}-${row.activityAt}`} {...rowLink(`/platform-admin/businesses/${row.businessId}`)}>
+                    <td>
+                      <div className="ac-cell-primary">{row.businessName}</div>
+                      {row.contactEmail ? <span className="ac-cell-secondary">{row.contactEmail}</span> : null}
                     </td>
-                    <td className={platformUi.tableTd}>
-                      {subscriptionPlanDisplayName(row.planKey as "basic" | "premium" | "enterprise", t)}
+                    <td>{subscriptionPlanDisplayName(row.planKey as "basic" | "premium" | "enterprise", t)}</td>
+                    <td>{subscriptionStatusBadge(row.status, t)}</td>
+                    <td>{paymentStatusBadge(row.paymentStatus, t)}</td>
+                    <td className="ac-num">{formatAmountCents(row.amountCents)}</td>
+                    <td>{t(`business.billing.${row.billingCycle === "yearly" ? "cycleYearly" : "cycleMonthly"}`)}</td>
+                    <td className="ac-nowrap">
+                      {formatRelative(row.activityAt, locale)}
+                      <span className="ac-cell-secondary">{formatAdminDate(row.activityAt, locale)}</span>
                     </td>
-                    <td className={platformUi.tableTd}>{subscriptionStatusBadge(row.status, t)}</td>
-                    <td className={platformUi.tableTd}>{paymentStatusBadge(row.paymentStatus, t)}</td>
-                    <td className={cn(platformUi.tableTd, "tabular-nums")}>
-                      {formatAmountCents(row.amountCents)}
-                    </td>
-                    <td className={platformUi.tableTd}>
-                      {t(`business.billing.${row.billingCycle === "yearly" ? "cycleYearly" : "cycleMonthly"}`)}
-                    </td>
-                    <td className={cn(platformUi.tableTd, "whitespace-nowrap text-xs")}>
-                      {formatAdminDate(row.activityAt, locale)}
-                    </td>
-                    <td className={cn(platformUi.tableTd, "whitespace-nowrap text-xs")}>
-                      {formatAdminDate(row.lastPaymentAttemptAt, locale)}
-                    </td>
-                    <td className={cn(platformUi.tableTd, "text-right")}>
-                      <Link
-                        to={`/platform-admin/businesses/${row.businessId}`}
-                        className="text-xs font-medium text-foreground underline-offset-2 hover:underline"
-                      >
+                    <td className="ac-nowrap ac-muted">{formatAdminDate(row.lastPaymentAttemptAt, locale)}</td>
+                    <td className="ac-actions">
+                      <Link to={`/platform-admin/businesses/${row.businessId}`} className="ac-btn ac-btn--ghost ac-btn--sm">
                         {t("admin.view")}
+                        <ChevronRight aria-hidden />
                       </Link>
                     </td>
                   </tr>
@@ -464,52 +418,28 @@ export function PlatformSubscriptionMonitoringSection({
       )}
 
       {activityTotal > PAGE_SIZE ? (
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
-          <p className="text-xs text-muted-foreground">
-            {t("admin.subscriptions.pagination", {
-              from: page * PAGE_SIZE + 1,
-              to: Math.min((page + 1) * PAGE_SIZE, activityTotal),
-              total: activityTotal,
-            })}
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled={page === 0 || activityLoading}
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              className="min-h-[40px] rounded-lg border border-border px-3 text-xs font-medium text-foreground disabled:opacity-50"
-            >
-              {t("admin.subscriptions.prevPage")}
-            </button>
-            <span className="text-xs tabular-nums text-muted-foreground">
-              {page + 1} / {pageCount}
-            </span>
-            <button
-              type="button"
-              disabled={page + 1 >= pageCount || activityLoading}
-              onClick={() => setPage((p) => p + 1)}
-              className="min-h-[40px] rounded-lg border border-border px-3 text-xs font-medium text-foreground disabled:opacity-50"
-            >
-              {t("admin.subscriptions.nextPage")}
-            </button>
-          </div>
-        </div>
+        <ConsolePager
+          summary={t("admin.subscriptions.pagination", {
+            from: page * PAGE_SIZE + 1,
+            to: Math.min((page + 1) * PAGE_SIZE, activityTotal),
+            total: activityTotal,
+          })}
+          prevLabel={t("admin.subscriptions.prevPage")}
+          nextLabel={t("admin.subscriptions.nextPage")}
+          prevDisabled={page === 0 || activityLoading}
+          nextDisabled={page + 1 >= pageCount || activityLoading}
+          onPrev={() => setPage((p) => Math.max(0, p - 1))}
+          onNext={() => setPage((p) => p + 1)}
+        />
       ) : null}
-    </>
+    </ConsoleCard>
   ) : null;
 
   const inner = (
-    <>
+    <div className="ac-stack ac-stack--lg">
       {overviewBody}
-      {part === "full" && showOverview && showActivity ? <div className="my-6 border-t border-border" /> : null}
-      {part === "full" && showActivity ? (
-        <PlatformAdminSection title={t("admin.subscriptions.activityTitle")} className="mt-2">
-          {activityBody}
-        </PlatformAdminSection>
-      ) : (
-        activityBody
-      )}
-    </>
+      {activityBody}
+    </div>
   );
 
   if (embedded) {
@@ -517,12 +447,8 @@ export function PlatformSubscriptionMonitoringSection({
   }
 
   return (
-    <Card className={cn(platformUi.contentCard, "mb-6")}>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">{t("admin.subscriptions.title")}</CardTitle>
-        <CardDescription>{t("admin.subscriptions.desc")}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">{inner}</CardContent>
-    </Card>
+    <section className="ac-stack" aria-label={t("admin.subscriptions.title")}>
+      {inner}
+    </section>
   );
 }

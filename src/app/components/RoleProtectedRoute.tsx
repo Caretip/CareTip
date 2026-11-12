@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useSyncExternalStore } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate } from "react-router";
 import { isClientSessionRevoked } from "../lib/api";
@@ -31,6 +31,8 @@ interface RoleProtectedRouteProps {
 export function RoleProtectedRoute({ allowedRoles, children }: RoleProtectedRouteProps) {
   const { t } = useTranslation();
   const gate = useProtectedRouteGate(allowedRoles);
+  // Stable identity: <Navigate> re-navigates whenever `state` changes (see ProtectedRoute).
+  const navigateState = useMemo(() => ({ from: gate.pathname }), [gate.pathname]);
   const rolesKey = allowedRoles.join(",");
   const logoutTransitionActive = useSyncExternalStore(
     subscribeAuthLogoutTransition,
@@ -81,7 +83,7 @@ export function RoleProtectedRoute({ allowedRoles, children }: RoleProtectedRout
       path: gate.pathname,
       scope: "RoleProtectedRoute",
     });
-    return <Navigate to={gate.loginPath} replace state={{ from: gate.pathname }} />;
+    return <Navigate to={gate.loginPath} replace state={navigateState} />;
   }
 
   if (gate.decision?.kind === "redirect") {
@@ -92,7 +94,7 @@ export function RoleProtectedRoute({ allowedRoles, children }: RoleProtectedRout
       path: gate.pathname,
       scope: "RoleProtectedRoute",
     });
-    return <Navigate to={gate.decision.to} replace state={{ from: gate.pathname }} />;
+    return <Navigate to={gate.decision.to} replace state={navigateState} />;
   }
 
   authDebug("route_guard", { decision: "allow", path: gate.pathname, scope: "RoleProtectedRoute" });

@@ -3,6 +3,18 @@ import { useLocation } from "react-router";
 import { useCookieConsent } from "@/app/context/CookieConsentContext";
 
 /**
+ * Install is only offered where it helps: the landing page and the signed-in app areas. Never on
+ * sign-in, guest tipping or checkout screens, where a fixed bottom banner covers primary actions
+ * (it hid the Google sign-in button on iPhone-sized screens).
+ */
+export function isPwaInstallPromptRoute(pathname: string): boolean {
+  const p = pathname.replace(/\/+$/, "") || "/";
+  if (p === "/") return true;
+  if (/^\/(employee|platform-admin)\/(login|signup)$/.test(p)) return false;
+  return /^\/(dashboard|employee|employee-dashboard|business-dashboard|business\/dashboard|platform-admin)(\/|$)/.test(p);
+}
+
+/**
  * PWA install is lower priority than cookie consent. Eligible only after consent is
  * stored, and — for visitors who resolve consent this session — after the next
  * meaningful interaction or in-app navigation (not the same moment the banner closes).
@@ -55,5 +67,5 @@ export function usePwaInstallPromptEligibility(): boolean {
     }
   }, [location.pathname, consent, unlocked]);
 
-  return consent != null && unlocked;
+  return consent != null && unlocked && isPwaInstallPromptRoute(location.pathname);
 }

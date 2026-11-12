@@ -110,6 +110,30 @@ function verifySpaCsp(label, entry, opts = {}) {
       `${label} (${source}): connect-src must not use scheme-only https: or wss: wildcards`,
     );
   }
+  // SEC-10: wildcard subdomains of shared hosting platforms let any tenant of that platform receive
+  // requests from the SPA. Only exact origins are allowed for them, in every directive.
+  for (const [directive, value] of d) {
+    const shared = value.match(
+      /\S*\*\.(onrender\.com|netlify\.app|vercel\.app|herokuapp\.com|fly\.dev|supabase\.co|pages\.dev|github\.io)\b/gi,
+    );
+    if (shared) {
+      failures.push(`${label} (${source}): ${directive} must not use shared-hosting wildcards: ${shared.join(", ")}`);
+    }
+    if (/'unsafe-eval'|'wasm-unsafe-eval'/i.test(value)) {
+      failures.push(`${label} (${source}): ${directive} must not contain 'unsafe-eval'`);
+    }
+    if (directive !== "style-src" && /'unsafe-inline'/i.test(value)) {
+      failures.push(`${label} (${source}): ${directive} must not contain 'unsafe-inline' (style-src is the documented exception)`);
+    }
+    if (/(^|\s)\*(\s|$)/.test(value)) {
+      failures.push(`${label} (${source}): ${directive} must not contain a bare * source`);
+    }
+  }
+  for (const origin of ["https://caretip.onrender.com", "wss://caretip.onrender.com"]) {
+    if (!connectSrc.split(/\s+/).includes(origin)) {
+      failures.push(`${label} (${source}): connect-src must allow the exact API origin ${origin}`);
+    }
+  }
   for (const host of SPA_CONNECT_SRC) {
     if (!connectSrc.includes(host)) {
       failures.push(`${label} (${source}): connect-src missing required host ${host}`);

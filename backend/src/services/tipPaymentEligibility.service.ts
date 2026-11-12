@@ -63,6 +63,8 @@ export async function assertEmployeeEligibleForTipPayment(
           onboardingVerificationStatus: true,
           operationalStatus: true,
           deletedAt: true,
+          tombstonedAt: true,
+          lifecycleStatus: true,
         },
       },
     },
@@ -116,6 +118,11 @@ export async function assertEmployeeEligibleForTipPayment(
 
   if (emp.business.operationalStatus !== "active") {
     throw new TipPaymentEligibilityError(EMPLOYEE_UNAVAILABLE_MSG, "BUSINESS_NOT_OPERATIONAL");
+  }
+
+  // SEC-04: same rule as public pages (lib/publicBusinessAvailability.ts) — GDPR lifecycle past active.
+  if (emp.business.tombstonedAt || emp.business.lifecycleStatus !== "active") {
+    throw new TipPaymentEligibilityError(EMPLOYEE_UNAVAILABLE_MSG, "BUSINESS_SOFT_CLOSED");
   }
 
   if (

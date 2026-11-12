@@ -181,11 +181,14 @@ export function LocationTablesWorkspaceSkeleton({
 /** Platform admin global transactions table. */
 export function GlobalTransactionsTableSkeleton({
   rows = 8,
+  asRows = false,
 }: {
   rows?: number;
+  /** Render only <tr> rows (for use inside an existing <tbody>). */
+  asRows?: boolean;
 }) {
-  return (
-    <tbody>
+  const body = (
+    <>
       {Array.from({ length: rows }).map((_, i) => (
         <tr key={i} className="border-b border-border/60">
           <td className="px-4 py-3.5">
@@ -211,7 +214,13 @@ export function GlobalTransactionsTableSkeleton({
           </td>
         </tr>
       ))}
-    </tbody>
+    </>
+  );
+  if (asRows) return body;
+  return (
+    <table className="w-full" aria-busy="true">
+      <tbody>{body}</tbody>
+    </table>
   );
 }
 

@@ -41,7 +41,9 @@ export function TableQrLandingPage() {
   const [query, setQuery] = useState("");
   const [repeatDismissed, setRepeatDismissed] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
-  usePublicHtmlBootHandoff(!loading && !error && Boolean(data));
+  // Hand off on any settled state: an error (stale QR, unknown slug, network) must not sit behind
+  // the boot overlay until its safety timeout.
+  usePublicHtmlBootHandoff(!loading && (Boolean(error) || Boolean(data)));
 
   useEffect(() => {
     const raw = tableId?.trim();

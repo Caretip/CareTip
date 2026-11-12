@@ -304,7 +304,7 @@ export function BusinessVerificationFilters({
       : t("admin.businessVerificationPage.searchAria");
 
   return (
-    <div className="platform-verification-filters mb-6 space-y-4">
+    <div className="ac-card platform-verification-filters flex flex-col gap-4 p-4 sm:p-5">
       <div className={cn(platformUi.searchWrap, "w-full max-w-xl")}>
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
         <input

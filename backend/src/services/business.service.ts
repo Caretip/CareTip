@@ -9,6 +9,7 @@ import { StatsFetchError, logStatsPhase } from "../utils/statsErrors.js";
 import { randomBytes } from "node:crypto";
 import { generateSlug, ensureUniqueSlug } from "../utils/slug.js";
 import { prisma } from "../prisma.js";
+import { PUBLIC_BUSINESS_WHERE } from "../lib/publicBusinessAvailability.js";
 import { toEmployeePayoutConnectionState } from "../lib/employeePayoutConnectState.js";
 import { isSubscriptionBasicDefaultEnabled } from "../config/featureFlags.js";
 import { provisionInternalBasicSubscription } from "./subscription.service.js";
@@ -1575,8 +1576,9 @@ async function countActivePublicEmployees(businessId: string): Promise<number> {
 
 /** Public tipping / QR — no KYC tier, contact, or staff counts. */
 export async function getPublicBusinessById(id: string): Promise<PublicBusinessProfileDto | null> {
-  const business = await prisma.business.findUnique({
-    where: { id },
+  // SEC-04: suspended / closed businesses are indistinguishable from unknown ones on public routes.
+  const business = await prisma.business.findFirst({
+    where: { id, ...PUBLIC_BUSINESS_WHERE },
     select: BUSINESS_PROFILE_SELECT,
   });
   if (!business) return null;

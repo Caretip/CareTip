@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
-import { Package } from "lucide-react";
+import { ChevronRight, Package, PackageCheck, PauseCircle, Printer, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { fetchPlatformPhysicalQrOrders, type PhysicalQrAdminOrder } from "../../lib/api";
 import {
@@ -12,12 +12,27 @@ import {
   physicalQrOrderNumber,
   physicalQrPaymentLabel,
 } from "../../lib/physicalQrOrderUi";
-import { PlatformPage, PlatformPageHeader } from "../../components/platform/PlatformPageChrome";
-import { platformUi } from "../../components/platform/platformDashboardUi";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import {
+  ConsoleCard,
+  ConsoleEmpty,
+  ConsoleHeader,
+  ConsoleKpi,
+  ConsoleKpiGrid,
+  ConsolePage,
+  ConsoleSearch,
+  ConsoleSegments,
+  ConsoleSkeletonRows,
+  ConsoleStatus,
+  ConsoleTable,
+  ConsoleToolbar,
+  ConsoleCallout,
+  useRowLink,
+} from "../../components/platform/console/AdminConsole";
+import { qrFulfillmentTone, qrOrderIsHeld, qrPaymentTone } from "../../components/platform/console/consoleTones";
+import { formatCount, formatRelative } from "../../components/platform/console/consoleFormat";
+import { PLATFORM_ADMIN_OVERVIEW_HREF, PLATFORM_BRANDING_ORDERS_BASE } from "../../components/platform/platformAdminNav";
 import { toDisplayErrorMessage } from "@/app/lib/errorMessages";
+import { isPhysicalQrFulfillable } from "../../lib/physicalQrOrderUi";
 
 const FILTERS = [
   "all",
@@ -30,21 +45,40 @@ const FILTERS = [
   "cancelled",
   "payment_failed",
 ] as const;
+type Filter = (typeof FILTERS)[number];
+
+function summarize(orders: PhysicalQrAdminOrder[]) {
+  let ready = 0;
+  let held = 0;
+  let printing = 0;
+  let transit = 0;
+  for (const o of orders) {
+    if (qrOrderIsHeld(o)) held += 1;
+    else if (["PAID", "PROCESSING"].includes(o.fulfillmentStatus) && isPhysicalQrFulfillable(o.paymentStatus, o.holdReleasedAt)) ready += 1;
+    if (o.fulfillmentStatus === "PRINTING" && !qrOrderIsHeld(o)) printing += 1;
+    if (o.fulfillmentStatus === "SHIPPED") transit += 1;
+  }
+  return { ready, held, printing, transit };
+}
 
 export function PlatformPhysicalQrOrdersPage() {
   const { t, i18n } = useTranslation();
+  const lang = i18n.language;
   const [orders, setOrders] = useState<PhysicalQrAdminOrder[]>([]);
-  const [filter, setFilter] = useState<string>("all");
+  const [allOrders, setAllOrders] = useState<PhysicalQrAdminOrder[] | null>(null);
+  const [filter, setFilter] = useState<Filter>("all");
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const rowLink = useRowLink();
 
-  async function reload(nextFilter = filter, nextQ = q) {
+  async function reload(nextFilter: Filter = filter, nextQ = q) {
     const data = await fetchPlatformPhysicalQrOrders({
       filter: nextFilter === "all" ? undefined : nextFilter,
       q: nextQ.trim() || undefined,
     });
     setOrders(data.orders);
+    if (nextFilter === "all" && !nextQ.trim()) setAllOrders(data.orders);
     setError(null);
   }
 
@@ -57,155 +91,166 @@ export function PlatformPhysicalQrOrdersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [t]);
 
+  const summary = useMemo(() => (allOrders ? summarize(allOrders) : null), [allOrders]);
+
+  const applyFilter = (id: Filter) => {
+    setFilter(id);
+    void reload(id, q).catch((err) => toast.error(toDisplayErrorMessage(err, t("admin.physicalQr.loadError"))));
+  };
+
   return (
-    <PlatformPage className="platform-physical-qr">
-      <PlatformPageHeader
+    <ConsolePage className="platform-physical-qr">
+      <ConsoleHeader
         icon={Package}
+        crumbs={[{ label: t("admin.workspace.eyebrow"), href: PLATFORM_ADMIN_OVERVIEW_HREF }, { label: t("admin.physicalQr.title") }]}
         title={t("admin.physicalQr.title")}
-        subtitle={t("admin.physicalQr.subtitle")}
+        description={t("admin.physicalQr.subtitle")}
       />
-      <div className="mb-4 flex max-w-full flex-wrap gap-2">
-        {FILTERS.map((id) => (
-          <Button
-            key={id}
-            type="button"
-            size="sm"
-            className="h-auto max-w-full whitespace-normal"
-            variant={filter === id ? "default" : "outline"}
-            onClick={() => {
-              setFilter(id);
-              void reload(id, q).catch((err) =>
-                toast.error(toDisplayErrorMessage(err, t("admin.physicalQr.loadError"))),
-              );
-            }}
-          >
-            {t(`admin.physicalQr.filters.${id}`)}
-          </Button>
-        ))}
-      </div>
-      <div className={platformUi.searchWrap}>
-        <Input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder={t("admin.physicalQr.searchPlaceholder")}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              void reload(filter, q).catch((err) =>
-                toast.error(toDisplayErrorMessage(err, t("admin.physicalQr.loadError"))),
-              );
-            }
-          }}
+
+      <ConsoleKpiGrid columns={4} label={t("admin.physicalQr.title")}>
+        <ConsoleKpi
+          icon={Printer}
+          tone={(summary?.ready ?? 0) > 0 ? "attention" : undefined}
+          label={t("admin.console.overview.qrReadyToFulfil")}
+          value={formatCount(summary?.ready, lang)}
+          hint={t("admin.console.qr.readyHint")}
+          loading={!summary && !error}
         />
-      </div>
+        <ConsoleKpi
+          icon={PauseCircle}
+          tone={(summary?.held ?? 0) > 0 ? "failure" : undefined}
+          label={t("admin.console.overview.qrOnHold")}
+          value={formatCount(summary?.held, lang)}
+          hint={t("admin.console.qr.heldHint")}
+          loading={!summary && !error}
+        />
+        <ConsoleKpi
+          icon={Printer}
+          tone="info"
+          label={t("admin.physicalQr.filters.printing")}
+          value={formatCount(summary?.printing, lang)}
+          loading={!summary && !error}
+        />
+        <ConsoleKpi
+          icon={Truck}
+          tone="success"
+          label={t("admin.console.overview.qrInTransit")}
+          value={formatCount(summary?.transit, lang)}
+          loading={!summary && !error}
+        />
+      </ConsoleKpiGrid>
 
-      {loading ? (
-        <div className={`${platformUi.dataPanel} mt-4`} role="status" aria-busy="true">
-          <div className="space-y-3 p-4">
-            {[0, 1, 2, 3].map((row) => (
-              <div key={row} className="h-8 animate-pulse rounded bg-muted" />
-            ))}
-          </div>
-        </div>
-      ) : error ? (
-        <p className="mt-4 text-sm text-destructive">{error}</p>
-      ) : orders.length === 0 ? (
-        <p className="mt-6 text-sm text-muted-foreground">{t("admin.physicalQr.empty")}</p>
-      ) : (
-        <>
-          <div className="mt-4 divide-y divide-border/80 border-y border-border/80 lg:hidden">
-            {orders.map((order) => (
-              <AdminOrderListRow key={order.id} order={order} compact />
-            ))}
-          </div>
-          <div className={cn(platformUi.tableWrap, "mt-4 border-y border-border/80")}>
-            <table className="pq-order-table">
-              <thead>
-                <tr>
-                  <th>{t("admin.physicalQr.colOrder")}</th>
-                  <th>{t("admin.physicalQr.business")}</th>
-                  <th>{t("admin.physicalQr.colItems")}</th>
-                  <th>{t("admin.physicalQr.colPayment")}</th>
-                  <th>{t("admin.physicalQr.colFulfillment")}</th>
-                  <th>{t("admin.physicalQr.colPlaced")}</th>
-                  <th className="text-right">{t("admin.physicalQr.colAction")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.map((order) => (
-                  <AdminOrderListRow key={order.id} order={order} />
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
-    </PlatformPage>
-  );
-}
+      <ConsoleCard flush>
+        <ConsoleToolbar
+          start={
+            <ConsoleSegments
+              label={t("admin.physicalQr.colFulfillment")}
+              options={FILTERS.map((id) => ({ value: id, label: t(`admin.physicalQr.filters.${id}`) }))}
+              value={filter}
+              onChange={applyFilter}
+            />
+          }
+          end={
+            <form
+              role="search"
+              className="w-full lg:w-auto"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void reload(filter, q).catch((err) => toast.error(toDisplayErrorMessage(err, t("admin.physicalQr.loadError"))));
+              }}
+            >
+              <ConsoleSearch
+                value={q}
+                onChange={setQ}
+                placeholder={t("admin.physicalQr.searchPlaceholder")}
+                label={t("admin.physicalQr.searchPlaceholder")}
+                wide
+              />
+            </form>
+          }
+        />
 
-function AdminOrderListRow({
-  order,
-  compact,
-}: {
-  order: PhysicalQrAdminOrder;
-  compact?: boolean;
-}) {
-  const { t, i18n } = useTranslation();
-  const href = `/platform-admin/branding-orders/${order.id}`;
-  const items =
-    order.itemCount > 1
-      ? t("admin.physicalQr.itemCount", { count: order.itemCount, defaultValue: "{{count}} QR items" })
-      : physicalQrContextLabel(order.qrContextType, t);
-
-  if (compact) {
-    return (
-      <Link to={href} className="block py-3.5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="font-medium">#{physicalQrOrderNumber(order.id)}</p>
-            <p className="mt-0.5 break-words text-sm text-muted-foreground">
-              {order.businessName} · {items} · ×{order.quantity}
-            </p>
+        {loading ? (
+          <div role="status" aria-busy="true">
+            <ConsoleSkeletonRows rows={6} />
           </div>
-          <p className="shrink-0 text-sm font-semibold tabular-nums">
-            {formatPhysicalQrMoney(order.totalAmount, order.currency, i18n.language)}
-          </p>
-        </div>
-        <p className="mt-2 text-sm">
-          {physicalQrPaymentLabel(order.paymentStatus, t, { totalAmount: order.totalAmount })}
-          {" · "}
-          {physicalQrFulfillmentLabel(order.fulfillmentStatus, t, { totalAmount: order.totalAmount })}
-        </p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {formatBerlinDateCompact(order.placedAt, i18n.language)}
-        </p>
-      </Link>
-    );
-  }
-
-  return (
-    <tr>
-      <td>
-        <Link to={href} className="font-medium hover:underline">
-          #{physicalQrOrderNumber(order.id)}
-        </Link>
-      </td>
-      <td className="min-w-0 break-words">{order.businessName}</td>
-      <td className="text-muted-foreground">
-        {items} · ×{order.quantity}
-      </td>
-      <td>{physicalQrPaymentLabel(order.paymentStatus, t, { totalAmount: order.totalAmount })}</td>
-      <td className="font-medium">
-        {physicalQrFulfillmentLabel(order.fulfillmentStatus, t, { totalAmount: order.totalAmount })}
-      </td>
-      <td className="whitespace-nowrap text-muted-foreground">
-        {formatBerlinDateCompact(order.placedAt, i18n.language)}
-      </td>
-      <td className="text-right">
-        <Link to={href} className="text-sm font-medium text-primary hover:underline">
-          {t("admin.physicalQr.openOrder")}
-        </Link>
-      </td>
-    </tr>
+        ) : error ? (
+          <div className="p-5">
+            <ConsoleCallout tone="failure" title={t("admin.physicalQr.loadError")}>
+              {error}
+            </ConsoleCallout>
+          </div>
+        ) : orders.length === 0 ? (
+          <ConsoleEmpty icon={PackageCheck} title={t("admin.physicalQr.empty")} />
+        ) : (
+          <ConsoleTable label={t("admin.physicalQr.title")}>
+            <thead>
+              <tr>
+                <th>{t("admin.physicalQr.colOrder")}</th>
+                <th>{t("admin.physicalQr.business")}</th>
+                <th>{t("admin.physicalQr.colItems")}</th>
+                <th className="ac-num">{t("admin.console.qr.colTotal")}</th>
+                <th>{t("admin.physicalQr.colPayment")}</th>
+                <th>{t("admin.physicalQr.colFulfillment")}</th>
+                <th>{t("admin.physicalQr.colPlaced")}</th>
+                <th className="ac-actions">
+                  <span className="sr-only">{t("admin.physicalQr.colAction")}</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map((order) => {
+                const href = `${PLATFORM_BRANDING_ORDERS_BASE}/${order.id}`;
+                const items =
+                  order.itemCount > 1
+                    ? t("admin.physicalQr.itemCount", { count: order.itemCount, defaultValue: "{{count}} QR items" })
+                    : physicalQrContextLabel(order.qrContextType, t);
+                const held = qrOrderIsHeld(order);
+                return (
+                  <tr key={order.id} {...rowLink(href)}>
+                    <td data-primary>
+                      <Link to={href} className="ac-cell-primary hover:underline">
+                        #{physicalQrOrderNumber(order.id)}
+                      </Link>
+                      <span className="ac-cell-secondary">{order.productName ?? "—"}</span>
+                    </td>
+                    <td data-label={t("admin.physicalQr.business")} className="min-w-0 break-words">{order.businessName}</td>
+                    <td data-label={t("admin.physicalQr.colItems")} className="ac-nowrap">
+                      {items} · ×{order.quantity}
+                    </td>
+                    <td data-label={t("admin.console.qr.colTotal")} className="ac-num font-semibold">
+                      {formatPhysicalQrMoney(order.totalAmount, order.currency, lang)}
+                    </td>
+                    <td data-label={t("admin.physicalQr.colPayment")}>
+                      <ConsoleStatus tone={qrPaymentTone(order.paymentStatus)}>
+                        {physicalQrPaymentLabel(order.paymentStatus, t, { totalAmount: order.totalAmount })}
+                      </ConsoleStatus>
+                    </td>
+                    <td data-label={t("admin.physicalQr.colFulfillment")}>
+                      <span className="inline-flex flex-wrap items-center justify-end gap-1.5 md:justify-start">
+                        <ConsoleStatus tone={held ? "neutral" : qrFulfillmentTone(order.fulfillmentStatus)}>
+                          {physicalQrFulfillmentLabel(order.fulfillmentStatus, t, { totalAmount: order.totalAmount })}
+                        </ConsoleStatus>
+                        {held ? <ConsoleStatus tone="failure">{t("admin.console.overview.qrOnHold")}</ConsoleStatus> : null}
+                      </span>
+                    </td>
+                    <td data-label={t("admin.physicalQr.colPlaced")} className="ac-nowrap">
+                      <span title={formatBerlinDateCompact(order.placedAt, lang)}>{formatRelative(order.placedAt, lang)}</span>
+                      <span className="ac-cell-secondary">{formatBerlinDateCompact(order.placedAt, lang)}</span>
+                    </td>
+                    <td className="ac-actions">
+                      <Link to={href} className="ac-btn ac-btn--ghost ac-btn--sm" aria-label={`${t("admin.physicalQr.openOrder")} #${physicalQrOrderNumber(order.id)}`}>
+                        {t("admin.physicalQr.openOrder")}
+                        <ChevronRight aria-hidden />
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </ConsoleTable>
+        )}
+      </ConsoleCard>
+    </ConsolePage>
   );
 }

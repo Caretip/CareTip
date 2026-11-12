@@ -1,20 +1,18 @@
 /** Root class on `.caretip-dashboard-shell` — platform admin shell (see SuperAdminLayout). */
 export const PLATFORM_DASHBOARD_ROOT = "platform-dashboard";
 
-import { caretipBtnPrimary } from "@/lib/caretipButtonSystem";
 
 /**
  * Shared rhythm for platform admin pages (presentation only).
  */
 export const platformUi = {
-  btnPrimary: caretipBtnPrimary,
+  btnPrimary: "ac-btn ac-btn--primary",
   pageMain: "bg-background",
   /** Matches business/employee overview shells — padding lives on pageInner. */
-  page: "platform-page min-h-0 w-full min-w-0 pb-10 sm:pb-12",
-  pageInner:
-    "caretip-container platform-page__inner w-full min-w-0 px-4 pt-3 max-lg:pt-3 sm:px-6 sm:pt-4",
+  page: "ac platform-console-page min-w-0 w-full overflow-x-hidden",
+  pageInner: "ac-page",
 
-  pageHeader: "platform-admin-page-header platform-admin-workspace-header",
+  pageHeader: "ac-header",
   pageTitleRow: "flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6",
   pageTitleIcon: "hidden",
   pageTitle: "platform-admin-page-title premium-workspace-header__title",
@@ -26,17 +24,15 @@ export const platformUi = {
   filterBar: "platform-admin-filter-bar",
   emptyBlock: "platform-admin-empty-block",
 
-  searchSection: "mb-5 max-lg:mb-6",
-  searchWrap: "relative w-full max-w-xl",
+  searchSection: "mb-0",
+  searchWrap: "ac-search ac-search--wide relative w-full",
   searchIcon: "pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground",
-  searchInput:
-    "w-full min-h-[2.5rem] rounded-lg border border-border bg-background py-2 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground transition-[border-color,box-shadow] focus:border-primary/35 focus:outline-none focus:ring-2 focus:ring-primary/12",
+  searchInput: "ac-input w-full pl-10",
   searchHint: "mt-2 text-xs leading-relaxed text-muted-foreground",
 
-  backLink:
-    "mb-5 inline-flex min-h-[44px] touch-manipulation items-center gap-2 text-sm font-medium text-primary transition-colors hover:text-foreground",
+  backLink: "ac-back",
 
-  contentCard: "dashboard-panel-card rounded-2xl border border-border/60 bg-card p-4 shadow-[0_1px_2px_rgb(23_20_17/0.04)] sm:p-5",
+  contentCard: "ac-card p-4 sm:p-5",
 
   /** Overview hub — content on the page surface (Netlify-style). */
   overviewHero: "bg-transparent",
@@ -47,36 +43,33 @@ export const platformUi = {
   overviewTeaserCard:
     "flex h-full min-h-0 flex-col border-t border-border/70 bg-transparent p-0 pt-5 shadow-none",
 
-  dataPanel: "overflow-hidden rounded-2xl border border-border/60 bg-card shadow-[0_1px_2px_rgb(23_20_17/0.04)]",
-  mobileList: "space-y-2.5 p-3 max-lg:p-3 lg:hidden",
-  tableWrap: "hidden overflow-x-auto lg:block",
-  table: "w-full text-sm tabular-nums",
-  tableHeadRow: "border-b border-border bg-muted/30 text-left",
-  tableTh:
-    "px-4 py-3 text-xs font-medium text-muted-foreground",
-  tableRow: "border-b border-border/60 transition-colors hover:bg-muted/25",
-  tableTd: "px-4 py-3",
-  panelFooter: "border-t border-border px-4 py-2.5 text-xs leading-relaxed text-muted-foreground",
-  emptyState: "px-4 py-10 text-center text-sm text-muted-foreground",
+  dataPanel: "ac-card overflow-hidden",
+  mobileList: "flex flex-col gap-2.5 p-3 lg:hidden",
+  tableWrap: "ac-table-wrap hidden lg:block",
+  table: "ac-table w-full",
+  tableHeadRow: "",
+  tableTh: "",
+  tableRow: "",
+  tableTd: "",
+  panelFooter: "ac-card__foot",
+  emptyState: "px-4 py-12 text-center text-sm text-muted-foreground",
 
-  mobileCard:
-    "block rounded-lg border border-border/70 bg-card p-4 transition-colors hover:bg-muted/20 active:bg-muted/30",
+  mobileCard: "block rounded-xl border border-border/80 bg-card p-4 transition-colors hover:bg-muted/30",
 
   /** Single column on phone; 2-up from sm; 3-up from lg; 5-up only on very wide viewports. */
-  statGrid:
-    "platform-admin-stat-grid relative mb-0 grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 sm:gap-3.5 lg:grid-cols-3 lg:gap-4 min-[1536px]:grid-cols-5 min-[1536px]:gap-4",
+  statGrid: "ac-kpis",
 
   analyticsSection: "platform-admin-analytics-section mb-0 max-lg:mb-0",
   analyticsHeader: "mb-5 flex flex-col gap-3 max-lg:mb-6 sm:flex-row sm:items-end sm:justify-between sm:gap-4",
   analyticsHeaderCopy: "min-w-0 space-y-1.5",
   analyticsControls: "flex w-full flex-col gap-2.5 max-lg:gap-3 sm:w-auto sm:max-w-[min(100%,16rem)] sm:items-end",
-  analyticsChartsGrid: "platform-admin-charts-grid grid grid-cols-1 gap-4 max-lg:gap-5 lg:grid-cols-2 lg:gap-5",
+  analyticsChartsGrid: "ac-grid ac-grid--2",
 
-  analyticsCard: "overflow-hidden rounded-2xl border border-border/60 bg-card shadow-[0_1px_2px_rgb(23_20_17/0.04)]",
-  analyticsCardHeader: "space-y-1.5 border-b border-border bg-muted/25 px-4 pb-3 pt-4 sm:px-5",
-  analyticsCardTitle: "text-sm font-semibold text-foreground sm:text-base",
-  analyticsCardDesc: "text-pretty text-xs leading-relaxed text-muted-foreground sm:text-sm",
-  analyticsCardBody: "p-4 pt-5 sm:p-5 sm:pt-6",
+  analyticsCard: "ac-card overflow-hidden",
+  analyticsCardHeader: "ac-card__head flex-col !items-start gap-1",
+  analyticsCardTitle: "ac-card__title",
+  analyticsCardDesc: "ac-card__desc",
+  analyticsCardBody: "ac-card__body",
   analyticsChartWrap: "h-[220px] w-full min-w-0 sm:h-[240px]",
 
   /** Overview charts sit on the page surface — other admin analytics pages keep cards. */
@@ -86,10 +79,9 @@ export const platformUi = {
   overviewAnalyticsCardTitle: "text-sm font-semibold text-foreground sm:text-base",
   overviewAnalyticsCardDesc: "text-pretty text-xs leading-relaxed text-muted-foreground sm:text-sm",
 
-  businessesPanel: "overflow-hidden rounded-lg border border-border/70 bg-card",
-  businessesPanelHeader:
-    "flex items-center justify-between gap-3 border-b border-border bg-muted/25 px-4 py-3 max-lg:px-4",
-  businessesSearchWrap: "border-b border-border px-4 py-3",
-  businessesMobileList: "space-y-2.5 p-3 max-lg:p-3 lg:hidden",
-  businessesTableWrap: "hidden overflow-x-auto lg:block",
+  businessesPanel: "ac-card overflow-hidden",
+  businessesPanelHeader: "ac-card__head items-center",
+  businessesSearchWrap: "border-b border-border/60 px-4 py-3",
+  businessesMobileList: "flex flex-col gap-2.5 p-3 lg:hidden",
+  businessesTableWrap: "ac-table-wrap hidden lg:block",
 } as const;

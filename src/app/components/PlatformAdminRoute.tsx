@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useSyncExternalStore } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useLocation } from "react-router";
 import { useAuth } from "../hooks/useAuth";
@@ -28,6 +28,8 @@ export function PlatformAdminRoute({ children }: PlatformAdminRouteProps) {
   const { t } = useTranslation();
   const { user, authStatus } = useAuth();
   const location = useLocation();
+  // Stable identity: <Navigate> re-navigates whenever `state` changes (see ProtectedRoute).
+  const navigateState = useMemo(() => ({ from: location.pathname }), [location.pathname]);
 
   const authBlocking = authStatus === "initializing" || isAuthRestorePending();
   const storedSessionSync =
@@ -66,7 +68,7 @@ export function PlatformAdminRoute({ children }: PlatformAdminRouteProps) {
       guard: "PlatformAdminRoute",
       reason: "not_authenticated",
     });
-    return <Navigate to="/platform-admin/login" replace state={{ from: location.pathname }} />;
+    return <Navigate to="/platform-admin/login" replace state={navigateState} />;
   }
 
   if (!canAccessPlatformAdminWorkspace(user)) {

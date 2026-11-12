@@ -75,6 +75,11 @@ import {
 import { isAppShellInteractive } from "../lib/appShellLifecycle";
 import { consumeSessionExpiredNotice } from "../lib/sessionExpiredNotice";
 import { MobileWebAuthShell } from "./auth/mobileWeb";
+import {
+  hasPendingGoogleRedirectHandoff,
+  readGoogleRedirectIntent,
+  takeGoogleRedirectHandoff,
+} from "../lib/googleOAuthRedirectWeb";
 
 function subscribeMobileWebAuth(onChange: () => void) {
   const mq = window.matchMedia("(max-width: 767px)");
@@ -396,7 +401,9 @@ export function AuthPage() {
       }
     }
 
-    if (authInFlightRef.current) return;
+    // A completed sign-in that is already navigating must not be repeated by a late second credential
+    // or a second tap (would issue a second session).
+    if (authInFlightRef.current || postAuthRedirectRef.current) return;
     authInFlightRef.current = true;
     beginAuthSignInHandoff();
     setAuthFlowInProgress(true);
@@ -513,7 +520,9 @@ export function AuthPage() {
       setError(t('auth.page.mfaCodeRequired'));
       return;
     }
-    if (authInFlightRef.current) return;
+    // A completed sign-in that is already navigating must not be repeated by a late second credential
+    // or a second tap (would issue a second session).
+    if (authInFlightRef.current || postAuthRedirectRef.current) return;
     authInFlightRef.current = true;
     beginAuthSignInHandoff();
     setAuthFlowInProgress(true);
@@ -583,7 +592,18 @@ export function AuthPage() {
     setUnlockedFields(new Set());
   };
 
-  const runSocialOAuth = async (provider: OAuthProviderId, idToken: string) => {
+  const nameField = name;
+  const merchantLegalAcceptedField = merchantLegalAccepted;
+  const resolvedInviteCodeField = resolvedInviteCode;
+  const runSocialOAuth = async (
+    provider: OAuthProviderId,
+    idToken: string,
+    /** Google redirect mode: the form state was lost in the full-page redirect — use the saved intent. */
+    restored?: { name?: string; inviteCode?: string; merchantLegalAccepted?: boolean },
+  ) => {
+    const name = restored?.name ?? nameField;
+    const merchantLegalAccepted = restored?.merchantLegalAccepted ?? merchantLegalAcceptedField;
+    const resolvedInviteCode = (restored?.inviteCode ?? resolvedInviteCodeField).trim();
     // Always complete provider auth → API resolution. Do not short-circuit on an
     // existing CareTip session (that previously redirected as the stale user).
     if (!isLogin && authLane === 'employee') {
@@ -600,7 +620,9 @@ export function AuthPage() {
       setError(t("auth.merchantLegalAcceptance.requiredError"));
       return;
     }
-    if (authInFlightRef.current) return;
+    // A completed sign-in that is already navigating must not be repeated by a late second credential
+    // or a second tap (would issue a second session).
+    if (authInFlightRef.current || postAuthRedirectRef.current) return;
     authInFlightRef.current = true;
     beginAuthSignInHandoff();
     setAuthFlowInProgress(true);
@@ -656,6 +678,29 @@ export function AuthPage() {
       }
     }
   };
+
+  // Google redirect mode (mobile web): finish sign-in once with the sealed credential handed back by
+  // /auth/google/complete. One-shot (taken from storage), so refresh/back never replays it.
+  const googleRedirectResumedRef = useRef(false);
+  useEffect(() => {
+    if (googleRedirectResumedRef.current || !hasPendingGoogleRedirectHandoff()) return;
+    if (authStatus === "initializing") return;
+    googleRedirectResumedRef.current = true;
+    const handoff = takeGoogleRedirectHandoff();
+    if (!handoff) {
+      setError(t("auth.oauth.googleRedirect.error_expired"));
+      return;
+    }
+    const intent = readGoogleRedirectIntent();
+    if (intent?.name) setName(intent.name);
+    if (intent?.merchantLegalAccepted) setMerchantLegalAccepted(true);
+    void runSocialOAuth("google", handoff, {
+      name: intent?.name,
+      inviteCode: intent?.inviteCode,
+      merchantLegalAccepted: intent?.merchantLegalAccepted,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authStatus]);
 
   const employeeSignupIncomplete =
     !isLogin && authLane === 'employee' && (!name.trim() || !resolvedInviteCode);

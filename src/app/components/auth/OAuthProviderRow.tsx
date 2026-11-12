@@ -31,6 +31,11 @@ import { logFacebookOAuthDiagnostic } from "@/app/lib/facebookOAuthDiagnostic";
 import { logClientError } from "@/app/lib/clientLog";
 import { toUserFriendlyMessage } from "@/app/lib/errorMessages";
 import { AuthGoogleOAuthScope } from "@/app/components/auth/AuthGoogleOAuthScope";
+import {
+  googleRedirectLoginUri,
+  resolveGoogleOAuthUxMode,
+  saveGoogleRedirectIntent,
+} from "@/app/lib/googleOAuthRedirectWeb";
 import { FacebookOAuthInlineStatus } from "@/app/components/auth/FacebookOAuthInlineStatus";
 import {
   applyFacebookPhaseIfCurrent,
@@ -127,6 +132,9 @@ export function OAuthProviderRow({
   const appleClientId = appleOAuthWebClientId();
   const facebookAppId = facebookOAuthWebAppId();
   const [gsiOriginError, setGsiOriginError] = useState(false);
+  const [googleStalled, setGoogleStalled] = useState(false);
+  const googleUxMode = resolveGoogleOAuthUxMode();
+  const googleLoginUri = googleUxMode === "redirect" ? googleRedirectLoginUri() : undefined;
   const [appleReady, setAppleReady] = useState<boolean | null>(null);
   const [facebookWarmState, setFacebookWarmState] = useState<"loading" | "ready" | "failed">(() =>
     isFacebookSdkReady() ? "ready" : "loading",
@@ -214,9 +222,24 @@ export function OAuthProviderRow({
     [onSocialCredential, resetFacebookAttempt],
   );
 
+  // Redirect mode leaves this page: keep the sign-in intent (login vs sign-up, role, invite, legal
+  // acceptance) so the auth page can finish with exactly what the user chose.
+  useEffect(() => {
+    if (googleUxMode !== "redirect" || !facebookRedirectContext) return;
+    saveGoogleRedirectIntent({
+      isLogin: facebookRedirectContext.isLogin,
+      returnPath: facebookRedirectContext.returnPath,
+      intendedRole: facebookRedirectContext.intendedRole,
+      name: facebookRedirectContext.name,
+      inviteCode: facebookRedirectContext.inviteCode,
+      merchantLegalAccepted: facebookRedirectContext.merchantLegalAccepted,
+    });
+  }, [googleUxMode, facebookRedirectContext]);
+
   const onGoogleSuccess = useCallback(
     (cred: CredentialResponse) => {
       setGsiOriginError(false);
+      setGoogleStalled(false);
       if (cred.credential) handleSocialCredential("google", cred.credential);
     },
     [handleSocialCredential],
@@ -224,12 +247,11 @@ export function OAuthProviderRow({
 
   const onGoogleError = useCallback(() => {
     setGsiOriginError(true);
-    toast.error(
-      t("auth.oauth.googleOriginError", {
-        origin: typeof window !== "undefined" ? window.location.origin : "",
-      }),
-      { id: "caretip-google-gsi-error" },
-    );
+    // The origin hint only helps developers; customers get an actionable message.
+    const message = import.meta.env.DEV
+      ? t("auth.oauth.googleOriginError", { origin: typeof window !== "undefined" ? window.location.origin : "" })
+      : t("auth.oauth.googleFailed");
+    toast.error(message, { id: "caretip-google-gsi-error" });
   }, [t]);
 
   const showGoogle = Boolean(googleClientId?.trim());
@@ -497,7 +519,19 @@ export function OAuthProviderRow({
                 (disabled || interactionBlocked) && "caretip-oauth-google-slot--disabled",
               )}
             >
-              <AuthGoogleLoginButton onSuccess={onGoogleSuccess} onError={onGoogleError} />
+              <AuthGoogleLoginButton
+                onSuccess={onGoogleSuccess}
+                onError={onGoogleError}
+                uxMode={googleUxMode}
+                loginUri={googleLoginUri}
+                onActivate={() => setGoogleStalled(false)}
+                onPopupStalled={() => setGoogleStalled(true)}
+              />
+              {googleStalled ? (
+                <p className="caretip-oauth-google-stalled mt-2 text-center text-xs text-muted-foreground" role="status">
+                  {t("auth.oauth.googleStalled")}
+                </p>
+              ) : null}
             </div>
           );
         }

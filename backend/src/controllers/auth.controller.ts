@@ -86,6 +86,16 @@ import {
 } from "../services/loginNotification.service.js";
 import { SERVICE_UNAVAILABLE_MESSAGE } from "../constants/serviceUnavailable.js";
 import {
+  GOOGLE_CSRF_COOKIE,
+  GoogleRedirectHandoffError,
+  buildGoogleRedirectCompleteUrl,
+  isGoogleRedirectHandoff,
+  openGoogleRedirectHandoff,
+  sealGoogleRedirectHandoff,
+} from "../services/oauth/googleOAuthRedirect.service.js";
+import { OAuthTokenVerificationError, verifyGoogleIdentity } from "../services/oauth/googleVerifier.js";
+import { safeSecretEqual } from "../lib/safeCompare.js";
+import {
   assertMfaVerifyAllowed,
   clearMfaVerifyFailures,
   MfaVerifyLockedError,
@@ -1137,12 +1147,54 @@ export async function resendVerificationEmailForSession(req: Request, res: Respo
   }
 }
 
+/**
+ * POST /api/auth/google/redirect — Google Identity Services redirect-mode `login_uri` (mobile web).
+ * Cross-site form POST from accounts.google.com: protected by Google's g_csrf_token double-submit
+ * cookie and the ID token signature/audience. Never creates a session; hands off to the SPA.
+ */
+export async function googleRedirectCallback(req: Request, res: Response) {
+  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const credential = typeof body.credential === "string" ? body.credential.trim() : "";
+  const bodyCsrf = typeof body[GOOGLE_CSRF_COOKIE] === "string" ? (body[GOOGLE_CSRF_COOKIE] as string) : "";
+  const cookieCsrf = parseCookie(req.headers.cookie, GOOGLE_CSRF_COOKIE);
+  if (!bodyCsrf || !cookieCsrf || !safeSecretEqual(bodyCsrf, cookieCsrf)) {
+    return res.redirect(303, buildGoogleRedirectCompleteUrl({ error: "csrf" }));
+  }
+  if (!credential) {
+    return res.redirect(303, buildGoogleRedirectCompleteUrl({ error: "missing_credential" }));
+  }
+  try {
+    await verifyGoogleIdentity(credential);
+  } catch (err) {
+    const notConfigured = err instanceof Error && err.message.includes("not configured");
+    if (!(err instanceof OAuthTokenVerificationError)) logServerError("auth.googleRedirectCallback", err);
+    return res.redirect(
+      303,
+      buildGoogleRedirectCompleteUrl({ error: notConfigured ? "unavailable" : "rejected" }),
+    );
+  }
+  return res.redirect(303, buildGoogleRedirectCompleteUrl({ handoff: sealGoogleRedirectHandoff(credential) }));
+}
+
 export async function oauth(req: Request, res: Response) {
   let facebookDiagnosticId: string | undefined;
   try {
     const body = req.body as Record<string, unknown>;
     const provider = body.provider;
-    const idToken = typeof body.idToken === "string" ? body.idToken : "";
+    let idToken = typeof body.idToken === "string" ? body.idToken : "";
+    // Mobile web: Google redirect mode returns a sealed hand-off instead of the raw ID token.
+    if (provider === "google" && isGoogleRedirectHandoff(idToken)) {
+      try {
+        idToken = openGoogleRedirectHandoff(idToken);
+      } catch (err) {
+        if (err instanceof GoogleRedirectHandoffError) {
+          return res.status(400).json({ message: err.message, code: err.code });
+        }
+        throw err;
+      }
+    }
     const isLogin = body.isLogin === true;
     const intendedRole = authService.parseLoginIntendedRole(body.intendedRole);
     const name = typeof body.name === "string" ? body.name : undefined;

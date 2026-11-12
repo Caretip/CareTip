@@ -1728,7 +1728,21 @@
       "facebookRecoveryTroubleshoot": "Troubleshoot Facebook",
       "facebookRecoverySteps": "On Android, open Settings → Apps → Facebook → Open by default, then turn off 'Open supported links'. Return to CareTip and try Facebook again.",
       "facebookRecoveryIncognito": "An Incognito tab is another thing you can try. It does not always avoid this.",
-      "facebookRecoveryBack": "Back"
+      "facebookRecoveryBack": "Back",
+      "googleFailed": "Google sign-in could not start. Please try again or sign in with your email.",
+      "googleStalled": "Google sign-in didn't finish. Tap the Google button to try again, or sign in with your email below.",
+      "googleRedirect": {
+        "title": "Google sign-in didn't complete",
+        "error_csrf": "Your sign-in session couldn't be confirmed. This can happen if cookies are blocked. Please try again.",
+        "error_missing_credential": "Google did not return your account details. Please try again.",
+        "error_rejected": "Google could not confirm this sign-in. Please try again.",
+        "error_unavailable": "Google sign-in is temporarily unavailable. Please sign in with your email.",
+        "error_generic": "Something went wrong while signing in with Google. Please try again.",
+        "error_expired": "Your Google sign-in expired. Please tap the Google button again.",
+        "tryAgain": "Try again",
+        "useEmail": "Sign in with email",
+        "error_rate_limited": "Too many sign-in attempts from this network. Please wait a few minutes and try again, or sign in with your email."
+      }
     },
     "recovery": {
       "backToSignIn": "Back to sign in"
@@ -7967,6 +7981,23 @@
       "loginDesc": "Email and alerts when your account is used to sign in. New devices get a stronger security message.",
       "ariaLogin": "Toggle sign-in alerts",
       "togglePwVisibility": "Toggle password visibility"
+    },
+    "console": {
+      "orders": {
+        "kpiInProgress": "In progress",
+        "kpiSpent": "Paid for prints",
+        "kpiOrders_one": "{{count}} order in total",
+        "kpiOrders_other": "{{count}} orders in total",
+        "kpiLastOrder": "Last order",
+        "activeTitle": "On their way to you",
+        "allTitle": "All orders",
+        "filterAll": "All",
+        "filterNeedsPayment": "Needs payment",
+        "filterOther": "Review, refunds & cancelled",
+        "searchPlaceholder": "Search by order number",
+        "noMatches": "No orders match this view.",
+        "needsPaymentDesc": "Printing starts once these orders are paid."
+      }
     }
   },
   "admin": {
@@ -9591,7 +9622,90 @@
         "toastProgrammeRequired": "Select a programme."
       }
     },
-    "fallbackAdminName": "Admin"
+    "fallbackAdminName": "Admin",
+    "console": {
+      "overview": {
+        "allClearTitle": "Nothing needs your attention",
+        "allClearBody": "Review queues are empty and core services are online.",
+        "openItems_one": "{{count}} open item",
+        "openItems_other": "{{count}} open items",
+        "last30Volume": "Tips · last 30 days",
+        "last30Count": "Tip payments · last 30 days",
+        "dailyAverage": "Daily average",
+        "workQueues": "Work queues",
+        "workQueuesDesc": "Items waiting on a platform admin decision.",
+        "qrReadyToFulfil": "Ready to fulfil",
+        "qrOnHold": "On hold",
+        "qrInTransit": "In transit",
+        "qrDesc": "Paid print orders and orders held for payment review.",
+        "platformFootprint": "Platform footprint",
+        "locations": "Locations",
+        "activeUsers": "Active users",
+        "venuesWithTips": "Venues receiving tips",
+        "growthTitle": "Sign-ups",
+        "growthDesc": "New users and new businesses per day, last 30 days."
+      },
+      "qr": {
+        "readyHint": "Paid and cleared to print or move forward.",
+        "heldHint": "Payment under review, refunded or disputed — do not print.",
+        "colTotal": "Total"
+      },
+      "business": {
+        "tabOverview": "Overview",
+        "tabVerification": "Verification",
+        "tabPlan": "Plan & access",
+        "tabPayouts": "Payouts",
+        "tabCompliance": "Legal hold",
+        "registered": "Registered"
+      },
+      "health": {
+        "dbDesc": "Primary database for accounts, tips, payouts and orders.",
+        "stripeDesc": "Payments, subscriptions and Connect payouts.",
+        "refresh": "Check again",
+        "lastChecked": "Last checked {{time}} (Europe/Berlin).",
+        "notReportedTitle": "Not reported by the health check",
+        "notReportedDesc": "The platform health endpoint currently checks the database and Stripe only. Check these services in your hosting dashboards.",
+        "notReported": "Not reported",
+        "queue": "Background jobs & queue",
+        "email": "Email delivery",
+        "storage": "File storage"
+      },
+      "security": {
+        "kpiEvents": "Security events",
+        "sample": "Based on the latest {{count}} audit entries.",
+        "eventsTitle": "Security-related audit events",
+        "empty": "No security-related events in the latest entries.",
+        "colCategory": "Category",
+        "cat": {
+          "auth": "Sign-in & sessions",
+          "mfa": "Two-factor",
+          "impersonation": "Impersonation",
+          "recovery": "Recovery & resets",
+          "legalHold": "Legal hold",
+          "dataAccess": "Sensitive data access"
+        }
+      },
+      "admins": {
+        "kpiActive": "Admins with recent activity",
+        "kpi24h": "Active in the last 24 hours",
+        "kpiActions": "Audited actions (sample)",
+        "activityTitle": "Admin activity",
+        "colAdmin": "Admin",
+        "colLastAction": "Last action",
+        "colLastSeen": "Last seen",
+        "colCount": "Actions"
+      },
+      "staff": {
+        "kpiBusinessesWithStaff": "Businesses with staff",
+        "byBusiness": "Staff by business"
+      },
+      "audit": {
+        "kpiTotal": "Entries recorded",
+        "kpiActors": "Distinct users (sample)",
+        "viewActions": "Admin actions",
+        "viewApi": "API access"
+      }
+    }
   },
   "industries": {
     "shared": {

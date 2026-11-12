@@ -1728,7 +1728,21 @@
       "facebookRecoveryTroubleshoot": "Facebook-Problem beheben",
       "facebookRecoverySteps": "Öffnen Sie auf Android die Einstellungen → Apps → Facebook → Standardmäßig öffnen und deaktivieren Sie „Unterstützte Links öffnen“. Kehren Sie zu CareTip zurück und versuchen Sie Facebook erneut.",
       "facebookRecoveryIncognito": "Ein Inkognito-Tab ist eine weitere Möglichkeit. Das umgeht das Problem nicht immer.",
-      "facebookRecoveryBack": "Zurück"
+      "facebookRecoveryBack": "Zurück",
+      "googleFailed": "Die Google-Anmeldung konnte nicht gestartet werden. Bitte versuchen Sie es erneut oder melden Sie sich mit Ihrer E-Mail an.",
+      "googleStalled": "Die Google-Anmeldung wurde nicht abgeschlossen. Tippen Sie erneut auf den Google-Button oder melden Sie sich unten mit Ihrer E-Mail an.",
+      "googleRedirect": {
+        "title": "Google-Anmeldung nicht abgeschlossen",
+        "error_csrf": "Ihre Anmeldesitzung konnte nicht bestätigt werden. Das kann passieren, wenn Cookies blockiert sind. Bitte versuchen Sie es erneut.",
+        "error_missing_credential": "Google hat keine Kontodaten übermittelt. Bitte versuchen Sie es erneut.",
+        "error_rejected": "Google konnte diese Anmeldung nicht bestätigen. Bitte versuchen Sie es erneut.",
+        "error_unavailable": "Die Google-Anmeldung ist vorübergehend nicht verfügbar. Bitte melden Sie sich mit Ihrer E-Mail an.",
+        "error_generic": "Bei der Anmeldung mit Google ist etwas schiefgelaufen. Bitte versuchen Sie es erneut.",
+        "error_expired": "Ihre Google-Anmeldung ist abgelaufen. Bitte tippen Sie erneut auf den Google-Button.",
+        "tryAgain": "Erneut versuchen",
+        "useEmail": "Mit E-Mail anmelden",
+        "error_rate_limited": "Zu viele Anmeldeversuche aus diesem Netzwerk. Bitte warten Sie einige Minuten und versuchen Sie es erneut, oder melden Sie sich mit Ihrer E-Mail an."
+      }
     },
     "recovery": {
       "backToSignIn": "Zurück zur Anmeldung"
@@ -7964,6 +7978,23 @@
       "loginDesc": "E-Mail und Hinweise, wenn sich jemand mit Ihrem Konto anmeldet. Neue Geräte erhalten eine stärkere Sicherheitsmeldung.",
       "ariaLogin": "Anmelde-Hinweise umschalten",
       "togglePwVisibility": "Passwortsichtbarkeit umschalten"
+    },
+    "console": {
+      "orders": {
+        "kpiInProgress": "In Bearbeitung",
+        "kpiSpent": "Für Drucke bezahlt",
+        "kpiOrders_one": "{{count}} Bestellung insgesamt",
+        "kpiOrders_other": "{{count}} Bestellungen insgesamt",
+        "kpiLastOrder": "Letzte Bestellung",
+        "activeTitle": "Auf dem Weg zu Ihnen",
+        "allTitle": "Alle Bestellungen",
+        "filterAll": "Alle",
+        "filterNeedsPayment": "Zahlung offen",
+        "filterOther": "Prüfung, Erstattungen & storniert",
+        "searchPlaceholder": "Nach Bestellnummer suchen",
+        "noMatches": "Keine Bestellungen in dieser Ansicht.",
+        "needsPaymentDesc": "Der Druck beginnt, sobald diese Bestellungen bezahlt sind."
+      }
     }
   },
   "admin": {
@@ -9588,7 +9619,90 @@
         "toastProgrammeRequired": "Bitte ein Programm auswählen."
       }
     },
-    "fallbackAdminName": "Admin"
+    "fallbackAdminName": "Admin",
+    "console": {
+      "overview": {
+        "allClearTitle": "Nichts erfordert Ihre Aufmerksamkeit",
+        "allClearBody": "Die Prüf-Warteschlangen sind leer und alle Kerndienste sind online.",
+        "openItems_one": "{{count}} offener Punkt",
+        "openItems_other": "{{count}} offene Punkte",
+        "last30Volume": "Trinkgelder · letzte 30 Tage",
+        "last30Count": "Trinkgeldzahlungen · letzte 30 Tage",
+        "dailyAverage": "Tagesdurchschnitt",
+        "workQueues": "Arbeitswarteschlangen",
+        "workQueuesDesc": "Vorgänge, die auf eine Entscheidung eines Plattform-Admins warten.",
+        "qrReadyToFulfil": "Bereit zur Bearbeitung",
+        "qrOnHold": "Angehalten",
+        "qrInTransit": "Unterwegs",
+        "qrDesc": "Bezahlte Druckaufträge und Aufträge, die zur Zahlungsprüfung angehalten sind.",
+        "platformFootprint": "Plattform-Umfang",
+        "locations": "Standorte",
+        "activeUsers": "Aktive Nutzer",
+        "venuesWithTips": "Betriebe mit Trinkgeldern",
+        "growthTitle": "Registrierungen",
+        "growthDesc": "Neue Nutzer und neue Betriebe pro Tag, letzte 30 Tage."
+      },
+      "qr": {
+        "readyHint": "Bezahlt und zum Drucken oder Weiterbearbeiten freigegeben.",
+        "heldHint": "Zahlung in Prüfung, erstattet oder angefochten – nicht drucken.",
+        "colTotal": "Summe"
+      },
+      "business": {
+        "tabOverview": "Übersicht",
+        "tabVerification": "Verifizierung",
+        "tabPlan": "Tarif & Zugang",
+        "tabPayouts": "Auszahlungen",
+        "tabCompliance": "Rechtliche Sperre",
+        "registered": "Registriert"
+      },
+      "health": {
+        "dbDesc": "Primäre Datenbank für Konten, Trinkgelder, Auszahlungen und Bestellungen.",
+        "stripeDesc": "Zahlungen, Abonnements und Connect-Auszahlungen.",
+        "refresh": "Erneut prüfen",
+        "lastChecked": "Zuletzt geprüft {{time}} (Europe/Berlin).",
+        "notReportedTitle": "Nicht vom Health-Check gemeldet",
+        "notReportedDesc": "Der Health-Endpunkt prüft derzeit nur Datenbank und Stripe. Prüfen Sie diese Dienste in Ihren Hosting-Dashboards.",
+        "notReported": "Nicht gemeldet",
+        "queue": "Hintergrundjobs & Warteschlange",
+        "email": "E-Mail-Zustellung",
+        "storage": "Dateispeicher"
+      },
+      "security": {
+        "kpiEvents": "Sicherheitsereignisse",
+        "sample": "Basierend auf den letzten {{count}} Audit-Einträgen.",
+        "eventsTitle": "Sicherheitsrelevante Audit-Ereignisse",
+        "empty": "Keine sicherheitsrelevanten Ereignisse in den letzten Einträgen.",
+        "colCategory": "Kategorie",
+        "cat": {
+          "auth": "Anmeldung & Sitzungen",
+          "mfa": "Zwei-Faktor",
+          "impersonation": "Identitätswechsel",
+          "recovery": "Wiederherstellung & Resets",
+          "legalHold": "Rechtliche Sperre",
+          "dataAccess": "Zugriff auf sensible Daten"
+        }
+      },
+      "admins": {
+        "kpiActive": "Admins mit aktueller Aktivität",
+        "kpi24h": "Aktiv in den letzten 24 Stunden",
+        "kpiActions": "Protokollierte Aktionen (Stichprobe)",
+        "activityTitle": "Admin-Aktivität",
+        "colAdmin": "Admin",
+        "colLastAction": "Letzte Aktion",
+        "colLastSeen": "Zuletzt aktiv",
+        "colCount": "Aktionen"
+      },
+      "staff": {
+        "kpiBusinessesWithStaff": "Betriebe mit Mitarbeitenden",
+        "byBusiness": "Mitarbeitende nach Betrieb"
+      },
+      "audit": {
+        "kpiTotal": "Erfasste Einträge",
+        "kpiActors": "Verschiedene Nutzer (Stichprobe)",
+        "viewActions": "Admin-Aktionen",
+        "viewApi": "API-Zugriffe"
+      }
+    }
   },
   "industries": {
     "shared": {

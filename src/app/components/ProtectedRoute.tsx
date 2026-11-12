@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate } from "react-router";
 import { isClientSessionRevoked } from "../lib/api";
@@ -23,6 +23,17 @@ import { resolveRouteLoadingMessage } from "../lib/appLoadingContexts";
 import { shouldRegisterBrandedRouteGuard } from "../lib/appLoadingJourney";
 import { markPostLoginTrace } from "../lib/postLoginRuntimeTrace";
 
+/**
+ * True when a redirect would point at the page we are already on. While a lazy route swaps in, this
+ * (old) guard can still be mounted with the new location; navigating again on every render looped
+ * ("Maximum update depth exceeded") until the next route's chunk resolved.
+ */
+function isRedirectToCurrentPath(to: string, pathname: string): boolean {
+  const target = to.split(/[?#]/)[0]?.replace(/\/+$/, "") || "/";
+  const current = pathname.replace(/\/+$/, "") || "/";
+  return target === current;
+}
+
 export function ProtectedRoute({
   allowedRoles,
   children,
@@ -33,6 +44,9 @@ export function ProtectedRoute({
   const { t } = useTranslation();
   const gate = useProtectedRouteGate(allowedRoles);
   const rolesKey = allowedRoles.join(",");
+  // <Navigate> re-navigates whenever `state` changes identity; a fresh object per render made every
+  // re-render during a pending (lazy) route transition navigate again → "Maximum update depth exceeded".
+  const navigateState = useMemo(() => ({ from: gate.pathname }), [gate.pathname]);
   const logoutTransitionActive = useSyncExternalStore(
     subscribeAuthLogoutTransition,
     isAuthLogoutTransitionActive,
@@ -102,7 +116,8 @@ export function ProtectedRoute({
       return null;
     }
     if (gate.decision?.kind === "redirect") {
-      return <Navigate to={gate.decision.to} replace state={{ from: gate.pathname }} />;
+      if (isRedirectToCurrentPath(gate.decision.to, gate.pathname)) return null;
+      return <Navigate to={gate.decision.to} replace state={navigateState} />;
     }
     return <>{children}</>;
   }
@@ -144,10 +159,14 @@ export function ProtectedRoute({
       guard: "ProtectedRoute",
       reason: "not_authenticated",
     });
-    return <Navigate to={gate.loginPath} replace state={{ from: gate.pathname }} />;
+    return <Navigate to={gate.loginPath} replace state={navigateState} />;
   }
 
   if (gate.decision?.kind === "redirect") {
+    if (isRedirectToCurrentPath(gate.decision.to, gate.pathname)) {
+      // Already on the target; the matching route is mounting — do not navigate again.
+      return <AppRouteGateShell />;
+    }
     authDebug("route_guard", {
       decision: "redirect",
       to: gate.decision.to,
@@ -160,7 +179,7 @@ export function ProtectedRoute({
       guard: "ProtectedRoute",
       reason: gate.decision.reason,
     });
-    return <Navigate to={gate.decision.to} replace state={{ from: gate.pathname }} />;
+    return <Navigate to={gate.decision.to} replace state={navigateState} />;
   }
 
   authDebug("route_guard", { decision: "allow", path: gate.pathname });

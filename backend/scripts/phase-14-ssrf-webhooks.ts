@@ -59,7 +59,12 @@ function runOutboundInventory() {
     fail("stripe-sig-required", "Stripe signature path incomplete");
   }
 
-  if (stripeWh.includes("isStripeWebhookEventProcessed")) {
+  // Current mechanism: atomic per-event claim (duplicate → no side effects); behaviour is covered by
+  // test:tip-webhook-processing-claim. The older processed-id lookup is still accepted.
+  if (
+    stripeWh.includes("isStripeWebhookEventProcessed") ||
+    (stripeWh.includes("acquireStripeWebhookProcessingClaim") && stripeWh.includes('claim.action === "duplicate"'))
+  ) {
     pass("stripe-event-idempotency", "Stripe webhook checks processed event ids before side effects");
   } else {
     fail("stripe-event-idempotency", "Event idempotency missing");

@@ -146,11 +146,33 @@ await withEnv({ NODE_ENV: "production", MFA_SECRET_ENCRYPTION_KEY: undefined }, 
 assert.equal(reviewProductionConfig({ RENDER: "true", NODE_ENV: "prod" }).fatal.length, 1, "a typo in NODE_ENV stops a deployed service");
 assert.equal(reviewProductionConfig({ RENDER: "true" }).fatal.length, 1, "missing NODE_ENV stops a deployed service");
 assert.equal(reviewProductionConfig({ NODE_ENV: "development" }).fatal.length, 0, "local development is unaffected");
-assert.equal(reviewProductionConfig({ NODE_ENV: "production" }).fatal.length, 1, "production cannot start without the MFA key");
-assert.equal(reviewProductionConfig({ NODE_ENV: "production", MFA_SECRET_ENCRYPTION_KEY: "short" }).fatal.length, 1, "a short key is refused");
-assert.equal(reviewProductionConfig({ NODE_ENV: "production", MFA_SECRET_ENCRYPTION_KEY: "x".repeat(32) }).fatal.length, 0);
-const prodWarnings = reviewProductionConfig({ RENDER: "true", NODE_ENV: "production", MFA_SECRET_ENCRYPTION_KEY: "x".repeat(32), SEC_API_TRAFFIC_CLASSES_ENABLED: "false", ENABLE_DEMO_BYPASS: "true", JWT_SECRET: "short", STRIPE_SECRET_KEY: "sk_test_x", VITE_GOOGLE_CLIENT_SECRET: "x" }).warnings.join("|");
-for (const needle of ["ENABLE_DEMO_BYPASS", "JWT_SECRET", "test key", "VITE_GOOGLE_CLIENT_SECRET", "CRON_SECRET", "TRUST_PROXY", "SEC_API_TRAFFIC_CLASSES_ENABLED", "Supabase"]) assert.ok(prodWarnings.includes(needle), needle);
+const GOOD_JWT = "k7Qm2vX9pL4sT8wZ1nB6cR3yH5jF0dGaE-uVoIqWe_Ys"; // test-only fixture, not a real secret
+assert.equal(reviewProductionConfig({ NODE_ENV: "production", JWT_SECRET: GOOD_JWT }).fatal.length, 1, "production cannot start without the MFA key");
+assert.equal(reviewProductionConfig({ NODE_ENV: "production", JWT_SECRET: GOOD_JWT, MFA_SECRET_ENCRYPTION_KEY: "short" }).fatal.length, 1, "a short key is refused");
+assert.equal(reviewProductionConfig({ NODE_ENV: "production", JWT_SECRET: GOOD_JWT, MFA_SECRET_ENCRYPTION_KEY: "x".repeat(32) }).fatal.length, 0);
+// SEC-08: weak JWT_SECRET is fatal in production (missing, < 32 bytes, placeholder, low variety) and never printed.
+const prodFatal = (jwtSecret: string | undefined) =>
+  reviewProductionConfig({ NODE_ENV: "production", MFA_SECRET_ENCRYPTION_KEY: "x".repeat(32), ...(jwtSecret === undefined ? {} : { JWT_SECRET: jwtSecret }) }).fatal;
+for (const [label, value] of [
+  ["missing", undefined],
+  ["empty", "   "],
+  ["short", "short-secret-31-bytes-long-abcd"],
+  [".env.example placeholder", "long-random-secret-replace-in-production"],
+  ["changeme", "changeme-changeme-changeme-changeme-1"],
+  ["your_super_secret_key", "your_super_secret_key_for_jwt_signing_2026"],
+  ["repeated character", "a".repeat(64)],
+  ["low variety", "abababababababababababababababab12"],
+] as const) {
+  const f = prodFatal(value);
+  assert.ok(f.some((m) => m.startsWith("JWT_SECRET")), `JWT_SECRET ${label} must stop production`);
+  if (value?.trim()) assert.ok(!f.join("|").includes(value.trim()), `JWT_SECRET ${label} value printed`);
+}
+assert.equal(prodFatal(GOOD_JWT).length, 0, "a random 44-char secret is accepted");
+assert.equal(prodFatal("0123456789abcdef0123456789abcdef").length, 0, "32 random-looking hex chars are accepted");
+assert.equal(reviewProductionConfig({ NODE_ENV: "development" }).fatal.length, 0, "development without JWT_SECRET is not blocked by the production review");
+assert.equal(reviewProductionConfig({ NODE_ENV: "test", JWT_SECRET: "short" }).fatal.length, 0, "test runs keep short local secrets");
+const prodWarnings = reviewProductionConfig({ RENDER: "true", NODE_ENV: "production", JWT_SECRET: GOOD_JWT, MFA_SECRET_ENCRYPTION_KEY: "x".repeat(32), SEC_API_TRAFFIC_CLASSES_ENABLED: "false", ENABLE_DEMO_BYPASS: "true", STRIPE_SECRET_KEY: "sk_test_x", VITE_GOOGLE_CLIENT_SECRET: "x" }).warnings.join("|");
+for (const needle of ["ENABLE_DEMO_BYPASS", "test key", "VITE_GOOGLE_CLIENT_SECRET", "CRON_SECRET", "TRUST_PROXY", "SEC_API_TRAFFIC_CLASSES_ENABLED", "Supabase"]) assert.ok(prodWarnings.includes(needle), needle);
 assert.ok(!prodWarnings.includes("sk_test_x"), "values never appear in messages");
 
 // --- Demo bypass ---
@@ -185,6 +207,20 @@ for (const [method, path] of [
 ] as const) assert.equal(isWriteBlockedDuringImpersonation(method, path), true, path);
 assert.equal(isWriteBlockedDuringImpersonation("GET", "/api/me/connect/instant-payout"), false, "reads stay available for support");
 assert.equal(isWriteBlockedDuringImpersonation("PATCH", "/api/employees/x"), false, "ordinary support edits stay available");
+// SEC-2026-11-01: Express routing is case-insensitive and ignores a trailing slash — the block must too.
+for (const [method, path] of [
+  ["POST", "/API/ME/CONNECT/INSTANT-PAYOUT"],
+  ["POST", "/api/me/Connect/instant-payout"],
+  ["patch", "/api/ME/connect/bank-payout-schedule"],
+  ["POST", "/api/me/Billing/cancel"],
+  ["POST", "/api/me//billing/checkout"],
+  ["POST", "/api/business/physical-qr/orders/abc/CHECKOUT"],
+  ["POST", "/api/me/connect/instant-payout/?x=1"],
+  // Policy gaps closed in the same change (change where money goes / who owns the account).
+  ["POST", "/api/me/connect/account-link"],
+  ["POST", "/api/business/ownership/transfer"],
+  ["POST", "/api/mobile/create-billing-session"],
+] as const) assert.equal(isWriteBlockedDuringImpersonation(method, path), true, `case/slash variant blocked: ${method} ${path}`);
 
 // --- Stripe mode separation ---
 assert.equal(isStripeEventModeMismatch({ livemode: true }, "sk_test_x"), true);

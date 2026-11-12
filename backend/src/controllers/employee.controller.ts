@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { Role } from "@prisma/client";
 import { prisma } from "../prisma.js";
+import { PUBLIC_BUSINESS_WHERE } from "../lib/publicBusinessAvailability.js";
 import * as employeeService from "../services/employee.service.js";
 import * as businessService from "../services/business.service.js";
 import { kycStatusToLegacyMirror } from "../lib/verificationWorkflow.js";
@@ -261,10 +262,11 @@ export async function getEmployees(req: Request, res: Response) {
     }
 
     if (!managerOwnsBusiness) {
-      const business = await prisma.business.findUnique({
-        where: { id: businessId },
+      const business = await prisma.business.findFirst({
+        where: { id: businessId, ...PUBLIC_BUSINESS_WHERE },
         select: { kycVerificationStatus: true, onboardingVerificationStatus: true },
       });
+      // SEC-04: suspended / closed resolve to null → same response as an unknown business.
       if (
         !business ||
         !hasBusinessVerificationCapability(
@@ -282,7 +284,9 @@ export async function getEmployees(req: Request, res: Response) {
       }
     }
 
-    const employees = await employeeService.getEmployeesByBusinessId(businessId);
+    const employees = await employeeService.getEmployeesByBusinessId(businessId, {
+      includeTipCounts: managerOwnsBusiness,
+    });
     return res.json(employees);
   } catch (err) {
     logServerError("employee.getEmployees", err);

@@ -1,4 +1,5 @@
 import { prisma } from "../prisma.js";
+import { PUBLIC_BUSINESS_WHERE } from "../lib/publicBusinessAvailability.js";
 import { absolutizePublicMediaPath } from "../utils/publicMediaUrl.js";
 import { isOnboardingApprovedForPublicGoLive } from "../lib/verificationWorkflow.js";
 import {
@@ -171,8 +172,8 @@ async function employeesForTableQr(businessId: string, tableId: string): Promise
 export async function getPublicLocationContext(
   locationId: string
 ): Promise<PublicTippingContextResult<PublicLocationContext> | null> {
-  const loc = await prisma.location.findUnique({
-    where: { id: locationId },
+  const loc = await prisma.location.findFirst({
+    where: { id: locationId, business: { is: PUBLIC_BUSINESS_WHERE } },
     select: {
       id: true,
       name: true,
@@ -201,8 +202,8 @@ export async function getPublicLocationContext(
 export async function getPublicTableContextById(
   tableId: string
 ): Promise<PublicTippingContextResult<PublicTableContext> | null> {
-  const table = await prisma.table.findUnique({
-    where: { id: tableId },
+  const table = await prisma.table.findFirst({
+    where: { id: tableId, location: { is: { business: { is: PUBLIC_BUSINESS_WHERE } } } },
     select: {
       id: true,
       name: true,

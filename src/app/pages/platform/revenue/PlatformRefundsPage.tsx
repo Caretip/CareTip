@@ -323,7 +323,7 @@ export function PlatformRefundsPage() {
             </thead>
             <tbody>
               {showTableLoading ? (
-                <GlobalTransactionsTableSkeleton rows={8} />
+                <GlobalTransactionsTableSkeleton rows={8} asRows />
               ) : loadError ? (
                 <tr>
                   <td colSpan={TABLE_COL_COUNT} className="p-0">

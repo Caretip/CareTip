@@ -11,7 +11,9 @@ import {
   activateEmployeeRateLimit,
   mobileWebHandoffConsumeRateLimitWithAudit,
   appleNativeCallbackRateLimit,
+  googleRedirectRateLimit,
 } from "../middleware/authRateLimit.middleware.js";
+import { buildGoogleRedirectCompleteUrl } from "../services/oauth/googleOAuthRedirect.service.js";
 import {
   changePasswordRateLimit,
   mfaTotpRateLimit,
@@ -50,6 +52,16 @@ router.post(
   authController.resendVerificationEmailForSession
 );
 router.post("/oauth", oauthRateLimit, authController.oauth);
+// Google Identity Services redirect mode (mobile web). Cross-site form POST from accounts.google.com:
+// CSRF is Google's g_csrf_token double-submit cookie, so there is no trusted-origin gate here.
+router.post(
+  "/google/redirect",
+  googleRedirectRateLimit((res) => {
+    res.setHeader("Cache-Control", "no-store");
+    res.redirect(303, buildGoogleRedirectCompleteUrl({ error: "rate_limited" }));
+  }),
+  authController.googleRedirectCallback,
+);
 router.post(
   "/facebook/start",
   oauthRateLimit,

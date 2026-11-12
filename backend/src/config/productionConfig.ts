@@ -7,6 +7,39 @@ import { MFA_KEY_MIN_LENGTH } from "../lib/mfaSecretCrypto.js";
 
 export type ProductionConfigReport = { fatal: string[]; warnings: string[] };
 
+/** Minimum JWT_SECRET size in bytes (HS256 key; RFC 7518 §3.2 requires >= 256 bits). */
+export const JWT_SECRET_MIN_BYTES = 32;
+
+/**
+ * Phrases from docs / .env.example / tutorials (case-insensitive). Each is long enough that a random
+ * base64/hex secret will not contain it by chance.
+ */
+const JWT_PLACEHOLDER_PATTERNS: RegExp[] = [
+  /replace[-_ ]?(me|in[-_ ]?production|this)/i,
+  /change[-_ ]?(me|this)/i,
+  /your[-_ ]?(super[-_ ]?)?(jwt[-_ ]?)?secret/i,
+  /placeholder|example|dummy|insecure|not[-_ ]?secret|long[-_ ]?random/i,
+];
+
+/**
+ * SEC-08: why a JWT_SECRET is unacceptable in production, or null when it is acceptable.
+ * Never includes the value. Byte length is measured on the trimmed UTF-8 value.
+ */
+export function jwtSecretProblem(raw: string | undefined): string | null {
+  const secret = raw?.trim() ?? "";
+  if (!secret) return "JWT_SECRET must be set";
+  if (Buffer.byteLength(secret, "utf8") < JWT_SECRET_MIN_BYTES) {
+    return `JWT_SECRET must be at least ${JWT_SECRET_MIN_BYTES} bytes of random data`;
+  }
+  if (JWT_PLACEHOLDER_PATTERNS.some((re) => re.test(secret))) {
+    return "JWT_SECRET looks like a placeholder or example value: generate a random secret";
+  }
+  if (new Set(secret).size < 10) {
+    return "JWT_SECRET has too few distinct characters to be random: generate a random secret";
+  }
+  return null;
+}
+
 const has = (env: NodeJS.ProcessEnv, name: string) => Boolean(env[name]?.trim());
 
 export function reviewProductionConfig(env: NodeJS.ProcessEnv = process.env): ProductionConfigReport {
@@ -21,6 +54,9 @@ export function reviewProductionConfig(env: NodeJS.ProcessEnv = process.env): Pr
   }
   if (!production) return { fatal, warnings };
 
+  const jwtProblem = jwtSecretProblem(env.JWT_SECRET);
+  if (jwtProblem) fatal.push(jwtProblem);
+
   const mfaKey = env.MFA_SECRET_ENCRYPTION_KEY?.trim() ?? "";
   if (mfaKey.length < MFA_KEY_MIN_LENGTH) {
     fatal.push(`MFA_SECRET_ENCRYPTION_KEY must be set with at least ${MFA_KEY_MIN_LENGTH} characters`);
@@ -34,8 +70,6 @@ export function reviewProductionConfig(env: NodeJS.ProcessEnv = process.env): Pr
   if (!has(env, "SUPABASE_URL") || !has(env, "SUPABASE_SERVICE_ROLE_KEY")) {
     warnings.push("Supabase Storage is not configured: uploaded files on local disk are lost on redeploy");
   }
-  const jwt = env.JWT_SECRET?.trim() ?? "";
-  if (jwt && jwt.length < 32) warnings.push("JWT_SECRET is shorter than 32 characters");
   if (!has(env, "CRON_SECRET")) warnings.push("CRON_SECRET is not set: scheduled jobs will be refused");
   if (!has(env, "STRIPE_WEBHOOK_SECRET")) warnings.push("STRIPE_WEBHOOK_SECRET is not set: Stripe webhooks will be refused");
   if (!has(env, "REDIS_URL")) warnings.push("REDIS_URL is not set: rate limits are per process");

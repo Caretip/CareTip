@@ -1,5 +1,6 @@
 import { randomBytes } from "crypto";
 import { prisma } from "../prisma.js";
+import { PUBLIC_BUSINESS_WHERE } from "../lib/publicBusinessAvailability.js";
 import { isOnboardingApprovedForPublicGoLive } from "../lib/verificationWorkflow.js";
 import {
   EntitlementDeniedError,
@@ -120,8 +121,8 @@ export async function getTippingContextByQrSlug(qrSlug: string) {
   if (!/^[a-zA-Z0-9_-]{3,128}$/.test(decoded)) {
     return null;
   }
-  const table = await prisma.table.findUnique({
-    where: { qrSlug: decoded },
+  const table = await prisma.table.findFirst({
+    where: { qrSlug: decoded, location: { is: { business: { is: PUBLIC_BUSINESS_WHERE } } } },
     select: {
       id: true,
       name: true,

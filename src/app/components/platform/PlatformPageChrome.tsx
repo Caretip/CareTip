@@ -1,9 +1,10 @@
 import type { ElementType, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Search } from "lucide-react";
+import { useLocation } from "react-router";
 import { cn } from "@/lib/utils";
-import { dashboardWorkspaceUi } from "@/app/components/dashboard/dashboardWorkspaceUi";
 import { platformUi } from "./platformDashboardUi";
+import { ConsoleHeader, ConsoleSearch, type ConsoleCrumb } from "./console/AdminConsole";
+import { PLATFORM_ADMIN_OVERVIEW_HREF, platformAdminNavEntries } from "./platformAdminNav";
 
 export {
   PlatformAdminSection,
@@ -19,6 +20,7 @@ export {
 } from "./PlatformAdminDesignPrimitives";
 export type { PlatformAdminStatusTone } from "./PlatformAdminDesignPrimitives";
 
+/** Admin console page frame (see console/AdminConsole + styles/admin-console.css). */
 export function PlatformPage({
   children,
   className,
@@ -33,8 +35,26 @@ export function PlatformPage({
   );
 }
 
+/** Breadcrumb from the sidebar nav: Platform admin › Module (› current page when it differs). */
+function usePlatformCrumbs(title: string): ConsoleCrumb[] {
+  const { t } = useTranslation();
+  const { pathname } = useLocation();
+  const crumbs: ConsoleCrumb[] = [{ label: t("admin.workspace.eyebrow"), href: PLATFORM_ADMIN_OVERVIEW_HREF }];
+  for (const entry of platformAdminNavEntries) {
+    if (entry.type !== "group") continue;
+    const child = entry.children.find((c) => pathname === c.href || pathname.startsWith(`${c.href}/`));
+    if (child) {
+      crumbs.push({ label: t(entry.labelKey), href: entry.defaultHref });
+      const childLabel = t(child.labelKey);
+      if (childLabel !== title) crumbs.push({ label: childLabel, href: child.href });
+      return crumbs;
+    }
+  }
+  return crumbs;
+}
+
 export function PlatformPageHeader({
-  icon: Icon,
+  icon,
   eyebrow,
   title,
   subtitle,
@@ -44,7 +64,7 @@ export function PlatformPageHeader({
   hideDefaultEyebrow = false,
 }: {
   icon?: ElementType;
-  /** Module kicker above the title — defaults to admin.workspace.eyebrow when omitted. */
+  /** Module kicker above the title — replaced by the nav breadcrumb unless given explicitly. */
   eyebrow?: string;
   title: string;
   subtitle?: string;
@@ -53,30 +73,14 @@ export function PlatformPageHeader({
   actions?: ReactNode;
   hideDefaultEyebrow?: boolean;
 }) {
-  const { t } = useTranslation();
-  const kicker = eyebrow ?? (hideDefaultEyebrow ? null : t("admin.workspace.eyebrow"));
+  const navCrumbs = usePlatformCrumbs(title);
+  const crumbs = eyebrow ? [{ label: eyebrow }] : hideDefaultEyebrow ? undefined : navCrumbs;
 
   return (
-    <header className={cn(platformUi.pageHeader, className)}>
-      <div className={platformUi.pageTitleRow}>
-        <div className="min-w-0 flex-1">
-          {kicker ? <p className={cn(dashboardWorkspaceUi.eyebrow, platformUi.pageEyebrow)}>{kicker}</p> : null}
-          <div className="mt-2 flex items-start gap-3">
-            {Icon ? (
-              <span className="platform-admin-page-header__icon" aria-hidden>
-                <Icon className="h-5 w-5" />
-              </span>
-            ) : null}
-            <div className="min-w-0">
-              <h1 className={platformUi.pageTitle}>{title}</h1>
-              {subtitle ? <p className={platformUi.pageSubtitle}>{subtitle}</p> : null}
-            </div>
-          </div>
-        </div>
-        {actions ? <div className={platformUi.pageHeaderActions}>{actions}</div> : null}
-      </div>
+    <div className={cn("flex flex-col gap-4", className)}>
+      <ConsoleHeader icon={icon} crumbs={crumbs} title={title} description={subtitle} actions={actions} />
       {children}
-    </header>
+    </div>
   );
 }
 
@@ -96,31 +100,20 @@ export function PlatformSearchField({
   className?: string;
 }) {
   return (
-    <div className={cn(platformUi.searchSection, className)}>
-      <div className={platformUi.searchWrap}>
-        <Search className={platformUi.searchIcon} aria-hidden />
-        <input
-          type="search"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          autoComplete="off"
-          aria-label={ariaLabel}
-          className={platformUi.searchInput}
-        />
-      </div>
-      {hint ? <p className={platformUi.searchHint}>{hint}</p> : null}
+    <div className={cn("flex flex-col gap-1.5", className)}>
+      <ConsoleSearch value={value} onChange={onChange} placeholder={placeholder} label={ariaLabel} wide />
+      {hint ? <p className="ac-field__hint">{hint}</p> : null}
     </div>
   );
 }
 
 export type PlatformDataPanelSurface = "panel" | "open";
 
+/** Data surface: always a console card (the "open" variant is kept for API compatibility). */
 export function PlatformDataPanel({
   children,
   footer,
   className,
-  surface = "open",
 }: {
   children: ReactNode;
   footer?: ReactNode;
@@ -128,14 +121,8 @@ export function PlatformDataPanel({
   surface?: PlatformDataPanelSurface;
 }) {
   return (
-    <section
-      className={cn(
-        surface === "open" ? "platform-admin-data-section--open" : platformUi.dataPanel,
-        "platform-admin-data-section",
-        className,
-      )}
-    >
-      <div className="platform-admin-data-section__body">{children}</div>
+    <section className={cn("ac-card overflow-hidden", className)}>
+      <div className="min-w-0">{children}</div>
       {footer ? <div className={platformUi.panelFooter}>{footer}</div> : null}
     </section>
   );
@@ -145,7 +132,6 @@ export function PlatformResponsiveData({
   mobile,
   desktop,
   footer,
-  surface = "open",
 }: {
   mobile: ReactNode;
   desktop: ReactNode;
@@ -153,8 +139,8 @@ export function PlatformResponsiveData({
   surface?: PlatformDataPanelSurface;
 }) {
   return (
-    <PlatformDataPanel footer={footer} surface={surface}>
-      <div className={cn(platformUi.mobileList, "platform-admin-mobile-list")}>{mobile}</div>
+    <PlatformDataPanel footer={footer}>
+      <div className={platformUi.mobileList}>{mobile}</div>
       <div className={platformUi.tableWrap}>{desktop}</div>
     </PlatformDataPanel>
   );

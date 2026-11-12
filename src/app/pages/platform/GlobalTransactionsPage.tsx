@@ -16,12 +16,12 @@ import {
   adminPayableStatusTone,
 } from "../../lib/adminPayableStatus";
 import { PlatformAdminStatusBadge } from "../../components/platform/PlatformPageChrome";
+import { ConsoleSearch, ConsoleSegments, ConsoleToolbar } from "../../components/platform/console/AdminConsole";
 import { ADMIN_FINANCIAL_TIMEZONE } from "../../lib/adminFinancialTimezone";
 import {
   PlatformPage,
   PlatformPageHeader,
   PlatformResponsiveData,
-  PlatformSearchField,
 } from "../../components/platform/PlatformPageChrome";
 import { PlatformTransactionMobileCard } from "../../components/platform/platformAdminMobileCards";
 import { platformUi } from "../../components/platform/platformDashboardUi";
@@ -237,32 +237,36 @@ export function GlobalTransactionsPage() {
         })}
       />
 
-      <PlatformSearchField
-        value={q}
-        onChange={setQ}
-        placeholder={t("admin.globalTransactionsPage.searchPlaceholder")}
-        ariaLabel={t("admin.globalTransactionsPage.searchAria")}
-        hint={t("admin.globalTransactionsPage.hintLiveSearch")}
-      />
-
-      <div className="mb-3 flex flex-wrap items-end gap-3">
-        <label className="flex min-w-[10rem] flex-col gap-1 text-xs font-medium text-muted-foreground">
-          {t("admin.globalTransactionsPage.filterTipStatus")}
-          <select
-            className="min-h-[40px] rounded-lg border border-border bg-background px-3 text-sm text-foreground"
-            value={tipStatus}
-            onChange={(e) => setTipStatus(e.target.value)}
-          >
-            <option value="all">{t("admin.globalTransactionsPage.tipStatusFilter.all")}</option>
-            <option value="success">{t("admin.globalTransactionsPage.tipStatus.success")}</option>
-            <option value="pending">{t("admin.globalTransactionsPage.tipStatus.pending")}</option>
-            <option value="failed">{t("admin.globalTransactionsPage.tipStatus.failed")}</option>
-          </select>
-        </label>
+      <div className="ac-card">
+        <ConsoleToolbar
+          start={
+            <ConsoleSegments
+              label={t("admin.globalTransactionsPage.filterTipStatus")}
+              value={tipStatus}
+              onChange={setTipStatus}
+              options={[
+                { value: "all", label: t("admin.globalTransactionsPage.tipStatusFilter.all") },
+                { value: "success", label: t("admin.globalTransactionsPage.tipStatus.success") },
+                { value: "pending", label: t("admin.globalTransactionsPage.tipStatus.pending") },
+                { value: "failed", label: t("admin.globalTransactionsPage.tipStatus.failed") },
+              ]}
+            />
+          }
+          end={
+            <ConsoleSearch
+              value={q}
+              onChange={setQ}
+              placeholder={t("admin.globalTransactionsPage.searchPlaceholder")}
+              label={t("admin.globalTransactionsPage.searchAria")}
+              wide
+            />
+          }
+        />
+        <p className="px-5 py-2.5 text-xs text-muted-foreground">{t("admin.globalTransactionsPage.hintLiveSearch")}</p>
       </div>
 
       {!loadError && !showTableLoading ? (
-        <p className="mb-3 text-sm font-medium text-foreground" role="status">
+        <p className="text-sm font-semibold text-foreground" role="status">
           {filterSummary}
         </p>
       ) : null}
@@ -281,7 +285,7 @@ export function GlobalTransactionsPage() {
           )
         }
         desktop={
-          <table className={cn(platformUi.table, "platform-admin-ledger-table min-w-[72rem]")}>
+          <table className={cn(platformUi.table, "platform-admin-ledger-table min-w-[64rem]")}>
             <thead>
               <tr className={platformUi.tableHeadRow}>
                 <th className={cn(platformUi.tableTh, "min-w-[11rem] max-w-[14rem]")}>
@@ -315,7 +319,7 @@ export function GlobalTransactionsPage() {
             </thead>
             <tbody>
               {showTableLoading ? (
-                <GlobalTransactionsTableSkeleton />
+                <GlobalTransactionsTableSkeleton asRows />
               ) : loadError ? (
                 <tr>
                   <td colSpan={8} className="p-0">

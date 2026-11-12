@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Star, Award } from "lucide-react";
 import { useTipFlow } from "../../context/TipFlowContext";
 import { getEmployees } from "../../lib/api";
 import type { EmployeeItem } from "../../lib/api";
@@ -63,9 +62,6 @@ export function SelectEmployeePage() {
     name: e.name,
     role: e.role,
     avatar: e.avatar,
-    rating: e.rating,
-    tips: e.tips,
-    topRated: e.topRated,
   }));
 
   const handleBack = () => {
@@ -163,13 +159,6 @@ export function SelectEmployeePage() {
                   selectedEmployee === String(employee.id) ? cf.employeeCardSelected : ""
                 }`}
               >
-                {employee.topRated ? (
-                  <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-full bg-accent px-2 py-1 text-xs text-white">
-                    <Award className="h-3 w-3" />
-                    <span>{t("tipFlow.selectEmployee.topRatedBadge")}</span>
-                  </div>
-                ) : null}
-
                 <div className="relative aspect-square bg-gradient-to-br from-primary/10 to-accent/10">
                   <ProfileAvatar
                     src={employee.avatar}
@@ -186,19 +175,6 @@ export function SelectEmployeePage() {
                     <p className="text-left text-xs text-muted-foreground">{employee.role}</p>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      {employee.rating != null ? (
-                        <>
-                          <Star className="h-3 w-3 fill-accent text-accent" />
-                          <span className="text-xs font-medium text-foreground">{employee.rating}</span>
-                        </>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">{t("tipFlow.selectEmployee.newMember")}</span>
-                      )}
-                    </div>
-                    <span className="text-xs text-muted-foreground">{t("tipFlow.selectEmployee.tipsCount", { count: employee.tips })}</span>
-                  </div>
                 </div>
 
                 {selectedEmployee === String(employee.id) ? (

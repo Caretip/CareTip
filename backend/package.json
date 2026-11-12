@@ -271,7 +271,10 @@
     "db:sync-active-employee-email-verified": "tsx scripts/syncActiveEmployeeEmailVerified.ts",
     "db:repair-logo-urls": "dotenv -e ../.env -e .env -- tsx scripts/repairMisconfiguredSupabaseLogoUrls.ts",
     "storage:list-logos": "dotenv -e ../.env -e .env -- tsx scripts/listSupabaseLogoObjects.ts",
-    "storage:migrate-official-bucket": "dotenv -e ../.env -e .env -- tsx scripts/migrateStorageBucketOfficialToCaretip.ts"
+    "storage:migrate-official-bucket": "dotenv -e ../.env -e .env -- tsx scripts/migrateStorageBucketOfficialToCaretip.ts",
+    "test:google-oauth-redirect": "tsx scripts/google-oauth-redirect-runtime.ts",
+    "test:public-business-availability": "tsx scripts/public-business-availability-runtime.ts",
+    "test:supabase-rls-repair": "tsx scripts/supabase-rls-repair-runtime.ts"
   },
   "dependencies": {
     "@napi-rs/canvas": "^0.1.100",
@@ -285,7 +288,7 @@
     "dotenv": "^17.3.1",
     "express": "^4.22.3",
     "express-async-errors": "^3.1.1",
-    "fast-xml-parser": "^5.10.1",
+    "fast-xml-parser": "^5.12.0",
     "firebase-admin": "^13.10.0",
     "google-auth-library": "^10.6.2",
     "ioredis": "^5.11.1",

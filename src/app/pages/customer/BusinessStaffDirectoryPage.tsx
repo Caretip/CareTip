@@ -37,7 +37,9 @@ export function BusinessStaffDirectoryPage() {
   const [data, setData] = useState<BusinessDirectoryResponse | null>(null);
   const [query, setQuery] = useState("");
 
-  usePublicHtmlBootHandoff(!loading && !invalidLink && !error && Boolean(data));
+  // Hand off on any settled state: an error (stale QR, unknown slug, network) must not sit behind
+  // the boot overlay until its safety timeout.
+  usePublicHtmlBootHandoff(invalidLink || (!loading && (Boolean(error) || Boolean(data))));
 
   useEffect(() => {
     const raw = businessSlug?.trim().toLowerCase();

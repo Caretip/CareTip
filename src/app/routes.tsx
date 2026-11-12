@@ -291,6 +291,11 @@ const routes: RouteObject[] = [
     errorElement: <ErrorBoundary />,
   },
   {
+    path: '/auth/google/complete',
+    lazy: routeLazy(() => import('./pages/GoogleOAuthCompletePage'), 'GoogleOAuthCompletePage'),
+    errorElement: <ErrorBoundary />,
+  },
+  {
     path: '/auth/facebook/complete',
     lazy: routeLazy(() => import('./pages/FacebookOAuthCompletePage'), 'FacebookOAuthCompletePage'),
     errorElement: <ErrorBoundary />,
