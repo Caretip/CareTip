@@ -182,7 +182,36 @@ export function physicalQrPaymentLabel(
   }
   if (paymentStatus === "FAILED") return t("business.qrStudio.physical.orders.paymentFailed");
   if (paymentStatus === "CANCELLED") return t("business.qrStudio.physical.orders.cancelled");
+  if (paymentStatus === "IN_REVIEW") return t("business.qrStudio.physical.orders.paymentInReview");
+  if (paymentStatus === "REFUNDED") return t("business.qrStudio.physical.orders.paymentRefunded");
+  if (paymentStatus === "PARTIALLY_REFUNDED") return t("business.qrStudio.physical.orders.paymentPartiallyRefunded");
+  if (paymentStatus === "DISPUTED") return t("business.qrStudio.physical.orders.paymentDisputed");
   return t("business.qrStudio.physical.orders.paymentPending");
+}
+
+/**
+ * Mirrors backend fulfillmentEligibility: only PAID orders may be printed or moved forward in
+ * fulfillment. Returns the admin hold-reason key for held payment states, null otherwise.
+ * The server enforces this independently; the UI only avoids offering actions it would reject.
+ */
+export function isPhysicalQrFulfillable(paymentStatus: string, holdReleasedAt?: string | null): boolean {
+  return paymentStatus === "PAID" || (paymentStatus === "PARTIALLY_REFUNDED" && Boolean(holdReleasedAt));
+}
+
+export function physicalQrFulfillmentHoldKey(paymentStatus: string, holdReleasedAt?: string | null): string | null {
+  if (isPhysicalQrFulfillable(paymentStatus, holdReleasedAt)) return null;
+  switch (paymentStatus) {
+    case "IN_REVIEW":
+      return "admin.physicalQr.holdInReview";
+    case "PARTIALLY_REFUNDED":
+      return "admin.physicalQr.holdPartiallyRefunded";
+    case "REFUNDED":
+      return "admin.physicalQr.holdRefunded";
+    case "DISPUTED":
+      return "admin.physicalQr.holdDisputed";
+    default:
+      return null;
+  }
 }
 
 /** Distinct progress / payment indicator tones for physical QR order UI. */
@@ -241,8 +270,9 @@ export function physicalQrCustomerStatusTone(
   if (confirming) return "confirming";
   const { paymentStatus: payment, fulfillmentStatus: fulfillment } = order;
   if (payment === "FAILED" || fulfillment === "PAYMENT_FAILED") return "failed";
-  if (payment === "CANCELLED" || fulfillment === "CANCELLED") return "cancelled";
-  if (fulfillment === "PENDING_PAYMENT" || payment === "PENDING") return "pending";
+  if (payment === "DISPUTED") return "failed";
+  if (payment === "CANCELLED" || fulfillment === "CANCELLED" || payment === "REFUNDED") return "cancelled";
+  if (fulfillment === "PENDING_PAYMENT" || payment === "PENDING" || payment === "IN_REVIEW") return "pending";
   if (fulfillment === "DELIVERED") return "delivered";
   if (fulfillment === "SHIPPED") return "shipped";
   if (fulfillment === "PRINTING") return "printing";
@@ -392,6 +422,30 @@ export function physicalQrCustomerStatus(
   }
   if (payment === "CANCELLED" || fulfillment === "CANCELLED") {
     return { tone, title: t("business.qrStudio.physical.orders.cancelled"), detail: null };
+  }
+  if (payment === "IN_REVIEW") {
+    return {
+      tone,
+      title: t("business.qrStudio.physical.orders.paymentInReview"),
+      detail: t("business.qrStudio.physical.orders.statusInReviewDetail"),
+    };
+  }
+  if (payment === "REFUNDED" || payment === "PARTIALLY_REFUNDED") {
+    return {
+      tone,
+      title:
+        payment === "REFUNDED"
+          ? t("business.qrStudio.physical.orders.paymentRefunded")
+          : t("business.qrStudio.physical.orders.paymentPartiallyRefunded"),
+      detail: t("business.qrStudio.physical.orders.statusRefundedDetail"),
+    };
+  }
+  if (payment === "DISPUTED") {
+    return {
+      tone,
+      title: t("business.qrStudio.physical.orders.paymentDisputed"),
+      detail: t("business.qrStudio.physical.orders.statusDisputedDetail"),
+    };
   }
   if (fulfillment === "PENDING_PAYMENT" || payment === "PENDING") {
     return {

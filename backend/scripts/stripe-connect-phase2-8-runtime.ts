@@ -114,6 +114,8 @@ async function createVenue(
       legalHold: connect.legalHold ?? false,
       stripeAccountId: acct,
       stripeConnectStatus: connect.status ?? StripeConnectStatus.ready,
+      // Destination charge to the business account = business_distribution routing (routing modes postdate this suite).
+      employeeTipPayoutMode: "business_distribution",
       stripeChargesEnabled: connect.chargesEnabled ?? true,
       stripePayoutsEnabled: connect.payoutsEnabled ?? true,
       stripeDetailsSubmitted: true,
@@ -144,6 +146,10 @@ async function destroyVenue(v: Venue): Promise<void> {
   }).catch(() => undefined);
   await prisma.tipRefund.deleteMany({ where: { businessId: v.businessId } }).catch(() => undefined);
   await prisma.businessActivityEvent.deleteMany({ where: { businessId: v.businessId } }).catch(() => undefined);
+  // Payables reference tips (FK RESTRICT): remove them first.
+  await prisma.employeeTipPayable.deleteMany({
+    where: { transaction: { OR: [{ businessId: v.businessId }, { employeeId: v.employeeId }] } },
+  });
   await prisma.transaction.deleteMany({
     where: { OR: [{ businessId: v.businessId }, { employeeId: v.employeeId }] },
   });

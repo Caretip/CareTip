@@ -17,6 +17,8 @@ globalThis.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
   sent.push({ html: String(body.html ?? ""), text: String(body.text ?? "") });
   return new Response(JSON.stringify({ id: "msg_test" }), { status: 200 });
 }) as typeof fetch;
+// resendClient refuses to send from a test process unless fetch is declared mocked (a604ea1d).
+process.env.CARETIP_RESEND_FETCH_IS_MOCKED = "1";
 
 const ENV_KEYS = ["NODE_ENV", "FRONTEND_URL", "RESEND_API_KEY", "RESEND_FROM", "RESEND_FROM_EMAIL"] as const;
 const savedEnv = Object.fromEntries(ENV_KEYS.map((k) => [k, process.env[k]]));

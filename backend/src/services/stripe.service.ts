@@ -155,6 +155,47 @@ async function retrievePaymentIntentForWebhook(
   });
 }
 
+/** Authoritative PaymentIntent (latest_charge expanded). Honors the PaymentIntent test seam. */
+export async function retrievePaymentIntentAuthoritative(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
+  return retrievePaymentIntentForWebhook(paymentIntentId, null);
+}
+
+/**
+ * Refund flags for a tip PaymentIntent. Destination charges transfer the full amount then take
+ * application_fee_amount on that transfer; Stripe requires reverse_transfer when refunding that fee.
+ */
+export function tipRefundDestinationFlags(
+  pi: Stripe.PaymentIntent,
+): Pick<Stripe.RefundCreateParams, "refund_application_fee" | "reverse_transfer"> {
+  return destinationAccountIdFromPaymentIntent(pi)
+    ? { refund_application_fee: true, reverse_transfer: true }
+    : {};
+}
+
+/** Refund create used by durable refund operations. Honors the refunds test seam. */
+export async function createStripeRefund(
+  params: Stripe.RefundCreateParams,
+  options: Stripe.RequestOptions,
+): Promise<Stripe.Refund> {
+  return refundsCreateFnForTests
+    ? refundsCreateFnForTests(params, options)
+    : getStripe().refunds.create(params, options);
+}
+
+type RefundsListFn = (paymentIntentId: string) => Promise<Stripe.Refund[]>;
+let refundsListFnForTests: RefundsListFn | null = null;
+
+/** Test seam — mocked refunds.list for refund-operation recovery. */
+export function __setRefundsListFnForTests(fn: RefundsListFn | null): void {
+  refundsListFnForTests = fn;
+}
+
+export async function listStripeRefundsForPaymentIntent(paymentIntentId: string): Promise<Stripe.Refund[]> {
+  if (refundsListFnForTests) return refundsListFnForTests(paymentIntentId);
+  const page = await getStripe().refunds.list({ payment_intent: paymentIntentId, limit: 100 });
+  return page.data;
+}
+
 async function retrieveConnectedAccountForWebhook(stripeAccountId: string): Promise<{
   id: string;
   charges_enabled?: boolean | null;
@@ -262,8 +303,10 @@ function assertLiveConnectedAccountCapable(account: {
 export function verifyWebhookSignature(
   rawBody: Buffer,
   signature: string | string[] | undefined,
+  /** The signing secret of the endpoint that received the request (defaults to the platform endpoint). */
+  endpointSecret?: string,
 ): Stripe.Event {
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const webhookSecret = endpointSecret ?? process.env.STRIPE_WEBHOOK_SECRET;
   if (!webhookSecret) {
     throw new Error("STRIPE_WEBHOOK_SECRET not configured");
   }
@@ -649,9 +692,10 @@ export async function createTipCheckoutSession(
   if (scanSession) metadata.qrScanSessionId = scanSession.slice(0, 64);
   if (guestLocale) metadata.locale = guestLocale;
   const name = input.customerName?.trim();
-  if (name) metadata.customerName = name;
+  if (name) metadata.customerName = name.slice(0, 500);
   const fb = input.feedback?.trim();
-  if (fb) metadata.feedback = fb.slice(0, 2000);
+  // Stripe rejects metadata values over 500 characters; the controller validates first.
+  if (fb) metadata.feedback = fb.slice(0, 500);
 
   let session: Stripe.Checkout.Session;
   try {
@@ -720,74 +764,62 @@ export async function createTipCheckoutSession(
 
 /**
  * Refund a captured tip when post-payment eligibility checks fail (employee deactivated, venue unverified, etc.).
- * Best-effort — logs and alerts ops if Stripe refund fails.
- * Returns Stripe refund id on success; null on failure (callers must not project payment.refunded).
+ * Durable: the refund is persisted as a refund operation and retried until Stripe confirms it or it
+ * fails permanently (then alerted + recorded as a discrepancy). Ledger/activity follow-up runs when
+ * Stripe confirms, so callers must not project payment.refunded themselves.
+ * Returns the Stripe refund id when it already succeeded; null while it is pending or failed.
  */
 async function refundTipPaymentForEligibilityFailure(
   paymentIntentId: string,
-  context: Record<string, unknown>,
+  context: Record<string, unknown> & {
+    transactionId?: string | null;
+    businessId?: string | null;
+    employeeId?: string | null;
+    amountEur?: number;
+  },
   eligibilityErr: unknown,
 ): Promise<string | null> {
   const source = typeof context.source === "string" ? context.source : "stripe.eligibility_refund";
   logTipPaymentEligibilityBlocked(source, { paymentIntentId, ...context }, eligibilityErr);
 
-  try {
-    let dest: string | null = null;
-    try {
-      const pi = await retrievePaymentIntentForWebhook(paymentIntentId, null);
-      dest = destinationAccountIdFromPaymentIntent(pi);
-    } catch (piErr) {
-      logServerError("stripe.eligibility_refund.retrieve_pi", piErr, { paymentIntentId });
-    }
-    const refundParams: Stripe.RefundCreateParams = dest
-      ? {
-          payment_intent: paymentIntentId,
-          // Destination charges transfer the full amount then take application_fee_amount
-          // on that transfer. Stripe requires reverse_transfer when refunding that fee.
-          refund_application_fee: true,
-          reverse_transfer: true,
-          metadata: {
-            caretip_refund_reason: "eligibility_failure",
-            caretip_context: source,
-          },
-        }
-      : {
-          payment_intent: paymentIntentId,
-          metadata: {
-            caretip_refund_reason: "eligibility_failure",
-            caretip_context: source,
-          },
-        };
-    const refundOptions: Stripe.RequestOptions = {
-      idempotencyKey: `eligibility_refund:${paymentIntentId}`,
-    };
-    const refund = refundsCreateFnForTests
-      ? await refundsCreateFnForTests(refundParams, refundOptions)
-      : await getStripe().refunds.create(refundParams, refundOptions);
-    console.warn("[stripe.refund.eligibility_failure] refunded", {
-      paymentIntentId,
-      refundId: refund.id,
-      status: refund.status,
-      ...context,
-    });
+  const employeeName = context.employeeId
+    ? (
+        await prisma.employee.findUnique({
+          where: { id: context.employeeId },
+          select: { name: true },
+        })
+      )?.name ?? null
+    : null;
+
+  const { requestRefundOperation } = await import("./payments/refundOperations.service.js");
+  const result = await requestRefundOperation({
+    // Same string as the historical Stripe idempotency key, so earlier attempts stay deduplicated.
+    operationKey: `eligibility_refund:${paymentIntentId}`,
+    purpose: "tip_eligibility",
+    paymentIntentId,
+    businessId: context.businessId ?? null,
+    transactionId: context.transactionId ?? null,
+    context: {
+      source,
+      employeeId: context.employeeId ?? null,
+      employeeName,
+      amountEur: typeof context.amountEur === "number" ? context.amountEur : null,
+    },
+  });
+  if (result.status === "succeeded") {
     captureServerException(new Error("Tip payment refunded: post-payment eligibility failure"), {
       paymentIntentId,
-      refundId: refund.id,
-      ...context,
+      refundId: result.stripeRefundId,
+      source,
     });
-    return refund.id;
-  } catch (refundErr) {
-    logServerError("stripe.refund.eligibility_failure", refundErr, {
-      paymentIntentId,
-      ...context,
-    });
-    captureServerException(refundErr, {
-      phase: "eligibility_refund_failed",
-      paymentIntentId,
-      ...context,
-    });
-    return null;
+    return result.stripeRefundId;
   }
+  console.warn("[stripe.refund.eligibility_failure] refund not yet confirmed", {
+    paymentIntentId,
+    operationId: result.operationId,
+    status: result.status,
+  });
+  return null;
 }
 
 async function failClosedCapturedTipPayment(params: {
@@ -838,45 +870,16 @@ async function failClosedCapturedTipPayment(params: {
     }
   }
 
-  const refundId = await refundTipPaymentForEligibilityFailure(paymentIntentId, {
+  // Business-less payments still get refunded; the ledger follow-up needs a tip row and runs
+  // inside the refund operation once Stripe confirms.
+  await refundTipPaymentForEligibilityFailure(paymentIntentId, {
     source: "handleSuccessfulTipPayment",
     sessionId,
-    employeeId: employeeId ?? undefined,
-    businessId: businessId ?? undefined,
-    amountEur,
+    employeeId: employeeId ?? null,
+    businessId: businessId && transactionId ? businessId : null,
+    amountEur: ledgerAmount,
     transactionId,
   }, err);
-
-  if (refundId && transactionId && businessId) {
-    const emp = employeeId
-      ? await prisma.employee.findUnique({
-          where: { id: employeeId },
-          select: { name: true },
-        })
-      : null;
-    schedulePaymentRefundedProjection({
-      paymentIntentId,
-      refundId,
-      transactionId,
-      businessId,
-      employeeId,
-      amountEur: ledgerAmount,
-      employeeName: emp?.name ?? null,
-    });
-    void import("./finance/tipRefunds.service.js").then(({ upsertStripeRefundEvent }) =>
-      upsertStripeRefundEvent({
-        stripeRefundId: refundId,
-        stripePaymentIntentId: paymentIntentId,
-        amountCents: Math.round(Number(ledgerAmount) * 100),
-        currency: "eur",
-        status: "succeeded",
-        reason: "eligibility_failure",
-        occurredAt: new Date(),
-        businessId,
-        tipId: transactionId,
-      }),
-    );
-  }
 
   console.log("SKIP REASON: employee or venue not eligible for tips (refund attempted)");
 }
@@ -943,42 +946,13 @@ export async function handlePaymentSuccess(paymentIntentId: string): Promise<voi
       where: { id: pending.id, status: "pending" },
       data: { status: "failed" },
     });
-    const refundId = await refundTipPaymentForEligibilityFailure(paymentIntentId, {
+    await refundTipPaymentForEligibilityFailure(paymentIntentId, {
       source: "handlePaymentSuccess",
-      employeeId: pending.employeeId ?? undefined,
+      employeeId: pending.employeeId ?? null,
       businessId: pending.businessId,
       transactionId: pending.id,
+      amountEur: Number(pending.amount),
     }, err);
-    if (refundId) {
-      const emp = pending.employeeId
-        ? await prisma.employee.findUnique({
-            where: { id: pending.employeeId },
-            select: { name: true },
-          })
-        : null;
-      schedulePaymentRefundedProjection({
-        paymentIntentId,
-        refundId,
-        transactionId: pending.id,
-        businessId: pending.businessId,
-        employeeId: pending.employeeId,
-        amountEur: Number(pending.amount),
-        employeeName: emp?.name ?? null,
-      });
-      void import("./finance/tipRefunds.service.js").then(({ upsertStripeRefundEvent }) =>
-        upsertStripeRefundEvent({
-          stripeRefundId: refundId,
-          stripePaymentIntentId: paymentIntentId,
-          amountCents: Math.round(Number(pending.amount) * 100),
-          currency: "eur",
-          status: "succeeded",
-          reason: "eligibility_failure",
-          occurredAt: new Date(),
-          businessId: pending.businessId,
-          tipId: pending.id,
-        }),
-      );
-    }
     return;
   }
 
@@ -1130,6 +1104,25 @@ export async function handleSuccessfulTipPayment(session: Stripe.Checkout.Sessio
   });
   if (dup) {
     console.log("SKIP REASON: duplicate payment intent", { existingTipId: dup.id, paymentIntentId: piId });
+    if (dup.status === "failed" && session.payment_status === "paid") {
+      // A captured payment whose ledger row was written as failed must have a refund operation.
+      // A webhook retry after a crash between the two writes lands here; the request is idempotent.
+      const { requestRefundOperation } = await import("./payments/refundOperations.service.js");
+      const existingOp = await prisma.stripeRefundOperation.findUnique({
+        where: { operationKey: `eligibility_refund:${piId}` },
+        select: { id: true },
+      });
+      if (!existingOp) {
+        await requestRefundOperation({
+          operationKey: `eligibility_refund:${piId}`,
+          purpose: "tip_eligibility",
+          paymentIntentId: piId,
+          businessId: dup.businessId,
+          transactionId: dup.id,
+          context: { source: "handleSuccessfulTipPayment.retry", employeeId: dup.employeeId, amountEur: Number(dup.amount) },
+        });
+      }
+    }
     return;
   }
 
@@ -1339,8 +1332,7 @@ export async function handleSuccessfulTipPayment(session: Stripe.Checkout.Sessio
       );
       await applyExistingStripeRefundsAfterSuccessfulTip({
         paymentIntentId: piId,
-        listRefunds: async () =>
-          (await getStripe().refunds.list({ payment_intent: piId, limit: 20 })).data,
+        listRefunds: () => listStripeRefundsForPaymentIntent(piId),
       });
     } catch (err) {
       logServerError("stripe.handleSuccessfulTipPayment.existingRefunds", err, {

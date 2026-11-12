@@ -18,7 +18,13 @@ import {
   SUBSCRIPTION_TRIAL_PERIOD_DAYS,
 } from "../config/subscriptionTrial.js";
 import { resolveCheckoutFrontendBaseUrl } from "../config/frontendUrl.js";
-import { assertSelfServeBillingCheckoutAllowed } from "./billingCheckoutGuard.service.js";
+import {
+  assertSelfServeBillingCheckoutAllowed,
+  BillingCheckoutVerificationError,
+} from "./billingCheckoutGuard.service.js";
+import { createHash } from "node:crypto";
+import { PaymentOperationBusyError, withPaymentOperationLease } from "../lib/payments/operationLease.js";
+import { recordPaymentDiscrepancy } from "./payments/paymentDiscrepancy.service.js";
 
 export type SubscriptionCheckoutFlow = "billing" | "onboarding";
 
@@ -71,7 +77,13 @@ function resolveCheckoutPriceId(planKey: SubscriptionPlanKey, billingCycle: "mon
   return resolveStripeCheckoutPriceId(billingCycle);
 }
 
-/** Create or retrieve Stripe Customer for a business (stored on Business; mirrored on Subscription when present). */
+export { stripeCustomerIdempotencyKey } from "./payments/stripeCustomerCreation.service.js";
+
+/**
+ * Returns the business's Stripe customer, creating it at most once. Durable, interruption-safe
+ * creation lives in payments/stripeCustomerCreation.service.ts (operation row + lease + metadata
+ * search before any new key); this wrapper keeps the existing call sites and error contract.
+ */
 export async function ensureStripeCustomerForBusiness(params: {
   businessId: string;
   email: string;
@@ -80,56 +92,17 @@ export async function ensureStripeCustomerForBusiness(params: {
   if (!isStripeConfigured()) {
     throw new Error("Stripe is not configured");
   }
-
-  const business = await prisma.business.findUnique({
-    where: { id: params.businessId },
-    select: {
-      stripeCustomerId: true,
-      subscription: { select: { stripeCustomerId: true } },
-    },
-  });
-
-  const existing =
-    business?.stripeCustomerId ?? business?.subscription?.stripeCustomerId ?? null;
-  if (existing) {
-    if (!business?.stripeCustomerId) {
-      await prisma.business.update({
-        where: { id: params.businessId },
-        data: { stripeCustomerId: existing },
-      });
+  const { ensureStripeCustomerCreated, StripeCustomerSetupBusyError } = await import(
+    "./payments/stripeCustomerCreation.service.js"
+  );
+  try {
+    return await ensureStripeCustomerCreated(params);
+  } catch (err) {
+    if (err instanceof StripeCustomerSetupBusyError) {
+      throw new BillingCheckoutVerificationError(err.message);
     }
-    return existing;
+    throw err;
   }
-
-  const stripe = getStripeClient();
-  const customer = await stripe.customers.create({
-    email: params.email,
-    name: params.businessName,
-    metadata: {
-      [BILLING_CHECKOUT_METADATA_KEYS.businessId]: params.businessId,
-    },
-  });
-
-  await prisma.business.update({
-    where: { id: params.businessId },
-    data: { stripeCustomerId: customer.id },
-  });
-
-  const subscriptionId = (
-    await prisma.subscription.findUnique({
-      where: { businessId: params.businessId },
-      select: { id: true },
-    })
-  )?.id;
-
-  if (subscriptionId) {
-    await prisma.subscription.update({
-      where: { id: subscriptionId },
-      data: { stripeCustomerId: customer.id },
-    });
-  }
-
-  return customer.id;
 }
 
 /** Create Stripe Checkout Session (mode: subscription). Gated by SUBSCRIPTION_BILLING_ENABLED. */
@@ -154,6 +127,107 @@ export async function createPlatformSubscriptionCheckoutSession(params: {
 
   assertSelfServeCheckoutPlanKey(params.planKey);
 
+  try {
+    return await withPaymentOperationLease(
+      `billing_checkout:${params.businessId}`,
+      { ttlMs: BILLING_CHECKOUT_LEASE_TTL_MS, waitMs: BILLING_CHECKOUT_LEASE_WAIT_MS },
+      () => createPlatformSubscriptionCheckoutSessionLocked(params),
+    );
+  } catch (err) {
+    if (err instanceof PaymentOperationBusyError) {
+      throw new BillingCheckoutVerificationError("Checkout is already being prepared. Please try again in a moment.");
+    }
+    throw err;
+  }
+}
+
+const BILLING_CHECKOUT_LEASE_TTL_MS = 60_000;
+const BILLING_CHECKOUT_LEASE_WAIT_MS = 8_000;
+
+/**
+ * Fingerprint of everything that makes a subscription checkout materially different. Equal requests
+ * (a double click, a client retry) share it and therefore Stripe's idempotent response; a different
+ * plan, cycle, trial choice or return flow gets its own key instead of colliding with the old one.
+ */
+export function billingCheckoutFingerprint(input: {
+  priceId: string;
+  planKey: string;
+  billingCycle: string;
+  trial: boolean;
+  customerId: string;
+  checkoutFlow: string;
+  subscriptionId: string | null;
+}): string {
+  return createHash("sha256")
+    .update(
+      JSON.stringify([
+        input.priceId,
+        input.planKey,
+        input.billingCycle,
+        input.trial,
+        input.customerId,
+        input.checkoutFlow,
+        input.subscriptionId,
+      ]),
+    )
+    .digest("hex")
+    .slice(0, 24);
+}
+
+/** `previousSessionId` chains to a fresh key when the cached session for a key is no longer open. */
+export function billingCheckoutIdempotencyKey(
+  businessId: string,
+  fingerprint: string,
+  previousSessionId: string | null = null,
+): string {
+  const base = `caretip_billing_checkout_${businessId}_${fingerprint}`;
+  return previousSessionId ? `${base}:after:${previousSessionId}` : base;
+}
+
+/**
+ * Expires this business's other open CareTip subscription checkouts so at most one can ever be
+ * completed (a plan or cycle change replaces the earlier session instead of leaving two payable).
+ * Best effort: if Stripe cannot be listed, the webhook-side duplicate-subscription check remains.
+ */
+async function expireOtherOpenBillingCheckouts(params: {
+  businessId: string;
+  customerId: string;
+  keepFingerprint: string;
+}): Promise<void> {
+  try {
+    const stripe = getStripeClient();
+    const open = await stripe.checkout.sessions.list({ customer: params.customerId, status: "open", limit: 20 });
+    for (const session of open.data) {
+      const md = session.metadata ?? {};
+      if (session.mode !== "subscription") continue;
+      if (md[BILLING_CHECKOUT_METADATA_KEYS.businessId] !== params.businessId) continue;
+      if (md[BILLING_CHECKOUT_FINGERPRINT_METADATA_KEY] === params.keepFingerprint) continue;
+      try {
+        await stripe.checkout.sessions.expire(session.id);
+      } catch {
+        /* completed or expired meanwhile */
+      }
+    }
+  } catch (err) {
+    console.warn("[billing.checkout] open session cleanup skipped", {
+      businessId: params.businessId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
+const BILLING_CHECKOUT_FINGERPRINT_METADATA_KEY = "caretipCheckoutFingerprint";
+
+async function createPlatformSubscriptionCheckoutSessionLocked(params: {
+  businessId: string;
+  subscriptionId?: string | null;
+  managerEmail: string;
+  businessName: string;
+  planKey: SubscriptionPlanKey;
+  billingCycle?: "monthly" | "yearly";
+  includeTrial?: boolean;
+  checkoutFlow?: SubscriptionCheckoutFlow;
+}): Promise<{ sessionId: string; url: string | null }> {
   await assertSelfServeBillingCheckoutAllowed(params.businessId);
 
   const billingCycle = params.billingCycle ?? "monthly";
@@ -192,10 +266,22 @@ export async function createPlatformSubscriptionCheckoutSession(params: {
 
   const checkoutFlow = params.checkoutFlow ?? "billing";
   const { successUrl, cancelUrl } = checkoutReturnUrls(checkoutFlow);
+  const fingerprint = billingCheckoutFingerprint({
+    priceId,
+    planKey: params.planKey,
+    billingCycle,
+    trial: trialEligible,
+    customerId,
+    checkoutFlow,
+    subscriptionId,
+  });
+  await expireOtherOpenBillingCheckouts({ businessId: params.businessId, customerId, keepFingerprint: fingerprint });
 
-  let session: Stripe.Checkout.Session;
+  let session: Stripe.Checkout.Session | null = null;
+  let previousSessionId: string | null = null;
   try {
-    session = await createStripeBillingCheckoutSession(
+    for (let attempt = 0; attempt < 3 && !session; attempt += 1) {
+    const created: Stripe.Checkout.Session = await createStripeBillingCheckoutSession(
       {
       mode: "subscription",
       customer: customerId,
@@ -230,12 +316,21 @@ export async function createPlatformSubscriptionCheckoutSession(params: {
           : {}),
         [BILLING_CHECKOUT_METADATA_KEYS.planKey]: params.planKey,
         [BILLING_CHECKOUT_METADATA_KEYS.source]: "platform_checkout",
+        [BILLING_CHECKOUT_FINGERPRINT_METADATA_KEY]: fingerprint,
       },
     },
       {
-        idempotencyKey: `caretip_billing_checkout_${params.businessId}`,
+        idempotencyKey: billingCheckoutIdempotencyKey(params.businessId, fingerprint, previousSessionId),
       },
     );
+    // Stripe replays the stored response for a reused key. If that session was completed or has
+    // expired, chain to a new key derived from it (deterministic, so concurrent retries agree).
+    if (!created.status || created.status === "open") {
+      session = created;
+    } else {
+      previousSessionId = created.id;
+    }
+    }
   } catch (err) {
     logStripeCheckoutFailure({
       planKey: params.planKey,
@@ -246,6 +341,9 @@ export async function createPlatformSubscriptionCheckoutSession(params: {
     throw err;
   }
 
+  if (!session) {
+    throw new BillingCheckoutVerificationError("Checkout could not be started. Please try again shortly.");
+  }
   return { sessionId: session.id, url: session.url };
 }
 

@@ -375,6 +375,9 @@ async function waitForRedisBeforeListening(): Promise<void> {
 void assertEnvForAuth().then(waitForRedisBeforeListening).then(() => {
   httpServer.listen(PORT, () => {
     console.log(`Caretip API running on http://localhost:${PORT}`);
+    // Non-financial raw SQL still compares bound dates with `timestamp` columns and is only correct
+    // when the database session TimeZone is UTC (the Supabase default). Make a drift visible.
+    void import("./lib/databaseSessionTimezone.js").then(({ warnIfDatabaseSessionNotUtc }) => warnIfDatabaseSessionNotUtc());
     const billingOn = process.env.SUBSCRIPTION_BILLING_ENABLED?.trim().toLowerCase();
     const billingEnabled =
       billingOn === "true" || billingOn === "1" || billingOn === "yes" || billingOn === "on";

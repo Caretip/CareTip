@@ -31,6 +31,7 @@ import {
   loadBillingReconciliationCursorWithExpected,
   logBillingReconciliationCursorCasStale,
 } from "./subscriptionBillingReconciliationCursor.service.js";
+import { withSubscriptionSyncLease } from "./subscriptionStripeSync.js";
 
 export const BILLING_RECONCILIATION_BATCH_SIZE = resolveBillingReconciliationBatchSize();
 export const BILLING_RECONCILIATION_MAX_SUBS_PER_CUSTOMER = 10;
@@ -217,23 +218,31 @@ async function safeRepairMirrorFromStripe(params: {
     return false;
   }
 
-  const snapshot = buildMirrorSnapshotFromStripeSubscription(params.sub);
   const stripeEventId = `recon_${params.runId}_${params.sub.id}`.slice(0, 120);
 
-  await applyStripeMirrorTransactional({
-    subscriptionRowId: params.subscriptionRowId,
-    businessId: params.businessId,
-    snapshot,
-    auditType: STRIPE_BILLING_AUDIT_TYPES.reconciliationRepair,
-    stripeEventId,
-    auditPayload: {
-      source: "billing_reconciliation",
-      runId: params.runId,
-      stripeSubscriptionId: params.sub.id,
-      stripeStatus: params.sub.status,
-    },
+  // The listing above may be minutes old: repair from state re-read under the business sync lease,
+  // the same rule every webhook path follows, so a repair can never apply an older state.
+  return withSubscriptionSyncLease(params.businessId, async () => {
+    const fresh = await retrieveStripeSubscription(params.sub.id);
+    if (fresh === "missing" || fresh === "api_failed") return false;
+    const freshMeta = metadataBusinessId(fresh.metadata);
+    if (freshMeta && freshMeta !== params.businessId) return false;
+    const snapshot = buildMirrorSnapshotFromStripeSubscription(fresh);
+    await applyStripeMirrorTransactional({
+      subscriptionRowId: params.subscriptionRowId,
+      businessId: params.businessId,
+      snapshot,
+      auditType: STRIPE_BILLING_AUDIT_TYPES.reconciliationRepair,
+      stripeEventId,
+      auditPayload: {
+        source: "billing_reconciliation",
+        runId: params.runId,
+        stripeSubscriptionId: fresh.id,
+        stripeStatus: fresh.status,
+      },
+    });
+    return true;
   });
-  return true;
 }
 
 export async function runSubscriptionBillingReconciliation(): Promise<BillingReconciliationSummary> {

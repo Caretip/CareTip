@@ -313,6 +313,48 @@ router.post("/employee-tip-release-reconciliation-tick", async (req, res) => {
 });
 
 /**
+ * POST /api/internal/jobs/payment-refund-operations-tick
+ * Retries due CareTip-initiated refunds (bounded, idempotent) and replays billing events that were
+ * deferred while SUBSCRIPTION_BILLING_ENABLED was off. Intended schedule: every 5 minutes.
+ */
+router.post("/payment-refund-operations-tick", async (req, res) => {
+  if (!authorizeCronRequest(req)) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  try {
+    const { retryDueRefundOperations } = await import("../services/payments/refundOperations.service.js");
+    const { replayDeferredBillingEvents } = await import("../services/stripeBillingWebhook.service.js");
+    const refunds = await retryDueRefundOperations();
+    const deferredBilling = await replayDeferredBillingEvents();
+    return res.json({ ok: true, refunds, deferredBilling });
+  } catch (err) {
+    const { logServerError } = await import("../utils/httpErrors.js");
+    logServerError("internalJobs.payment-refund-operations-tick", err);
+    return res.status(500).json({ ok: false, message: "Payment refund operations tick failed" });
+  }
+});
+
+/**
+ * POST /api/internal/jobs/payment-reconciliation
+ * Stripe ↔ CareTip reconciliation for guest tips and QR print orders (detection; verified repair only
+ * when PAYMENT_RECONCILIATION_REPAIR=true). Intended schedule: hourly.
+ */
+router.post("/payment-reconciliation", async (req, res) => {
+  if (!authorizeCronRequest(req)) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  try {
+    const { runPaymentReconciliation } = await import("../services/payments/paymentReconciliation.service.js");
+    const result = await runPaymentReconciliation();
+    return res.json({ ok: true, ...result });
+  } catch (err) {
+    const { logServerError } = await import("../utils/httpErrors.js");
+    logServerError("internalJobs.payment-reconciliation", err);
+    return res.status(500).json({ ok: false, message: "Payment reconciliation failed" });
+  }
+});
+
+/**
  * POST /api/internal/jobs/subscription-billing-reconciliation
  * SUB-008 — Stripe ↔ mirror drift detection + bounded safe repair (no Stripe mutations).
  */

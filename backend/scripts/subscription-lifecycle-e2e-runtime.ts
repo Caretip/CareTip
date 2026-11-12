@@ -32,16 +32,22 @@ const BASIC_ALLOW: SubscriptionCapability[] = [
   "tableQr",
   "basicAnalytics",
   "qrTemplates",
+  // Pay-per-print physical QR orders are available on Basic (175e5577).
+  "physicalQrPrinting",
   "teamManagement",
 ];
 
 const PRO_ONLY: SubscriptionCapability[] = [
+  // The monthly included print order is Pro-only (175e5577).
+  "physicalQrPrintingIncluded",
   "brandingCustomization",
   "advancedAnalytics",
   "csvExport",
   "multiLocation",
   "employeeGoals",
   "customerFeedback",
+  // Pro-only custom job titles (see git log -S customJobTitles on subscriptionCapabilities.ts).
+  "customJobTitles",
 ];
 
 const results: string[] = [];

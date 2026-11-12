@@ -1,3 +1,4 @@
+import { sqlUtcTimestamp } from "../utils/sqlUtcTimestamp.js";
 import { Prisma, StripeConnectPayoutStatus } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import { sqlCreatedAtLocal } from "../utils/sqlNaiveUtcToLocal.js";
@@ -53,7 +54,7 @@ export async function getPlatformPayoutAnalytics(input: {
         COUNT(*)::int AS c,
         COALESCE(SUM(amount_cents), 0)::float / 100.0 AS eur
       FROM stripe_connect_payouts
-      WHERE stripe_created_at >= ${startUtc} AND stripe_created_at <= ${endUtc}
+      WHERE stripe_created_at >= ${sqlUtcTimestamp(startUtc)} AND stripe_created_at <= ${sqlUtcTimestamp(endUtc)}
       GROUP BY 2
       UNION ALL
       SELECT 'emp'::text,
@@ -61,17 +62,17 @@ export async function getPlatformPayoutAnalytics(input: {
         COUNT(*)::int,
         COALESCE(SUM(amount_cents), 0)::float / 100.0
       FROM employee_stripe_payouts
-      WHERE stripe_created_at >= ${startUtc} AND stripe_created_at <= ${endUtc}
+      WHERE stripe_created_at >= ${sqlUtcTimestamp(startUtc)} AND stripe_created_at <= ${sqlUtcTimestamp(endUtc)}
       GROUP BY 2
     `),
     prisma.$queryRaw<Array<{ status: StripeConnectPayoutStatus; c: number }>>(Prisma.sql`
       SELECT status, COUNT(*)::int AS c
       FROM (
         SELECT status FROM stripe_connect_payouts
-        WHERE stripe_created_at >= ${startUtc} AND stripe_created_at <= ${endUtc}
+        WHERE stripe_created_at >= ${sqlUtcTimestamp(startUtc)} AND stripe_created_at <= ${sqlUtcTimestamp(endUtc)}
         UNION ALL
         SELECT status FROM employee_stripe_payouts
-        WHERE stripe_created_at >= ${startUtc} AND stripe_created_at <= ${endUtc}
+        WHERE stripe_created_at >= ${sqlUtcTimestamp(startUtc)} AND stripe_created_at <= ${sqlUtcTimestamp(endUtc)}
       ) s
       GROUP BY status
     `),

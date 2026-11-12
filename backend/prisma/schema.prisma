@@ -2198,6 +2198,12 @@ enum PhysicalQrPaymentStatus {
   PAID
   FAILED
   CANCELLED
+  /// Stripe reports money received, but it could not be matched safely (amount/currency/order state). Never fulfilled until an operator resolves it.
+  IN_REVIEW
+  PARTIALLY_REFUNDED
+  REFUNDED
+  /// An open or lost card dispute; not eligible for fulfillment.
+  DISPUTED
 }
 
 enum PhysicalQrFulfillmentStatus {
@@ -2263,6 +2269,11 @@ model PhysicalQrOrder {
   fulfillmentStatus       PhysicalQrFulfillmentStatus  @default(PENDING_PAYMENT) @map("fulfillment_status")
   stripeCheckoutSessionId String?                      @unique @map("stripe_checkout_session_id")
   stripePaymentIntentId   String?                      @map("stripe_payment_intent_id")
+  /// Platform-admin release of a PARTIALLY_REFUNDED order for fulfillment (see PhysicalQrHoldResolution).
+  /// Valid only while the refunded total still equals holdReleaseRefundedCents; any later refund or dispute clears it.
+  holdReleasedAt          DateTime?                    @map("hold_released_at")
+  holdReleasedByUserId    String?                      @map("hold_released_by_user_id")
+  holdReleaseRefundedCents Int?                        @map("hold_release_refunded_cents")
   carrier                 String?
   trackingNumber          String?                      @map("tracking_number")
   trackingUrl             String?                      @map("tracking_url") @db.Text
@@ -2344,3 +2355,154 @@ model PhysicalQrOrderInternalNote {
   @@map("physical_qr_order_internal_notes")
 }
 
+/// Cross-instance lease for a payment operation (checkout creation, Stripe customer creation,
+/// subscription mirror sync, reconciliation runs). A row, not a session lock, so it survives the
+/// transaction pooler and is never held across a Stripe call by an open DB connection.
+model PaymentOperationLease {
+  key        String   @id @db.VarChar(191)
+  token      String   @db.VarChar(64)
+  acquiredAt DateTime @default(now()) @map("acquired_at")
+  expiresAt  DateTime @map("expires_at")
+
+  @@index([expiresAt])
+  @@map("payment_operation_leases")
+}
+
+enum StripeRefundOperationStatus {
+  pending
+  succeeded
+  failed_permanent
+}
+
+/// Durable record of a refund CareTip initiates itself (e.g. ineligible tip, duplicate QR payment).
+/// Retried with the same Stripe idempotency key until it succeeds or fails permanently.
+model StripeRefundOperation {
+  id                    String                      @id @default(cuid())
+  /// Stable per financial intent, e.g. "eligibility_refund:pi_…". Also used as the Stripe idempotency key base.
+  operationKey          String                      @unique @map("operation_key") @db.VarChar(191)
+  purpose               String                      @db.VarChar(64)
+  stripePaymentIntentId String                      @map("stripe_payment_intent_id")
+  /// null = refund the full remaining amount.
+  amountCents           Int?                        @map("amount_cents")
+  reverseTransfer       Boolean                     @default(false) @map("reverse_transfer")
+  refundApplicationFee  Boolean                     @default(false) @map("refund_application_fee")
+  status                StripeRefundOperationStatus @default(pending)
+  attempts              Int                         @default(0)
+  /// Bumped only after Stripe confirms no refund exists for the previous key (idempotency keys expire after 24h).
+  keyGeneration         Int                         @default(0) @map("key_generation")
+  nextAttemptAt         DateTime?                   @map("next_attempt_at")
+  lastErrorKind         String?                     @map("last_error_kind") @db.VarChar(32)
+  lastErrorCode         String?                     @map("last_error_code") @db.VarChar(120)
+  lastErrorMessage      String?                     @map("last_error_message") @db.VarChar(500)
+  stripeRefundId        String?                     @map("stripe_refund_id")
+  businessId            String?                     @map("business_id")
+  transactionId         String?                     @map("transaction_id")
+  physicalQrOrderId     String?                     @map("physical_qr_order_id")
+  context               Json?
+  createdAt             DateTime                    @default(now()) @map("created_at")
+  updatedAt             DateTime                    @updatedAt @map("updated_at")
+  succeededAt           DateTime?                   @map("succeeded_at")
+
+  @@index([status, nextAttemptAt])
+  @@index([stripePaymentIntentId])
+  @@map("stripe_refund_operations")
+}
+
+enum PaymentDiscrepancyStatus {
+  open
+  auto_repaired
+  resolved
+}
+
+/// Durable payment discrepancy found by a webhook handler or the payment reconciliation job.
+model PaymentDiscrepancy {
+  id                      String                   @id @default(cuid())
+  /// kind + subject; one row per distinct problem.
+  fingerprint             String                   @unique @db.VarChar(191)
+  workflow                String                   @db.VarChar(32)
+  kind                    String                   @db.VarChar(64)
+  /// The object the finding is about, e.g. "tip:pi_…" or "qr_order:<id>" (used to auto-resolve).
+  subjectKey              String                   @map("subject_key") @db.VarChar(191)
+  status                  PaymentDiscrepancyStatus @default(open)
+  businessId              String?                  @map("business_id")
+  stripePaymentIntentId   String?                  @map("stripe_payment_intent_id")
+  stripeCheckoutSessionId String?                  @map("stripe_checkout_session_id")
+  transactionId           String?                  @map("transaction_id")
+  physicalQrOrderId       String?                  @map("physical_qr_order_id")
+  details                 Json?
+  occurrences             Int                      @default(1)
+  firstSeenAt             DateTime                 @default(now()) @map("first_seen_at")
+  lastSeenAt              DateTime                 @default(now()) @map("last_seen_at")
+  resolvedAt              DateTime?                @map("resolved_at")
+
+  @@index([status, workflow])
+  @@index([subjectKey])
+  @@map("payment_discrepancies")
+}
+
+/// Refunds and disputes against a QR print order payment (Stripe is the source of truth).
+model PhysicalQrPaymentAdjustment {
+  id                    String   @id @default(cuid())
+  orderId               String   @map("order_id")
+  businessId            String   @map("business_id")
+  /// "refund" | "dispute"
+  kind                  String   @db.VarChar(16)
+  stripeRefundId        String?  @unique @map("stripe_refund_id")
+  stripeDisputeId       String?  @unique @map("stripe_dispute_id")
+  stripePaymentIntentId String?  @map("stripe_payment_intent_id")
+  stripeChargeId        String?  @map("stripe_charge_id")
+  /// Refund: pending | succeeded | failed | canceled. Dispute: Stripe dispute status.
+  status                String   @db.VarChar(32)
+  amountCents           Int      @map("amount_cents")
+  currency              String   @db.VarChar(3)
+  reason                String?  @db.VarChar(120)
+  occurredAt            DateTime @map("occurred_at")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@index([orderId])
+  @@map("physical_qr_payment_adjustments")
+}
+
+/// Append-only record of a platform admin resolving a held QR print order (who, when, why, and the
+/// payment state that was verified with Stripe at that moment).
+model PhysicalQrHoldResolution {
+  id                          String   @id @default(cuid())
+  orderId                     String   @map("order_id")
+  businessId                  String   @map("business_id")
+  adminUserId                 String   @map("admin_user_id")
+  /// "release_for_fulfillment"
+  action                      String   @db.VarChar(40)
+  previousPaymentStatus       String   @map("previous_payment_status") @db.VarChar(32)
+  newPaymentStatus            String   @map("new_payment_status") @db.VarChar(32)
+  previousFulfillmentStatus   String   @map("previous_fulfillment_status") @db.VarChar(32)
+  newFulfillmentStatus        String   @map("new_fulfillment_status") @db.VarChar(32)
+  reason                      String   @db.Text
+  stripePaymentIntentId       String?  @map("stripe_payment_intent_id")
+  verifiedAmountReceivedCents Int      @map("verified_amount_received_cents")
+  verifiedRefundedCents       Int      @map("verified_refunded_cents")
+  createdAt                   DateTime @default(now()) @map("created_at")
+
+  @@index([orderId, createdAt])
+  @@map("physical_qr_hold_resolutions")
+}
+
+/// Durable state of creating a business's Stripe customer, so an interrupted creation (timeout, lost
+/// response, crash, lost database write) is recovered instead of creating a second customer.
+model StripeCustomerCreation {
+  businessId       String    @id @map("business_id")
+  /// "creating" (request may or may not have reached Stripe) | "created" (Stripe returned it) | "bound"
+  status           String    @db.VarChar(16)
+  idempotencyKey   String    @map("idempotency_key") @db.VarChar(191)
+  keyGeneration    Int       @default(0) @map("key_generation")
+  /// Parameters of the first request, reused verbatim so retries match Stripe's idempotent request.
+  email            String
+  name             String
+  stripeCustomerId String?   @map("stripe_customer_id")
+  attempts         Int       @default(0)
+  lastErrorMessage String?   @map("last_error_message") @db.VarChar(500)
+  startedAt        DateTime  @default(now()) @map("started_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  @@map("stripe_customer_creations")
+}

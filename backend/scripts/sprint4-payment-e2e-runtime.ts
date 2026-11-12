@@ -47,6 +47,8 @@ async function seedVerifiedVenue() {
           subscriptionTier: "premium",
           stripeAccountId: `acct_sprint4_${tag}`,
           stripeConnectStatus: "ready",
+          // Destination charge to the business account = business_distribution routing.
+          employeeTipPayoutMode: "business_distribution",
           stripeChargesEnabled: true,
           stripePayoutsEnabled: true,
         },
@@ -78,6 +80,7 @@ async function seedVerifiedVenue() {
     employeeId: empUser.employee!.id,
     stripeAccountId: user.business!.stripeAccountId!,
     cleanup: async () => {
+      await prisma.employeeTipPayable.deleteMany({ where: { businessId: user.business!.id } });
       await prisma.transaction.deleteMany({ where: { businessId: user.business!.id } });
       await prisma.employee.deleteMany({ where: { businessId: user.business!.id } });
       await prisma.business.delete({ where: { id: user.business!.id } }).catch(() => {});

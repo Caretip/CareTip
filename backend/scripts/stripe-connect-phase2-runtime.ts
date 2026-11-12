@@ -126,6 +126,8 @@ async function createVenue(
       legalHold: connect.legalHold ?? false,
       stripeAccountId: acct,
       stripeConnectStatus: connect.status ?? StripeConnectStatus.ready,
+      // Destination charge to the business account = business_distribution routing (routing modes postdate this suite).
+      employeeTipPayoutMode: "business_distribution",
       stripeChargesEnabled: connect.chargesEnabled ?? true,
       stripePayoutsEnabled: connect.payoutsEnabled ?? true,
       stripeDetailsSubmitted: true,
@@ -154,6 +156,10 @@ async function destroyVenue(v: Venue): Promise<void> {
   await prisma.notification.deleteMany({
     where: { userId: { in: [v.managerId, v.employeeUserId] } },
   }).catch(() => undefined);
+  // Payables reference tips (FK RESTRICT): remove them first.
+  await prisma.employeeTipPayable.deleteMany({
+    where: { transaction: { OR: [{ businessId: v.businessId }, { employeeId: v.employeeId }] } },
+  });
   await prisma.transaction.deleteMany({
     where: { OR: [{ businessId: v.businessId }, { employeeId: v.employeeId }] },
   });
@@ -194,7 +200,7 @@ function runStaticSecurity() {
   if (
     stripeSvc.includes("application_fee_amount") &&
     stripeSvc.includes("transfer_data") &&
-    stripeSvc.includes("destination: destinationAccountId")
+    (stripeSvc.includes("destination: destinationAccountId") || stripeSvc.includes("destination: routing.destinationAccountId"))
   ) {
     pass("A-static-destination-checkout", "Checkout Session includes application_fee_amount + transfer_data.destination");
   } else {

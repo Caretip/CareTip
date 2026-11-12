@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useStaleExternalStripeStateReset } from "@/app/hooks/useStaleExternalStripeStateReset";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
@@ -65,8 +65,12 @@ export function QrStudioOrdersPage() {
     };
   }, [businessId, reload]);
 
+  // Synchronous guard: one checkout request at a time, even on a fast double click.
+  const payInFlight = useRef(false);
   const payOrder = useCallback(
     async (id: string) => {
+      if (payInFlight.current) return;
+      payInFlight.current = true;
       setPayingOrderId(id);
       try {
         const session = await checkoutPhysicalQrOrder(id);
@@ -77,6 +81,7 @@ export function QrStudioOrdersPage() {
       } catch (err) {
         toast.error(toDisplayErrorMessage(err, t("business.qrStudio.physical.orderError")));
         setPayingOrderId(null);
+        payInFlight.current = false;
       }
     },
     [t],

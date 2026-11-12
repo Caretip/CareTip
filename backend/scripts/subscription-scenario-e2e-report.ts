@@ -28,6 +28,32 @@ import {
   resolveSubscriptionEntitlements,
 } from "../src/services/subscriptionEntitlement.service.js";
 import { activateSubscriptionMirrorFromStripeSubscription } from "../src/services/subscriptionActivation.service.js";
+import { __setSubscriptionRetrieveFnForTests } from "../src/services/subscriptionStripeSync.js";
+
+// Test fixture: this report exercises the billing path, so it needs billing on and test price ids.
+// Only filled in when unset (an isolated run blanks every .env name); real values are never needed.
+for (const [k, v] of [
+  ["SUBSCRIPTION_BILLING_ENABLED", "true"],
+  ["SUBSCRIPTION_TRIAL_ENABLED", "true"],
+  ["STRIPE_PRICE_PREMIUM_MONTHLY", "price_scenario_premium_monthly"],
+  ["STRIPE_PRICE_BASIC_MONTHLY", "price_scenario_basic_monthly"],
+  ["STRIPE_PRICE_ENTERPRISE_MONTHLY", "price_scenario_enterprise_monthly"],
+] as const) {
+  if (!process.env[k]?.trim()) process.env[k] = v;
+}
+
+// Mirror writes re-read the subscription from Stripe (2026-11). The mocks below are Stripe's state:
+// every mock passed to activation or a webhook is registered here and served by the retrieve seam.
+const stripeSubscriptionState = new Map<string, unknown>();
+__setSubscriptionRetrieveFnForTests(async (id) => {
+  const sub = stripeSubscriptionState.get(id);
+  if (!sub) throw Object.assign(new Error("No such subscription"), { code: "resource_missing", statusCode: 404 });
+  return sub as never;
+});
+function asStripeState<T extends { id: string }>(sub: T): T {
+  stripeSubscriptionState.set(sub.id, sub);
+  return sub;
+}
 import { provisionInternalBasicSubscription } from "../src/services/subscription.service.js";
 import { handleStripeBillingWebhookEvent } from "../src/services/stripeBillingWebhook.service.js";
 import { STRIPE_BILLING_AUDIT_TYPES } from "../src/lib/subscription/subscriptionAuditTypes.js";
@@ -143,7 +169,7 @@ async function webhookLifecycle(
   const event = {
     id: `evt_${type}_${sub.id}_${Date.now()}`,
     type,
-    data: { object: sub },
+    data: { object: asStripeState(sub) },
   } as Stripe.Event;
   await handleStripeBillingWebhookEvent(event);
 }
@@ -167,7 +193,7 @@ async function activateViaProductionPath(
   });
   const outcome = await activateSubscriptionMirrorFromStripeSubscription({
     businessId,
-    sub,
+    sub: asStripeState(sub),
     auditType: STRIPE_BILLING_AUDIT_TYPES.subscriptionCreated,
     stripeEventId: `evt_activate_${subId}`,
     source: opts.source ?? "webhook_subscription_created",
@@ -185,16 +211,22 @@ const BASIC_CAPS: SubscriptionCapability[] = [
   "tableQr",
   "basicAnalytics",
   "qrTemplates",
+  // Pay-per-print physical QR orders are available on Basic (175e5577).
+  "physicalQrPrinting",
   "teamManagement",
 ];
 
 const PRO_ONLY_CAPS: SubscriptionCapability[] = [
+  // The monthly included print order is Pro-only (175e5577).
+  "physicalQrPrintingIncluded",
   "brandingCustomization",
   "advancedAnalytics",
   "csvExport",
   "multiLocation",
   "employeeGoals",
   "customerFeedback",
+  // Pro-only custom job titles (see git log -S customJobTitles on subscriptionCapabilities.ts).
+  "customJobTitles",
 ];
 
 function assertCapabilityMatrix(tier: BusinessSubscriptionTier | null, label: string): string | null {
@@ -402,7 +434,7 @@ async function runScenarios(): Promise<void> {
     // verify idempotent activation path instead (same service as webhook)
     await activateSubscriptionMirrorFromStripeSubscription({
       businessId,
-      sub,
+      sub: asStripeState(sub),
       auditType: STRIPE_BILLING_AUDIT_TYPES.subscriptionCreated,
       stripeEventId: `evt_sync_${subId}`,
       source: "checkout_return_sync",

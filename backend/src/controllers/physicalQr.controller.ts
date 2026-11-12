@@ -1,3 +1,4 @@
+import { physicalQrOrderFulfillmentBlock } from "../lib/physicalQr/fulfillmentEligibility.js";
 import type { Request, Response } from "express";
 import { Role } from "@prisma/client";
 import { logServerError } from "../utils/httpErrors.js";
@@ -166,12 +167,9 @@ export async function printMyPhysicalQrOrder(req: Request, res: Response) {
     const auth = await requireManagerBusiness(req, res);
     if (!auth) return;
     const row = await getPhysicalQrOrderForBusiness(auth.businessId, String(req.params.orderId ?? ""));
-    if (row.paymentStatus !== "PAID") {
-      return res.status(409).json({
-        success: false,
-        code: "PAYMENT_REQUIRED",
-        message: "Print files are available after payment is confirmed.",
-      });
+    const block = physicalQrOrderFulfillmentBlock(row);
+    if (block) {
+      return res.status(409).json({ success: false, code: block.code, message: block.message });
     }
     const itemId = String(req.query.itemId ?? "").trim();
     const items = resolveOrderItemRows(row);

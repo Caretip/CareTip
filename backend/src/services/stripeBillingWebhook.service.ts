@@ -1,4 +1,4 @@
-import { SubscriptionStatus } from "@prisma/client";
+import { SubscriptionEventProcessingResult } from "@prisma/client";
 import type Stripe from "stripe";
 import { isSubscriptionBillingEnabled } from "../config/featureFlags.js";
 import { BILLING_CHECKOUT_METADATA_KEYS, STRIPE_BILLING_AUDIT_TYPES } from "../lib/subscription/subscriptionAuditTypes.js";
@@ -21,6 +21,11 @@ import {
   isBillingWebhookClaimStillOwned,
 } from "./billingWebhookProcessingClaim.service.js";
 import { logTrialSync } from "../lib/subscription/trialSyncDebugLog.js";
+import {
+  retrieveStripeSubscriptionAuthoritative,
+  withSubscriptionSyncLease,
+} from "./subscriptionStripeSync.js";
+import { PaymentOperationBusyError } from "../lib/payments/operationLease.js";
 import {
   handleSubscriptionInvoicePaymentFailedNotification,
   supersedeSubscriptionPaymentFailedNotificationsForInvoice,
@@ -187,36 +192,39 @@ async function handleInvoicePaymentSucceeded(
     return;
   }
 
-  const stripe = getStripeClient();
-  const sub = await stripe.subscriptions.retrieve(subId);
-  const row = await resolveSubscriptionRow(sub);
-  if (!row) {
+  const sub = await retrieveStripeSubscriptionAuthoritative(subId);
+  const row = sub === "missing" ? null : await resolveSubscriptionRow(sub);
+  if (sub === "missing" || !row) {
     await recordIgnoredBillingEvent({
       ctx,
       auditType: STRIPE_BILLING_AUDIT_TYPES.invoicePaymentSucceeded,
-      payload: { reason: "subscription_row_not_found", stripeSubscriptionId: subId },
+      payload: {
+        reason: sub === "missing" ? "stripe_subscription_missing" : "subscription_row_not_found",
+        stripeSubscriptionId: subId,
+      },
     });
     return;
   }
 
-  const snapshot = buildMirrorSnapshotFromStripeSubscription(sub);
-  if (snapshot.status !== SubscriptionStatus.active && snapshot.status !== SubscriptionStatus.trialing) {
-    snapshot.status = SubscriptionStatus.active;
-  }
-
-  await applyStripeMirrorTransactional({
-    subscriptionRowId: row.id,
+  // A paid invoice is a payment fact, not an entitlement decision. The mirror follows the
+  // subscription's current Stripe status (re-read under the business sync lease); it is never forced
+  // to "active", so a late invoice event cannot revive a canceled, unpaid or incomplete subscription.
+  const outcome = await activateSubscriptionMirrorFromStripeSubscription({
     businessId: row.businessId,
-    snapshot,
+    sub,
     auditType: STRIPE_BILLING_AUDIT_TYPES.invoicePaymentSucceeded,
     stripeEventId: event.id,
-    auditPayload: {
-      invoiceId: invoice.id,
-      amountPaid: invoice.amount_paid,
-      stripeSubscriptionId: subId,
-    },
+    source: "webhook_invoice_payment_succeeded",
     billingWebhookClaimToken: ctx.claimToken,
+    auditPayloadExtra: { invoiceId: invoice.id, amountPaid: invoice.amount_paid },
   });
+  if (outcome === "ignored") {
+    await recordIgnoredBillingEvent({
+      ctx,
+      auditType: STRIPE_BILLING_AUDIT_TYPES.invoicePaymentSucceeded,
+      payload: { reason: "activation_ignored", invoiceId: invoice.id, stripeSubscriptionId: subId },
+    });
+  }
 
   await supersedeSubscriptionPaymentFailedNotificationsForInvoice(invoice.id);
 }
@@ -236,16 +244,42 @@ async function handleInvoicePaymentFailed(
     return;
   }
 
-  const stripe = getStripeClient();
-  const sub = await stripe.subscriptions.retrieve(subId);
-  const row = await resolveSubscriptionRow(sub);
-  if (!row) {
+  const hint = await retrieveStripeSubscriptionAuthoritative(subId);
+  const row = hint === "missing" ? null : await resolveSubscriptionRow(hint);
+  if (hint === "missing" || !row) {
     await recordIgnoredBillingEvent({
       ctx,
       auditType: STRIPE_BILLING_AUDIT_TYPES.invoicePaymentFailed,
-      payload: { reason: "subscription_row_not_found", stripeSubscriptionId: subId },
+      payload: {
+        reason: hint === "missing" ? "stripe_subscription_missing" : "subscription_row_not_found",
+        stripeSubscriptionId: subId,
+      },
     });
     return;
+  }
+
+  const applied = await withSubscriptionSyncLease(row.businessId, async () => {
+  const sub = await retrieveStripeSubscriptionAuthoritative(subId);
+  if (sub === "missing") {
+    await recordIgnoredBillingEvent({
+      ctx,
+      auditType: STRIPE_BILLING_AUDIT_TYPES.invoicePaymentFailed,
+      payload: { reason: "stripe_subscription_missing", stripeSubscriptionId: subId },
+    });
+    return false;
+  }
+  const mirror = await prisma.subscription.findUnique({
+    where: { id: row.id },
+    select: { stripeSubscriptionId: true },
+  });
+  if (mirror?.stripeSubscriptionId && mirror.stripeSubscriptionId !== sub.id) {
+    // The failed invoice belongs to a subscription this business has already replaced.
+    await recordIgnoredBillingEvent({
+      ctx,
+      auditType: STRIPE_BILLING_AUDIT_TYPES.invoicePaymentFailed,
+      payload: { reason: "superseded_subscription", stripeSubscriptionId: subId },
+    });
+    return false;
   }
 
   const snapshot = buildMirrorSnapshotFromStripeSubscription(sub);
@@ -275,7 +309,7 @@ async function handleInvoicePaymentFailed(
       reason: "invoice_payment_failed_final",
       billingWebhookClaimToken: ctx.claimToken,
     });
-    return;
+    return false;
   }
 
   await applyStripeMirrorTransactional({
@@ -292,6 +326,9 @@ async function handleInvoicePaymentFailed(
     },
     billingWebhookClaimToken: ctx.claimToken,
   });
+  return true;
+  });
+  if (!applied) return;
 
   await handleSubscriptionInvoicePaymentFailedNotification({
     businessId: row.businessId,
@@ -436,6 +473,7 @@ export async function handleStripeBillingWebhookEvent(
 
   if (!isSubscriptionBillingEnabled()) {
     logTrialSync("webhook.dispatch.stop", { reason: "billing_disabled" });
+    await deferBillingEventWhileDisabled(event);
     return { received: true, billingDisabled: true };
   }
 
@@ -485,13 +523,18 @@ export async function handleStripeBillingWebhookEvent(
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     if (isSubscriptionCheckoutSession(session)) {
-      await runWithFailureRecording(
-        STRIPE_BILLING_AUDIT_TYPES.checkoutSessionCompleted,
-        { eventType: event.type },
-        async () => {
-          await handleSubscriptionCheckoutCompleted(ctx, event, session);
-        },
-      );
+      try {
+        await runWithFailureRecording(
+          STRIPE_BILLING_AUDIT_TYPES.checkoutSessionCompleted,
+          { eventType: event.type },
+          async () => {
+            await handleSubscriptionCheckoutCompleted(ctx, event, session);
+          },
+        );
+      } catch (err) {
+        if (err instanceof PaymentOperationBusyError) throw new BillingWebhookConcurrentDeliveryError(event.id);
+        throw err;
+      }
       return { received: true };
     }
   }
@@ -505,10 +548,102 @@ export async function handleStripeBillingWebhookEvent(
     return { received: true };
   }
 
-  await runWithFailureRecording(event.type, { eventType: event.type }, async () => {
-    await dispatchBillingEvent(ctx, event);
-    await assertBillingWebhookClaimFinalized(ctx);
-  });
+  try {
+    await runWithFailureRecording(event.type, { eventType: event.type }, async () => {
+      await dispatchBillingEvent(ctx, event);
+      await assertBillingWebhookClaimFinalized(ctx);
+    });
+  } catch (err) {
+    if (err instanceof PaymentOperationBusyError) throw new BillingWebhookConcurrentDeliveryError(event.id);
+    throw err;
+  }
 
   return { received: true };
+}
+
+/** Reason stored on a deferred event; the claim service treats it as retryable. */
+export const BILLING_DISABLED_DEFERRED_REASON = "billing_disabled_deferred";
+
+/**
+ * While SUBSCRIPTION_BILLING_ENABLED is off, verified billing events are recorded (event id + type,
+ * no payload) as retryable-ignored instead of being dropped. `replayDeferredBillingEvents` re-fetches
+ * them from Stripe and processes them once billing is enabled again. Idempotent: the event id is
+ * unique, and an event that was already processed is never downgraded to deferred.
+ */
+async function deferBillingEventWhileDisabled(event: Stripe.Event): Promise<void> {
+  const existing = await prisma.subscriptionEvent.findUnique({
+    where: { stripeEventId: event.id },
+    select: { id: true },
+  });
+  if (existing) return; // redelivery, or already processed before billing was turned off
+  try {
+    await prisma.subscriptionEvent.create({
+      data: {
+        subscriptionId: null,
+        auditType: event.type,
+        type: event.type,
+        stripeEventId: event.id,
+        processingResult: SubscriptionEventProcessingResult.ignored,
+        payload: { reason: BILLING_DISABLED_DEFERRED_REASON, eventType: event.type },
+        occurredAt: new Date((event.created ?? Math.floor(Date.now() / 1000)) * 1000),
+      },
+    });
+  } catch (err) {
+    if ((err as { code?: string })?.code !== "P2002") throw err;
+  }
+}
+
+type RetrieveEventFn = (id: string) => Promise<Stripe.Event>;
+let retrieveEventFnForTests: RetrieveEventFn | null = null;
+export function __setRetrieveStripeEventFnForTests(fn: RetrieveEventFn | null): void {
+  retrieveEventFnForTests = fn;
+}
+
+/** Stripe keeps events for 30 days; older deferred events cannot be replayed. */
+const DEFERRED_EVENT_MAX_AGE_MS = 29 * 24 * 60 * 60_000;
+
+export async function replayDeferredBillingEvents(limit = 50): Promise<{
+  replayed: number;
+  failed: number;
+  expired: number;
+  skipped: "billing_disabled" | null;
+}> {
+  if (!isSubscriptionBillingEnabled()) return { replayed: 0, failed: 0, expired: 0, skipped: "billing_disabled" };
+  const rows = await prisma.subscriptionEvent.findMany({
+    where: {
+      processingResult: SubscriptionEventProcessingResult.ignored,
+      payload: { path: ["reason"], equals: BILLING_DISABLED_DEFERRED_REASON },
+      stripeEventId: { not: null },
+    },
+    orderBy: { occurredAt: "asc" },
+    take: limit,
+    select: { id: true, stripeEventId: true, occurredAt: true },
+  });
+  let replayed = 0;
+  let failed = 0;
+  let expired = 0;
+  for (const row of rows) {
+    if (Date.now() - row.occurredAt.getTime() > DEFERRED_EVENT_MAX_AGE_MS) {
+      await prisma.subscriptionEvent.update({
+        where: { id: row.id },
+        data: { payload: { reason: "billing_disabled_deferred_expired" } },
+      });
+      expired += 1;
+      continue;
+    }
+    try {
+      const event = retrieveEventFnForTests
+        ? await retrieveEventFnForTests(row.stripeEventId!)
+        : await getStripeClient().events.retrieve(row.stripeEventId!);
+      await handleStripeBillingWebhookEvent(event);
+      replayed += 1;
+    } catch (err) {
+      failed += 1;
+      logTrialSync("billing_replay.failed", {
+        stripeEventId: row.stripeEventId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+  return { replayed, failed, expired, skipped: null };
 }

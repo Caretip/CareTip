@@ -6,6 +6,8 @@
  *   CRON_SECRET — required; must match web service CRON_SECRET
  *   CARE_TIP_API_ORIGIN — default https://caretip.onrender.com
  *   CARE_TIP_INTERNAL_JOB_PATH — e.g. /api/internal/jobs/category-retention-sweep
+ *   CARE_TIP_JOB_TIMEOUT_MS — optional client timeout (default 120000, max 900000). The API keeps
+ *     running a job if this caller gives up; jobs that must not overlap hold their own lease.
  */
 const secret = process.env.CRON_SECRET?.trim();
 if (!secret) {
@@ -26,7 +28,8 @@ const origin = (process.env.CARE_TIP_API_ORIGIN?.trim() || "https://caretip.onre
 const url = `${origin}${jobPath.startsWith("/") ? jobPath : `/${jobPath}`}`;
 
 const controller = new AbortController();
-const timeout = setTimeout(() => controller.abort(), 120_000);
+const timeoutMs = Math.min(900_000, Math.max(10_000, Number(process.env.CARE_TIP_JOB_TIMEOUT_MS) || 120_000));
+const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
 try {
   const res = await fetch(url, {

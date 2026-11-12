@@ -24,6 +24,15 @@ const results: string[] = [];
 const pass = (m: string) => results.push(`PASS: ${m}`);
 const fail = (m: string) => results.push(`FAIL: ${m}`);
 
+// Test fixture: trial rules only apply with billing and trials on. An isolated run blanks every .env
+// name, so fill them in when unset (a deliberately configured environment is left as it is).
+for (const [k, v] of [
+  ["SUBSCRIPTION_BILLING_ENABLED", "true"],
+  ["SUBSCRIPTION_TRIAL_ENABLED", "true"],
+] as const) {
+  if (!process.env[k]?.trim()) process.env[k] = v;
+}
+
 function billingPrereqsOk(): boolean {
   const billing = process.env.SUBSCRIPTION_BILLING_ENABLED?.trim().toLowerCase();
   const billingOn =

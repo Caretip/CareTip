@@ -1,3 +1,4 @@
+import { sqlUtcTimestamp } from "./sqlUtcTimestamp.js";
 import { Prisma } from "@prisma/client";
 import { DateTime } from "luxon";
 import { prisma } from "../prisma.js";
@@ -36,8 +37,8 @@ export async function queryDailyTipBuckets(opts: {
       COALESCE(SUM(amount), 0)::float AS total
     FROM tips
     WHERE status = 'success'
-      AND created_at >= ${opts.startUtc}
-      AND created_at <= ${opts.endUtc}
+      AND created_at >= ${sqlUtcTimestamp(opts.startUtc)}
+      AND created_at <= ${sqlUtcTimestamp(opts.endUtc)}
       ${employeeFilter}
       ${businessFilter}
     GROUP BY 1
@@ -78,8 +79,8 @@ export async function queryRecentEmployeeTips(opts: {
     FROM tips
     WHERE employee_id = ${opts.employeeId}
       AND status = 'success'
-      AND created_at >= ${opts.startUtc}
-      AND created_at <= ${opts.endUtc}
+      AND created_at >= ${sqlUtcTimestamp(opts.startUtc)}
+      AND created_at <= ${sqlUtcTimestamp(opts.endUtc)}
     ORDER BY created_at DESC
     LIMIT ${take}
   `);
@@ -168,8 +169,8 @@ export async function queryEmployeeAnalyticsBundle(opts: {
             FROM tips
             WHERE employee_id = ${opts.employeeId}
               AND status = 'success'
-              AND created_at >= ${opts.startUtc}
-              AND created_at <= ${opts.endUtc}
+              AND created_at >= ${sqlUtcTimestamp(opts.startUtc)}
+              AND created_at <= ${sqlUtcTimestamp(opts.endUtc)}
             ORDER BY created_at DESC
             LIMIT ${take}
           ) r
@@ -183,8 +184,8 @@ export async function queryEmployeeAnalyticsBundle(opts: {
             FROM tips
             WHERE employee_id = ${opts.employeeId}
               AND status = 'success'
-              AND created_at >= ${opts.startUtc}
-              AND created_at <= ${opts.endUtc}
+              AND created_at >= ${sqlUtcTimestamp(opts.startUtc)}
+              AND created_at <= ${sqlUtcTimestamp(opts.endUtc)}
             GROUP BY 1
           ) b
         ) AS buckets_json
@@ -208,8 +209,8 @@ export async function queryEmployeeAnalyticsBundle(opts: {
           FROM tips
           WHERE employee_id = ${opts.employeeId}
             AND status = 'success'
-            AND created_at >= ${opts.startUtc}
-            AND created_at <= ${opts.endUtc}
+            AND created_at >= ${sqlUtcTimestamp(opts.startUtc)}
+            AND created_at <= ${sqlUtcTimestamp(opts.endUtc)}
           ORDER BY created_at DESC
           LIMIT ${take}
         ) r
@@ -223,8 +224,8 @@ export async function queryEmployeeAnalyticsBundle(opts: {
           FROM tips
           WHERE employee_id = ${opts.employeeId}
             AND status = 'success'
-            AND created_at >= ${opts.startUtc}
-            AND created_at <= ${opts.endUtc}
+            AND created_at >= ${sqlUtcTimestamp(opts.startUtc)}
+            AND created_at <= ${sqlUtcTimestamp(opts.endUtc)}
           GROUP BY 1
         ) b
       ) AS buckets_json
@@ -261,8 +262,8 @@ export async function queryHourlyTipBuckets(opts: {
       COALESCE(SUM(amount), 0)::float AS total
     FROM tips
     WHERE status = 'success'
-      AND created_at >= ${opts.startUtc}
-      AND created_at <= ${opts.endUtc}
+      AND created_at >= ${sqlUtcTimestamp(opts.startUtc)}
+      AND created_at <= ${sqlUtcTimestamp(opts.endUtc)}
       ${employeeFilter}
       ${businessFilter}
     GROUP BY 1
@@ -301,8 +302,8 @@ export async function queryBusinessTipShiftAggregates(opts: {
       FROM tips
       WHERE business_id = ${opts.businessId}
         AND status = 'success'
-        AND created_at >= ${opts.startUtc}
-        AND created_at <= ${opts.endUtc}
+        AND created_at >= ${sqlUtcTimestamp(opts.startUtc)}
+        AND created_at <= ${sqlUtcTimestamp(opts.endUtc)}
       GROUP BY 1
       ORDER BY 1 ASC
     `),
@@ -323,8 +324,8 @@ export async function queryBusinessTipShiftAggregates(opts: {
         FROM tips
         WHERE business_id = ${opts.businessId}
           AND status = 'success'
-          AND created_at >= ${opts.startUtc}
-          AND created_at <= ${opts.endUtc}
+          AND created_at >= ${sqlUtcTimestamp(opts.startUtc)}
+          AND created_at <= ${sqlUtcTimestamp(opts.endUtc)}
         GROUP BY 1, 2
       ) s
     `),
@@ -370,8 +371,8 @@ export async function queryMonthlyTipTotalsForRange(opts: {
       COALESCE(SUM(amount), 0)::float AS total
     FROM tips
     WHERE status = 'success'
-      AND created_at >= ${opts.startUtc}
-      AND created_at <= ${opts.endUtc}
+      AND created_at >= ${sqlUtcTimestamp(opts.startUtc)}
+      AND created_at <= ${sqlUtcTimestamp(opts.endUtc)}
       ${employeeFilter}
       ${businessFilter}
     GROUP BY 1
@@ -401,8 +402,8 @@ export async function queryYearlyTipTotalsForRange(opts: {
     FROM tips
     WHERE status = 'success'
       AND business_id = ${opts.businessId}
-      AND created_at >= ${opts.startUtc}
-      AND created_at <= ${opts.endUtc}
+      AND created_at >= ${sqlUtcTimestamp(opts.startUtc)}
+      AND created_at <= ${sqlUtcTimestamp(opts.endUtc)}
     GROUP BY 1
     ORDER BY 1 ASC
   `);
@@ -430,8 +431,8 @@ export async function queryTipRankingsByLocationAndTable(opts: {
     LEFT JOIN locations l ON l.id = t.location_id
     WHERE t.business_id = ${opts.businessId}
       AND t.status = 'success'
-      AND t.created_at >= ${opts.startUtc}
-      AND t.created_at <= ${opts.endUtc}
+      AND t.created_at >= ${sqlUtcTimestamp(opts.startUtc)}
+      AND t.created_at <= ${sqlUtcTimestamp(opts.endUtc)}
     GROUP BY t.location_id, l.name
     ORDER BY tips_eur DESC
     LIMIT 25
@@ -449,8 +450,8 @@ export async function queryTipRankingsByLocationAndTable(opts: {
     LEFT JOIN venue_tables tb ON tb.id = t.table_id
     WHERE t.business_id = ${opts.businessId}
       AND t.status = 'success'
-      AND t.created_at >= ${opts.startUtc}
-      AND t.created_at <= ${opts.endUtc}
+      AND t.created_at >= ${sqlUtcTimestamp(opts.startUtc)}
+      AND t.created_at <= ${sqlUtcTimestamp(opts.endUtc)}
       AND t.table_id IS NOT NULL
     GROUP BY t.table_id, tb.name
     ORDER BY tips_eur DESC
@@ -489,8 +490,8 @@ export async function queryPriorPeriodTipTotals(opts: {
     FROM tips
     WHERE business_id = ${opts.businessId}
       AND status = 'success'
-      AND created_at >= ${priorStart}
-      AND created_at <= ${priorEnd}
+      AND created_at >= ${sqlUtcTimestamp(priorStart)}
+      AND created_at <= ${sqlUtcTimestamp(priorEnd)}
   `);
   return {
     totalTips: Number(row?.total ?? 0),
@@ -618,16 +619,16 @@ export async function queryBusinessDashboardMetaAndSummaryMetrics(opts: {
           WHERE ts.created_at >= bd.range_start AND ts.created_at <= bd.range_end
         ))::int AS period_count,
         COALESCE(SUM(ts.amount) FILTER (
-          WHERE ts.created_at >= ${opts.sixtyAgo}
+          WHERE ts.created_at >= ${sqlUtcTimestamp(opts.sixtyAgo)}
         ), 0)::float AS last60_amount,
         (COUNT(*) FILTER (
-          WHERE ts.created_at >= ${opts.sixtyAgo}
+          WHERE ts.created_at >= ${sqlUtcTimestamp(opts.sixtyAgo)}
         ))::int AS last60_count,
         COALESCE(SUM(ts.amount) FILTER (
-          WHERE ts.created_at >= bd.today_start AND ts.created_at <= ${opts.todayEnd}
+          WHERE ts.created_at >= bd.today_start AND ts.created_at <= ${sqlUtcTimestamp(opts.todayEnd)}
         ), 0)::float AS today_amount,
         (COUNT(*) FILTER (
-          WHERE ts.created_at >= bd.today_start AND ts.created_at <= ${opts.todayEnd}
+          WHERE ts.created_at >= bd.today_start AND ts.created_at <= ${sqlUtcTimestamp(opts.todayEnd)}
         ))::int AS today_count
       FROM tip_scoped ts
       CROSS JOIN bounds bd
@@ -675,36 +676,36 @@ export async function queryBusinessDashboardMetaAndSummaryMetrics(opts: {
       FROM tips
       WHERE business_id = ${opts.businessId}
         AND status = 'success'
-        AND created_at >= ${new Date(
+        AND created_at >= ${sqlUtcTimestamp(new Date(
           Math.min(
             (opts.scanStart ?? opts.rangeStart)!.getTime(),
             opts.sixtyAgo.getTime(),
             (opts.todayStart ?? opts.rangeStart)!.getTime(),
           ),
-        )}
-        AND created_at <= ${new Date(
+        ))}
+        AND created_at <= ${sqlUtcTimestamp(new Date(
           Math.max((opts.scanEnd ?? opts.rangeEnd)!.getTime(), opts.todayEnd.getTime()),
-        )}
+        ))}
     ),
     tip_agg AS (
       SELECT
         COALESCE(SUM(amount) FILTER (
-          WHERE created_at >= ${opts.rangeStart!} AND created_at <= ${opts.rangeEnd!}
+          WHERE created_at >= ${sqlUtcTimestamp(opts.rangeStart!)} AND created_at <= ${sqlUtcTimestamp(opts.rangeEnd!)}
         ), 0)::float AS period_amount,
         (COUNT(*) FILTER (
-          WHERE created_at >= ${opts.rangeStart!} AND created_at <= ${opts.rangeEnd!}
+          WHERE created_at >= ${sqlUtcTimestamp(opts.rangeStart!)} AND created_at <= ${sqlUtcTimestamp(opts.rangeEnd!)}
         ))::int AS period_count,
         COALESCE(SUM(amount) FILTER (
-          WHERE created_at >= ${opts.sixtyAgo}
+          WHERE created_at >= ${sqlUtcTimestamp(opts.sixtyAgo)}
         ), 0)::float AS last60_amount,
         (COUNT(*) FILTER (
-          WHERE created_at >= ${opts.sixtyAgo}
+          WHERE created_at >= ${sqlUtcTimestamp(opts.sixtyAgo)}
         ))::int AS last60_count,
         COALESCE(SUM(amount) FILTER (
-          WHERE created_at >= ${opts.todayStart!} AND created_at <= ${opts.todayEnd}
+          WHERE created_at >= ${sqlUtcTimestamp(opts.todayStart!)} AND created_at <= ${sqlUtcTimestamp(opts.todayEnd)}
         ), 0)::float AS today_amount,
         (COUNT(*) FILTER (
-          WHERE created_at >= ${opts.todayStart!} AND created_at <= ${opts.todayEnd}
+          WHERE created_at >= ${sqlUtcTimestamp(opts.todayStart!)} AND created_at <= ${sqlUtcTimestamp(opts.todayEnd)}
         ))::int AS today_count
       FROM tip_scoped
     ),
@@ -793,8 +794,8 @@ export async function queryBusinessTipsByEmployee(opts: {
     FROM tips
     WHERE business_id = ${opts.businessId}
       AND status = 'success'
-      AND created_at >= ${opts.startUtc}
-      AND created_at <= ${opts.endUtc}
+      AND created_at >= ${sqlUtcTimestamp(opts.startUtc)}
+      AND created_at <= ${sqlUtcTimestamp(opts.endUtc)}
     GROUP BY employee_id
     ORDER BY employee_id ASC
   `);
@@ -841,30 +842,30 @@ export async function queryEmployeeDashboardSummaryMetrics(opts: {
   >(Prisma.sql`
     SELECT
       COALESCE(SUM(t.amount) FILTER (
-        WHERE t.created_at >= ${opts.periodStart} AND t.created_at <= ${opts.periodEnd}
+        WHERE t.created_at >= ${sqlUtcTimestamp(opts.periodStart)} AND t.created_at <= ${sqlUtcTimestamp(opts.periodEnd)}
       ), 0)::float AS period_amount,
       (COUNT(*) FILTER (
-        WHERE t.created_at >= ${opts.periodStart} AND t.created_at <= ${opts.periodEnd}
+        WHERE t.created_at >= ${sqlUtcTimestamp(opts.periodStart)} AND t.created_at <= ${sqlUtcTimestamp(opts.periodEnd)}
       ))::int AS period_count,
       COALESCE(SUM(t.amount) FILTER (
-        WHERE t.created_at >= ${opts.monthStart} AND t.created_at <= ${opts.monthEnd}
+        WHERE t.created_at >= ${sqlUtcTimestamp(opts.monthStart)} AND t.created_at <= ${sqlUtcTimestamp(opts.monthEnd)}
       ), 0)::float AS month_amount,
       AVG(tf.rating) FILTER (
-        WHERE t.created_at >= ${opts.periodStart}
-          AND t.created_at <= ${opts.periodEnd}
+        WHERE t.created_at >= ${sqlUtcTimestamp(opts.periodStart)}
+          AND t.created_at <= ${sqlUtcTimestamp(opts.periodEnd)}
           AND tf.rating IS NOT NULL
       )::float AS period_avg_rating,
       (COUNT(tf.id) FILTER (
-        WHERE t.created_at >= ${opts.periodStart}
-          AND t.created_at <= ${opts.periodEnd}
+        WHERE t.created_at >= ${sqlUtcTimestamp(opts.periodStart)}
+          AND t.created_at <= ${sqlUtcTimestamp(opts.periodEnd)}
           AND tf.rating IS NOT NULL
       ))::int AS period_rating_count
     FROM tips t
     LEFT JOIN tip_feedback tf ON tf.transaction_id = t.id
     WHERE t.employee_id = ${opts.employeeId}
       AND t.status = 'success'
-      AND t.created_at >= ${opts.scanStart}
-      AND t.created_at <= ${opts.scanEnd}
+      AND t.created_at >= ${sqlUtcTimestamp(opts.scanStart)}
+      AND t.created_at <= ${sqlUtcTimestamp(opts.scanEnd)}
   `);
 
   const tSql = Math.round(performance.now() - t0);
@@ -945,8 +946,8 @@ async function queryBusinessTipPeriodRollups(opts: {
         FROM tips
         WHERE business_id = ${opts.businessId}
           AND status = 'success'
-          AND created_at >= ${opts.startUtc}
-          AND created_at <= ${opts.endUtc}
+          AND created_at >= ${sqlUtcTimestamp(opts.startUtc)}
+          AND created_at <= ${sqlUtcTimestamp(opts.endUtc)}
         GROUP BY 1, 2
       ),
       tagged AS (
@@ -979,8 +980,8 @@ async function queryBusinessTipPeriodRollups(opts: {
         FROM tips
         WHERE business_id = ${opts.businessId}
           AND status = 'success'
-          AND created_at >= ${opts.startUtc}
-          AND created_at <= ${opts.endUtc}
+          AND created_at >= ${sqlUtcTimestamp(opts.startUtc)}
+          AND created_at <= ${sqlUtcTimestamp(opts.endUtc)}
         GROUP BY 1, 2, 3
       )
       SELECT
@@ -1188,28 +1189,28 @@ export async function queryBusinessDashboardSummaryMetrics(opts: {
   >(Prisma.sql`
     SELECT
       COALESCE(SUM(amount) FILTER (
-        WHERE created_at >= ${opts.rangeStart} AND created_at <= ${opts.rangeEnd}
+        WHERE created_at >= ${sqlUtcTimestamp(opts.rangeStart)} AND created_at <= ${sqlUtcTimestamp(opts.rangeEnd)}
       ), 0)::float AS period_amount,
       (COUNT(*) FILTER (
-        WHERE created_at >= ${opts.rangeStart} AND created_at <= ${opts.rangeEnd}
+        WHERE created_at >= ${sqlUtcTimestamp(opts.rangeStart)} AND created_at <= ${sqlUtcTimestamp(opts.rangeEnd)}
       ))::int AS period_count,
       COALESCE(SUM(amount) FILTER (
-        WHERE created_at >= ${opts.sixtyAgo}
+        WHERE created_at >= ${sqlUtcTimestamp(opts.sixtyAgo)}
       ), 0)::float AS last60_amount,
       (COUNT(*) FILTER (
-        WHERE created_at >= ${opts.sixtyAgo}
+        WHERE created_at >= ${sqlUtcTimestamp(opts.sixtyAgo)}
       ))::int AS last60_count,
       COALESCE(SUM(amount) FILTER (
-        WHERE created_at >= ${opts.todayStart} AND created_at <= ${opts.todayEnd}
+        WHERE created_at >= ${sqlUtcTimestamp(opts.todayStart)} AND created_at <= ${sqlUtcTimestamp(opts.todayEnd)}
       ), 0)::float AS today_amount,
       (COUNT(*) FILTER (
-        WHERE created_at >= ${opts.todayStart} AND created_at <= ${opts.todayEnd}
+        WHERE created_at >= ${sqlUtcTimestamp(opts.todayStart)} AND created_at <= ${sqlUtcTimestamp(opts.todayEnd)}
       ))::int AS today_count
     FROM tips
     WHERE business_id = ${opts.businessId}
       AND status = 'success'
-      AND created_at >= ${lowerBound}
-      AND created_at <= ${upperBound}
+      AND created_at >= ${sqlUtcTimestamp(lowerBound)}
+      AND created_at <= ${sqlUtcTimestamp(upperBound)}
   `);
 
   const tSql = Math.round(performance.now() - t0);

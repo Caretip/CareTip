@@ -11,6 +11,12 @@ import { prisma } from "../prisma.js";
 import { isSubscriptionBillingEnabled } from "../config/featureFlags.js";
 import { getStripeClient, isStripeConfigured } from "./stripe.service.js";
 import {
+  retrieveStripeSubscriptionAuthoritative,
+  withSubscriptionSyncLease,
+} from "./subscriptionStripeSync.js";
+import { PaymentOperationBusyError } from "../lib/payments/operationLease.js";
+import { recordPaymentDiscrepancy } from "./payments/paymentDiscrepancy.service.js";
+import {
   applyStripeMirrorTransactional,
   buildMirrorSnapshotFromStripeSubscription,
   downgradeToInternalBasic,
@@ -25,6 +31,8 @@ export type SubscriptionActivationSource =
   | "webhook_subscription_created"
   | "webhook_subscription_updated"
   | "webhook_subscription_deleted"
+  | "webhook_invoice_payment_succeeded"
+  | "billing_event_replay"
   | "checkout_return_sync";
 
 export type SubscriptionActivationOutcome =
@@ -125,11 +133,72 @@ async function resolveSubscriptionRow(sub: Stripe.Subscription) {
  */
 export async function activateSubscriptionMirrorFromStripeSubscription(params: {
   businessId: string;
+  /** Identifies the subscription; its contents are NOT trusted — the current state is re-read. */
   sub: Stripe.Subscription;
   auditType: SubscriptionAuditType;
   stripeEventId: string;
   source: SubscriptionActivationSource;
   billingWebhookClaimToken?: string | null;
+  auditPayloadExtra?: Record<string, unknown>;
+}): Promise<SubscriptionActivationOutcome> {
+  const hintMeta = metadataLookup(params.sub.metadata);
+  if (hintMeta.caretipBusinessId && hintMeta.caretipBusinessId !== params.businessId) {
+    logTrialSync("activation.stop", {
+      source: params.source,
+      outcome: "ignored",
+      reason: "business_metadata_mismatch",
+      expectedBusinessId: params.businessId,
+      metadataBusinessId: hintMeta.caretipBusinessId,
+    });
+    return "ignored";
+  }
+  return withSubscriptionSyncLease(params.businessId, async () => {
+    const fresh = await retrieveStripeSubscriptionAuthoritative(params.sub.id);
+    if (fresh === "missing") {
+      return handleMissingStripeSubscription(params);
+    }
+    return activateSubscriptionMirrorLocked({ ...params, sub: fresh });
+  });
+}
+
+/** Stripe no longer has the subscription: end entitlement only if the mirror still points at it. */
+async function handleMissingStripeSubscription(params: {
+  businessId: string;
+  sub: Stripe.Subscription;
+  auditType: SubscriptionAuditType;
+  stripeEventId: string;
+  source: SubscriptionActivationSource;
+  billingWebhookClaimToken?: string | null;
+}): Promise<SubscriptionActivationOutcome> {
+  const row = await prisma.subscription.findUnique({
+    where: { businessId: params.businessId },
+    select: { id: true, businessId: true, stripeSubscriptionId: true },
+  });
+  if (!row || row.stripeSubscriptionId !== params.sub.id) {
+    logTrialSync("activation.stop", { source: params.source, outcome: "ignored", reason: "stripe_subscription_missing" });
+    return "ignored";
+  }
+  await downgradeToInternalBasic({
+    subscriptionRowId: row.id,
+    businessId: row.businessId,
+    auditType: params.auditType,
+    stripeEventId: params.stripeEventId,
+    auditPayload: { source: params.source, stripeSubscriptionId: params.sub.id, stripeStatus: "missing" },
+    reason: "stripe_subscription_missing",
+    billingWebhookClaimToken: params.billingWebhookClaimToken,
+  });
+  return "mirror_removed";
+}
+
+/** Caller holds the business sync lease and passes the subscription as just retrieved from Stripe. */
+async function activateSubscriptionMirrorLocked(params: {
+  businessId: string;
+  sub: Stripe.Subscription;
+  auditType: SubscriptionAuditType;
+  stripeEventId: string;
+  source: SubscriptionActivationSource;
+  billingWebhookClaimToken?: string | null;
+  auditPayloadExtra?: Record<string, unknown>;
 }): Promise<SubscriptionActivationOutcome> {
   const { sub, auditType, stripeEventId, source } = params;
 
@@ -152,6 +221,7 @@ export async function activateSubscriptionMirrorFromStripeSubscription(params: {
     status: snapshot.status,
     cancelAtPeriodEnd: snapshot.cancelAtPeriodEnd,
     cancellationEffective: snapshot.cancellationEffective?.toISOString() ?? null,
+    ...(params.auditPayloadExtra ?? {}),
   };
 
   const meta = metadataLookup(sub.metadata);
@@ -199,6 +269,33 @@ export async function activateSubscriptionMirrorFromStripeSubscription(params: {
         status: snapshot.status,
       });
       return "mirror_created";
+    }
+  }
+
+  const current = await prisma.subscription.findUnique({
+    where: { id: row.id },
+    select: { stripeSubscriptionId: true, status: true },
+  });
+  if (current?.stripeSubscriptionId && current.stripeSubscriptionId !== sub.id) {
+    if (!isSubscriptionMirrorEntitled(snapshot)) {
+      // An older subscription of this business ended; it must not end the one that replaced it.
+      logTrialSync("activation.stop", {
+        source,
+        outcome: "ignored",
+        reason: "superseded_subscription",
+        stripeSubscriptionId: sub.id,
+        mirrorStripeSubscriptionId: current.stripeSubscriptionId,
+      });
+      return "ignored";
+    }
+    if (current.status === "active" || current.status === "trialing") {
+      await recordPaymentDiscrepancy({
+        workflow: "subscription",
+        kind: "multiple_entitled_subscriptions",
+        subjectKey: `business:${row.businessId}`,
+        businessId: row.businessId,
+        details: { mirrorStripeSubscriptionId: current.stripeSubscriptionId, incomingStripeSubscriptionId: sub.id },
+      });
     }
   }
 
@@ -379,13 +476,21 @@ export async function tryActivateSubscriptionFromStripeForBusiness(params: {
     }
   }
 
-  return activateSubscriptionMirrorFromStripeSubscription({
-    businessId: params.businessId,
-    sub,
-    auditType: STRIPE_BILLING_AUDIT_TYPES.checkoutSessionCompleted,
-    stripeEventId,
-    source,
-  });
+  try {
+    return await activateSubscriptionMirrorFromStripeSubscription({
+      businessId: params.businessId,
+      sub,
+      auditType: STRIPE_BILLING_AUDIT_TYPES.checkoutSessionCompleted,
+      stripeEventId,
+      source,
+    });
+  } catch (err) {
+    if (err instanceof PaymentOperationBusyError) {
+      logTrialSync("activation.checkout_return_sync.busy", { businessId: params.businessId });
+      return "ignored";
+    }
+    throw err;
+  }
 }
 
 /** Allow re-processing webhooks that were ignored before Option A create-on-first shipped. */

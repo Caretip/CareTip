@@ -16,6 +16,7 @@ import { prisma } from "../src/prisma.js";
 import { createManagerCheckoutSession } from "../src/services/managerBilling.service.js";
 import { reconcileOneSubscription } from "../src/services/subscriptionReconciliation.service.js";
 import { activateSubscriptionMirrorFromStripeSubscription } from "../src/services/subscriptionActivation.service.js";
+import { __setSubscriptionRetrieveFnForTests } from "../src/services/subscriptionStripeSync.js";
 import { STRIPE_BILLING_AUDIT_TYPES } from "../src/lib/subscription/subscriptionAuditTypes.js";
 import {
   isInternalBasicSubscription,
@@ -260,6 +261,8 @@ async function testProCancelReturnsBasic(): Promise<boolean> {
     currentPeriodEnd: pastUnix(1),
   });
 
+  // Activation re-reads the subscription from Stripe under the sync lease; the mock is Stripe's state.
+  __setSubscriptionRetrieveFnForTests(async () => canceled as never);
   await activateSubscriptionMirrorFromStripeSubscription({
     businessId: user.business.id,
     sub: canceled as never,
@@ -268,6 +271,7 @@ async function testProCancelReturnsBasic(): Promise<boolean> {
     source: "webhook_subscription_deleted",
   });
 
+  __setSubscriptionRetrieveFnForTests(null);
   const ent = await resolveSubscriptionEntitlements(user.business.id);
   const sub = await prisma.subscription.findUnique({
     where: { businessId: user.business.id },

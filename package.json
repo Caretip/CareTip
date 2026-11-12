@@ -118,6 +118,7 @@
     "test:employee-goal-sync-architecture": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/employee-goal-sync-architecture-runtime.ts",
     "test:employee-goal-sync": "npm --prefix backend run test:employee-goal-sync && npm run test:employee-goal-sync-architecture",
     "test:physical-qr-frontend": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/physical-qr-frontend-runtime.ts",
+    "test:physical-qr-hold-ui": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/physical-qr-hold-ui-runtime.ts",
     "test:print-qr-studio-session": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/print-qr-studio-session-runtime.ts",
     "test:physical-qr-orders-session": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/physical-qr-orders-session-runtime.ts",
     "test:employee-page-session": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/employee-page-session-runtime.ts",

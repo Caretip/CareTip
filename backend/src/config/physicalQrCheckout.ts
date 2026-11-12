@@ -13,6 +13,15 @@ export const PHYSICAL_QR_PRICE_NOT_CONFIGURED = "PRICE_NOT_CONFIGURED" as const;
 export const PHYSICAL_QR_CHECKOUT_NOT_ACTIVATED = "CHECKOUT_NOT_ACTIVATED" as const;
 export const PHYSICAL_QR_CHECKOUT_METADATA_SOURCE = "physical_qr_order" as const;
 
+/**
+ * QR print Checkout accepts immediate-confirmation methods only (policy 2026-11, decision C).
+ * "card" includes Apple Pay and Google Pay. Passing an explicit list makes Stripe ignore the
+ * Dashboard payment-method configuration, so delayed methods (SEPA Direct Debit, bank transfers, …)
+ * cannot appear through a Dashboard default. Adding a method here requires an approved and tested
+ * delayed-payment fulfilment lifecycle first.
+ */
+export const PHYSICAL_QR_CHECKOUT_PAYMENT_METHOD_TYPES: readonly ["card"] = ["card"] as const;
+
 export function isPhysicalQrCheckoutEnvEnabled(): boolean {
   return process.env.PHYSICAL_QR_CHECKOUT_ENABLED !== "false";
 }

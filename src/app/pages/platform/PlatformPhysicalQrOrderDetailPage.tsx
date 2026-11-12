@@ -9,11 +9,15 @@ import {
   markPlatformPhysicalQrPrinting,
   markPlatformPhysicalQrProcessing,
   postPlatformPhysicalQrInternalNote,
+  releasePlatformPhysicalQrHold,
   shipPlatformPhysicalQrOrder,
   type PhysicalQrAdminOrder,
+  type PhysicalQrHoldResolution,
   type PhysicalQrInternalNote,
 } from "../../lib/api";
 import {
+  isPhysicalQrFulfillable,
+  physicalQrFulfillmentHoldKey,
   formatBerlinDateTime,
   formatPhysicalQrMoney,
   physicalQrAddressLine,
@@ -51,11 +55,16 @@ export function PlatformPhysicalQrOrderDetailPage() {
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [downloadingItemId, setDownloadingItemId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [holdResolutions, setHoldResolutions] = useState<PhysicalQrHoldResolution[]>([]);
+  const [releaseReason, setReleaseReason] = useState("");
+  const [releaseConfirming, setReleaseConfirming] = useState(false);
+  const [releasing, setReleasing] = useState(false);
 
   const reload = useCallback(async () => {
     const data = await fetchPlatformPhysicalQrOrder(orderId);
     setOrder(data.order);
     setNotes(data.internalNotes);
+    setHoldResolutions(data.holdResolutions ?? []);
     setCarrier(data.order.carrier ?? "");
     setTrackingNumber(data.order.trackingNumber ?? "");
     setTrackingUrl(data.order.trackingUrl ?? "");
@@ -87,6 +96,27 @@ export function PlatformPhysicalQrOrderDetailPage() {
     } finally {
       setDownloadingPdf(false);
       setDownloadingItemId(null);
+    }
+  }
+
+  async function releaseHold() {
+    if (!order || releasing) return;
+    setReleasing(true);
+    try {
+      await releasePlatformPhysicalQrHold(order.id, {
+        reason: releaseReason.trim(),
+        expectedPaymentStatus: order.paymentStatus,
+      });
+      toast.success(t("admin.physicalQr.releaseDone"));
+      setReleaseReason("");
+      setReleaseConfirming(false);
+      await reload();
+    } catch (err) {
+      // Server messages explain exactly why (Stripe state, open findings, changed order).
+      toast.error(toDisplayErrorMessage(err, t("admin.physicalQr.releaseError")));
+      setReleaseConfirming(false);
+    } finally {
+      setReleasing(false);
     }
   }
 
@@ -134,6 +164,13 @@ export function PlatformPhysicalQrOrderDetailPage() {
       : t("admin.physicalQr.downloadPdf");
   const nextStep = physicalQrAdminNextStep(order.fulfillmentStatus, t);
   const paymentLabel = physicalQrPaymentLabel(order.paymentStatus, t, { totalAmount: order.totalAmount });
+  // Forward fulfillment (processing, printing, shipping) needs a fully paid order; the server enforces it too.
+  const fulfillable = isPhysicalQrFulfillable(order.paymentStatus, order.holdReleasedAt);
+  const holdKey = physicalQrFulfillmentHoldKey(order.paymentStatus, order.holdReleasedAt);
+  const releasable =
+    order.paymentStatus === "IN_REVIEW" || (order.paymentStatus === "PARTIALLY_REFUNDED" && !order.holdReleasedAt);
+  const reasonLength = releaseReason.trim().length;
+  const reasonOk = reasonLength >= 10 && reasonLength <= 1000;
   const fulfillmentLabel = physicalQrFulfillmentLabel(order.fulfillmentStatus, t, {
     totalAmount: order.totalAmount,
   });
@@ -172,8 +209,82 @@ export function PlatformPhysicalQrOrderDetailPage() {
           </div>
         </div>
 
+        {holdKey ? (
+          <div className="pq-order-section" role="status">
+            <p className="text-sm font-medium">{t("admin.physicalQr.holdTitle")}</p>
+            <p className="mt-1 break-words text-sm text-muted-foreground">{t(holdKey)}</p>
+            {order.paymentStatus === "REFUNDED" ? (
+              <p className="mt-1 break-words text-xs text-muted-foreground">{t("admin.physicalQr.holdNotReleasableRefunded")}</p>
+            ) : null}
+            {order.paymentStatus === "DISPUTED" ? (
+              <p className="mt-1 break-words text-xs text-muted-foreground">{t("admin.physicalQr.holdNotReleasableDisputed")}</p>
+            ) : null}
+            {releasable ? (
+              <div className="mt-3 space-y-2" data-testid="pq-release-hold">
+                <p className="text-sm font-medium">{t("admin.physicalQr.releaseTitle")}</p>
+                <p className="break-words text-xs text-muted-foreground">
+                  {order.paymentStatus === "IN_REVIEW"
+                    ? t("admin.physicalQr.releaseHelpInReview")
+                    : t("admin.physicalQr.releaseHelpPartial")}
+                </p>
+                <Label htmlFor="pq-release-reason">{t("admin.physicalQr.releaseReasonLabel")}</Label>
+                <Textarea
+                  id="pq-release-reason"
+                  value={releaseReason}
+                  maxLength={1000}
+                  disabled={releasing}
+                  onChange={(e) => {
+                    setReleaseReason(e.target.value);
+                    setReleaseConfirming(false);
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">{t("admin.physicalQr.releaseReasonHint")}</p>
+                {releaseConfirming ? (
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" disabled={!reasonOk || releasing} onClick={() => void releaseHold()}>
+                      {t("admin.physicalQr.releaseConfirm")}
+                    </Button>
+                    <Button type="button" variant="outline" disabled={releasing} onClick={() => setReleaseConfirming(false)}>
+                      {t("admin.physicalQr.releaseCancel")}
+                    </Button>
+                  </div>
+                ) : (
+                  <Button type="button" variant="outline" disabled={!reasonOk} onClick={() => setReleaseConfirming(true)}>
+                    {t("admin.physicalQr.releaseReview")}
+                  </Button>
+                )}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        {order.paymentStatus === "PARTIALLY_REFUNDED" && order.holdReleasedAt ? (
+          <p className="pq-order-section break-words text-sm text-muted-foreground" role="status">
+            {t("admin.physicalQr.holdReleasedNotice")}
+          </p>
+        ) : null}
+
+        {holdResolutions.length ? (
+          <div className="pq-order-section">
+            <p className="text-sm font-medium">{t("admin.physicalQr.resolutionHistory")}</p>
+            <ul className="mt-2 space-y-2">
+              {holdResolutions.map((r) => (
+                <li key={r.id} className="break-words text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">
+                    {t("admin.physicalQr.resolutionEntry", {
+                      from: physicalQrPaymentLabel(r.previousPaymentStatus, t),
+                      to: physicalQrPaymentLabel(r.newPaymentStatus, t),
+                    })}
+                  </span>{" "}
+                  · {formatBerlinDateTime(r.createdAt, i18n.language)} · {r.reason}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
         <div className="platform-physical-qr__actions pq-admin-actions">
-          {order.paymentStatus === "PAID" ? (
+          {fulfillable ? (
             <Button
               type="button"
               variant="outline"
@@ -186,7 +297,7 @@ export function PlatformPhysicalQrOrderDetailPage() {
           ) : (
             <p className="break-words text-sm text-muted-foreground">{t("admin.physicalQr.printUnpaidHint")}</p>
           )}
-          {order.fulfillmentStatus === "PAID" ? (
+          {fulfillable && order.fulfillmentStatus === "PAID" ? (
             <Button
               type="button"
               className="h-auto max-w-full whitespace-normal"
@@ -196,7 +307,7 @@ export function PlatformPhysicalQrOrderDetailPage() {
               {t("admin.physicalQr.markProcessing")}
             </Button>
           ) : null}
-          {order.fulfillmentStatus === "PROCESSING" ? (
+          {fulfillable && order.fulfillmentStatus === "PROCESSING" ? (
             <Button
               type="button"
               className="h-auto max-w-full whitespace-normal"
@@ -218,7 +329,7 @@ export function PlatformPhysicalQrOrderDetailPage() {
           ) : null}
         </div>
 
-        {order.fulfillmentStatus === "PRINTING" ? (
+        {fulfillable && order.fulfillmentStatus === "PRINTING" ? (
           <div className="pq-order-section grid gap-3 sm:grid-cols-3">
             <div className="space-y-1">
               <Label>{t("admin.physicalQr.carrier")}</Label>
@@ -285,7 +396,7 @@ export function PlatformPhysicalQrOrderDetailPage() {
                         <p className="mt-0.5 break-words text-xs text-muted-foreground">
                           {physicalQrContextLabel(item.qrContextType, t)} · ×{item.quantity}
                         </p>
-                        {order.paymentStatus === "PAID" ? (
+                        {fulfillable ? (
                           <Button
                             type="button"
                             size="sm"
@@ -334,7 +445,7 @@ export function PlatformPhysicalQrOrderDetailPage() {
                             </td>
                             <td className="text-right tabular-nums">×{item.quantity}</td>
                             <td className="text-right">
-                              {order.paymentStatus === "PAID" ? (
+                              {fulfillable ? (
                                 <Button
                                   type="button"
                                   size="sm"

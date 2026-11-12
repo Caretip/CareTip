@@ -16,7 +16,8 @@ export type BillingWebhookClaimAcquireResult =
 
 function isRetryableIgnoredPayload(payload: unknown): boolean {
   const reason = (payload as { reason?: string } | null)?.reason;
-  return reason === "subscription_row_not_found";
+  // billing_disabled_deferred: recorded while billing was off; replayed once it is on again.
+  return reason === "subscription_row_not_found" || reason === "billing_disabled_deferred";
 }
 
 function claimExpired(expiresAt: Date | null | undefined, now = Date.now()): boolean {

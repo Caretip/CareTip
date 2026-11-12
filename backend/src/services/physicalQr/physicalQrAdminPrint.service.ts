@@ -1,3 +1,4 @@
+import { physicalQrOrderFulfillmentBlock } from "../../lib/physicalQr/fulfillmentEligibility.js";
 import { renderPhysicalQrPrint } from "../../lib/physicalQr/printPipeline.js";
 import { jpegToA5Pdf, jpegsToA5Pdf } from "../../lib/physicalQr/pdfA5.js";
 import { zipStore } from "../../lib/physicalQr/zipStore.js";
@@ -64,12 +65,9 @@ export async function buildPhysicalQrOrderPdfForAdmin(
   row: Awaited<ReturnType<typeof getPhysicalQrOrderForAdmin>>,
   itemId?: string,
 ): Promise<{ pdf: Buffer; filename: string; pageCount: number }> {
-  if (row.paymentStatus !== "PAID") {
-    throw new PhysicalQrFulfillmentError(
-      "PAYMENT_REQUIRED",
-      "Print files are available after payment is confirmed.",
-      409,
-    );
+  const block = physicalQrOrderFulfillmentBlock(row);
+  if (block) {
+    throw new PhysicalQrFulfillmentError(block.code, block.message, 409);
   }
   const items = resolveOrderItemRows(row);
   if (!items.length) {

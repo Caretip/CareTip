@@ -67,7 +67,8 @@ function sectionStaticRegression() {
   } else fail("onPlatformOperationalAlert channel override missing");
 
   if (
-    webhook.includes('if (order.paymentStatus === "PAID")') &&
+    // Same payment delivered again → duplicate before notify (2026-11 rewrite keys idempotency on the PaymentIntent).
+    webhook.includes("row.stripePaymentIntentId === paymentIntentId") &&
     webhook.includes("duplicate: true") &&
     webhook.includes("notifyPhysicalQrPaymentReceived")
   ) {

@@ -1,3 +1,4 @@
+import { sqlUtcTimestamp } from "../utils/sqlUtcTimestamp.js";
 import { EmployeeGoalStatus, GoalPeriod, Prisma, TipStatus } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import {
@@ -576,9 +577,9 @@ async function listEmployeeGoalsForBusinessImpl(
         g.start_date,
         e.name AS employee_name,
         CASE g.goal_period
-          WHEN 'daily' THEN ${dayStart}::timestamptz
-          WHEN 'weekly' THEN ${weekStart}::timestamptz
-          ELSE ${monthStart}::timestamptz
+          WHEN 'daily' THEN ${sqlUtcTimestamp(dayStart)}
+          WHEN 'weekly' THEN ${sqlUtcTimestamp(weekStart)}
+          ELSE ${sqlUtcTimestamp(monthStart)}
         END AS period_start
       FROM employee_goals g
       INNER JOIN employees e ON e.id = g.employee_id
@@ -601,7 +602,7 @@ async function listEmployeeGoalsForBusinessImpl(
      AND t.employee_id = goals.employee_id
      AND t.status = 'success'
      AND t.created_at >= GREATEST(goals.start_date, goals.period_start)
-     AND t.created_at <= ${now}
+     AND t.created_at <= ${sqlUtcTimestamp(now)}
     GROUP BY
       goals.id,
       goals.employee_id,

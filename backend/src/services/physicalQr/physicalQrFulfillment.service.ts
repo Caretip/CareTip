@@ -1,4 +1,5 @@
 import { prisma } from "../../prisma.js";
+import { physicalQrOrderFulfillmentBlock } from "../../lib/physicalQr/fulfillmentEligibility.js";
 import { assertFulfillmentTransition } from "../../lib/physicalQr/status.js";
 import type { PhysicalQrFulfillmentStatus } from "../../lib/physicalQr/types.js";
 import { sanitizeLikeContainsSearch } from "../../utils/likeSearch.js";
@@ -79,6 +80,9 @@ export async function getPhysicalQrOrderForAdmin(orderId: string) {
   return row;
 }
 
+/** Fulfillment steps that start or advance fulfillment; each requires a fully paid order. */
+const PAYMENT_GATED_FULFILLMENT_STEPS = new Set<PhysicalQrFulfillmentStatus>(["PROCESSING", "PRINTING", "SHIPPED"]);
+
 async function transitionOrder(
   orderId: string,
   to: PhysicalQrFulfillmentStatus,
@@ -88,10 +92,38 @@ async function transitionOrder(
   if (!order) {
     throw new PhysicalQrFulfillmentError("ORDER_NOT_FOUND", "Order not found", 404);
   }
+  const gated = PAYMENT_GATED_FULFILLMENT_STEPS.has(to);
+  if (gated) {
+    const block = physicalQrOrderFulfillmentBlock(order);
+    if (block) throw new PhysicalQrFulfillmentError(block.code, block.message, 409);
+  }
   assertFulfillmentTransition(order.fulfillmentStatus as PhysicalQrFulfillmentStatus, to);
-  return prisma.physicalQrOrder.update({
-    where: { id: order.id },
+  // Compare-and-set on the state we validated: a refund/dispute or another admin action that lands
+  // in between makes this update match nothing instead of advancing a no-longer-eligible order.
+  const updated = await prisma.physicalQrOrder.updateMany({
+    where: {
+      id: order.id,
+      fulfillmentStatus: order.fulfillmentStatus,
+      ...(gated
+        ? {
+            OR: [
+              { paymentStatus: "PAID" as const },
+              { paymentStatus: "PARTIALLY_REFUNDED" as const, holdReleasedAt: { not: null } },
+            ],
+          }
+        : {}),
+    },
     data: { fulfillmentStatus: to, ...extra },
+  });
+  if (updated.count !== 1) {
+    throw new PhysicalQrFulfillmentError(
+      "ORDER_STATE_CHANGED",
+      "This order changed while you were updating it. Reload and try again.",
+      409,
+    );
+  }
+  return prisma.physicalQrOrder.findUniqueOrThrow({
+    where: { id: order.id },
     include: {
       product: true,
       items: { include: { product: true }, orderBy: { createdAt: "asc" } },
@@ -177,6 +209,8 @@ export function toAdminOrderDto(row: {
   contactSnapshot?: unknown;
   qrTargetUrlSnapshot?: string | null;
   stripePaymentIntentId?: string | null;
+  holdReleasedAt?: Date | null;
+  holdReleasedByUserId?: string | null;
   businessNameSnapshot?: string;
   colorTokensSnapshot?: unknown;
   supportsAddress?: boolean;
@@ -238,6 +272,8 @@ export function toAdminOrderDto(row: {
     contactSnapshot: row.contactSnapshot ?? null,
     qrTargetUrlSnapshot: rawItems[0]?.qrTargetUrlSnapshot ?? row.qrTargetUrlSnapshot ?? null,
     stripePaymentIntentId: row.stripePaymentIntentId ?? null,
+    holdReleasedAt: row.holdReleasedAt?.toISOString() ?? null,
+    holdReleasedByUserId: row.holdReleasedByUserId ?? null,
     businessNameSnapshot: row.businessNameSnapshot ?? null,
     colorTokensSnapshot: first?.colorTokensSnapshot ?? row.colorTokensSnapshot ?? null,
   };

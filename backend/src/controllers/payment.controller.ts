@@ -38,6 +38,9 @@ export const TIP_CONNECT_CLIENT_FORBIDDEN_KEYS = [
 
 const FORBIDDEN_CONNECT_KEY_SET = new Set<string>(TIP_CONNECT_CLIENT_FORBIDDEN_KEYS);
 
+/** Stripe metadata value limit (characters). */
+const STRIPE_METADATA_VALUE_MAX = 500;
+
 const FORBIDDEN_CONNECT_HEADERS = ["stripe-account", "x-stripe-account", "destination"] as const;
 
 function findForbiddenConnectKeyInValue(value: unknown, path: string, depth: number): string | null {
@@ -124,6 +127,13 @@ export async function createTipSession(req: Request, res: Response) {
       return res.status(400).json({ message: "Invalid email address" });
     }
     const feedback = typeof body.feedback === "string" ? body.feedback : undefined;
+    // Stripe metadata values are limited to 500 characters; reject instead of failing at Stripe.
+    if (customerName != null && customerName.trim().length > STRIPE_METADATA_VALUE_MAX) {
+      return res.status(400).json({ message: "customerName is too long", code: "FIELD_TOO_LONG" });
+    }
+    if (feedback != null && feedback.trim().length > STRIPE_METADATA_VALUE_MAX) {
+      return res.status(400).json({ message: "feedback is too long", code: "FIELD_TOO_LONG" });
+    }
     const qrScanSessionId =
       typeof body.qrScanSessionId === "string" && body.qrScanSessionId.trim()
         ? body.qrScanSessionId.trim().slice(0, 64)
@@ -341,7 +351,6 @@ export async function getTipSessionContext(req: Request, res: Response) {
       paymentStatus: ctx.paymentStatus,
       businessId: ctx.businessId,
       employeeId: ctx.employeeId,
-      customerName: ctx.customerName,
       elapsedMs: Date.now() - lookupStarted,
     });
     return res.status(202).json({

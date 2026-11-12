@@ -803,6 +803,10 @@ async function runDb() {
       businessId: business.id,
       tipId: destTip.id,
     });
+    // Ledger after the first succeeded event. (The payable's refunded total is derived from distinct
+    // succeeded Stripe refunds since the 2026-11 refund state machine, so a manual delta applied above
+    // through applyRefundToEmployeePayable is not added on top.)
+    const destFirst = await prisma.employeeTipPayable.findUnique({ where: { id: destPayable.id } });
     await upsertStripeRefundEvent({
       stripeRefundId: `re_rt_${suffix}`,
       stripePaymentIntentId: `pi_rt_dest_${suffix}`,
@@ -813,7 +817,7 @@ async function runDb() {
       tipId: destTip.id,
     });
     const destDup = await prisma.employeeTipPayable.findUnique({ where: { id: destPayable.id } });
-    if (destDup?.refundedCents === 400) {
+    if (destDup?.refundedCents === destFirst?.refundedCents && destDup?.refundedCents === 200) {
       pass("duplicate-refund-event-not-double-counted", "Second succeeded upsert of the same Stripe refund is ignored");
     } else {
       fail("duplicate-refund-event-not-double-counted", String(destDup?.refundedCents));

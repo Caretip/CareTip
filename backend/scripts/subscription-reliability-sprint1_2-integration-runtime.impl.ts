@@ -26,7 +26,7 @@ import {
   __setListStripeSubscriptionsForCustomerForTests,
   assessBusinessBillingDeleteGuard,
 } from "../src/services/billingLifecycleIntegrity.service.js";
-import { __setCheckoutSessionsCreateFnForTests } from "../src/services/stripe.service.js";
+import { getStripeClient, __setCheckoutSessionsCreateFnForTests } from "../src/services/stripe.service.js";
 import { createPlatformSubscriptionCheckoutSession } from "../src/services/stripeBilling.service.js";
 import { isPrismaUniqueViolationOnStripeEventId } from "../src/lib/prismaUniqueViolation.js";
 import { applyStripeMirrorTransactional } from "../src/services/subscription.service.js";
@@ -384,7 +384,11 @@ async function testCheckoutConcurrentIdempotency(): Promise<boolean> {
   const { businessId } = await createTestBusiness();
   process.env.SUBSCRIPTION_BILLING_ENABLED = "true";
   process.env.STRIPE_SECRET_KEY = "sk_test_mock";
+  // Test fixture: checkout resolves the Pro price from env (blanked in isolated runs).
+  if (!process.env.STRIPE_PRICE_PREMIUM_MONTHLY?.trim()) process.env.STRIPE_PRICE_PREMIUM_MONTHLY = "price_sprint12_premium_monthly";
   __setListStripeSubscriptionsForCustomerForTests(async () => []);
+  // Stand-in for the open-session listing used to expire superseded checkouts (no Stripe call).
+  (getStripeClient() as unknown as { checkout: { sessions: { list: unknown } } }).checkout.sessions.list = async () => ({ data: [] });
 
   const idempotencyKeys: string[] = [];
   let creates = 0;
@@ -415,9 +419,14 @@ async function testCheckoutConcurrentIdempotency(): Promise<boolean> {
   __setCheckoutSessionsCreateFnForTests(null);
   __resetListStripeSubscriptionsForCustomerForTests();
 
-  const expectedKey = `caretip_billing_checkout_${businessId}`;
-  if (idempotencyKeys.length < 1 || !idempotencyKeys.every((k) => k === expectedKey)) {
-    fail("checkout: idempotency keys must be stable per business");
+  // Identical concurrent requests share one key (scoped to the business + request fingerprint), so
+  // Stripe deduplicates them. Different plans/cycles get different keys (see payment-integrity-subscription).
+  const keyPrefix = `caretip_billing_checkout_${businessId}_`;
+  if (
+    idempotencyKeys.length < 1 ||
+    !idempotencyKeys.every((k) => k === idempotencyKeys[0] && k.startsWith(keyPrefix))
+  ) {
+    fail("checkout: identical concurrent requests must share one business-scoped idempotency key");
     return false;
   }
   const mirrorCount = await prisma.subscription.count({ where: { businessId } });
@@ -425,7 +434,7 @@ async function testCheckoutConcurrentIdempotency(): Promise<boolean> {
     fail(`checkout: expected exactly one subscription mirror, got ${mirrorCount}`);
     return false;
   }
-  pass("checkout: concurrent attempts use stable Stripe idempotency key");
+  pass("checkout: identical concurrent attempts share one business-scoped Stripe idempotency key");
   return true;
 }
 

@@ -339,6 +339,107 @@ export async function applyRefundToEmployeePayable(params: {
   }));
 }
 
+/** Status a payable returns to when a refund that had fully refunded it is reported failed. */
+function statusAfterRefundReversal(row: EmployeeTipPayable): EmployeeTipPayableStatus {
+  if (row.chargeModel === EmployeeTipChargeModel.platform_hold) {
+    return row.transferredCents - row.reversedCents > 0
+      ? EmployeeTipPayableStatus.transferred
+      : EmployeeTipPayableStatus.held_platform;
+  }
+  return initialStatus(row.chargeModel);
+}
+
+/**
+ * Refund ledger sync (replaces delta application for Stripe refund events).
+ *
+ * Under the payable row lock: `recordRefund` writes the refund row (returns false when the event was
+ * stale and nothing changed), then the payable's `refundedCents` is set to the total of all distinct
+ * succeeded refunds for the tip, capped by what is refundable. Replays therefore cannot double-count,
+ * and a refund that Stripe later reports as failed lowers the total again.
+ *
+ * A platform-hold transfer already reversed for a refund that later failed is not re-transferred
+ * automatically (that is a new payout decision); it is flagged on the payable and recorded as a
+ * payment discrepancy for review.
+ *
+ * Returns false when there is no payable (the caller records the refund row on its own).
+ */
+export async function syncEmployeePayableRefundTotal(params: {
+  transactionId: string;
+  recordRefund: (tx: Prisma.TransactionClient) => Promise<boolean>;
+  succeededRefundTotalCents: (tx: Prisma.TransactionClient) => Promise<number>;
+}): Promise<boolean> {
+  const head = await prisma.employeeTipPayable.findUnique({
+    where: { transactionId: params.transactionId },
+    select: { id: true, employeeId: true },
+  });
+  if (!head) return false;
+
+  let reversalStranded: { payableId: string; reversedCents: number; refundedCents: number } | null = null;
+  await runSerializedByKey(payableLockKey(head), () => withLockedPayable(head.id, async (tx, row) => {
+    if (!(await params.recordRefund(tx))) return;
+
+    const total = await params.succeededRefundTotalCents(tx);
+    const refundCap = Math.max(0, row.payableCents - row.disputedLostCents);
+    const nextRefunded = Math.max(0, Math.min(refundCap, total));
+    if (nextRefunded === row.refundedCents) return;
+
+    if (nextRefunded < row.refundedCents) {
+      const status =
+        row.status === EmployeeTipPayableStatus.refunded && nextRefunded < row.payableCents
+          ? statusAfterRefundReversal(row)
+          : row.status;
+      const stranded = row.reversedCents > 0;
+      await tx.employeeTipPayable.update({
+        where: { id: row.id },
+        data: {
+          refundedCents: nextRefunded,
+          status,
+          ...(stranded
+            ? mergePayableLastTransferErrorUpdate(row.lastTransferError, "refund_failed_after_transfer_reversal")
+            : {}),
+        },
+      });
+      if (stranded) {
+        reversalStranded = { payableId: row.id, reversedCents: row.reversedCents, refundedCents: nextRefunded };
+      }
+      return;
+    }
+
+    const increment = nextRefunded - row.refundedCents;
+    const { nextReversed, reversalFailed } = await maybeReversePlatformHoldTransfer({
+      row,
+      incrementCents: increment,
+    });
+    const status =
+      nextRefunded >= row.payableCents ? EmployeeTipPayableStatus.refunded : row.status;
+    await tx.employeeTipPayable.update({
+      where: { id: row.id },
+      data: {
+        refundedCents: nextRefunded,
+        ...(reversalFailed ? {} : { reversedCents: nextReversed }),
+        status,
+        ...mergePayableLastTransferErrorUpdate(
+          row.lastTransferError,
+          reversalFailed ? "transfer_reversal_failed" : null,
+        ),
+      },
+    });
+  }));
+
+  if (reversalStranded) {
+    const { recordPaymentDiscrepancy } = await import("./payments/paymentDiscrepancy.service.js");
+    const r = reversalStranded as { payableId: string; reversedCents: number; refundedCents: number };
+    await recordPaymentDiscrepancy({
+      workflow: "refund",
+      kind: "refund_failed_after_transfer_reversal",
+      subjectKey: `payable:${r.payableId}`,
+      transactionId: params.transactionId,
+      details: { reversedCents: r.reversedCents, refundedCentsNow: r.refundedCents },
+    });
+  }
+  return true;
+}
+
 export async function applyDisputeToEmployeePayable(params: {
   transactionId: string;
   stripeDisputeId: string;

@@ -1,3 +1,4 @@
+import { physicalQrOrderFulfillmentBlock } from "../lib/physicalQr/fulfillmentEligibility.js";
 import type { Request, Response } from "express";
 import { logServerError } from "../utils/httpErrors.js";
 import { PhysicalQrStatusError } from "../lib/physicalQr/status.js";
@@ -56,7 +57,9 @@ export async function adminGetPhysicalQrOrder(req: Request, res: Response) {
   try {
     const row = await getPhysicalQrOrderForAdmin(String(req.params.orderId ?? ""));
     const internalNotes = await listPhysicalQrInternalNotes(row.id);
-    return res.json({ order: toAdminOrderDto(row), internalNotes });
+    const { listPhysicalQrHoldResolutions } = await import("../services/physicalQr/physicalQrHoldResolution.service.js");
+    const holdResolutions = await listPhysicalQrHoldResolutions(row.id);
+    return res.json({ order: toAdminOrderDto(row), internalNotes, holdResolutions });
   } catch (err) {
     return mapErr(res, err, "physicalQr.admin.get");
   }
@@ -87,12 +90,9 @@ function itemCopies(quantity: number): number {
 export async function adminPrintPhysicalQrOrder(req: Request, res: Response) {
   try {
     const row = await getPhysicalQrOrderForAdmin(String(req.params.orderId ?? ""));
-    if (row.paymentStatus !== "PAID") {
-      return res.status(409).json({
-        success: false,
-        code: "PAYMENT_REQUIRED",
-        message: "Print files are available after payment is confirmed.",
-      });
+    const block = physicalQrOrderFulfillmentBlock(row);
+    if (block) {
+      return res.status(409).json({ success: false, code: block.code, message: block.message });
     }
     const itemId = String(req.query.itemId ?? "").trim();
     const items = resolveOrderItemRows(row);
@@ -187,6 +187,27 @@ export async function adminPrintPhysicalQrOrdersBulk(req: Request, res: Response
     return res.send(result.zip);
   } catch (err) {
     return mapErr(res, err, "physicalQr.admin.printBulk");
+  }
+}
+
+/**
+ * POST /api/platform/physical-qr/orders/:orderId/release-hold — platform admins only (router guard:
+ * SUPER_ADMIN + isPlatformAdmin, re-read from the database). Body: { reason, expectedPaymentStatus }.
+ */
+export async function adminReleasePhysicalQrHold(req: Request, res: Response) {
+  try {
+    const { releasePhysicalQrOrderHold } = await import("../services/physicalQr/physicalQrHoldResolution.service.js");
+    const result = await releasePhysicalQrOrderHold({
+      orderId: String(req.params.orderId ?? ""),
+      // Same identity the platform-admin guard resolved (sub, userId or id claim).
+      adminUserId: String(req.user?.sub ?? req.user?.userId ?? req.user?.id ?? ""),
+      reason: req.body?.reason,
+      expectedPaymentStatus: req.body?.expectedPaymentStatus,
+    });
+    const row = await getPhysicalQrOrderForAdmin(result.orderId);
+    return res.json({ success: true, resolution: result, order: toAdminOrderDto(row) });
+  } catch (err) {
+    return mapErr(res, err, "physicalQr.admin.releaseHold");
   }
 }
 

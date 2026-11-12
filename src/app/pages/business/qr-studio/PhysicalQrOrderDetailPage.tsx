@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useStaleExternalStripeStateReset } from "@/app/hooks/useStaleExternalStripeStateReset";
 import { Link, useParams, useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
@@ -122,7 +122,12 @@ export function PhysicalQrOrderDetailPage() {
     };
   }, [checkoutFlag, orderId, businessId]);
 
+  // Synchronous guard: React state alone lets a fast double click send two checkout requests.
+  const payInFlight = useRef(false);
+
   async function pay() {
+    if (payInFlight.current) return;
+    payInFlight.current = true;
     setPaying(true);
     try {
       const session = await checkoutPhysicalQrOrder(orderId);
@@ -131,6 +136,7 @@ export function PhysicalQrOrderDetailPage() {
     } catch (err) {
       toast.error(toDisplayErrorMessage(err, t("business.qrStudio.physical.orderError")));
       setPaying(false);
+      payInFlight.current = false;
     }
   }
 

@@ -182,6 +182,10 @@ router.get("/physical-qr/orders/:orderId/print", async (req, res) => {
   const { adminPrintPhysicalQrOrder } = await import("../controllers/platformPhysicalQr.controller.js");
   return adminPrintPhysicalQrOrder(req, res);
 });
+router.post("/physical-qr/orders/:orderId/release-hold", async (req, res) => {
+  const { adminReleasePhysicalQrHold } = await import("../controllers/platformPhysicalQr.controller.js");
+  return adminReleasePhysicalQrHold(req, res);
+});
 router.post("/physical-qr/orders/:orderId/processing", async (req, res) => {
   const { adminMarkPhysicalQrProcessing } = await import("../controllers/platformPhysicalQr.controller.js");
   return adminMarkPhysicalQrProcessing(req, res);

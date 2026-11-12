@@ -1,3 +1,4 @@
+import { sqlUtcTimestamp } from "../../utils/sqlUtcTimestamp.js";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "../../prisma.js";
 import { hasFeature } from "../subscriptionEntitlement.service.js";
@@ -72,7 +73,7 @@ export async function hasPaidPhysicalQrMonthlyFreeOrderThisMonth(
         AND payment_status::text = 'PAID'
         AND monthly_free_quota_applied = true
         AND paid_at IS NOT NULL
-        AND paid_at >= ${monthStart}
+        AND paid_at >= ${sqlUtcTimestamp(monthStart)}
     ) AS consumed
   `;
   return Boolean(rows[0]?.consumed);
@@ -106,9 +107,9 @@ export async function tryClaimPhysicalQrMonthlyFreeOrder(input: {
   const monthStart = berlinCalendarMonthStart(now, zone);
   const result = await prisma.$executeRaw`
     UPDATE businesses
-    SET physical_qr_free_order_used_at = ${now}
+    SET physical_qr_free_order_used_at = ${sqlUtcTimestamp(now)}
     WHERE id = ${input.businessId}
-      AND (physical_qr_free_order_used_at IS NULL OR physical_qr_free_order_used_at < ${monthStart})
+      AND (physical_qr_free_order_used_at IS NULL OR physical_qr_free_order_used_at < ${sqlUtcTimestamp(monthStart)})
   `;
   return { claimed: Number(result) === 1, claimedAt: now };
 }

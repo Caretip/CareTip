@@ -330,7 +330,8 @@ const adminDetail = readFileSync(path.join(root, "src/app/pages/platform/Platfor
 if (
   adminDetail.includes("markPlatformPhysicalQrPrinting") &&
   adminDetail.includes("downloadPlatformPhysicalQrOrderPrint") &&
-  adminDetail.includes('paymentStatus === "PAID"') &&
+  // Payment gate: literal check, or the shared rule (PAID, or an admin-released partial refund).
+  (adminDetail.includes('paymentStatus === "PAID"') || adminDetail.includes("isPhysicalQrFulfillable(order.paymentStatus, order.holdReleasedAt)")) &&
   adminDetail.includes("shipPlatformPhysicalQrOrder") &&
   adminDetail.includes("internalNotes") &&
   adminDetail.includes("deliveryAddress") &&
@@ -494,7 +495,8 @@ if (
   printStudio.includes("previewProductId") &&
   printStudio.includes("Eye") &&
   printStudio.includes("Dialog") &&
-  printStudio.includes("max-w-[8.5rem]") &&
+  // Card preview width: 8.5rem → 10.5rem in f310bade (deliberate polish); still a compact, bounded card.
+  printStudio.includes("max-w-[10.5rem]") &&
   printStudio.includes("max-w-[22rem]") &&
   !printStudio.includes("lg:sticky") &&
   printStudio.includes("noTemplates") &&

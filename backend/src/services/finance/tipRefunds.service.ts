@@ -63,6 +63,8 @@ export async function upsertStripeRefundEvent(input: {
         }
       : null);
   if (!linked?.businessId) {
+    const { applyPhysicalQrRefundEvent } = await import("../physicalQr/physicalQrPayments.service.js");
+    if (await applyPhysicalQrRefundEvent(input)) return;
     console.warn("[tipRefunds] skip refund — no business link", {
       stripeRefundId: input.stripeRefundId,
       paymentIntentId: input.stripePaymentIntentId,
@@ -70,23 +72,26 @@ export async function upsertStripeRefundEvent(input: {
     return;
   }
 
-  const statusMap: Record<string, TipRefundStatus> = {
-    pending: TipRefundStatus.pending,
-    requires_action: TipRefundStatus.pending,
-    succeeded: TipRefundStatus.succeeded,
-    failed: TipRefundStatus.failed,
-    canceled: TipRefundStatus.canceled,
-    cancelled: TipRefundStatus.canceled,
-  };
-  const status = statusMap[String(input.status).toLowerCase()] ?? TipRefundStatus.pending;
+  const status = mapStripeRefundStatus(input.status);
   const amountEur = Number((input.amountCents / 100).toFixed(2));
 
-  /** Returns true only for the first write that moves this refund to succeeded. */
-  const recordRefund = async (db: Prisma.TransactionClient): Promise<boolean> => {
+  /**
+   * Writes the refund row under the state machine. Returns the status actually stored, or null when
+   * the event was stale (its status may not follow the stored one) and nothing changed.
+   */
+  const recordRefund = async (db: Prisma.TransactionClient): Promise<TipRefundStatus | null> => {
     const previous = await db.tipRefund.findUnique({
       where: { stripeRefundId: input.stripeRefundId },
       select: { status: true },
     });
+    if (previous && !isAllowedRefundTransition(previous.status, status)) {
+      console.info("[tipRefunds] stale refund status ignored", {
+        stripeRefundId: input.stripeRefundId,
+        stored: previous.status,
+        incoming: status,
+      });
+      return null;
+    }
     await db.tipRefund.upsert({
       where: { stripeRefundId: input.stripeRefundId },
       create: {
@@ -111,18 +116,58 @@ export async function upsertStripeRefundEvent(input: {
         tipId: linked.tipId ?? undefined,
       },
     });
-    return status === TipRefundStatus.succeeded && previous?.status !== TipRefundStatus.succeeded;
+    return status;
   };
 
-  // With a payable, the refund row is written under the payable row lock together with the
-  // ledger change, so concurrent events for the same refund (charge.refunded / refund.updated)
-  // on different instances apply it once.
+  // With a payable, the refund row is written under the payable row lock and the payable's
+  // refunded total is recomputed from the distinct succeeded refunds in the same transaction, so
+  // replays and out-of-order events (charge.refunded / refund.updated / refund.failed, any
+  // instance) can never apply the same refund twice.
   const tipId = linked.tipId ?? input.tipId ?? null;
-  const { applyRefundToEmployeePayable } = await import("../employeeTipPayable.service.js");
+  const { syncEmployeePayableRefundTotal } = await import("../employeeTipPayable.service.js");
   const handled = tipId
-    ? await applyRefundToEmployeePayable({ transactionId: tipId, refundedCents: input.amountCents, recordRefund })
+    ? await syncEmployeePayableRefundTotal({
+        transactionId: tipId,
+        recordRefund: async (tx) => (await recordRefund(tx)) !== null,
+        succeededRefundTotalCents: (tx) => succeededRefundTotalCentsForTip(tx, tipId),
+      })
     : false;
   if (!handled) await recordRefund(prisma);
+}
+
+/** Stripe refund status → ledger status (unknown values stay pending, never succeeded). */
+export function mapStripeRefundStatus(raw: string): TipRefundStatus {
+  switch (String(raw).toLowerCase()) {
+    case "succeeded":
+      return TipRefundStatus.succeeded;
+    case "failed":
+      return TipRefundStatus.failed;
+    case "canceled":
+    case "cancelled":
+      return TipRefundStatus.canceled;
+    default:
+      return TipRefundStatus.pending;
+  }
+}
+
+/**
+ * Stripe refund lifecycle: pending/requires_action → succeeded | failed | canceled, and Stripe may
+ * report a succeeded refund as failed later. failed/canceled are final. Anything else (succeeded →
+ * pending, failed → succeeded, …) is an out-of-order delivery and must not change the ledger.
+ */
+export function isAllowedRefundTransition(from: TipRefundStatus, to: TipRefundStatus): boolean {
+  if (from === to) return true;
+  if (from === TipRefundStatus.pending) return true;
+  if (from === TipRefundStatus.succeeded) return to === TipRefundStatus.failed;
+  return false;
+}
+
+async function succeededRefundTotalCentsForTip(db: Prisma.TransactionClient, tipId: string): Promise<number> {
+  const sum = await db.tipRefund.aggregate({
+    where: { tipId, kind: TipRefundKind.refund, status: TipRefundStatus.succeeded },
+    _sum: { amountEur: true },
+  });
+  return Math.round(Number(sum._sum.amountEur ?? 0) * 100);
 }
 
 /** Catches refunds whose webhook arrived before the tip existed and was skipped. Safe to repeat. */
@@ -195,6 +240,8 @@ export async function upsertStripeDisputeEvent(input: {
     (await resolveBusinessFromPaymentIntent(input.stripePaymentIntentId)) ??
     (await resolveBusinessFromChargeId(input.stripeChargeId));
   if (!linked?.businessId) {
+    const { applyPhysicalQrDisputeEvent } = await import("../physicalQr/physicalQrPayments.service.js");
+    if (await applyPhysicalQrDisputeEvent(input)) return;
     console.warn("[tipRefunds] skip dispute — no business link", {
       stripeDisputeId: input.stripeDisputeId,
     });

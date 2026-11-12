@@ -700,7 +700,9 @@ function sectionRegressionFiles() {
     pricingService.includes("$executeRaw") &&
     pricingService.includes("physical_qr_free_order_used_at") &&
     pricingService.includes("Number(result) === 1") &&
-    pricingService.includes("AND (physical_qr_free_order_used_at IS NULL OR physical_qr_free_order_used_at < ${monthStart})") &&
+    // Atomic conditional claim; since 2026-11 the bound month start is converted to UTC explicitly (audit L2).
+    (pricingService.includes("AND (physical_qr_free_order_used_at IS NULL OR physical_qr_free_order_used_at < ${monthStart})") ||
+      pricingService.includes("AND (physical_qr_free_order_used_at IS NULL OR physical_qr_free_order_used_at < ${sqlUtcTimestamp(monthStart)})")) &&
     orderService.includes("QUOTA_CHANGED") &&
     orderService.includes("BASIC_SINGLE_LOCATION_REQUIRED") &&
     batchService.includes("stripeLineItemsForPhysicalQrQuote") &&
@@ -842,7 +844,8 @@ function sectionRegressionFiles() {
     platformRoutes.includes("/physical-qr/orders/:orderId/print") &&
     adminPrint.includes("adminPrintPhysicalQrOrder") &&
     adminPrint.includes("renderPhysicalQrPrint") &&
-    adminPrint.includes("PAYMENT_REQUIRED") &&
+    // Payment gate: literal code, or the shared fulfilment-eligibility guard (2026-11) that returns it.
+    (adminPrint.includes("PAYMENT_REQUIRED") || adminPrint.includes("physicalQrOrderFulfillmentBlock(row)")) &&
     adminPrint.includes("buildPhysicalQrOrderPdfForAdmin") &&
     adminPrint.includes("getPhysicalQrOrderForAdmin") &&
     !adminPrint.includes("req.query.path") &&
@@ -1011,7 +1014,9 @@ async function sectionOptionalDb() {
       metadata: { source: "physical_qr_order", orderId: "does-not-exist", businessId: a!.id },
       amount_total: 999999,
     } as never);
-    if (!wrongBiz.ok && wrongBiz.reason === "order_not_found") pass("webhook rejects unknown order");
+    // Since the 2026-11 webhook rewrite an unknown order is acknowledged (no Stripe retry loop) and
+    // recorded for review; it is still never processed as a payment.
+    if (wrongBiz.reason === "order_not_found" && wrongBiz.review === true && !wrongBiz.duplicate) pass("webhook rejects unknown order");
     else fail(`webhook unknown order ${JSON.stringify(wrongBiz)}`);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

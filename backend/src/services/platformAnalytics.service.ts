@@ -1,3 +1,4 @@
+import { sqlUtcTimestamp } from "../utils/sqlUtcTimestamp.js";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import { DateTime } from "luxon";
@@ -87,7 +88,7 @@ async function getPlatformAnalyticsImpl(input?: {
       COUNT(*)::int AS c,
       NULL::float AS tips_eur
     FROM tips
-    WHERE created_at >= ${start} AND created_at <= ${end}
+    WHERE created_at >= ${sqlUtcTimestamp(start)} AND created_at <= ${sqlUtcTimestamp(end)}
     GROUP BY 2
     UNION ALL
     SELECT 'tip_vol'::text,
@@ -96,8 +97,8 @@ async function getPlatformAnalyticsImpl(input?: {
       COALESCE(SUM(amount), 0)::float
     FROM tips
     WHERE status = 'success'
-      AND created_at >= ${start}
-      AND created_at <= ${end}
+      AND created_at >= ${sqlUtcTimestamp(start)}
+      AND created_at <= ${sqlUtcTimestamp(end)}
     GROUP BY 2
   `);
 
@@ -109,7 +110,7 @@ async function getPlatformAnalyticsImpl(input?: {
         COUNT(*)::int AS c,
         NULL::float AS tips_eur
       FROM "User"
-      WHERE created_at >= ${start} AND created_at <= ${end}
+      WHERE created_at >= ${sqlUtcTimestamp(start)} AND created_at <= ${sqlUtcTimestamp(end)}
       GROUP BY 2
       UNION ALL
       SELECT 'businesses'::text,
@@ -118,8 +119,8 @@ async function getPlatformAnalyticsImpl(input?: {
         NULL::float
       FROM businesses
       WHERE deleted_at IS NULL
-        AND created_at >= ${start}
-        AND created_at <= ${end}
+        AND created_at >= ${sqlUtcTimestamp(start)}
+        AND created_at <= ${sqlUtcTimestamp(end)}
       GROUP BY 2
     `);
   } catch (err) {
@@ -131,7 +132,7 @@ async function getPlatformAnalyticsImpl(input?: {
         COUNT(*)::int AS c,
         NULL::float AS tips_eur
       FROM "User"
-      WHERE created_at >= ${start} AND created_at <= ${end}
+      WHERE created_at >= ${sqlUtcTimestamp(start)} AND created_at <= ${sqlUtcTimestamp(end)}
       GROUP BY 2
       UNION ALL
       SELECT 'businesses'::text,
@@ -140,8 +141,8 @@ async function getPlatformAnalyticsImpl(input?: {
         NULL::float
       FROM "User"
       WHERE role = 'MANAGER'
-        AND created_at >= ${start}
-        AND created_at <= ${end}
+        AND created_at >= ${sqlUtcTimestamp(start)}
+        AND created_at <= ${sqlUtcTimestamp(end)}
       GROUP BY 2
     `);
   }

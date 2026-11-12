@@ -1,3 +1,4 @@
+import { sqlUtcTimestamp } from "../utils/sqlUtcTimestamp.js";
 import { EmployeeGoalStatus, type GoalPeriod, Prisma, TipStatus } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import { getCachedOrLoad, invalidateCacheKeyPrefix } from "../utils/shortLivedCache.js";
@@ -198,13 +199,13 @@ async function resolveGoalForSummaryBundle(opts: {
     const rows = await logDashboardPhase(label, "goalSqlMonth", () =>
       prisma.$queryRaw<Array<{ goal_amount: number }>>(Prisma.sql`
         SELECT COALESCE(SUM(amount) FILTER (
-          WHERE created_at >= ${goalBounds.start} AND created_at <= ${goalBounds.end}
+          WHERE created_at >= ${sqlUtcTimestamp(goalBounds.start)} AND created_at <= ${sqlUtcTimestamp(goalBounds.end)}
         ), 0)::float AS goal_amount
         FROM tips
         WHERE employee_id = ${opts.employeeId}
           AND status = 'success'
-          AND created_at >= ${opts.monthRange.startUtc}
-          AND created_at <= ${opts.monthRange.endUtc}
+          AND created_at >= ${sqlUtcTimestamp(opts.monthRange.startUtc)}
+          AND created_at <= ${sqlUtcTimestamp(opts.monthRange.endUtc)}
       `),
     );
     return buildActiveGoalWithProgress(activeGoal, Number(rows[0]?.goal_amount ?? 0), now, tz);
@@ -218,13 +219,13 @@ async function resolveGoalForSummaryBundle(opts: {
     const rows = await logDashboardPhase(label, "goalSqlPeriod", () =>
       prisma.$queryRaw<Array<{ goal_amount: number }>>(Prisma.sql`
         SELECT COALESCE(SUM(amount) FILTER (
-          WHERE created_at >= ${goalBounds.start} AND created_at <= ${goalBounds.end}
+          WHERE created_at >= ${sqlUtcTimestamp(goalBounds.start)} AND created_at <= ${sqlUtcTimestamp(goalBounds.end)}
         ), 0)::float AS goal_amount
         FROM tips
         WHERE employee_id = ${opts.employeeId}
           AND status = 'success'
-          AND created_at >= ${opts.periodRange.startUtc}
-          AND created_at <= ${opts.periodRange.endUtc}
+          AND created_at >= ${sqlUtcTimestamp(opts.periodRange.startUtc)}
+          AND created_at <= ${sqlUtcTimestamp(opts.periodRange.endUtc)}
       `),
     );
     return buildActiveGoalWithProgress(activeGoal, Number(rows[0]?.goal_amount ?? 0), now, tz);

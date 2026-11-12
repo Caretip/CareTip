@@ -34,6 +34,7 @@ import {
 } from "../services/finance/tipRefunds.service.js";
 import { isPhysicalQrCheckoutSession } from "../services/physicalQr/physicalQrCheckout.service.js";
 import {
+  handlePhysicalQrAsyncPaymentFailed,
   handlePhysicalQrCheckoutExpired,
   handlePhysicalQrCheckoutSessionCompleted,
   handlePhysicalQrPaymentFailed,
@@ -56,6 +57,10 @@ export function isStripeEventModeMismatch(event: Pick<Stripe.Event, "livemode">,
 
 const TIP_EVENT_TYPES = new Set([
   "checkout.session.expired",
+  "checkout.session.async_payment_succeeded",
+  "checkout.session.async_payment_failed",
+  "refund.created",
+  "refund.failed",
   "payment_intent.succeeded",
   "payment_intent.payment_failed",
   "payment_intent.canceled",
@@ -67,6 +72,19 @@ const TIP_EVENT_TYPES = new Set([
 ]);
 
 const CONNECT_EVENT_TYPES = new Set(["account.updated"]);
+
+type StripeWebhookEndpoint = {
+  kind: "platform" | "connect";
+  secretEnv: "STRIPE_WEBHOOK_SECRET" | "STRIPE_CONNECT_WEBHOOK_SECRET";
+};
+
+/** Connected-account event types CareTip applies when they arrive on the Connect endpoint. */
+const CONNECT_ENDPOINT_EVENT_TYPES = new Set([
+  "account.updated",
+  "charge.dispute.created",
+  "charge.dispute.updated",
+  "charge.dispute.closed",
+]);
 
 function usesStripeWebhookEventStore(event: Stripe.Event): boolean {
   return (
@@ -162,6 +180,27 @@ async function dispatchNonBillingStripeEvent(event: Stripe.Event): Promise<void>
     return;
   }
 
+  if (event.type === "checkout.session.async_payment_succeeded") {
+    // Delayed payment methods: the session was completed earlier with payment_status "unpaid".
+    const session = event.data.object as Stripe.Checkout.Session;
+    if (isSubscriptionCheckoutSession(session)) return; // invoice/subscription events carry billing state
+    await handleSuccessfulTipPayment(session);
+    return;
+  }
+
+  if (event.type === "checkout.session.async_payment_failed") {
+    const session = event.data.object as Stripe.Checkout.Session;
+    if (isPhysicalQrCheckoutSession(session)) {
+      await handlePhysicalQrAsyncPaymentFailed(session);
+    } else {
+      console.info("[stripe.webhook] checkout.session.async_payment_failed", {
+        eventId: event.id,
+        sessionId: session.id,
+      });
+    }
+    return;
+  }
+
   if (event.type === "checkout.session.expired") {
     const session = event.data.object as Stripe.Checkout.Session;
     if (isPhysicalQrCheckoutSession(session)) {
@@ -203,9 +242,14 @@ async function dispatchNonBillingStripeEvent(event: Stripe.Event): Promise<void>
     return;
   }
 
-  if (event.type === "charge.refunded" || event.type === "refund.updated") {
+  if (
+    event.type === "charge.refunded" ||
+    event.type === "refund.updated" ||
+    event.type === "refund.created" ||
+    event.type === "refund.failed"
+  ) {
     const obj = event.data.object as Stripe.Charge | Stripe.Refund;
-    if (event.type === "refund.updated") {
+    if (event.type !== "charge.refunded") {
       const refund = obj as Stripe.Refund;
       const pi =
         typeof refund.payment_intent === "string"
@@ -271,9 +315,11 @@ async function dispatchNonBillingStripeEvent(event: Stripe.Event): Promise<void>
   }
 }
 
-router.post("/stripe", async (req: Request, res: Response) => {
+function stripeWebhookHandler(endpoint: StripeWebhookEndpoint) {
+  return async (req: Request, res: Response) => {
   const webhookReceivedAt = Date.now();
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  // Each endpoint has its own signing secret. Exactly one secret is tried per endpoint.
+  const webhookSecret = process.env[endpoint.secretEnv]?.trim();
   const sig = req.headers["stripe-signature"];
 
   if (!sig || !webhookSecret) {
@@ -282,9 +328,9 @@ router.post("/stripe", async (req: Request, res: Response) => {
 
   let event: Stripe.Event;
   try {
-    event = verifyWebhookSignature(req.body as Buffer, sig);
+    event = verifyWebhookSignature(req.body as Buffer, sig, webhookSecret);
   } catch (err) {
-    logServerError("stripe.webhook.verify", err, { phase: "signature_verify" });
+    logServerError("stripe.webhook.verify", err, { phase: "signature_verify", endpoint: endpoint.kind });
     return res.status(400).send("Webhook signature verification failed");
   }
 
@@ -293,14 +339,32 @@ router.post("/stripe", async (req: Request, res: Response) => {
     return res.json({ received: true, ignored: "mode_mismatch" });
   }
 
+  if (endpoint.kind === "connect") {
+    // Connected-account endpoint: only events that happen on a connected account, and only the
+    // types CareTip handles there. Everything else is acknowledged and ignored (never applied).
+    const account = typeof event.account === "string" ? event.account : "";
+    if (!account.startsWith("acct_")) {
+      console.error("[stripe.webhook] connect endpoint received a platform event: ignored", {
+        eventId: event.id,
+        eventType: event.type,
+      });
+      return res.json({ received: true, ignored: "not_connected_account_event" });
+    }
+    if (!CONNECT_ENDPOINT_EVENT_TYPES.has(event.type) && !isConnectPayoutEventType(event.type)) {
+      return res.json({ received: true, ignored: true });
+    }
+  }
+
   try {
-    if (event.type === "checkout.session.completed") {
+    if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
       const session = event.data.object as Stripe.Checkout.Session;
       if (isPhysicalQrCheckoutSession(session)) {
         let physicalResult: Awaited<ReturnType<typeof handlePhysicalQrCheckoutSessionCompleted>> | undefined;
         const outcome = await runWithStripeWebhookClaim(event, async () => {
           physicalResult = await handlePhysicalQrCheckoutSessionCompleted(session);
-          if (!physicalResult.ok) {
+          // Business-rule outcomes (review, awaiting payment, duplicate) are recorded durably and
+          // acknowledged. Only infrastructure failures are retried by Stripe.
+          if (!physicalResult.ok && physicalResult.retryable) {
             throw new Error(`physical_qr_checkout_failed:${physicalResult.reason ?? "unknown"}`);
           }
         });
@@ -312,7 +376,7 @@ router.post("/stripe", async (req: Request, res: Response) => {
         }
         return res.json({ received: true, source: "physical_qr_order", ...physicalResult! });
       }
-      if (isSubscriptionCheckoutSession(session)) {
+      if (event.type === "checkout.session.completed" && isSubscriptionCheckoutSession(session)) {
         logTrialSync("webhook.stripe_router.billing_checkout", {
           stripeEventId: event.id,
           sessionId: session.id,
@@ -375,9 +439,25 @@ router.post("/stripe", async (req: Request, res: Response) => {
   console.info("[stripe.webhook] processed", {
     eventId: event.id,
     type: event.type,
+    endpoint: endpoint.kind,
     durationMs: Date.now() - webhookReceivedAt,
   });
   return res.json({ received: true });
-});
+  };
+}
+
+/**
+ * Platform endpoint (POST /api/webhooks/stripe): events on the CareTip platform account, verified
+ * with STRIPE_WEBHOOK_SECRET.
+ *
+ * Connect endpoint (POST /api/webhooks/stripe-connect): events on connected accounts (account.updated,
+ * payout.*, disputes), verified with STRIPE_CONNECT_WEBHOOK_SECRET. Stripe signs each Dashboard
+ * endpoint with its own secret, so the two never share one. Both use the same event-claim table
+ * (keyed by the globally unique Stripe event id), so an event delivered to both is processed once.
+ * When STRIPE_CONNECT_WEBHOOK_SECRET is unset the Connect endpoint rejects every request (400).
+ */
+router.post("/stripe", stripeWebhookHandler({ kind: "platform", secretEnv: "STRIPE_WEBHOOK_SECRET" }));
+router.post("/stripe-connect", stripeWebhookHandler({ kind: "connect", secretEnv: "STRIPE_CONNECT_WEBHOOK_SECRET" }));
+
 
 export default router;

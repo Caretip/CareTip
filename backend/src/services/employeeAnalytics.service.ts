@@ -1,6 +1,7 @@
 /**
  * Employee Analytics bundle — CareTip ledger + read-only Stripe summary.
  */
+import { sqlUtcTimestamp } from "../utils/sqlUtcTimestamp.js";
 import { EmployeeTipPayoutMode, Prisma, TipStatus } from "@prisma/client";
 import type Stripe from "stripe";
 import { prisma } from "../prisma.js";
@@ -132,8 +133,8 @@ async function queryEmployeeAnalyticsPeriodKpis(opts: {
     LEFT JOIN employee_tip_payables p ON p.transaction_id = t.id
     WHERE t.employee_id = ${opts.employeeId}
       AND t.status = 'success'
-      AND t.created_at >= ${opts.periodStart}
-      AND t.created_at <= ${opts.periodEnd}
+      AND t.created_at >= ${sqlUtcTimestamp(opts.periodStart)}
+      AND t.created_at <= ${sqlUtcTimestamp(opts.periodEnd)}
   `);
   return row ?? EMPTY_PERIOD_KPIS;
 }
@@ -266,8 +267,8 @@ export async function loadEmployeeAnalyticsForUser(
     LEFT JOIN employee_tip_payables p ON p.transaction_id = t.id
     WHERE t.employee_id = ${actor.employeeId}
       AND t.status = 'success'
-      AND t.created_at >= ${periodStart}
-      AND t.created_at <= ${periodEnd}
+      AND t.created_at >= ${sqlUtcTimestamp(periodStart)}
+      AND t.created_at <= ${sqlUtcTimestamp(periodEnd)}
     GROUP BY 1
     ORDER BY 1 ASC
   `);

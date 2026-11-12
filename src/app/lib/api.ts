@@ -5723,7 +5723,24 @@ export type PhysicalQrAdminOrder = {
   contactSnapshot?: unknown;
   qrTargetUrlSnapshot?: string | null;
   stripePaymentIntentId?: string | null;
+  /** Platform-admin release of a partially refunded order (cleared by any later refund/dispute). */
+  holdReleasedAt?: string | null;
+  holdReleasedByUserId?: string | null;
   businessNameSnapshot: string | null;
+};
+
+export type PhysicalQrHoldResolution = {
+  id: string;
+  action: string;
+  adminUserId: string;
+  previousPaymentStatus: string;
+  newPaymentStatus: string;
+  previousFulfillmentStatus: string;
+  newFulfillmentStatus: string;
+  reason: string;
+  verifiedAmountReceivedCents: number;
+  verifiedRefundedCents: number;
+  createdAt: string;
 };
 
 export async function fetchPlatformPhysicalQrOrders(params?: {
@@ -5743,6 +5760,7 @@ export async function fetchPlatformPhysicalQrOrders(params?: {
 export async function fetchPlatformPhysicalQrOrder(orderId: string): Promise<{
   order: PhysicalQrAdminOrder;
   internalNotes: PhysicalQrInternalNote[];
+  holdResolutions?: PhysicalQrHoldResolution[];
 }> {
   return apiRequest(apiPath(`/api/platform/physical-qr/orders/${encodeURIComponent(orderId)}`), {
     headers: getHeaders(),
@@ -5835,6 +5853,19 @@ export async function downloadPlatformPhysicalQrOrdersZip(orderIds: string[]): P
     failed: Number.isFinite(failed) ? failed : 0,
     requested: Number.isFinite(requested) ? requested : orderIds.length,
   };
+}
+
+/** Platform admin: release a held (IN_REVIEW / PARTIALLY_REFUNDED) order for fulfillment. Server re-verifies with Stripe. */
+export async function releasePlatformPhysicalQrHold(
+  orderId: string,
+  input: { reason: string; expectedPaymentStatus: string },
+): Promise<{ success: true; order: PhysicalQrAdminOrder }> {
+  return apiRequest(apiPath(`/api/platform/physical-qr/orders/${encodeURIComponent(orderId)}/release-hold`), {
+    method: "POST",
+    headers: getHeaders(),
+    credentials: "include",
+    body: JSON.stringify(input),
+  });
 }
 
 export async function markPlatformPhysicalQrProcessing(orderId: string): Promise<PhysicalQrAdminOrder> {

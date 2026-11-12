@@ -1,6 +1,7 @@
 /**
  * Canonical business financial metrics from CareTip ledger (not Stripe).
  */
+import { sqlUtcTimestamp } from "../utils/sqlUtcTimestamp.js";
 import { EmployeeTipPayoutMode, Prisma } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import {
@@ -9,6 +10,7 @@ import {
 } from "./tipDistribution.service.js";
 import type { BusinessTimeframe } from "../utils/businessTime.js";
 import { businessUtcRangeForTimeframe, sanitizeIanaTimezone } from "../utils/businessTime.js";
+
 
 export type BusinessFinancialMetrics = {
   /** Gross successful customer tip volume (CareTip tips ledger). */
@@ -60,7 +62,7 @@ export async function loadBusinessFinancialMetrics(
       FROM tips
       WHERE business_id = ${businessId}
         AND status = 'success'
-        ${period !== "all" && periodStart && periodEnd ? Prisma.sql`AND created_at >= ${periodStart} AND created_at <= ${periodEnd}` : Prisma.empty}
+        ${period !== "all" && periodStart && periodEnd ? Prisma.sql`AND created_at >= ${sqlUtcTimestamp(periodStart)} AND created_at <= ${sqlUtcTimestamp(periodEnd)}` : Prisma.empty}
     `),
     prisma.$queryRaw<
       Array<{ routing_mode: EmployeeTipPayoutMode; gross_cents: number; fee_cents: number; row_count: number }>
@@ -73,7 +75,7 @@ export async function loadBusinessFinancialMetrics(
       FROM employee_tip_payables p
       ${period !== "all" && periodStart && periodEnd ? Prisma.sql`JOIN tips t ON t.id = p.transaction_id` : Prisma.empty}
       WHERE p.business_id = ${businessId}
-        ${period !== "all" && periodStart && periodEnd ? Prisma.sql`AND t.created_at >= ${periodStart} AND t.created_at <= ${periodEnd}` : Prisma.empty}
+        ${period !== "all" && periodStart && periodEnd ? Prisma.sql`AND t.created_at >= ${sqlUtcTimestamp(periodStart)} AND t.created_at <= ${sqlUtcTimestamp(periodEnd)}` : Prisma.empty}
       GROUP BY p.routing_mode
     `),
     obligationPromise,
