@@ -93,7 +93,10 @@ const ok = (name: string) => passed.push(name);
 
 try {
   // Startup
-  const fatal = (env: NodeJS.ProcessEnv) => reviewProductionConfig(env).fatal.join(" ");
+  // A valid JWT_SECRET (required in production since SEC-08) so these checks isolate the MFA key rules.
+  const STARTUP_JWT_SECRET = "k7Qm2vX9pL4sT8wZ1nB6cR3yH5jF0dGaE-uVoIqWe_Ys"; // test-only fixture
+  const fatal = (env: NodeJS.ProcessEnv) =>
+    reviewProductionConfig({ JWT_SECRET: STARTUP_JWT_SECRET, ...env }).fatal.join(" ");
   assert.match(fatal({ NODE_ENV: "production", RENDER: "true" }), /MFA_SECRET_ENCRYPTION_KEY/);
   assert.match(fatal({ NODE_ENV: "production", RENDER: "true", MFA_SECRET_ENCRYPTION_KEY: "too-short" }), /MFA_SECRET_ENCRYPTION_KEY/);
   assert.equal(fatal({ NODE_ENV: "production", RENDER: "true", MFA_SECRET_ENCRYPTION_KEY: K1 }), "");
