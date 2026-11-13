@@ -115,13 +115,19 @@ export function getSignInHandoffTimingSnapshot(): SignInHandoffTiming {
   return { ...timing };
 }
 
-/** Call on Sign In click — suppresses branded loaders for the whole journey. */
+/**
+ * Call on Sign In click — suppresses branded loaders for the whole journey.
+ * The cover is NOT shown yet: while credentials are checked the form stays visible with its button
+ * spinner. Showing it here put a full-screen loader over the form for the whole request and, on a
+ * wrong password or an MFA step, flashed it away again. It appears in
+ * {@link markSignInHandoffNavigating}, when the page actually swaps to the destination.
+ */
 export function beginAuthSignInHandoff(): void {
   if (active) return;
   resetPostLoginTrace();
   prepareAuthSoftNavHandoff();
   active = true;
-  coverVisible = true;
+  coverVisible = false;
   targetPath = null;
   shellReady = false;
   dataReady = false;
@@ -138,7 +144,7 @@ export function beginAuthSignInHandoff(): void {
     }
   }, HANDOFF_MAX_MS);
   logMark("click");
-  markPostLoginTrace("click", { coverVisible: true });
+  markPostLoginTrace("click", { coverVisible: false });
   emit();
 }
 

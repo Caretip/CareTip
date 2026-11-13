@@ -1,4 +1,6 @@
-import { RouterProvider } from 'react-router';
+// react-router/dom wires ReactDOM.flushSync, so navigate(to, { flushSync: true }) commits synchronously
+// (logout relies on it to swap routes without an empty intermediate frame). Other navigations are unchanged.
+import { RouterProvider } from 'react-router/dom';
 import { Toaster } from 'sonner';
 import { router } from './routes';
 import { TipFlowProvider } from './context/TipFlowContext';

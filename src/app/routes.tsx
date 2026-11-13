@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useLayoutEffect } from 'react';
+import React, { lazy, Suspense, useEffect, useLayoutEffect, useState } from 'react';
 import {
   createBrowserRouter,
   RouteObject,
@@ -68,7 +68,12 @@ import { JoinPage } from './pages/JoinPage';
 import { AuthLogoutHandoffCover } from "./components/auth/AuthLogoutHandoffCover";
 import { RootSpaRouteHold } from "./routing/RootSpaRouteHold";
 import { AuthBootstrapShell } from "./components/auth/AuthBootstrapShell";
-import { authPageLazy, platformAdminLoginPageLazy } from "./routing/routeLazy";
+import {
+  authPageLazy,
+  getLoadedAuthPage,
+  getLoadedPlatformAdminLogin,
+  platformAdminLoginPageLazy,
+} from "./routing/routeLazy";
 import { hasClientSessionHint } from "./lib/authSessionHint";
 import { runWhenIdle } from "./lib/runWhenIdle";
 import { LandingHeroPersistenceLayer } from "./components/landing/LandingHeroPersistenceLayer";
@@ -87,6 +92,12 @@ const PlatformAdminLoginChunk = lazy(() =>
  * #root stayed empty until the chunk arrived (a blank flash on landing → login).
  */
 function AuthPage() {
+  // Code already loaded (prefetch, earlier visit, a Login link or logout that waited for it):
+  // render it directly. React.lazy suspends on its first render even for a resolved chunk, which
+  // committed the full-screen fallback for a frame or more. Chosen once per mount so a mounted page
+  // never switches component type (which would reset the form).
+  const [Loaded] = useState(getLoadedAuthPage);
+  if (Loaded) return <Loaded />;
   return (
     <Suspense fallback={<AuthBootstrapShell />}>
       <AuthPageChunk />
@@ -95,6 +106,8 @@ function AuthPage() {
 }
 
 function PlatformAdminLoginPage() {
+  const [Loaded] = useState(getLoadedPlatformAdminLogin);
+  if (Loaded) return <Loaded />;
   return (
     <Suspense fallback={<AuthBootstrapShell />}>
       <PlatformAdminLoginChunk />

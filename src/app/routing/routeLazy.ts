@@ -43,17 +43,30 @@ export const employeeLayoutLazy = async (): Promise<LazyRouteResult> => {
 /** Shared with {@link prefetchAuthLoginRoute} so logout can warm the same promise RR awaits. */
 let authPageLazyPromise: Promise<LazyRouteResult> | null = null;
 let platformAdminLoginLazyPromise: Promise<LazyRouteResult> | null = null;
+/** Set once the module has loaded, so routes can render it synchronously (no Suspense fallback). */
+let loadedAuthPage: ComponentType<object> | null = null;
+let loadedPlatformAdminLogin: ComponentType<object> | null = null;
 
 /** Auth CSS + AuthPage — kept for prefetch / remaining lazy auth cousins. Critical /login is eager. */
 export function authPageLazy(): Promise<LazyRouteResult> {
   if (!authPageLazyPromise) {
     authPageLazyPromise = loadRouteModuleWithRetry(() =>
       Promise.all([import("@/styles/bundles/auth.css"), import("../components/AuthPage")]),
-    ).then(([, mod]) => ({
-      Component: mod.AuthPage as ComponentType<object>,
-    }));
+    ).then(([, mod]) => {
+      loadedAuthPage = mod.AuthPage as ComponentType<object>;
+      return { Component: loadedAuthPage };
+    });
+    // A failed fetch must not poison every later attempt (offline blip, deploy swap).
+    authPageLazyPromise.catch(() => {
+      authPageLazyPromise = null;
+    });
   }
   return authPageLazyPromise;
+}
+
+/** AuthPage component when its code is already loaded; otherwise null. */
+export function getLoadedAuthPage(): ComponentType<object> | null {
+  return loadedAuthPage;
 }
 export const joinPageLazy = async (): Promise<LazyRouteResult> => {
   const [, mod] = await loadRouteModuleWithRetry(() =>
@@ -106,11 +119,57 @@ export function platformAdminLoginPageLazy(): Promise<LazyRouteResult> {
         import("@/styles/bundles/auth.css"),
         import("../pages/platform/PlatformAdminLoginPage"),
       ]),
-    ).then(([, mod]) => ({
-      Component: mod.PlatformAdminLoginPage as ComponentType<object>,
-    }));
+    ).then(([, mod]) => {
+      loadedPlatformAdminLogin = mod.PlatformAdminLoginPage as ComponentType<object>;
+      return { Component: loadedPlatformAdminLogin };
+    });
+    platformAdminLoginLazyPromise.catch(() => {
+      platformAdminLoginLazyPromise = null;
+    });
   }
   return platformAdminLoginLazyPromise;
+}
+
+/** PlatformAdminLoginPage component when its code is already loaded; otherwise null. */
+export function getLoadedPlatformAdminLogin(): ComponentType<object> | null {
+  return loadedPlatformAdminLogin;
+}
+
+/** Signed-out entry routes rendered by the AuthPage / PlatformAdminLoginPage wrappers in routes.tsx. */
+const AUTH_PAGE_ROUTES = new Set(["/auth", "/login", "/employee/login", "/join/signup", "/signup"]);
+
+function normalizeRoutePath(path: string): string {
+  const p = path.split("?")[0]?.split("#")[0] ?? path;
+  return p.length > 1 && p.endsWith("/") ? p.slice(0, -1) : p;
+}
+
+/**
+ * For signed-out entry routes: null when the page code is loaded (navigate now), otherwise a promise
+ * that settles when it is (navigate then — the current page stays on screen meanwhile, the same way
+ * React Router waits for a route's `lazy` code). Settles (never rejects) so callers always navigate.
+ * Returns null for every other path.
+ */
+/** True for the signed-out entry routes whose page code is split behind a full-screen fallback. */
+export function isAuthEntryRoutePath(path: string): boolean {
+  const p = normalizeRoutePath(path);
+  return p === "/platform-admin/login" || AUTH_PAGE_ROUTES.has(p);
+}
+
+export function ensureAuthEntryRouteCode(path: string): Promise<void> | null {
+  const p = normalizeRoutePath(path);
+  if (p === "/platform-admin/login") {
+    if (loadedPlatformAdminLogin) return null;
+    return platformAdminLoginPageLazy().then(
+      () => undefined,
+      () => undefined,
+    );
+  }
+  if (!AUTH_PAGE_ROUTES.has(p)) return null;
+  if (loadedAuthPage) return null;
+  return authPageLazy().then(
+    () => undefined,
+    () => undefined,
+  );
 }
 
 /**

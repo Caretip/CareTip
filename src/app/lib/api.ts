@@ -470,6 +470,23 @@ function requestUrlPathname(url: string): string {
   }
 }
 
+/**
+ * Anonymous credential exchanges. A 401 here means the presented credentials were rejected (wrong
+ * password, expired MFA/OAuth hand-off), not that a session expired: never refresh-and-retry them.
+ * Retrying re-submitted the same password (two failed attempts per click against lockout / rate
+ * limits) and kept the sign-in waiting on a refresh round-trip before the error could show.
+ */
+export function isCredentialExchangeAuthPath(p: string): boolean {
+  return (
+    p === "/api/auth/signin" ||
+    p === "/api/auth/register" ||
+    p === "/api/auth/oauth" ||
+    p.startsWith("/api/auth/login/mfa/") ||
+    p === "/api/auth/facebook/complete" ||
+    p === "/api/auth/mobile-web-handoff/consume"
+  );
+}
+
 function requestUsesCaretipProtectedApi(url: string): boolean {
   const p = requestUrlPathname(url);
   if (isPublicGuestTipApiPath(p)) return false;
@@ -920,7 +937,8 @@ async function apiRequestOnce<T>(url: string, init?: RequestInit): Promise<T> {
     const tokenAtStart = getToken();
     const tokenIsSet = typeof tokenAtStart === "string" && tokenAtStart.trim().length > 0;
     /** HttpOnly refresh cookie can restore a session even when the access token is missing from storage. */
-    const canAttemptRefresh = isCaretipApi && !isAuthRefresh;
+    const canAttemptRefresh =
+      isCaretipApi && !isAuthRefresh && !isCredentialExchangeAuthPath(requestUrlPathname(url));
     const alreadyRetried = initFlags?.__caretipRetried === true;
     let refreshDeemedInvalid = false;
     let refreshTemporarilyUnavailable = false;

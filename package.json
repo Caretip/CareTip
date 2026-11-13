@@ -107,6 +107,7 @@
     "test:financial-write-no-replay": "node ./scripts/run-vite-ssr-runtime.mjs ./scripts/financial-write-no-replay-runtime.ts",
     "test:chunk-preload-recovery": "node ./scripts/run-vite-ssr-runtime.mjs ./scripts/chunk-preload-recovery-runtime.ts",
     "test:auth-refresh-reliability-frontend": "node ./scripts/run-vite-ssr-runtime.mjs ./scripts/auth-refresh-reliability-frontend-runtime.ts",
+    "test:auth-loader-flicker": "node ./scripts/run-vite-ssr-runtime.mjs ./scripts/auth-loader-flicker-runtime.ts",
     "test:first-party-api-domain-frontend": "node ./scripts/run-vite-ssr-runtime.mjs ./scripts/first-party-api-domain-frontend-runtime.ts VITE_API_URL=https://api.caretip.de VITE_LEGACY_API_URL=https://caretip.onrender.com",
     "test:auth-refresh-security": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/auth-refresh-security-regression-runtime.ts",
     "test:auth-logout-session-expired": "node ./backend/node_modules/tsx/dist/cli.mjs ./scripts/auth-logout-session-expired-runtime.ts",

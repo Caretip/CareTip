@@ -55,7 +55,14 @@ import {
   signalLogoutAuthPageReady,
 } from "../lib/authLogoutTransition";
 import { isIdleLogoutInFlight } from "../lib/idleSessionStore";
-import { prefetchAuthLoginRoute } from "../routing/routeLazy";
+import { ensureAuthEntryRouteCode, prefetchAuthLoginRoute } from "../routing/routeLazy";
+
+/**
+ * Upper bound for waiting on the login page code at sign-out. Security bound, not a visual one:
+ * sign-out must always complete even if that fetch stalls. A normal sign-out never waits (code cached).
+ */
+const LOGOUT_LOGIN_CODE_WAIT_MAX_MS = 4_000;
+let logoutLoginCodeWaitActive = false;
 import { hasClientSessionHint, markClientSessionHint } from "../lib/authSessionHint";
 import { hasClientStoredSession } from "../lib/authUserStore";
 import { setMemoryAccessToken } from "../lib/accessTokenStore";
@@ -536,30 +543,25 @@ export function useAuth() {
     return u;
   }, []);
 
-  const logout = useCallback(() => {
-    if (isAuthLogoutTransitionActive()) return;
-
-    const clickStartedAt = performance.now();
-    authDebug("logout_click", { t: clickStartedAt });
-
+  const runLogout = useCallback((clickStartedAt: number) => {
     const snapshot = captureLogoutSnapshot();
     // Force AppLoadingManager + guards to commit overlay cover before session teardown / RR transition.
     flushSync(() => {
       beginAuthLogoutTransition(snapshot.loginPath);
     });
     markLogoutPending();
-    // Login/admin-login are eager; prefetch still warms CSS for remaining lazy auth cousins.
     prefetchAuthLoginRoute(snapshot.loginPath);
 
     // Clear session before route swap so AuthPage never paints authenticated chrome mid-handoff.
     const { clientCleanupMs } = performClientLogoutCleanup(snapshot);
     publishSessionEnded("logout");
 
-    flushSync(() => {
-      navigate(snapshot.loginPath, { replace: true });
-      signalLogoutAuthPageReady();
-      endAuthLogoutTransition();
-    });
+    // RouterProvider comes from react-router/dom, so this commits the login route synchronously.
+    // Without it the router rendered the route in a later transition: the cover had already ended and
+    // the old protected tree, now without a user, painted an empty frame in between.
+    navigate(snapshot.loginPath, { replace: true, flushSync: true });
+    signalLogoutAuthPageReady();
+    endAuthLogoutTransition();
 
     authDebug("logout_navigate", {
       loginPath: snapshot.loginPath,
@@ -572,6 +574,34 @@ export function useAuth() {
       clickStartedAt,
     });
   }, [navigate]);
+
+  const logout = useCallback(() => {
+    if (isAuthLogoutTransitionActive() || logoutLoginCodeWaitActive) return;
+
+    const clickStartedAt = performance.now();
+    authDebug("logout_click", { t: clickStartedAt });
+
+    // The login page is code-split. Swapping to it before its code has arrived showed the full-screen
+    // Suspense fallback between the dashboard and the login form (the sign-out loader flash). Wait for
+    // the code first — the dashboard stays as it is, the session is untouched — then sign out at once.
+    const codeReady = ensureAuthEntryRouteCode(captureLogoutSnapshot().loginPath);
+    if (!codeReady) {
+      runLogout(clickStartedAt);
+      return;
+    }
+    logoutLoginCodeWaitActive = true;
+    authDebug("logout_wait_login_code");
+    let boundTimer = 0;
+    const bound = new Promise<void>((resolve) => {
+      boundTimer = window.setTimeout(resolve, LOGOUT_LOGIN_CODE_WAIT_MAX_MS);
+    });
+    void Promise.race([codeReady, bound]).then(() => {
+      window.clearTimeout(boundTimer);
+      logoutLoginCodeWaitActive = false;
+      if (isAuthLogoutTransitionActive()) return;
+      runLogout(clickStartedAt);
+    });
+  }, [runLogout]);
 
   const switchRole = (newRole: UserRole) => {
     if (user) {

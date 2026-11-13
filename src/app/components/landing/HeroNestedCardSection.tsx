@@ -3,6 +3,7 @@ import { motion } from "motion/react";
 import { ChevronDown } from "lucide-react";
 
 import { CareTipLogo } from "../CareTipLogo";
+import { PrefetchLink } from "../PrefetchLink";
 import { cn } from "@/lib/utils";
 
 type HeroNestedCardSectionProps = {
@@ -65,12 +66,12 @@ export function HeroNestedCardSection({
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Link
+                  <PrefetchLink
                     to="/login"
                     className="hidden rounded-full bg-transparent px-4 py-2 text-sm font-semibold text-white/90 hover:text-white lg:inline-flex"
                   >
                     Login
-                  </Link>
+                  </PrefetchLink>
                   <Link
                     to={primaryCtaTo}
                     className="inline-flex items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-bold text-black shadow-md transition-colors hover:bg-primary-hover"
