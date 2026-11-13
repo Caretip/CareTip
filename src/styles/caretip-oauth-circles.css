@@ -200,6 +200,15 @@
   background: #ffffff;
 }
 
+.caretip-oauth-google-button__unavailable {
+  max-width: 24rem;
+  margin: 0 auto;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  text-align: center;
+  color: hsl(var(--muted-foreground));
+}
+
 .dark .caretip-oauth-google-button__placeholder {
   border-color: rgba(255, 255, 255, 0.18);
   background: rgba(255, 255, 255, 0.04);

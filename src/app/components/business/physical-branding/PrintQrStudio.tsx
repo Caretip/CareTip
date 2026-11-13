@@ -1236,6 +1236,7 @@ function QuantityStepper({
   onIncrement: () => void;
   ariaLabel: string;
 }) {
+  const { t } = useTranslation();
   return (
     <div
       className="inline-flex items-center rounded-md border border-border bg-background"
@@ -1247,7 +1248,7 @@ function QuantityStepper({
         className="inline-flex h-8 w-8 items-center justify-center text-muted-foreground transition-colors hover:bg-muted/60 disabled:pointer-events-none disabled:opacity-40"
         onClick={onDecrement}
         disabled={quantity <= PHYSICAL_QR_QUANTITY_MIN}
-        aria-label="Decrease quantity"
+        aria-label={t("common.a11y.decreaseQuantity")}
       >
         <Minus className="h-3.5 w-3.5" aria-hidden />
       </button>
@@ -1259,7 +1260,7 @@ function QuantityStepper({
         className="inline-flex h-8 w-8 items-center justify-center text-muted-foreground transition-colors hover:bg-muted/60 disabled:pointer-events-none disabled:opacity-40"
         onClick={onIncrement}
         disabled={quantity >= PHYSICAL_QR_QUANTITY_MAX}
-        aria-label="Increase quantity"
+        aria-label={t("common.a11y.increaseQuantity")}
       >
         <Plus className="h-3.5 w-3.5" aria-hidden />
       </button>

@@ -1,6 +1,9 @@
 import { useNavigate, useParams, Link } from "react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { RotateCw, SearchX } from "lucide-react";
+import { isApiRequestError } from "../../lib/apiError";
+import { caretipBtnPrimary, caretipBtnSecondary } from "@/lib/caretipButtonSystem";
 import { useTipFlow } from "../../context/TipFlowContext";
 import {
   getBusinessStaffDirectory,
@@ -34,6 +37,8 @@ export function BusinessStaffDirectoryPage() {
   /** Semantic invalid URL — translated at render so locale switches do not refetch. */
   const [invalidLink, setInvalidLink] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 404 = unknown business slug (mistyped URL or old QR code); anything else is a temporary failure.
+  const [notFound, setNotFound] = useState(false);
   const [data, setData] = useState<BusinessDirectoryResponse | null>(null);
   const [query, setQuery] = useState("");
 
@@ -55,6 +60,7 @@ export function BusinessStaffDirectoryPage() {
     (async () => {
       setLoading(true);
       setError(null);
+      setNotFound(false);
       try {
         const res = await getBusinessStaffDirectory(raw);
         if (cancelled) return;
@@ -68,6 +74,7 @@ export function BusinessStaffDirectoryPage() {
       } catch (e) {
         logClientError("BusinessStaffDirectoryPage", e);
         if (!cancelled) {
+          setNotFound(isApiRequestError(e) && e.status === 404);
           setError(toUserFriendlyMessage(e));
           setData(null);
         }
@@ -148,16 +155,33 @@ export function BusinessStaffDirectoryPage() {
   }
 
   if (invalidLink || error || !data) {
-    const message = invalidLink
-      ? t("tipFlow.errors.invalidLink")
-      : (error ?? t("tipFlow.common.notFound"));
+    // Unknown slug or a bad link: explain both likely causes (typo, outdated QR code).
+    const missing = invalidLink || notFound || !error;
     return (
-      <div className={cf.stateCenter}>
-        <p className={cf.stateError}>{message}</p>
-        <Link to="/" className="mt-4 text-sm font-semibold text-primary underline-offset-2 hover:underline">
-          {t("tipFlow.common.goHomeLink")}
-        </Link>
-      </div>
+      <main className={cf.stateCenter} data-caretip-route-ready="">
+        <span
+          className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-muted text-foreground"
+          aria-hidden="true"
+        >
+          {missing ? <SearchX className="h-6 w-6" /> : <RotateCw className="h-6 w-6" />}
+        </span>
+        <h1 className="mb-2 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+          {t(missing ? "tipFlow.notFoundPage.title" : "tipFlow.notFoundPage.errorTitle")}
+        </h1>
+        <p className="mb-6 max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base">
+          {missing ? t("tipFlow.notFoundPage.body") : error}
+        </p>
+        <div className="flex w-full max-w-xs flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
+          {missing ? null : (
+            <button type="button" className={caretipBtnPrimary} onClick={() => window.location.reload()}>
+              {t("tipFlow.notFoundPage.retry")}
+            </button>
+          )}
+          <Link to="/" className={`${missing ? caretipBtnPrimary : caretipBtnSecondary} no-underline`}>
+            {t("tipFlow.notFoundPage.home")}
+          </Link>
+        </div>
+      </main>
     );
   }
 

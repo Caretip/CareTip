@@ -27,7 +27,7 @@ export function BusinessOnboardingFinishCta({
     <div className="business-onboarding-finish-cta space-y-5">
       {publishOnly ? (
         <p className="business-onboarding-finish-cta__status">
-          <Check className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
+          <Check className="h-4 w-4 shrink-0 text-emerald-700 dark:text-emerald-400" aria-hidden />
           {t("business.onboarding.finalStep.guestPageReady")}
         </p>
       ) : null}

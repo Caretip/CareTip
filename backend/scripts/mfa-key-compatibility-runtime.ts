@@ -6,6 +6,7 @@
  */
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { AddressInfo } from "node:net";
@@ -94,9 +95,10 @@ const ok = (name: string) => passed.push(name);
 try {
   // Startup
   // A valid JWT_SECRET (required in production since SEC-08) so these checks isolate the MFA key rules.
-  const STARTUP_JWT_SECRET = "k7Qm2vX9pL4sT8wZ1nB6cR3yH5jF0dGaE-uVoIqWe_Ys"; // test-only fixture
+  // Generated per run (never a literal in the repo, so secret scanners stay clean).
+  const startupJwtKey = randomBytes(32).toString("base64url");
   const fatal = (env: NodeJS.ProcessEnv) =>
-    reviewProductionConfig({ JWT_SECRET: STARTUP_JWT_SECRET, ...env }).fatal.join(" ");
+    reviewProductionConfig({ JWT_SECRET: startupJwtKey, ...env }).fatal.join(" ");
   assert.match(fatal({ NODE_ENV: "production", RENDER: "true" }), /MFA_SECRET_ENCRYPTION_KEY/);
   assert.match(fatal({ NODE_ENV: "production", RENDER: "true", MFA_SECRET_ENCRYPTION_KEY: "too-short" }), /MFA_SECRET_ENCRYPTION_KEY/);
   assert.equal(fatal({ NODE_ENV: "production", RENDER: "true", MFA_SECRET_ENCRYPTION_KEY: K1 }), "");

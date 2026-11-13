@@ -1,7 +1,8 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import { GoogleLogin, useGoogleOAuth, type CredentialResponse } from "@react-oauth/google";
 import type { GoogleOAuthUxMode } from "@/app/lib/googleOAuthRedirectWeb";
+import { hasGoogleGsiScriptFailed, subscribeGoogleGsiScriptStatus } from "@/app/lib/googleGsiScriptStatus";
 
 type AuthGoogleLoginButtonProps = {
   onSuccess: (cred: CredentialResponse) => void;
@@ -40,6 +41,7 @@ export function AuthGoogleLoginButton({
 }: AuthGoogleLoginButtonProps) {
   const { t } = useTranslation();
   const { scriptLoadedSuccessfully } = useGoogleOAuth();
+  const scriptFailed = useSyncExternalStore(subscribeGoogleGsiScriptStatus, hasGoogleGsiScriptFailed, () => false);
   const hostRef = useRef<HTMLDivElement>(null);
   /**
    * Measured before paint; the Google button renders only once the width is known. It used to render
@@ -158,6 +160,11 @@ export function AuthGoogleLoginButton({
             style: { width, minHeight: GSI_BUTTON_HEIGHT },
           }}
         />
+      ) : scriptFailed ? (
+        // The Google script was blocked or failed: say so instead of showing an empty, dead box.
+        <p className="caretip-oauth-google-button__unavailable" role="note">
+          {t("auth.oauth.googleUnavailable")}
+        </p>
       ) : (
         <div
           className="caretip-oauth-google-button__placeholder"

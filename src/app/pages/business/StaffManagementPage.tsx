@@ -1264,6 +1264,7 @@ export function StaffManagementPage() {
                       type="button"
                       role="switch"
                       aria-checked={employee.isActive}
+                      aria-label={t("business.staffPage.activeToggleAria", { name: employee.name })}
                       onClick={() => handleActivationToggleRequest(employee)}
                       className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-all hover:opacity-90 active:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                         employee.isActive ? "bg-primary" : "bg-muted"
@@ -1368,6 +1369,7 @@ export function StaffManagementPage() {
                     type="button"
                     role="switch"
                     aria-checked={employee.isActive}
+                    aria-label={t("business.staffPage.activeToggleAria", { name: employee.name })}
                     onClick={() => handleActivationToggleRequest(employee)}
                     className={cn(
                       "relative mt-1 inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-all hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",

@@ -279,21 +279,21 @@ async function main() {
     }
 
     // --- Incident cleanup verification (read-only) ---
+    // Invariant: no Google identity is bound to the walkthrough demo employee. A specific address from
+    // an incident can be checked too via OAUTH_INCIDENT_EMAIL (personal data is not kept in the repo).
+    const incidentEmail = process.env.OAUTH_INCIDENT_EMAIL?.trim();
     const incidentLinks = await prisma.oAuthAccount.findMany({
       where: {
         provider: "google",
         OR: [
-          { emailAtLink: { equals: "euchariaprecious76@gmail.com", mode: "insensitive" } },
-          {
-            user: { email: "employee@caretip.de" },
-            emailAtLink: { contains: "eucharia", mode: "insensitive" },
-          },
+          { user: { email: "employee@caretip.de" } },
+          ...(incidentEmail ? [{ emailAtLink: { equals: incidentEmail, mode: "insensitive" as const } }] : []),
         ],
       },
       select: { id: true, userId: true, emailAtLink: true },
     });
     if (incidentLinks.length === 0) {
-      pass("Incident cleanup: no OAuthAccount binds personal Gmail to demo employee");
+      pass("Incident cleanup: no Google identity is bound to the demo employee");
     } else {
       fail(`Incident link still present (count=${incidentLinks.length}) — do not recreate; clean first`);
     }

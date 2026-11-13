@@ -87,7 +87,7 @@ import {
 } from "../../lib/dashboardFormalGreeting";
 
 function goalStatusClass(s: EmployeeGoalProgressStatus): string {
-  if (s === "achieved") return "text-emerald-600 dark:text-emerald-400";
+  if (s === "achieved") return "text-emerald-700 dark:text-emerald-400";
   if (s === "on_track") return "text-muted-foreground";
   return "text-amber-700 dark:text-amber-500";
 }

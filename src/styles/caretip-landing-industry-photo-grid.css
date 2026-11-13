@@ -133,7 +133,8 @@ html.caretip-document-hidden .caretip-landing .caretip-industry-photo-card--anim
   align-items: center;
   gap: 4px;
   margin-top: 4px;
-  min-height: 0;
+  /* 24px minimum hit area (WCAG 2.2 target size); the text itself is unchanged. */
+  min-height: 1.5rem;
   padding: 0;
   border: none;
   border-radius: 0;

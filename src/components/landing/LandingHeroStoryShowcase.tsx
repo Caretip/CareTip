@@ -9,6 +9,8 @@ import {
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import {
   LCP_HERO_STORY_FRAME,
+  heroFrameFallbackSrc,
+  heroFramePreloadSrc,
   loadDeferredHeroStoryFrame,
   preloadHeroFrame,
   getWarmLandingHeroImage,
@@ -93,7 +95,7 @@ export function LandingHeroStoryShowcase({
 
   const handleFrameImageError = useCallback(
     (frame: HeroStoryFrame, isLcpFrame: boolean, img: HTMLImageElement) => {
-      const fallback = frame.webp ?? frame.src;
+      const fallback = heroFrameFallbackSrc(frame);
       if (!fallback) {
         if (isLcpFrame) handleLcpFrameLoad();
         else markFrameReady(frame.key);
@@ -301,9 +303,14 @@ export function LandingHeroStoryShowcase({
                   ) : null}
                   {frame.avif ? <source type="image/avif" srcSet={frame.avif} /> : null}
                   {frame.webp ? <source type="image/webp" srcSet={frame.webp} /> : null}
+                  {/*
+                    `src` is the same file <picture> selects for this viewport. WebKit starts fetching
+                    `src` before it evaluates the sources, so a desktop fallback here made phones
+                    download the 300–700 KB desktop photos on every visit.
+                  */}
                   <img
                     ref={isLcpFrame ? lcpImgRef : undefined}
-                    src={frame.webp ?? frame.src}
+                    src={heroFramePreloadSrc(frame)}
                     alt={isVisible ? alt : ""}
                     aria-hidden={!isVisible}
                     className={cn(

@@ -78,7 +78,7 @@ export function PlatformAdminRoute({ children }: PlatformAdminRouteProps) {
       guard: "PlatformAdminRoute",
       reason: "wrong_role",
     });
-    return <Navigate to="/unauthorized" replace />;
+    return <Navigate to="/unauthorized" replace state={{ area: "platform-admin" }} />;
   }
 
   navFlashLog("guard_resolved", { path: location.pathname, guard: "PlatformAdminRoute", decision: "allow" });

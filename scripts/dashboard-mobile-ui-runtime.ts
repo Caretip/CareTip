@@ -93,12 +93,13 @@ if (emptyState.includes("dashboard-workspace-empty--compact")) {
 
 const assignmentCard = read("src/app/components/employee/EmployeeAssignmentCard.tsx");
 if (
-  assignmentCard.includes("employee-assignment-panel") &&
+  assignmentCard.includes("employee-workplace__location") &&
+  assignmentCard.includes("employee-workplace__tables") &&
   !assignmentCard.includes("employeeUi.card") &&
-  assignmentCard.includes("EmployeeEmptyState")
+  assignmentCard.includes("employee-workplace__empty")
 ) {
-  pass("employee assignment panel is surface-first (no wrapping card)");
-} else fail("employee assignment still wrapped in decorative card");
+  pass("employee assignment uses its own location + tables layout (no generic card wrapper) with an empty state");
+} else fail("employee assignment layout missing location/tables sections or empty state");
 
 const performance = read("src/app/components/employee/EmployeePerformanceInsights.tsx");
 if (
@@ -208,9 +209,11 @@ if (tipsSubtitle === "" && liveDesc === "") {
   pass("Tips module redundant subtitles cleared");
 } else fail("Tips module still has redundant subtitle/liveDesc");
 
-if ((en?.employee?.assignment?.subtitle ?? "x") === "") {
-  pass("Employee assignment subtitle cleared (title sufficient)");
-} else fail("Employee assignment subtitle still present");
+// The redesigned work-location page explains what the location and tables do, in one short line.
+const assignmentSubtitle = (en?.employee?.assignment?.subtitle ?? "") as string;
+if (assignmentSubtitle.length > 0 && assignmentSubtitle.length <= 90) {
+  pass("Employee assignment subtitle is one short explanatory line");
+} else fail(`Employee assignment subtitle missing or too long: ${assignmentSubtitle}`);
 
 if (
   (en?.notifications?.inbox?.emptyHint ?? "x") === "" &&

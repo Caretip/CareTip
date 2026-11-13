@@ -1684,3 +1684,21 @@ html.caretip-logout-viewport-lock body {
 .caretip-logout-handoff-cover {
   touch-action: none;
 }
+
+/*
+ * WCAG 2.2 AA target size (2.5.8): compact standalone text links/actions get at least a 24px-high
+ * hit area. :where() keeps specificity at zero, so each component's own layout still wins.
+ */
+:where(
+    .dashboard-view-all-link,
+    .qr-studio-action-link,
+    .ac-link,
+    .caretip-industry-photo-card__cta,
+    .mw-auth-forgot__link,
+    .caretip-contact-inline-link,
+    .caretip-contact-back
+  ) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5rem;
+}

@@ -14,10 +14,19 @@ export const marketingChildRoutes: RouteObject[] = [
   { path: "plv", lazy: routeLazy(() => import("../pages/PlvPage"), "PriceServicesListPage") },
   { path: "about", lazy: routeLazy(() => import("../pages/AboutPage"), "AboutPage") },
   { path: "contact", lazy: routeLazy(() => import("../pages/ContactPage"), "ContactPage") },
-  { path: "careers", lazy: routeLazy(() => import("../pages/CareersPage"), "CareersPage") },
-  { path: "blog", lazy: routeLazy(() => import("../pages/BlogPage"), "BlogPage") },
+  // Placeholder roles and company stats (not real data): development only. Production sends /careers home.
+  import.meta.env.DEV
+    ? { path: "careers", lazy: routeLazy(() => import("../pages/CareersPage"), "CareersPage") }
+    : { path: "careers", element: <Navigate to="/" replace /> },
+  // Placeholder articles with no working actions: development only. Production sends /blog home.
+  import.meta.env.DEV
+    ? { path: "blog", lazy: routeLazy(() => import("../pages/BlogPage"), "BlogPage") }
+    : { path: "blog", element: <Navigate to="/" replace /> },
   { path: "faq", lazy: routeLazy(() => import("../pages/FAQPage"), "FAQPage") },
-  { path: "mobile-app", lazy: routeLazy(() => import("../pages/MobileAppPage"), "MobileAppPage") },
+  // Placeholder store stats and download buttons with no target: development only.
+  import.meta.env.DEV
+    ? { path: "mobile-app", lazy: routeLazy(() => import("../pages/MobileAppPage"), "MobileAppPage") }
+    : { path: "mobile-app", element: <Navigate to="/" replace /> },
   { path: "features", lazy: routeLazy(() => import("../pages/FeaturesPage"), "FeaturesPage") },
   { path: "industries/events", element: <Navigate to="/industries/fairs" replace /> },
   {

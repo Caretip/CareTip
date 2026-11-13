@@ -67,10 +67,14 @@ export function formatDateTime(iso: string | null | undefined, language?: string
  * "platform.business.approved" → "Business approved"; keeps the raw key available for a
  * secondary mono line so operators can still search the audit log by exact action.
  */
+/** Words that are initialisms in audit keys ("mfa.login.success" → "MFA login success"). */
+const AUDIT_ACRONYMS = new Set(["mfa", "kyc", "qr", "api", "id", "url", "gdpr", "iban", "pdf", "csv", "ip", "sso", "2fa", "otp", "dpa", "avv"]);
+
 export function humanizeAuditAction(action: string): string {
   const parts = action.split(".").filter(Boolean);
   const meaningful = parts[0] === "platform" && parts.length > 1 ? parts.slice(1) : parts;
-  const text = meaningful.join(" ").replace(/[_-]+/g, " ").trim();
-  if (!text) return action;
+  const words = meaningful.join(" ").replace(/[_-]+/g, " ").trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return action;
+  const text = words.map((w) => (AUDIT_ACRONYMS.has(w.toLowerCase()) ? w.toUpperCase() : w)).join(" ");
   return text.charAt(0).toUpperCase() + text.slice(1);
 }

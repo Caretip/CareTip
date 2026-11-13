@@ -39,7 +39,7 @@ export function AnalyticsKpiStrip({ items, loading, className, ariaLabel }: Anal
               <p
                 className={cn(
                   "mt-0.5 text-[11px] leading-snug tabular-nums",
-                  item.trendDirection === "up" && "text-emerald-600 dark:text-emerald-400",
+                  item.trendDirection === "up" && "text-emerald-700 dark:text-emerald-400",
                   item.trendDirection === "down" && "text-amber-700 dark:text-amber-400",
                   (!item.trendDirection || item.trendDirection === "neutral") && "text-muted-foreground",
                 )}

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { DASHBOARD_MOBILE_DRAWER_PANEL_CLASS } from "@/lib/theme/dashboardSidebarUi";
@@ -30,6 +31,7 @@ export function MobileDrawer({
   side = "left",
   ariaLabel,
 }: MobileDrawerProps) {
+  const { t } = useTranslation();
   const reduceMotion = useReducedMotion();
   const openedAtRef = useRef(0);
   const [backdropDismissible, setBackdropDismissible] = useState(false);
@@ -95,7 +97,7 @@ export function MobileDrawer({
     <>
       <button
         type="button"
-        aria-label="Close menu"
+        aria-label={t("nav.closeMenu")}
         className={cn(
           "fixed inset-0 z-40 touch-manipulation bg-black/50 lg:hidden",
           reduceMotion ? "opacity-100" : "caretip-mobile-drawer-backdrop--open",

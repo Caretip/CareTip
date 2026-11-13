@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { DashboardHeroMetricSkeleton } from "@/app/components/dashboard/DashboardAnalyticsLoader";
 
@@ -19,12 +20,13 @@ export function CustomerFeedbackMetricsStrip({
   loading?: boolean;
   className?: string;
 }) {
+  const { t } = useTranslation();
   return (
     <div
       className={cn("caretip-feedback-metric-strip", className)}
       aria-busy={loading === true}
       role="group"
-      aria-label="Feedback metrics"
+      aria-label={t("common.a11y.feedbackMetrics")}
     >
       {items.map((item) => (
         <div

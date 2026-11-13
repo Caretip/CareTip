@@ -1,0 +1,454 @@
+/*
+ * Employee "Your Tip Location" (/employee/assignment).
+ *
+ * Layout: a dark card with the venue and the location the business assigned, and a "Your tables" panel
+ * with the assigned tables. Two columns from 1024px, stacked below. Only assigned data is shown.
+ * Scoped to the employee dashboard shell; brand orange comes from --primary (#eb992c), never darkened.
+ */
+
+.caretip-dashboard-shell.employee-dashboard .employee-assignment-page .employee-page__inner {
+  max-width: 68rem;
+}
+
+.employee-workplace__grid {
+  display: grid;
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .employee-workplace__grid {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 1.5rem;
+  }
+}
+
+/* ── Location card ───────────────────────────────────────────────────────────────────────────── */
+.employee-workplace__location {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  padding: 1.25rem 1.125rem 1.125rem;
+  border-radius: 1.5rem;
+  border: 1px solid rgb(255 255 255 / 0.06);
+  color: #fafafa;
+  background-color: rgb(23 20 17);
+  background-image: radial-gradient(120% 75% at 100% 0%, hsl(var(--primary) / 0.16), transparent 62%);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.04) inset,
+    0 18px 40px -24px rgb(0 0 0 / 0.55);
+}
+
+@media (min-width: 640px) {
+  .employee-workplace__location {
+    padding: 1.5rem;
+  }
+}
+
+/* Desktop: the location stays in view while a long table list scrolls (declared after the base rule). */
+@media (min-width: 1024px) {
+  .employee-workplace__location {
+    position: sticky;
+    top: 5.5rem;
+  }
+}
+
+/* Soft ring motif, as on the hero. */
+.employee-workplace__location::after {
+  content: "";
+  position: absolute;
+  top: -5.5rem;
+  right: -5.5rem;
+  width: 13rem;
+  height: 13rem;
+  border-radius: 999px;
+  border: 1px solid hsl(var(--primary) / 0.22);
+  pointer-events: none;
+}
+
+.employee-workplace__venue {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+  margin-bottom: 1.25rem;
+}
+
+.employee-workplace__venue-logo {
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.625rem;
+  object-fit: cover;
+  background: rgb(255 255 255 / 0.08);
+}
+
+.employee-workplace__venue-logo--initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.14);
+}
+
+.employee-workplace__venue-name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: rgb(255 255 255 / 0.86);
+}
+
+.employee-workplace__location-head {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.employee-workplace__pin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.75rem;
+  color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.14);
+  box-shadow: 0 0 0 1px hsl(var(--primary) / 0.22) inset;
+}
+
+.employee-workplace__eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: hsl(var(--primary));
+}
+
+.employee-workplace__location-name {
+  margin: 0.875rem 0 0;
+  font-size: clamp(1.5rem, 6.4vw, 1.875rem);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+}
+
+.employee-workplace__location-name--muted {
+  color: rgb(255 255 255 / 0.9);
+  font-size: clamp(1.25rem, 5.4vw, 1.5rem);
+}
+
+.employee-workplace__location-desc {
+  margin: 0.5rem 0 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: rgb(255 255 255 / 0.72);
+  overflow-wrap: anywhere;
+}
+
+/* ── Tables panel ────────────────────────────────────────────────────────────────────────────── */
+.employee-workplace__tables {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+  padding: 1.125rem;
+  border-radius: 1.5rem;
+  border: 1px solid hsl(var(--border) / 0.8);
+  background: hsl(var(--card));
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.03);
+}
+
+@media (min-width: 640px) {
+  .employee-workplace__tables {
+    padding: 1.5rem;
+  }
+}
+
+.employee-workplace__tables-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.employee-workplace__tables-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: hsl(var(--foreground));
+}
+
+.employee-workplace__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.4375rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: hsl(var(--foreground));
+  background: hsl(var(--primary) / 0.16);
+}
+
+.employee-workplace__tables-hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: hsl(var(--muted-foreground));
+}
+
+.employee-workplace__tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 640px) {
+  .employee-workplace__tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.625rem;
+  }
+}
+
+.employee-workplace__tile {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+  min-height: 3.25rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.875rem;
+  border: 1px solid hsl(var(--border) / 0.8);
+  background: hsl(var(--muted) / 0.35);
+}
+
+.employee-workplace__tile-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: 0.625rem;
+  color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.12);
+}
+
+.employee-workplace__tile-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.employee-workplace__tile-location {
+  font-size: 0.75rem;
+  line-height: 1.3;
+  color: hsl(var(--muted-foreground));
+  overflow-wrap: anywhere;
+}
+
+.employee-workplace__tile-name {
+  display: -webkit-box;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: hsl(var(--foreground));
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.employee-workplace__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.75rem 1rem;
+  border-radius: 1rem;
+  border: 1px dashed hsl(var(--border));
+  text-align: center;
+  background: hsl(var(--muted) / 0.25);
+}
+
+.employee-workplace__empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.875rem;
+  color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.12);
+}
+
+.employee-workplace__empty-title {
+  margin: 0.75rem 0 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.employee-workplace__empty-desc {
+  max-width: 22rem;
+  margin: 0.25rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: hsl(var(--muted-foreground));
+}
+
+.employee-workplace__note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0;
+  padding-top: 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: hsl(var(--muted-foreground));
+}
+
+.employee-workplace__note svg {
+  margin-top: 0.0625rem;
+}
+
+/* ── Loading skeletons ───────────────────────────────────────────────────────────────────────── */
+.employee-workplace__skeleton-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin-top: 0.875rem;
+}
+
+.employee-workplace__skeleton {
+  display: block;
+  border-radius: 0.5rem;
+  background: hsl(var(--muted));
+  animation: employee-workplace-pulse 1.4s ease-in-out infinite;
+}
+
+.employee-workplace__location .employee-workplace__skeleton {
+  background: rgb(255 255 255 / 0.1);
+}
+
+.employee-workplace__skeleton--title {
+  width: 65%;
+  height: 1.75rem;
+}
+
+.employee-workplace__skeleton--line {
+  width: 85%;
+  height: 0.875rem;
+}
+
+.employee-workplace__skeleton--tile {
+  height: 3.25rem;
+  border-radius: 0.875rem;
+}
+
+@keyframes employee-workplace-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .employee-workplace__skeleton {
+    animation: none;
+  }
+}
+
+@media (max-width: 380px) {
+  .employee-workplace__location,
+  .employee-workplace__tables {
+    padding: 1rem;
+  }
+}
+
+/* ── Overview entry row (EmployeeWorkLocationCard on /employee/dashboard) ─────────────────────── */
+.caretip-dashboard-shell.employee-dashboard .employee-work-location {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 4rem;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-radius: 1.25rem;
+  border: 1px solid hsl(var(--border) / 0.8);
+  background: hsl(var(--card));
+  background-image: radial-gradient(90% 140% at 100% 0%, hsl(var(--primary) / 0.07), transparent 60%);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.03);
+  color: hsl(var(--foreground));
+  text-decoration: none;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-work-location:hover {
+  border-color: hsl(var(--primary) / 0.45);
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-work-location:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+.employee-work-location__pin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.875rem;
+  color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.13);
+  box-shadow: 0 0 0 1px hsl(var(--primary) / 0.2) inset;
+}
+
+.employee-work-location__cta {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.employee-work-location__chevron {
+  flex: none;
+  color: hsl(var(--muted-foreground));
+  transition: transform 150ms ease, color 150ms ease;
+}
+
+.caretip-dashboard-shell.employee-dashboard .employee-work-location:hover .employee-work-location__chevron {
+  color: hsl(var(--primary));
+  transform: translateX(2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caretip-dashboard-shell.employee-dashboard .employee-work-location:hover .employee-work-location__chevron {
+    transform: none;
+  }
+}

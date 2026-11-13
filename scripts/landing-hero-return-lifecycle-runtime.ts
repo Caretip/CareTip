@@ -29,6 +29,16 @@ const landingPage = read("src/app/pages/LandingPage.tsx");
 const heroPersistence = read("src/app/components/landing/LandingHeroPersistenceLayer.tsx");
 const shellReady = read("src/app/lib/useLandingShellReady.ts");
 const heroBootHandoff = read("src/app/lib/landingHeroBootHandoff.ts");
+const marketingRoutes = read("src/app/routing/marketingChildRoutes.tsx");
+
+/** `/` is the eager MarketingShellLayout; LandingPage is its eager index child (no lazy hole). */
+function landingRouteIsEager(): boolean {
+  return (
+    /path:\s*'\/',[\s\S]{0,200}?Component:\s*MarketingShellLayout/.test(routes) &&
+    !/path:\s*'\/',\s*\n\s*lazy:/.test(routes) &&
+    /\{\s*index:\s*true,\s*Component:\s*LandingPage\s*\}/.test(marketingRoutes)
+  );
+}
 
 assert(
   storyCss.includes(".caretip-hero-media-clip:not(.caretip-hero-media-clip--background) .caretip-hero-story-frame"),
@@ -89,8 +99,7 @@ assert(
   "warm cache helper must exist without inventing new network preloads",
 );
 assert(
-  /path:\s*'\/',\s*\n\s*\/\/ Eager[\s\S]*?Component:\s*LandingPage/.test(routes) &&
-    !/path:\s*'\/',\s*\n\s*lazy:/.test(routes),
+  landingRouteIsEager(),
   "/ must ship LandingPage eagerly so the first Outlet commit is the landing page, not an empty lazy hole",
 );
 assert(
@@ -120,8 +129,7 @@ assert(
   "landing JS must prefetch in parallel with i18n",
 );
 assert(
-  /path:\s*'\/',\s*\n\s*\/\/ Eager[\s\S]*?Component:\s*LandingPage/.test(routes) &&
-    !/path:\s*'\/',\s*\n\s*lazy:/.test(routes),
+  landingRouteIsEager(),
   "/ must ship LandingPage eagerly so the first Outlet commit is the landing page, not an empty lazy hole",
 );
 assert(

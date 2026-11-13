@@ -32,7 +32,7 @@ const GRADE_STYLES: Record<
   },
   unscannable: {
     icon: ShieldAlert,
-    badge: "bg-destructive/15 text-destructive",
+    badge: "bg-destructive/15 text-red-700 dark:text-destructive",
     ring: "ring-destructive/30",
   },
 };

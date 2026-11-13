@@ -18,10 +18,10 @@ import {
 import { useBusinessPageBoot } from "../../../lib/useBusinessPageBoot";
 
 const tabTriggerClass =
-  "rounded-none border-b-2 border-transparent bg-transparent px-3 py-2 shadow-none data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none";
+  "min-w-0 whitespace-normal text-center leading-tight sm:whitespace-nowrap rounded-none border-b-2 border-transparent bg-transparent px-3 py-2 shadow-none data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none";
 
 const leaderboardTabTriggerClass =
-  "rounded-none border-b-2 border-transparent bg-transparent px-3 py-2 text-primary shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none";
+  "min-w-0 whitespace-normal text-center leading-tight sm:whitespace-nowrap rounded-none border-b-2 border-transparent bg-transparent px-3 py-2 text-primary shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none";
 
 /** Team → Performance: executive insights + leaderboard workspace. Gated at layout level. */
 export function BusinessTeamPerformancePage() {
@@ -65,7 +65,7 @@ export function BusinessTeamPerformancePage() {
       >
         <div className="flex flex-col gap-3 border-b border-border/80 sm:flex-row sm:items-end sm:justify-between">
           <TabsList
-            className="h-auto w-full justify-start gap-1 rounded-none bg-transparent p-0 sm:w-auto"
+            className="grid h-auto w-full grid-cols-2 gap-1 rounded-none bg-transparent p-0 sm:flex sm:w-auto sm:justify-start"
             aria-label={t("business.team.performance.tabsAria")}
           >
             <TabsTrigger value="overview" className={tabTriggerClass}>

@@ -229,7 +229,13 @@
       "connectionAction": "Try again"
     },
     "tryAgain": "Try again",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "a11y": {
+      "feedbackMetrics": "Feedback metrics",
+      "decreaseQuantity": "Decrease quantity",
+      "increaseQuantity": "Increase quantity",
+      "loadingNavigation": "Loading navigation"
+    }
   },
   "mobileWebHandoff": {
     "errorTitle": "Couldn't open Billing",
@@ -1684,6 +1690,7 @@
       "mfaVerifyUnavailable": "We couldn't verify your code right now. Please try again."
     },
     "oauth": {
+      "googleUnavailable": "Google sign-in couldn't load. Check your connection or content blocker, or sign in with your email and password.",
       "envHintBefore": "Add",
       "envHintOr": "or",
       "envHintAfter": "in your Vercel (or other) project environment, then redeploy. Vite bakes these in at build time. Plain GOOGLE_CLIENT_ID is for the API only, not the browser.",
@@ -1859,7 +1866,9 @@
     },
     "unauthorized": {
       "title": "Access denied",
-      "body": "You do not have permission to view this page. If you are a platform administrator, sign in from the platform admin login.",
+      "body": "Your account doesn't have access to this page. If you think it should, ask your account administrator.",
+      "bodyPlatformAdmin": "This area is for CareTip platform administrators. If you are one, sign in with your platform admin account.",
+      "dashboard": "Go to your dashboard",
       "home": "Home",
       "platformLogin": "Platform admin login"
     },
@@ -2094,6 +2103,13 @@
     }
   },
   "tipFlow": {
+    "notFoundPage": {
+      "title": "We couldn't find this page",
+      "body": "The link may be mistyped, or this business is no longer on CareTip. If you scanned a QR code, please ask the team for a current one.",
+      "errorTitle": "This page didn't load",
+      "retry": "Try again",
+      "home": "Go to homepage"
+    },
     "common": {
       "teamMember": "Team Member",
       "valuedTeamMember": "Valued Team Member",
@@ -2808,7 +2824,7 @@
       "tipHistory": "Tip activity",
       "tipActivity": "Tip activity",
       "analytics": "Analytics",
-      "assignment": "My Work Location",
+      "assignment": "Your Tip Location",
       "tipGoals": "Tip goals",
       "payouts": "Payouts",
       "payments": "Stripe Payout",
@@ -4284,26 +4300,30 @@
       "confirmRemove": "Remove your tip goal?"
     },
     "workLocation": {
-      "title": "My Work Location",
+      "viewCta": "View your tip location",
+      "title": "Your Tip Location",
       "hint": "This location is used for your CareTip tips.",
-      "loading": "Loading your work location…",
-      "loadError": "Your work location could not be loaded.",
-      "emptyTitle": "No work location yet",
+      "loading": "Loading your tip location…",
+      "loadError": "Your tip location could not be loaded.",
+      "emptyTitle": "No tip location yet",
       "emptyHint": "Your manager assigns the location used for your CareTip tips.",
       "tables": "Tables: {{names}}"
     },
     "assignment": {
-      "title": "My Work Location",
-      "subtitle": "",
+      "title": "Your Tip Location",
+      "subtitle": "The location and tables your business assigned to you.",
       "backAria": "Back",
       "locationLabel": "Assigned location",
+      "tablesTitle": "Your tables",
+      "tablesHint": "Assigned to you by your business.",
+      "managedNote": "Your manager sets your location and tables. If something looks wrong, ask them to update it.",
       "tablesLabel": "Assigned tables",
       "tableAtLocation": "At {{location}}",
       "loading": "Loading assignment…",
       "noLocationTitle": "No location assigned",
-      "noLocationDesc": "Ask your manager to assign one.",
+      "noLocationDesc": "Your manager hasn't assigned a location to you yet.",
       "noTablesTitle": "No tables assigned",
-      "noTablesDesc": "Ask your manager to assign tables."
+      "noTablesDesc": "Your manager hasn't assigned any tables to you yet."
     },
     "qrModal": {
       "toastLinkCopied": "Link copied to clipboard",
@@ -5827,6 +5847,7 @@
       },
       "thRating": "Rating",
       "thActive": "Active",
+      "activeToggleAria": "Active status for {{name}}",
       "thActions": "Actions",
       "removeStaffButton": "Remove staff"
     },

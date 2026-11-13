@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import {
   DASHBOARD_SIDEBAR_BRAND_CLASS,
@@ -12,13 +13,14 @@ type SidebarSkeletonProps = {
 };
 
 export function SidebarSkeleton({ className, variant = "desktop" }: SidebarSkeletonProps) {
+  const { t } = useTranslation();
   const shell =
     variant === "desktop"
       ? cn(DASHBOARD_SIDEBAR_SHELL_CLASS, "hidden lg:fixed lg:inset-y-0 lg:z-40 lg:flex lg:w-64 lg:flex-col")
       : "flex w-64 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground";
 
   return (
-    <aside className={cn(shell, className)} aria-label="Loading navigation" aria-busy="true">
+    <aside className={cn(shell, className)} aria-label={t("common.a11y.loadingNavigation")} aria-busy="true">
       <div className={DASHBOARD_SIDEBAR_BRAND_CLASS}>
         <div
           className={cn(

@@ -27,12 +27,20 @@ function readAssignmentFromSession(userId: string | undefined): EmployeeSelfAssi
   );
 }
 
+type Venue = { name: string | null; logo: string | null };
+
+function readVenueFromSession(): Venue | undefined {
+  const profile = peekEmployeeProfileSession() ?? peekEmployeeProfileCache();
+  return profile ? { name: profile.businessName ?? null, logo: profile.businessLogo ?? null } : undefined;
+}
+
 export function EmployeeAssignmentPage() {
   const { t } = useTranslation();
   const { user, authHydrated, sessionValidated, authReady } = useRequireAuth();
   const [boot] = useState(() => readAssignmentFromSession(user?.id));
   const [assignment, setAssignment] = useState<EmployeeSelfAssignment | undefined>(boot);
   const [loaded, setLoaded] = useState(() => boot !== undefined);
+  const [venue, setVenue] = useState<Venue | undefined>(() => readVenueFromSession());
 
   const pageEnabled = Boolean(authReady && user?.role === "employee");
 
@@ -40,6 +48,7 @@ export function EmployeeAssignmentPage() {
     try {
       const profile = await getEmployeeProfile();
       setAssignment(profile.assignment);
+      setVenue({ name: profile.businessName ?? null, logo: profile.businessLogo ?? null });
       if (user?.id) writeEmployeeAssignmentSnapshot(user.id, profile.assignment);
     } catch {
       if (!opts?.quiet) setAssignment(undefined);
@@ -74,18 +83,18 @@ export function EmployeeAssignmentPage() {
       <div className={employeeUi.pageInner}>
         <EmployeePageHeader
           title={t("employee.assignment.title")}
-          description={t("employee.assignment.subtitle").trim() || undefined}
+          description={t("employee.assignment.subtitle")}
           backAriaLabel={t("employee.assignment.backAria")}
           backVariant="subtle"
         />
         <section
-          className={cn(employeeUi.section, "employee-assignment-page__content pb-6")}
+          className={cn(employeeUi.section, "employee-assignment-page__content pb-2")}
           aria-labelledby="employee-assignment-heading"
         >
           <h2 id="employee-assignment-heading" className="sr-only">
             {t("employee.assignment.title")}
           </h2>
-          <EmployeeAssignmentCard assignment={assignment} loading={!loaded} showHeader={false} />
+          <EmployeeAssignmentCard assignment={assignment} loading={!loaded} venue={venue} showHeader={false} />
         </section>
       </div>
     </div>

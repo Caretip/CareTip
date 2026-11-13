@@ -87,13 +87,13 @@ function statusPulse(state: "checking" | "online" | "offline"): ReactNode {
 
 function valueClass(state: "checking" | "online" | "offline"): string {
   if (state === "checking") return "text-foreground";
-  if (state === "online") return "text-emerald-600 dark:text-emerald-400";
+  if (state === "online") return "text-emerald-700 dark:text-emerald-400";
   return "text-destructive";
 }
 
 function iconTint(state: "checking" | "online" | "offline"): string {
   if (state === "checking") return "text-primary";
-  if (state === "online") return "text-emerald-600 dark:text-emerald-400";
+  if (state === "online") return "text-emerald-700 dark:text-emerald-400";
   return "text-destructive";
 }
 

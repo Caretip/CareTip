@@ -56,6 +56,8 @@ export const AnalyticsDonutChart = memo(function AnalyticsDonutChart({
             role="img"
             aria-label={title}
           >
+            {/* The wrapper's label describes the chart; Recharts sectors must not each read as an image. */}
+            <div className="h-full w-full" aria-hidden="true">
             <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <PieChart>
                 <Pie
@@ -81,6 +83,7 @@ export const AnalyticsDonutChart = memo(function AnalyticsDonutChart({
                 />
               </PieChart>
             </ResponsiveContainer>
+            </div>
             {centerLabel ? (
               <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
                 <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">

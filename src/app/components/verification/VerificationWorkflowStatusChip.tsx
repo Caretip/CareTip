@@ -10,7 +10,7 @@ function toneClass(tone: ChipTone): string {
     case "success":
       return "bg-emerald-500/15 text-emerald-800 dark:text-emerald-200";
     case "danger":
-      return "bg-destructive/15 text-destructive";
+      return "bg-destructive/15 text-red-700 dark:text-destructive";
     case "warn":
       return "bg-amber-500/15 text-amber-800 dark:text-amber-200";
     default:

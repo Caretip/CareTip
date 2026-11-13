@@ -732,21 +732,26 @@ const routes: RouteObject[] = [
     element: <Navigate to="/#how-it-works" replace />,
     errorElement: <ErrorBoundary />,
   },
-  {
-    path: '/hero-demo',
-    lazy: routeLazyDefault(() => import('./pages/HeroSectionDemoPage')),
-    errorElement: <ErrorBoundary />,
-  },
-  {
-    path: '/hero-animation-demo',
-    lazy: routeLazy(() => import('./pages/HeroAnimationDemoPage'), 'HeroAnimationDemoPage'),
-    errorElement: <ErrorBoundary />,
-  },
-  {
-    path: '/saas-3d-hero',
-    lazy: routeLazyDefault(() => import('./pages/SaasDashboard3DHeroPage')),
-    errorElement: <ErrorBoundary />,
-  },
+  // Internal design demos (placeholder copy) — development builds only, never reachable in production.
+  ...(import.meta.env.DEV
+    ? ([
+        {
+          path: '/hero-demo',
+          lazy: routeLazyDefault(() => import('./pages/HeroSectionDemoPage')),
+          errorElement: <ErrorBoundary />,
+        },
+        {
+          path: '/hero-animation-demo',
+          lazy: routeLazy(() => import('./pages/HeroAnimationDemoPage'), 'HeroAnimationDemoPage'),
+          errorElement: <ErrorBoundary />,
+        },
+        {
+          path: '/saas-3d-hero',
+          lazy: routeLazyDefault(() => import('./pages/SaasDashboard3DHeroPage')),
+          errorElement: <ErrorBoundary />,
+        },
+      ] satisfies RouteObject[])
+    : []),
   // Customer Flow Pages
   {
     path: '/staff/:slug',

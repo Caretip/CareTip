@@ -52,7 +52,12 @@ export const EmployeePerformanceRanking = memo(function EmployeePerformanceRanki
           {t("business.dashboard.topPerformersEmptyHint")}
         </p>
       ) : (
-        <div className="mt-3 w-full min-w-0" style={{ height: chartHeight }} role="img">
+        <div
+          className="mt-3 w-full min-w-0"
+          style={{ height: chartHeight }}
+          role="img"
+          aria-label={t("business.tips.analytics.sections.employees")}
+        >
           <ResponsiveContainer width="100%" height="100%" minWidth={0}>
             <BarChart
               data={chartRows}

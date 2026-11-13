@@ -56,7 +56,7 @@ export function PlatformAdminMetricStrip({
     <div
       className={cn("ac-kpis platform-admin-metric-strip--console", className)}
       style={{ "--ac-kpi-cols": cols } as CSSProperties}
-      role="list"
+      role="group"
       aria-label={ariaLabel}
     >
       {children}

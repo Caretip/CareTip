@@ -28,6 +28,9 @@ export function EmployeePaymentsConnectPage() {
   const [businessName, setBusinessName] = useState("");
   const [routingReady, setRoutingReady] = useState(false);
   const [businessDistribution, setBusinessDistribution] = useState(false);
+  /** null until known. false = no Stripe account yet: the Connect card leads and the payout schedule
+   *  (which the API rejects without an account) is not requested. */
+  const [hasConnectAccount, setHasConnectAccount] = useState<boolean | null>(null);
   const [eligibility, setEligibility] = useState<EmployeeInstantPayoutEligibility | null>(null);
   const [metricsLoading, setMetricsLoading] = useState(true);
   const [eligibilityError, setEligibilityError] = useState<string | null>(null);
@@ -56,10 +59,12 @@ export function EmployeePaymentsConnectPage() {
     void getEmployeeConnectStatus()
       .then((s) => {
         setBusinessDistribution(isEmployeeBusinessDistributionMode(s.employeeTipPayoutMode));
+        setHasConnectAccount(s.hasAccount);
         setRoutingReady(true);
       })
       .catch(() => {
         setBusinessDistribution(false);
+        setHasConnectAccount(null);
         setRoutingReady(true);
       });
     void reloadEligibility();
@@ -96,10 +101,20 @@ export function EmployeePaymentsConnectPage() {
         />
         <div className="caretip-payout-layout min-w-0 gap-4">
           <div className="min-w-0">
-            <EmployeeStripeBankPayoutList variant="panel" take={8} />
+            {hasConnectAccount === false && !businessDistribution ? (
+              // No Stripe account yet: the one useful action comes first, not after disabled settings.
+              <EmployeePayoutAccountCard
+                businessDistribution={businessDistribution}
+                last4={eligibility?.destinationLast4 ?? null}
+                destinationKind={eligibility?.destinationKind ?? null}
+                layout="rail"
+              />
+            ) : (
+              <EmployeeStripeBankPayoutList variant="panel" take={8} />
+            )}
           </div>
           <div className="caretip-payout-rail min-w-0 space-y-4">
-            {!businessDistribution ? <EmployeeBankPayoutScheduleCard /> : null}
+            {!businessDistribution && hasConnectAccount === true ? <EmployeeBankPayoutScheduleCard /> : null}
             <EmployeeInstantPayoutCard
               businessDistribution={businessDistribution}
               routingReady={routingReady}
@@ -110,12 +125,14 @@ export function EmployeePaymentsConnectPage() {
               onSharedReload={reloadEligibility}
               onSharedEligibilityChange={setEligibility}
             />
-            <EmployeePayoutAccountCard
-              businessDistribution={businessDistribution}
-              last4={eligibility?.destinationLast4 ?? null}
-              destinationKind={eligibility?.destinationKind ?? null}
-              layout="rail"
-            />
+            {hasConnectAccount === false && !businessDistribution ? null : (
+              <EmployeePayoutAccountCard
+                businessDistribution={businessDistribution}
+                last4={eligibility?.destinationLast4 ?? null}
+                destinationKind={eligibility?.destinationKind ?? null}
+                layout="rail"
+              />
+            )}
           </div>
         </div>
       </div>

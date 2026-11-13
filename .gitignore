@@ -49,6 +49,7 @@ Desktop.ini
 .idea/
 .cursor/
 .qodo/
+.claude/settings.local.json
 *.suo
 *.ntvs*
 *.njsproj
@@ -57,16 +58,35 @@ Desktop.ini
 # --- Markdown: public README only; internal audits/reports stay local ---
 *.md
 !/README.md
+# Maintainer runbooks referenced from code comments and .env.example (no secrets, no audit findings)
+!/docs/ops/*.md
+!/scripts/storage-backup/README.md
 /CARETIP*.md
 /CARETIP-*.md
 /BUSINESS_*.md
 /*_REPORT.md
 /*_AUDIT.md
 docs/audits/
+docs/security/
 backend/docs/
 security-audit/
 security/pentest-preparation/
 backend/scripts/experiment-*.ts
+# One-off ops scripts that target named real accounts (keep local; never publish personal data)
+backend/scripts/addBypassEmployeesForManager.ts
+
+# --- Local profiling / audit output (generated; root only — names overlap source files) ---
+/lighthouse*.json
+/i18n-integrity-audit.json
+/*_DASHBOARD_PROFILE*.json
+/*_DASHBOARD_PROFILE*.md
+/DASHBOARD_*PROFILE*.json
+/DASHBOARD_*PROFILE*.md
+/POST_LOGIN_RUNTIME_TRACE.json
+/POST_LOGIN_RUNTIME_TRACE.md
+*.har
+*.cpuprofile
+*.heapsnapshot
 
 # --- Local restore / accidental paste dumps ---
 .restore_*.txt
@@ -84,8 +104,20 @@ firebase-service-account.json
 **/firebase-service-account.json
 *.pem
 *.p12
+*.pfx
 *.key
+*.p8
+*.jks
+*.keystore
+*.mobileprovision
 !**/*.key.example
+google-services.json
+GoogleService-Info.plist
+# Captured sessions, cookies and tokens from local testing
+cookies.txt
+*.cookies.json
+**/session.json
+**/storage-state*.json
 
 # --- Firebase local emulator / debug ---
 firebase-debug.log
@@ -100,6 +132,9 @@ supabase/.temp/
 
 # --- PostgreSQL / database dumps (local backups) ---
 *.sql.gz
+/*.sql
+*.sql.bak
+*.csv.gz
 *.dump
 *.backup
 *.db

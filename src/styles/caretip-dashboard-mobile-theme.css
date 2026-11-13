@@ -486,10 +486,6 @@
     padding-top: 0.625rem;
   }
 
-  .caretip-dashboard-shell.employee-dashboard .employee-assignment-panel__body {
-    gap: 1rem;
-  }
-
   /* Tip goals empty / create block inside flat surface */
   .caretip-dashboard-shell .dashboard-mobile-flat-surface .rounded-lg.border.bg-muted\/35,
   .caretip-dashboard-shell .dashboard-mobile-flat-surface [class*="bg-muted/35"] {

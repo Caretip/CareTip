@@ -49,7 +49,7 @@ function GoalStatusBadge({ status, label }: { status: EmployeeGoalRow["status"];
     <span
       className={cn(
         "text-[0.6875rem] font-medium",
-        status === "archived" ? "text-muted-foreground" : "text-emerald-600 dark:text-emerald-400",
+        status === "archived" ? "text-muted-foreground" : "text-emerald-700 dark:text-emerald-400",
       )}
     >
       {label}

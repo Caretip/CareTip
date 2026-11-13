@@ -119,7 +119,7 @@ function NotificationCard({
               <SupportStatusBadge status={metaStatus as SupportTicketStatus} />
             ) : null}
             {!notification.read ? (
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-label={t("notifications.inbox.unreadBadge")} />
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" role="img" aria-label={t("notifications.inbox.unreadBadge")} />
             ) : null}
           </div>
           <div className="flex shrink-0 items-center gap-0.5">

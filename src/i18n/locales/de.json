@@ -229,7 +229,13 @@
       "connectionAction": "Erneut versuchen"
     },
     "tryAgain": "Erneut versuchen",
-    "dismiss": "Schließen"
+    "dismiss": "Schließen",
+    "a11y": {
+      "feedbackMetrics": "Feedback-Kennzahlen",
+      "decreaseQuantity": "Menge verringern",
+      "increaseQuantity": "Menge erhöhen",
+      "loadingNavigation": "Navigation wird geladen"
+    }
   },
   "mobileWebHandoff": {
     "errorTitle": "Abrechnung konnte nicht geöffnet werden",
@@ -1684,6 +1690,7 @@
       "mfaVerifyUnavailable": "Ihr Code konnte gerade nicht überprüft werden. Bitte versuchen Sie es erneut."
     },
     "oauth": {
+      "googleUnavailable": "Die Google-Anmeldung konnte nicht geladen werden. Prüfen Sie Ihre Verbindung oder Ihren Inhaltsblocker, oder melden Sie sich mit E-Mail und Passwort an.",
       "envHintBefore": "Fügen Sie",
       "envHintOr": "oder",
       "envHintAfter": "in den Umgebungsvariablen Ihres Vercel- (oder anderen) Projekts hinzu und deployen Sie neu. Vite übernimmt diese Werte nur beim Build. GOOGLE_CLIENT_ID allein gilt nur für die API, nicht für den Browser.",
@@ -1859,7 +1866,9 @@
     },
     "unauthorized": {
       "title": "Zugriff verweigert",
-      "body": "Sie haben keine Berechtigung für diese Seite. Wenn Sie Plattform-Administrator sind, melden Sie sich über die Plattform-Admin-Anmeldung an.",
+      "body": "Ihr Konto hat keinen Zugriff auf diese Seite. Wenn Sie meinen, dass das ein Fehler ist, wenden Sie sich an die Person, die Ihr Konto verwaltet.",
+      "bodyPlatformAdmin": "Dieser Bereich ist für CareTip-Plattform-Administratoren. Wenn Sie dazu gehören, melden Sie sich mit Ihrem Plattform-Admin-Konto an.",
+      "dashboard": "Zu Ihrem Dashboard",
       "home": "Startseite",
       "platformLogin": "Plattform-Admin-Anmeldung"
     },
@@ -2094,6 +2103,13 @@
     }
   },
   "tipFlow": {
+    "notFoundPage": {
+      "title": "Diese Seite wurde nicht gefunden",
+      "body": "Der Link ist möglicherweise falsch geschrieben, oder dieser Betrieb ist nicht mehr bei CareTip. Wenn Sie einen QR-Code gescannt haben, fragen Sie bitte das Team nach einem aktuellen Code.",
+      "errorTitle": "Diese Seite konnte nicht geladen werden",
+      "retry": "Erneut versuchen",
+      "home": "Zur Startseite"
+    },
     "common": {
       "teamMember": "Teammitglied",
       "valuedTeamMember": "Geschätztes Teammitglied",
@@ -2808,7 +2824,7 @@
       "tipHistory": "Trinkgeldaktivität",
       "tipActivity": "Trinkgeldaktivität",
       "analytics": "Analysen",
-      "assignment": "Mein Einsatzort",
+      "assignment": "Ihr Trinkgeld-Standort",
       "tipGoals": "Trinkgeldziele",
       "payouts": "Auszahlungen",
       "payments": "Stripe-Auszahlungen",
@@ -4284,26 +4300,30 @@
       "confirmRemove": "Ihr Trinkgeldziel entfernen?"
     },
     "workLocation": {
-      "title": "Mein Einsatzort",
+      "viewCta": "Ihren Trinkgeld-Standort ansehen",
+      "title": "Ihr Trinkgeld-Standort",
       "hint": "Dieser Standort ist Ihrer CareTip-Trinkgeldaktivität zugeordnet.",
-      "loading": "Einsatzort wird geladen…",
-      "loadError": "Ihr Einsatzort konnte nicht geladen werden.",
-      "emptyTitle": "Noch kein Einsatzort",
+      "loading": "Trinkgeld-Standort wird geladen…",
+      "loadError": "Ihr Trinkgeld-Standort konnte nicht geladen werden.",
+      "emptyTitle": "Noch kein Trinkgeld-Standort",
       "emptyHint": "Ihr Manager legt den Standort für Ihre CareTip-Trinkgelder fest.",
       "tables": "Tische: {{names}}"
     },
     "assignment": {
-      "title": "Mein Einsatzort",
-      "subtitle": "",
+      "title": "Ihr Trinkgeld-Standort",
+      "subtitle": "Der Standort und die Tische, die Ihr Betrieb Ihnen zugewiesen hat.",
       "backAria": "Zurück",
       "locationLabel": "Zugewiesener Standort",
+      "tablesTitle": "Ihre Tische",
+      "tablesHint": "Von Ihrem Betrieb zugewiesen.",
+      "managedNote": "Standort und Tische legt Ihr Manager fest. Wenn etwas nicht stimmt, bitten Sie ihn um eine Änderung.",
       "tablesLabel": "Zugewiesene Tische",
       "tableAtLocation": "In {{location}}",
       "loading": "Zuweisung wird geladen…",
       "noLocationTitle": "Kein Standort zugewiesen",
-      "noLocationDesc": "Bitten Sie Ihren Manager um eine Zuweisung.",
+      "noLocationDesc": "Ihr Manager hat Ihnen noch keinen Standort zugewiesen.",
       "noTablesTitle": "Keine Tische zugewiesen",
-      "noTablesDesc": "Bitten Sie Ihren Manager um Tischzuweisungen."
+      "noTablesDesc": "Ihr Manager hat Ihnen noch keine Tische zugewiesen."
     },
     "qrModal": {
       "toastLinkCopied": "Link in die Zwischenablage kopiert",
@@ -5827,6 +5847,7 @@
       },
       "thRating": "Bewertung",
       "thActive": "Aktiv",
+      "activeToggleAria": "Aktiv-Status für {{name}}",
       "thActions": "Aktionen",
       "removeStaffButton": "Mitarbeiter entfernen"
     },

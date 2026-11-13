@@ -73,7 +73,7 @@ export function DashboardRefreshIndicator({
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-1.5 text-[11px] font-medium tracking-wide text-muted-foreground/80 tabular-nums",
+        "inline-flex items-center gap-1.5 text-[11px] font-medium tracking-wide text-muted-foreground tabular-nums",
         className,
       )}
       role="status"

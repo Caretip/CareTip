@@ -198,6 +198,14 @@ export function heroFramePreloadSrc(frame: HeroStoryFrame): string {
   return frame.avif ?? frame.webp ?? frame.src;
 }
 
+/** Universally decodable fallback for this viewport (used when an AVIF fails to decode). */
+export function heroFrameFallbackSrc(frame: HeroStoryFrame): string {
+  if (isMobileHeroViewport()) {
+    return frame.mobileWebp ?? frame.mobileSrc ?? frame.webp ?? frame.src;
+  }
+  return frame.webp ?? frame.src;
+}
+
 export function preloadHeroFrame(frame: HeroStoryFrame, onReady?: () => void): void {
   const img = new Image();
   const finish = () => onReady?.();
@@ -206,7 +214,8 @@ export function preloadHeroFrame(frame: HeroStoryFrame, onReady?: () => void): v
     const fallback = new Image();
     fallback.onload = finish;
     fallback.onerror = finish;
-    fallback.src = frame.webp ?? frame.mobileWebp ?? frame.mobileSrc ?? frame.src;
+    // Viewport-matched: a desktop fallback here made phones download the ~700 KB desktop frame.
+    fallback.src = heroFrameFallbackSrc(frame);
   };
   img.src = heroFramePreloadSrc(frame);
 }

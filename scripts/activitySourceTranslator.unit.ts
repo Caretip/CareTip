@@ -19,12 +19,12 @@ assert.ok(translated.title.includes("Business QR"));
 assert.ok(translated.subtitle?.includes("Guest scanned your Business QR"));
 
 const translatedEmp = translateActivitySource(
-  { type: "qr.scanned", params: { scanType: "employee", employeeName: "Eucharia Precious" } },
+  { type: "qr.scanned", params: { scanType: "employee", employeeName: "Lena Fischer" } },
   t,
 );
 assert.ok(translatedEmp);
 assert.ok(translatedEmp.title.includes("Employee QR"));
-assert.ok(translatedEmp.subtitle?.includes("Guest viewed Eucharia Precious"));
+assert.ok(translatedEmp.subtitle?.includes("Guest viewed Lena Fischer"));
 
 console.log("activitySourceTranslator unit tests: OK");
 

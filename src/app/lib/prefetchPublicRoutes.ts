@@ -21,9 +21,6 @@ const PUBLIC_ROUTE_IMPORTERS: Record<string, RouteImporter> = {
   "/industries/midwives": () => import("../pages/IndustryPage"),
   "/industries/fairs": () => import("../pages/IndustryPage"),
   "/industries/field-service": () => import("../pages/IndustryPage"),
-  "/blog": () => import("../pages/BlogPage"),
-  "/careers": () => import("../pages/CareersPage"),
-  "/mobile-app": () => import("../pages/MobileAppPage"),
   "/avv": () => import("../pages/AvvPage"),
   "/plv": () => import("../pages/PlvPage"),
 };

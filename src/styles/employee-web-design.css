@@ -324,14 +324,6 @@
   background: hsl(var(--muted));
 }
 
-/* Assignment labels */
-.caretip-dashboard-shell.employee-dashboard .employee-assignment-panel__label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  color: hsl(var(--muted-foreground));
-}
-
 /* Destructive settings block stays distinct without dominating */
 .caretip-dashboard-shell.employee-dashboard .employee-settings-section--danger {
   border-top: 1px solid hsl(var(--destructive) / 0.28) !important;
