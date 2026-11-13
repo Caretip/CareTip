@@ -1690,7 +1690,7 @@
       "mfaVerifyUnavailable": "We couldn't verify your code right now. Please try again."
     },
     "oauth": {
-      "googleUnavailable": "Google sign-in couldn't load. Check your connection or content blocker, or sign in with your email and password.",
+      "googleUnavailable": "Google sign-in is unavailable. Please use your email and password.",
       "envHintBefore": "Add",
       "envHintOr": "or",
       "envHintAfter": "in your Vercel (or other) project environment, then redeploy. Vite bakes these in at build time. Plain GOOGLE_CLIENT_ID is for the API only, not the browser.",

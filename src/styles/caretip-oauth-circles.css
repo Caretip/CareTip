@@ -200,13 +200,42 @@
   background: #ffffff;
 }
 
+/*
+ * Google script blocked/failed: one horizontal notice across the full form width (the slot is
+ * capped at Google's button width only while the real button can render).
+ */
+.caretip-oauth-google-slot:has(.caretip-oauth-google-button__unavailable),
+.caretip-oauth-google-slot:has(.caretip-oauth-google-button__unavailable) .caretip-oauth-google-button {
+  width: 100%;
+  max-width: none;
+}
+
 .caretip-oauth-google-button__unavailable {
-  max-width: 24rem;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.5rem;
+  box-sizing: border-box;
   margin: 0 auto;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  background: hsl(var(--muted) / 0.35);
   font-size: 0.8125rem;
-  line-height: 1.45;
-  text-align: center;
+  line-height: 1.35;
+  text-align: left;
   color: hsl(var(--muted-foreground));
+}
+
+.caretip-oauth-google-button__unavailable-icon {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+}
+
+.dark .caretip-oauth-google-button__unavailable {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .dark .caretip-oauth-google-button__placeholder {

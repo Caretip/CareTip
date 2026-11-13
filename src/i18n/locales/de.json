@@ -1690,7 +1690,7 @@
       "mfaVerifyUnavailable": "Ihr Code konnte gerade nicht überprüft werden. Bitte versuchen Sie es erneut."
     },
     "oauth": {
-      "googleUnavailable": "Die Google-Anmeldung konnte nicht geladen werden. Prüfen Sie Ihre Verbindung oder Ihren Inhaltsblocker, oder melden Sie sich mit E-Mail und Passwort an.",
+      "googleUnavailable": "Google-Anmeldung ist nicht verfügbar. Bitte nutzen Sie E-Mail und Passwort.",
       "envHintBefore": "Fügen Sie",
       "envHintOr": "oder",
       "envHintAfter": "in den Umgebungsvariablen Ihres Vercel- (oder anderen) Projekts hinzu und deployen Sie neu. Vite übernimmt diese Werte nur beim Build. GOOGLE_CLIENT_ID allein gilt nur für die API, nicht für den Browser.",

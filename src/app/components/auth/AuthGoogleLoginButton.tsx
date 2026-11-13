@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import { GoogleLogin, useGoogleOAuth, type CredentialResponse } from "@react-oauth/google";
+import { Info } from "lucide-react";
 import type { GoogleOAuthUxMode } from "@/app/lib/googleOAuthRedirectWeb";
 import { hasGoogleGsiScriptFailed, subscribeGoogleGsiScriptStatus } from "@/app/lib/googleGsiScriptStatus";
 
@@ -162,9 +163,14 @@ export function AuthGoogleLoginButton({
         />
       ) : scriptFailed ? (
         // The Google script was blocked or failed: say so instead of showing an empty, dead box.
-        <p className="caretip-oauth-google-button__unavailable" role="note">
-          {t("auth.oauth.googleUnavailable")}
-        </p>
+        <div
+          className="caretip-oauth-google-button__unavailable"
+          role="note"
+          style={{ minHeight: GSI_BUTTON_HEIGHT }}
+        >
+          <Info className="caretip-oauth-google-button__unavailable-icon" aria-hidden="true" />
+          <span>{t("auth.oauth.googleUnavailable")}</span>
+        </div>
       ) : (
         <div
           className="caretip-oauth-google-button__placeholder"
