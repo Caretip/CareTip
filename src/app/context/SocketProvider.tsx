@@ -65,6 +65,13 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const [connected, setConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<SocketConnectionStatus>("idle");
 
+  /**
+   * Bumped by every connect() and disconnect(). connect() awaits the socket.io import, so several calls
+   * could overlap (token-sync bursts at login and on returning to the tab); each used to create its own
+   * socket while only the last was kept — the others stayed connected and reconnecting forever, and
+   * every one of them fired the catch-up refetch events. Only the newest call may create a socket.
+   */
+  const connectGenRef = useRef(0);
   const authRecoveryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const authRecoveryAttemptRef = useRef(0);
 
@@ -74,6 +81,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const disconnect = useCallback(() => {
+    connectGenRef.current += 1;
     clearAuthRecovery();
     const s = socketRef.current;
     if (s) {
@@ -87,6 +95,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   }, [clearAuthRecovery]);
 
   const connect = useCallback(async () => {
+    const gen = ++connectGenRef.current;
     clearAuthRecovery();
     if (socketRef.current) {
       socketRef.current.removeAllListeners();
@@ -105,6 +114,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
     setConnectionStatus("connecting");
     const { io } = await import("socket.io-client");
+    // Superseded by a newer connect() or a disconnect() while the import was pending.
+    if (gen !== connectGenRef.current || interestRef.current <= 0) return;
     const s = io(url, {
       // Read on every (re)connection attempt, so a reconnect never replays an old access token.
       auth: (cb) => cb({ token: getMemoryAccessToken() ?? "" }),
@@ -121,11 +132,19 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         window.dispatchEvent(new CustomEvent(SOCKET_CONNECTED_EVENT));
       }
     };
+    // Socket.IO fires "connect" on every successful connection, reconnections included. Announce
+    // each connection exactly once: CONNECTED the first time, RECONNECTED after that.
+    let everConnected = false;
     const onConnect = () => {
       authRecoveryAttemptRef.current = 0;
       setConnected(true);
       setConnectionStatus("connected");
-      dispatchSocketConnected();
+      if (!everConnected) {
+        everConnected = true;
+        dispatchSocketConnected();
+      } else if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent(SOCKET_RECONNECTED_EVENT));
+      }
     };
     /**
      * The server refused the handshake, so Socket.IO will not retry on its own. Refresh the session
@@ -163,12 +182,9 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       setConnectionStatus("reconnecting");
     };
     const onReconnect = () => {
+      // Status only — "connect" (which also fires on reconnect) announces the reconnection.
       setConnected(true);
       setConnectionStatus("connected");
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent(SOCKET_RECONNECTED_EVENT));
-        window.dispatchEvent(new CustomEvent(SOCKET_CONNECTED_EVENT));
-      }
     };
 
     s.on("connect", onConnect);

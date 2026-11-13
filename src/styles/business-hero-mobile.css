@@ -1,0 +1,179 @@
+/*
+ * Business dashboard hero — the same compact premium layout as the employee hero
+ * (employee-hero-mobile.css) for phones and tablets (< 1024px).
+ *
+ * Scope: only `.caretip-dashboard-shell.business-dashboard .business-dashboard-hero`, so the employee /
+ * admin heroes are unaffected, and desktop keeps its layout. Loaded last in bundles/dashboard.css.
+ *
+ * Mobile changes (as on the employee hero):
+ *  - one inset and a soft brand glow on the dark shell;
+ *  - tighter heading block and a stronger headline figure;
+ *  - payout metrics as a 2×2 tile grid with hairline dividers instead of a boxed panel;
+ *  - no divider line above the actions; taller, rounder thumb-friendly buttons (colours unchanged);
+ *  - the illustration keeps its full frame (the mockup already fits its 16:9 crop) with matching corners.
+ */
+
+@media (max-width: 1023px) {
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero {
+    margin-bottom: 1.25rem !important;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .premium-page-hero__content {
+    padding: 1.25rem 1.125rem 1.125rem !important;
+    border-radius: 1.5rem !important;
+    background-image: radial-gradient(120% 70% at 100% 0%, rgb(235 153 44 / 0.12), transparent 62%);
+    box-shadow:
+      0 1px 0 rgb(255 255 255 / 0.04) inset,
+      0 18px 40px -24px rgb(0 0 0 / 0.55);
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .premium-page-hero__content::before,
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .premium-page-hero__content::after {
+    opacity: 0.45;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-dashboard-root > div:first-child,
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-shell {
+    padding: 0 !important;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-container {
+    gap: 0.875rem;
+  }
+
+  /* Heading block. */
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-badge {
+    padding: 0 !important;
+    font-size: 0.75rem !important;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-title {
+    margin-top: 0.125rem;
+    font-size: clamp(1.3125rem, 5.9vw, 1.625rem) !important;
+    line-height: 1.12 !important;
+    letter-spacing: -0.02em;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-actions,
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-cta-block {
+    margin-top: 0 !important;
+    gap: 0 !important;
+  }
+
+  /* Headline figure. */
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-financial-panel.dashboard-hero-financial {
+    gap: 0.75rem !important;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__zone--primary {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__zone--primary .dashboard-hero-financial__label {
+    font-size: 0.75rem;
+    line-height: 1.3;
+    letter-spacing: 0.02em;
+    opacity: 0.8;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__value--primary {
+    font-size: clamp(2rem, 10.5vw, 2.5rem) !important;
+    line-height: 1.05 !important;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Payout metrics: 2×2 tiles with hairline dividers. */
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__zone--payout {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid rgb(255 255 255 / 0.08) !important;
+    border-radius: 1rem !important;
+    background: rgb(255 255 255 / 0.035) !important;
+    overflow: hidden;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__payout-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: rgb(255 255 255 / 0.07) !important;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__payout-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+    margin: 0 !important;
+    padding: 0.625rem 0.875rem !important;
+    background: rgb(23 20 17);
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__payout-cell .dashboard-hero-financial__label {
+    margin: 0;
+    font-size: 0.6875rem;
+    line-height: 1.25;
+    letter-spacing: 0.01em;
+    opacity: 0.72;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__value--payout {
+    font-size: clamp(1rem, 4.6vw, 1.125rem) !important;
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__details {
+    margin-top: 0.125rem !important;
+  }
+
+  /* Actions: no divider line above them; thumb-friendly height. Colours and labels untouched. */
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-cta-row {
+    margin-top: 0.875rem !important;
+    padding-top: 0 !important;
+    border-top: 0 !important;
+    gap: 0.5rem !important;
+  }
+
+  /* Two stacked actions here (one on the employee hero), so a little shorter: 44px tap targets. */
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-cta-row .dashboard-hero-action {
+    height: 2.75rem !important;
+    min-height: 2.75rem !important;
+    border-radius: 0.875rem !important;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    gap: 0.5rem;
+  }
+
+  /* Illustration: matching corners; the mockup already fits its frame. */
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-container > .min-w-0.pt-1 {
+    padding-top: 0 !important;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-media {
+    border-radius: 1rem;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .business-hero-illustration-card {
+    border-radius: 1rem !important;
+    border: 1px solid rgb(255 255 255 / 0.08) !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .premium-page-hero__content {
+    padding: 1.125rem 1rem 1rem !important;
+  }
+
+  .caretip-dashboard-shell.business-dashboard .business-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__payout-cell {
+    padding: 0.6875rem 0.75rem !important;
+  }
+}

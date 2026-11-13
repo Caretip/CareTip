@@ -37,13 +37,53 @@ export function handleVitePreloadError(): void {
   recoverStaleChunkOnce();
 }
 
-/** Retry the same factory once. Does not reload the document. */
+/**
+ * A route's code must arrive within this. A dynamic import has no browser timeout: one started on a
+ * connection that died (device sleep, app switch, network change) can stay pending for minutes, and
+ * React Router then never renders the page or its error screen — the boot loader stays up until its
+ * failsafe drops it onto a blank page, recoverable only by leaving for an eagerly loaded page such as
+ * the landing page. Kept below that failsafe so the route error screen (with Try again) shows instead.
+ */
+export const ROUTE_MODULE_LOAD_DEADLINE_MS = 15_000;
+
+const ROUTE_MODULE_TIMEOUT_NAME = "RouteModuleTimeoutError";
+
+export class RouteModuleTimeoutError extends Error {
+  constructor() {
+    super("Route module did not arrive in time");
+    this.name = ROUTE_MODULE_TIMEOUT_NAME;
+  }
+}
+
+export function isRouteModuleTimeout(error: unknown): boolean {
+  return (
+    error != null &&
+    typeof error === "object" &&
+    (error as { name?: unknown }).name === ROUTE_MODULE_TIMEOUT_NAME
+  );
+}
+
+function withRouteModuleDeadline<T>(load: Promise<T>): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new RouteModuleTimeoutError()), ROUTE_MODULE_LOAD_DEADLINE_MS);
+  });
+  return Promise.race([load, deadline]).finally(() => {
+    if (timer !== undefined) clearTimeout(timer);
+  });
+}
+
+/**
+ * Retry the same factory once after a chunk failure. Does not reload the document.
+ * A timeout is not retried here: the browser would hand back the same pending request. It surfaces as
+ * {@link RouteModuleTimeoutError} for the route error screen, whose Try again starts fresh connections.
+ */
 export async function loadRouteModuleWithRetry<T>(factory: () => Promise<T>): Promise<T> {
   try {
-    return await factory();
+    return await withRouteModuleDeadline(factory());
   } catch (error) {
     if (!isChunkLoadFailure(error)) throw error;
-    return await factory();
+    return await withRouteModuleDeadline(factory());
   }
 }
 

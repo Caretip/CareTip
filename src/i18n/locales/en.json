@@ -223,7 +223,10 @@
       "staleAction": "Refresh",
       "routeTitle": "This page couldn’t load",
       "routeBody": "Please try again, or go back to the home page.",
-      "homeAction": "Go back home"
+      "homeAction": "Go back home",
+      "connectionTitle": "Connection interrupted",
+      "connectionBody": "This page didn't finish loading. Check your connection and try again.",
+      "connectionAction": "Try again"
     },
     "tryAgain": "Try again",
     "dismiss": "Dismiss"
@@ -1742,7 +1745,12 @@
         "tryAgain": "Try again",
         "useEmail": "Sign in with email",
         "error_rate_limited": "Too many sign-in attempts from this network. Please wait a few minutes and try again, or sign in with your email."
-      }
+      },
+      "progress": {
+        "title": "Signing you in with {{provider}}…",
+        "hint": "This only takes a moment."
+      },
+      "openingGoogle": "Opening Google…"
     },
     "recovery": {
       "backToSignIn": "Back to sign in"

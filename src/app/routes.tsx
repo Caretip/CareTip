@@ -77,7 +77,7 @@ import {
 import { hasClientSessionHint } from "./lib/authSessionHint";
 import { runWhenIdle } from "./lib/runWhenIdle";
 import { LandingHeroPersistenceLayer } from "./components/landing/LandingHeroPersistenceLayer";
-import { isChunkLoadFailure } from "./lib/chunkLoadRecovery";
+import { isChunkLoadFailure, isRouteModuleTimeout } from "./lib/chunkLoadRecovery";
 import { handleChunkLoadFailure } from "./lib/deployUpdate/runtime";
 
 const AuthPageChunk = lazy(() => authPageLazy().then(({ Component }) => ({ default: Component })));
@@ -171,8 +171,14 @@ function ErrorBoundary() {
   }, [location.pathname, location.search, t]);
 
   const is404 = isRouteErrorResponse(error) && error.status === 404;
+  // The page's code did not arrive (dead connection after sleep / network change): offer a fresh
+  // load of the same page — not the stale-deploy path, and never a detour via the home page.
+  const moduleTimedOut =
+    !is404 &&
+    (isRouteModuleTimeout(error) || (isRouteErrorResponse(error) && isRouteModuleTimeout(error.data)));
   const chunkFailed =
     !is404 &&
+    !moduleTimedOut &&
     (isChunkLoadFailure(error) ||
       (isRouteErrorResponse(error) && isChunkLoadFailure(error.data)));
   const chunkError = chunkFailed ? (isRouteErrorResponse(error) ? error.data : error) : null;
@@ -182,12 +188,16 @@ function ErrorBoundary() {
 
   const title = is404
     ? t("common.errorScreen.notFoundTitle")
-    : chunkFailed
+    : moduleTimedOut
+      ? t("common.errorScreen.connectionTitle")
+      : chunkFailed
       ? t("common.errorScreen.staleTitle")
       : t("common.errorScreen.routeTitle");
   const message = is404
     ? t("common.errorScreen.notFoundBody")
-    : chunkFailed
+    : moduleTimedOut
+      ? t("common.errorScreen.connectionBody")
+      : chunkFailed
       ? t("common.errorScreen.staleBody")
       : t("common.errorScreen.routeBody");
 
@@ -199,7 +209,15 @@ function ErrorBoundary() {
       <div className="text-center px-4 max-w-md">
         <h1 className="text-2xl sm:text-3xl font-bold mb-4 text-foreground">{title}</h1>
         <p className="mb-6 text-muted-foreground">{message}</p>
-        {chunkFailed ? (
+        {moduleTimedOut ? (
+          <button
+            type="button"
+            className="inline-block px-6 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary-hover transition-colors"
+            onClick={() => window.location.reload()}
+          >
+            {t("common.errorScreen.connectionAction")}
+          </button>
+        ) : chunkFailed ? (
           <button
             type="button"
             className="inline-block px-6 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary-hover transition-colors"

@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
-import { AuthBootstrapShell } from "@/app/components/auth/AuthBootstrapShell";
+import { AuthOAuthProgress } from "@/app/components/auth/AuthOAuthProgress";
 import { useReleaseAppBootOverlay } from "@/app/context/AppLoadingManager";
 import {
   parseGoogleRedirectFragment,
@@ -10,6 +10,7 @@ import {
   storeGoogleRedirectHandoff,
   takeGoogleRedirectHandoff,
 } from "@/app/lib/googleOAuthRedirectWeb";
+import { ensureAuthEntryRouteCode } from "@/app/routing/routeLazy";
 
 const KNOWN_ERRORS = new Set(["csrf", "missing_credential", "rejected", "unavailable", "rate_limited"]);
 
@@ -28,6 +29,9 @@ export function GoogleOAuthCompletePage() {
   const intent = readGoogleRedirectIntent();
   const returnPath = resolveGoogleRedirectReturnPath(intent);
 
+  // This page draws its own state (Google progress or the error screen), so no CareTip loader is
+  // needed on top of it. The boot screen on this URL already shows the same Google progress
+  // (public/boot-locale.js), so the hand-over is seamless.
   useLayoutEffect(() => {
     releaseAppBootOverlay();
   }, [releaseAppBootOverlay]);
@@ -40,7 +44,10 @@ export function GoogleOAuthCompletePage() {
     window.history.replaceState(window.history.state, "", window.location.pathname);
     if (handoff) {
       storeGoogleRedirectHandoff(handoff);
-      navigate(returnPath, { replace: true });
+      // Navigate once the auth page's code is here, so it renders straight away (no Suspense loader).
+      const codeReady = ensureAuthEntryRouteCode(returnPath);
+      if (!codeReady) navigate(returnPath, { replace: true });
+      else void codeReady.then(() => navigate(returnPath, { replace: true }));
       return;
     }
     // Refresh / back to this page without a fragment: never leave a stale credential behind.
@@ -52,10 +59,17 @@ export function GoogleOAuthCompletePage() {
     if (errorCode) headingRef.current?.focus();
   }, [errorCode]);
 
-  if (!errorCode) return <AuthBootstrapShell />;
+  if (!errorCode) {
+    // Same "Signing you in with Google" state as the boot screen before it and the auth page after it.
+    return (
+      <div data-caretip-route-ready="">
+        <AuthOAuthProgress provider="google" />
+      </div>
+    );
+  }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <div data-caretip-route-ready="" className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md space-y-4 text-center">
         <h1 ref={headingRef} tabIndex={-1} className="text-2xl font-semibold text-foreground outline-none">
           {t("auth.oauth.googleRedirect.title")}

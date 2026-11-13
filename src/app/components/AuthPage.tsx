@@ -15,6 +15,7 @@ import {
   isAuthSignInHandoffActive,
   subscribeAuthSignInHandoff,
   endAuthSignInHandoff,
+  setAuthSignInHandoffProvider,
   formatSignInHandoffTimingReport,
   getSignInHandoffMaxMs,
   getSignInHandoffTimingSnapshot,
@@ -75,6 +76,7 @@ import {
 import { isAppShellInteractive } from "../lib/appShellLifecycle";
 import { consumeSessionExpiredNotice } from "../lib/sessionExpiredNotice";
 import { MobileWebAuthShell } from "./auth/mobileWeb";
+import { AuthOAuthProgress, type OAuthProgressProvider } from "./auth/AuthOAuthProgress";
 import {
   hasPendingGoogleRedirectHandoff,
   readGoogleRedirectIntent,
@@ -165,6 +167,14 @@ export function AuthPage() {
   const navigationRecoveryCancelRef = useRef<(() => void) | null>(null);
   /** Suppresses session-resume UI during fresh sign-in before navigation completes. */
   const [authFlowInProgress, setAuthFlowInProgress] = useState(false);
+  /**
+   * Provider whose credential is being exchanged — shows AuthOAuthProgress over the form. Starts set
+   * when a Google redirect hand-off is waiting, so the login form never paints on the way back from
+   * Google (it used to show until the exchange began, then flash away again).
+   */
+  const [oauthProgress, setOauthProgress] = useState<OAuthProgressProvider | null>(() =>
+    hasPendingGoogleRedirectHandoff() ? "google" : null,
+  );
   const isMobileWebAuth = useSyncExternalStore(
     subscribeMobileWebAuth,
     getMobileWebAuthSnapshot,
@@ -194,6 +204,7 @@ export function AuthPage() {
         postAuthRedirectRef.current = null;
         setIsSubmitting(false);
         setAuthFlowInProgress(false);
+        setOauthProgress(null);
         endAuthSignInHandoff("auth_navigation_recovery");
         setError(t("auth.page.navigationRecovery"));
       },
@@ -608,15 +619,18 @@ export function AuthPage() {
     // existing CareTip session (that previously redirected as the stale user).
     if (!isLogin && authLane === 'employee') {
       if (!name.trim()) {
+        setOauthProgress(null);
         setError(t("auth.page.errorFullName"));
         return;
       }
       if (!resolvedInviteCode) {
+        setOauthProgress(null);
         setError(t("auth.page.errorInviteRequired"));
         return;
       }
     }
     if (!isLogin && authLane === 'business' && !merchantLegalAccepted) {
+      setOauthProgress(null);
       setError(t("auth.merchantLegalAcceptance.requiredError"));
       return;
     }
@@ -624,7 +638,9 @@ export function AuthPage() {
     // or a second tap (would issue a second session).
     if (authInFlightRef.current || postAuthRedirectRef.current) return;
     authInFlightRef.current = true;
+    setOauthProgress(provider);
     beginAuthSignInHandoff();
+    setAuthSignInHandoffProvider(provider);
     setAuthFlowInProgress(true);
     setIsSubmitting(true);
     setError('');
@@ -647,6 +663,7 @@ export function AuthPage() {
       });
       if (isMfaLoginChallenge(loggedIn)) {
         endAuthSignInHandoff("AuthPage_mfa_challenge");
+        setOauthProgress(null);
         setPendingMfaToken(loggedIn.pendingMfaToken);
         setMfaSetupRequired(Boolean(loggedIn.mfaSetupRequired));
         setOtpCode('');
@@ -662,6 +679,7 @@ export function AuthPage() {
     } catch (err) {
       logClientError('AuthPage.oauth', err);
       endAuthSignInHandoff("AuthPage_oauth_error");
+      setOauthProgress(null);
       setError(toUserFriendlyMessage(err));
       const raw = err instanceof Error ? err.message : String(err);
       if (
@@ -675,6 +693,7 @@ export function AuthPage() {
       if (!postAuthRedirectRef.current) {
         setIsSubmitting(false);
         setAuthFlowInProgress(false);
+        setOauthProgress(null);
       }
     }
   };
@@ -688,6 +707,7 @@ export function AuthPage() {
     googleRedirectResumedRef.current = true;
     const handoff = takeGoogleRedirectHandoff();
     if (!handoff) {
+      setOauthProgress(null);
       setError(t("auth.oauth.googleRedirect.error_expired"));
       return;
     }
@@ -820,11 +840,15 @@ export function AuthPage() {
       : 'register';
 
   return (
+    <>
+    {oauthProgress ? <AuthOAuthProgress provider={oauthProgress} /> : null}
     <div
       className={cn(
         "caretip-auth-page relative font-sans",
         isMobileWebAuth && "caretip-auth-page--has-mobile-web",
       )}
+      // While a provider credential is exchanged the form stays mounted but out of reach.
+      {...(oauthProgress ? { inert: "", "aria-hidden": true } : {})}
     >
         {isMobileWebAuth ? (
           <MobileWebAuthShell
@@ -1232,5 +1256,6 @@ export function AuthPage() {
         </SignInCard2>
         </div>
     </div>
+    </>
   );
 }

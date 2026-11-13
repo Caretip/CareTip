@@ -25,6 +25,8 @@ export type SignInHandoffTiming = {
 let active = false;
 let coverVisible = false;
 let targetPath: string | null = null;
+/** Set for a provider sign-in (Google, …): the cover keeps showing that provider's progress state. */
+let provider: "google" | "apple" | "facebook" | null = null;
 let shellReady = false;
 let dataReady = false;
 let maxTimer: number | null = null;
@@ -111,6 +113,17 @@ export function getAuthSignInHandoffTargetPath(): string | null {
   return targetPath;
 }
 
+/** Provider of the sign-in in progress, so the cover continues its progress state (no CareTip loader). */
+export function setAuthSignInHandoffProvider(next: "google" | "apple" | "facebook" | null): void {
+  if (provider === next) return;
+  provider = next;
+  emit();
+}
+
+export function getAuthSignInHandoffProvider(): "google" | "apple" | "facebook" | null {
+  return provider;
+}
+
 export function getSignInHandoffTimingSnapshot(): SignInHandoffTiming {
   return { ...timing };
 }
@@ -129,6 +142,7 @@ export function beginAuthSignInHandoff(): void {
   active = true;
   coverVisible = false;
   targetPath = null;
+  provider = null;
   shellReady = false;
   dataReady = false;
   timing = emptyTiming();
@@ -231,6 +245,7 @@ export function endAuthSignInHandoff(caller = "unspecified"): void {
   active = false;
   coverVisible = false;
   targetPath = null;
+  provider = null;
   shellReady = false;
   dataReady = false;
   clearMaxTimer();

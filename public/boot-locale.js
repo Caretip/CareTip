@@ -185,6 +185,75 @@
     isGuestSlugPath: isGuestSlugPath,
   };
 
+  var GOOGLE_RETURN_PATH = "/auth/google/complete";
+  var SVG_NS = "http://www.w3.org/2000/svg";
+  var GOOGLE_PATHS = [
+    ["#EA4335", "M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"],
+    ["#4285F4", "M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"],
+    ["#FBBC05", "M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"],
+    ["#34A853", "M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"],
+  ];
+
+  /**
+   * Returning from Google (redirect sign-in): the boot screen shows the same "Signing you in with
+   * Google" state as the app's AuthOAuthProgress, so the CareTip mark never appears in between and the
+   * whole sign-in reads as one uninterrupted step until the dashboard renders.
+   * Built with DOM calls (CSP: no inline script); the spinner uses the Web Animations API.
+   */
+  function applyGoogleReturnBootVariant(doc, lng) {
+    var el = doc.getElementById("caretip-html-boot");
+    if (!el) return;
+    var dark = doc.documentElement.classList.contains("dark");
+    var title = lng === "en" ? "Signing you in with Google…" : "Anmeldung mit Google läuft …";
+    var hint = lng === "en" ? "This only takes a moment." : "Das dauert nur einen Moment.";
+    while (el.firstChild) el.removeChild(el.firstChild);
+    el.setAttribute("data-oauth-progress", "google");
+    el.setAttribute("aria-label", title);
+
+    var wrap = doc.createElement("div");
+    wrap.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:1.25rem;max-width:20rem;text-align:center";
+    var ringBox = doc.createElement("div");
+    ringBox.style.cssText = "position:relative;display:flex;align-items:center;justify-content:center;width:4rem;height:4rem";
+    var ring = doc.createElement("span");
+    ring.setAttribute("aria-hidden", "true");
+    ring.style.cssText =
+      "position:absolute;inset:0;border-radius:9999px;border:2px solid rgba(235,153,44,0.2);border-top-color:#eb992c;box-sizing:border-box";
+    ringBox.appendChild(ring);
+    var svg = doc.createElementNS(SVG_NS, "svg");
+    svg.setAttribute("viewBox", "0 0 48 48");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("width", "28");
+    svg.setAttribute("height", "28");
+    for (var i = 0; i < GOOGLE_PATHS.length; i++) {
+      var path = doc.createElementNS(SVG_NS, "path");
+      path.setAttribute("fill", GOOGLE_PATHS[i][0]);
+      path.setAttribute("d", GOOGLE_PATHS[i][1]);
+      svg.appendChild(path);
+    }
+    ringBox.appendChild(svg);
+    var texts = doc.createElement("div");
+    var t1 = doc.createElement("p");
+    t1.textContent = title;
+    t1.style.cssText = "margin:0 0 0.375rem;font-size:1rem;line-height:1.5rem;font-weight:600";
+    var t2 = doc.createElement("p");
+    t2.textContent = hint;
+    t2.style.cssText = "margin:0;font-size:0.875rem;line-height:1.25rem;color:" + (dark ? "#a3a3a3" : "#737373");
+    texts.appendChild(t1);
+    texts.appendChild(t2);
+    wrap.appendChild(ringBox);
+    wrap.appendChild(texts);
+    el.appendChild(wrap);
+    var reduce = false;
+    try {
+      reduce = global.matchMedia && global.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    } catch (_) {
+      reduce = false;
+    }
+    if (!reduce && typeof ring.animate === "function") {
+      ring.animate([{ transform: "rotate(0deg)" }, { transform: "rotate(360deg)" }], { duration: 1000, iterations: Infinity });
+    }
+  }
+
   /**
    * Locale/tagline only. Visibility is CSS (`#caretip-html-boot { display: flex }` until the node is removed).
    * Must not live in an inline <script>: production CSP is script-src 'self' (no 'unsafe-inline').
@@ -205,6 +274,10 @@
         el.setAttribute("aria-label", "CareTip — " + tagline);
         el.removeAttribute("hidden");
       }
+      var bootPath = String((global.location && global.location.pathname) || "/").split("?")[0];
+      if (bootPath === GOOGLE_RETURN_PATH) applyGoogleReturnBootVariant(doc, lng);
+      // Reveal the boot mark (index.html keeps it hidden until this script has run).
+      doc.documentElement.setAttribute("data-boot-copy", "");
       markBootLocalePerf();
     } catch (_) {
       /* ignore */

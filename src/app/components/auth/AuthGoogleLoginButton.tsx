@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { GoogleLogin, useGoogleOAuth, type CredentialResponse } from "@react-oauth/google";
 import type { GoogleOAuthUxMode } from "@/app/lib/googleOAuthRedirectWeb";
 
@@ -37,9 +38,16 @@ export function AuthGoogleLoginButton({
   onPopupStalled,
   onActivate,
 }: AuthGoogleLoginButtonProps) {
+  const { t } = useTranslation();
   const { scriptLoadedSuccessfully } = useGoogleOAuth();
   const hostRef = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState<number>(GSI_MIN_WIDTH);
+  /**
+   * Measured before paint; the Google button renders only once the width is known. It used to render
+   * at 200px and redraw at the real width, visibly rebuilding Google's iframe on every mount.
+   */
+  const [width, setWidth] = useState<number | null>(null);
+  /** Redirect mode: tapped, the browser is about to leave for Google. */
+  const [leavingForGoogle, setLeavingForGoogle] = useState(false);
   const attemptRef = useRef(false);
   /** Safari does not move focus into the button iframe; pointer position is the fallback signal. */
   const pointerOverRef = useRef(false);
@@ -47,7 +55,7 @@ export function AuthGoogleLoginButton({
   const callbacksRef = useRef({ onPopupStalled, onActivate });
   callbacksRef.current = { onPopupStalled, onActivate };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = hostRef.current;
     if (!el) return;
     const measure = () => {
@@ -76,11 +84,14 @@ export function AuthGoogleLoginButton({
         if (focusedButton || pointerOverRef.current) {
           attemptRef.current = true;
           clearStall();
+          if (uxMode === "redirect") setLeavingForGoogle(true);
           callbacksRef.current.onActivate?.();
         }
       }, 0);
     };
     const onReturn = () => {
+      // Back on this page (Back from Google, bfcache restore, focus): no longer leaving.
+      if (document.visibilityState !== "hidden") setLeavingForGoogle(false);
       if (!attemptRef.current || uxMode !== "popup") return;
       if (document.visibilityState === "hidden") return;
       clearStall();
@@ -93,11 +104,13 @@ export function AuthGoogleLoginButton({
     };
     window.addEventListener("blur", onBlur);
     window.addEventListener("focus", onReturn);
+    window.addEventListener("pageshow", onReturn);
     document.addEventListener("visibilitychange", onReturn);
     return () => {
       clearStall();
       window.removeEventListener("blur", onBlur);
       window.removeEventListener("focus", onReturn);
+      window.removeEventListener("pageshow", onReturn);
       document.removeEventListener("visibilitychange", onReturn);
     };
   }, [uxMode]);
@@ -119,7 +132,7 @@ export function AuthGoogleLoginButton({
   return (
     <div
       ref={hostRef}
-      className="caretip-oauth-google-button"
+      className="caretip-oauth-google-button relative"
       onPointerEnter={() => {
         pointerOverRef.current = true;
       }}
@@ -127,7 +140,7 @@ export function AuthGoogleLoginButton({
         pointerOverRef.current = false;
       }}
     >
-      {scriptLoadedSuccessfully ? (
+      {scriptLoadedSuccessfully && width != null ? (
         <GoogleLogin
           onSuccess={handleSuccess}
           onError={handleError}
@@ -148,10 +161,24 @@ export function AuthGoogleLoginButton({
       ) : (
         <div
           className="caretip-oauth-google-button__placeholder"
-          style={{ width, height: GSI_BUTTON_HEIGHT }}
+          style={{ width: width ?? "100%", maxWidth: GSI_MAX_WIDTH, height: GSI_BUTTON_HEIGHT }}
           aria-hidden
         />
       )}
+      {leavingForGoogle ? (
+        <div
+          className="absolute inset-0 z-[1] flex items-center justify-center gap-2 rounded-md bg-background/90 text-sm font-medium text-foreground"
+          role="status"
+          aria-live="polite"
+          data-google-leaving=""
+        >
+          <span
+            className="h-4 w-4 animate-spin rounded-full border-2 border-primary/25 border-t-primary motion-reduce:animate-none"
+            aria-hidden
+          />
+          {t("auth.oauth.openingGoogle")}
+        </div>
+      ) : null}
     </div>
   );
 }

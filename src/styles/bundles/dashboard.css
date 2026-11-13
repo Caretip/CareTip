@@ -36,6 +36,7 @@
 @import "../platform-admin-workspace.css";
 @import "../admin-console.css";
 @import "../employee-hero-mobile.css";
+@import "../business-hero-mobile.css";
 
 /* Portaled notification popover — not inside .caretip-dashboard-shell */
 .caretip-notification-panel {

@@ -223,7 +223,10 @@
       "staleAction": "Neu laden",
       "routeTitle": "Diese Seite konnte nicht geladen werden",
       "routeBody": "Bitte versuchen Sie es erneut oder kehren Sie zur Startseite zurück.",
-      "homeAction": "Zur Startseite"
+      "homeAction": "Zur Startseite",
+      "connectionTitle": "Verbindung unterbrochen",
+      "connectionBody": "Diese Seite wurde nicht vollständig geladen. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+      "connectionAction": "Erneut versuchen"
     },
     "tryAgain": "Erneut versuchen",
     "dismiss": "Schließen"
@@ -1742,7 +1745,12 @@
         "tryAgain": "Erneut versuchen",
         "useEmail": "Mit E-Mail anmelden",
         "error_rate_limited": "Zu viele Anmeldeversuche aus diesem Netzwerk. Bitte warten Sie einige Minuten und versuchen Sie es erneut, oder melden Sie sich mit Ihrer E-Mail an."
-      }
+      },
+      "progress": {
+        "title": "Anmeldung mit {{provider}} läuft …",
+        "hint": "Das dauert nur einen Moment."
+      },
+      "openingGoogle": "Google wird geöffnet …"
     },
     "recovery": {
       "backToSignIn": "Zurück zur Anmeldung"

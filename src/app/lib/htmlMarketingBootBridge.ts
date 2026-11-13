@@ -116,6 +116,12 @@ export function shouldRetainHtmlBootUntilLandingCommit(): boolean {
   if (isCustomerJourneyPath(p)) {
     return document.querySelector("[data-caretip-route-ready]") == null;
   }
+  // Google redirect return: hold through the hop to the auth page, which shows the Google progress
+  // state from its first paint; only the error screen commits here. Otherwise the boot left on
+  // React's first DOM write and a blank frame showed before any loader mounted.
+  if (p === "/auth/google/complete") {
+    return document.querySelector("[data-caretip-route-ready]") == null;
+  }
   // Stripe subscription return pages (protected, outside the dashboard shell): hold until the
   // page commits, or the boot left on the first DOM write and a bare background showed first.
   if (p.startsWith("/subscription/")) {

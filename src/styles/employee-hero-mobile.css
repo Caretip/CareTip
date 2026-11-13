@@ -8,7 +8,7 @@
  * What changes on mobile:
  *  - one inset instead of two stacked paddings (dark shell 18px + inner card 16px);
  *  - tighter heading block and a stronger earnings figure;
- *  - payout metrics as a 2×2 tile grid with hairline dividers instead of a boxed panel;
+ *  - payout metrics as a 2×2 grid inside one soft card, without divider lines;
  *  - no divider line above the CTA; taller, rounder thumb-friendly CTA (brand fill unchanged);
  *  - the photo uses a 5:4 frame that keeps the whole tipping scene (people, phone, QR sign) visible.
  */
@@ -99,7 +99,7 @@
     opacity: 0.7;
   }
 
-  /* Payout metrics: 2×2 tiles with hairline dividers. */
+  /* Payout metrics: 2×2 grid inside one soft card, no divider lines between the figures. */
   .caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__zone--payout {
     margin: 0 !important;
     padding: 0 !important;
@@ -111,11 +111,11 @@
 
   .caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__payout-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1px !important;
-    padding: 0 !important;
+    gap: 0 !important;
+    padding: 0.125rem 0 !important;
     border: 0 !important;
     border-radius: 0 !important;
-    background: rgb(255 255 255 / 0.07) !important;
+    background: transparent !important;
   }
 
   .caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__payout-cell {
@@ -124,8 +124,9 @@
     gap: 0.25rem;
     min-width: 0;
     margin: 0 !important;
-    padding: 0.75rem 0.875rem !important;
-    background: rgb(23 20 17);
+    padding: 0.625rem 0.875rem !important;
+    border: 0 !important;
+    background: transparent;
   }
 
   .caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .dashboard-hero-financial-panel .dashboard-hero-financial__payout-cell .dashboard-hero-financial__label {

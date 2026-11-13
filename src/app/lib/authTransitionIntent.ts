@@ -4,6 +4,16 @@
  */
 
 import { isLogoutPending } from "./api";
+import { hasPendingGoogleRedirectHandoff } from "./googleOAuthRedirectWeb";
+
+/**
+ * Returning from Google (redirect sign-in): the return page and the auth page show the Google progress
+ * state themselves — a CareTip session-check overlay on top of it would be a second, competing loader.
+ */
+function isGoogleRedirectReturnInProgress(): boolean {
+  if (typeof window !== "undefined" && window.location?.pathname === "/auth/google/complete") return true;
+  return hasPendingGoogleRedirectHandoff();
+}
 import {
   isAuthLogoutTransitionActive,
   isPostLogoutBootstrapSuppress,
@@ -38,7 +48,8 @@ export function shouldSuppressSessionBootstrapOverlay(): boolean {
   return (
     isIntentionalUserLogout() ||
     isAuthPostLoginTransitionActive() ||
-    isAuthSignInHandoffActive()
+    isAuthSignInHandoffActive() ||
+    isGoogleRedirectReturnInProgress()
   );
 }
 

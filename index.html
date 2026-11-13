@@ -125,6 +125,19 @@
         --caretip-loader-track: rgba(255, 255, 255, 0.12);
       }
 
+      /* Shown once boot-locale.js has run (it sets data-boot-copy, or swaps in the Google sign-in state on
+         the Google return URL, where the CareTip mark must never flash). CSS fallback if it never runs. */
+      html:not([data-boot-copy]) .caretip-html-boot__mark {
+        visibility: hidden;
+        animation: caretip-boot-mark-reveal 0s linear 1.2s forwards;
+      }
+
+      @keyframes caretip-boot-mark-reveal {
+        to {
+          visibility: visible;
+        }
+      }
+
       .caretip-html-boot__mark img {
         display: block;
         width: 4rem;

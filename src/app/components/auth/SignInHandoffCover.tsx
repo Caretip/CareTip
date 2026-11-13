@@ -1,11 +1,13 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import {
+  getAuthSignInHandoffProvider,
   getAuthSignInHandoffTargetPath,
   isAuthSignInHandoffCoverVisible,
   subscribeAuthSignInHandoff,
 } from "../../lib/authSignInHandoff";
 import { AuthBootstrapShell } from "./AuthBootstrapShell";
+import { AuthOAuthProgress } from "./AuthOAuthProgress";
 import { markPostLoginTrace } from "../../lib/postLoginRuntimeTrace";
 
 /**
@@ -24,6 +26,11 @@ export function SignInHandoffCover() {
     getAuthSignInHandoffTargetPath,
     () => null,
   );
+  const provider = useSyncExternalStore(
+    subscribeAuthSignInHandoff,
+    getAuthSignInHandoffProvider,
+    () => null,
+  );
 
   useEffect(() => {
     if (!import.meta.env.DEV) return;
@@ -36,6 +43,16 @@ export function SignInHandoffCover() {
   }, [visible]);
 
   if (!visible) return null;
+
+  // Provider sign-in: keep the same "Signing you in with …" state until the destination renders —
+  // switching to the CareTip loader here read as a second, competing loader.
+  if (provider) {
+    return (
+      <div className="fixed inset-0 z-[10000]" data-testid="sign-in-handoff-cover">
+        <AuthOAuthProgress provider={provider} />
+      </div>
+    );
+  }
 
   const onboarding =
     (targetPath ?? window.location.pathname).split("?")[0]?.startsWith("/onboarding") === true;
