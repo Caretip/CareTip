@@ -7,6 +7,7 @@ import {
   getTipDistributionEmployees,
   getTipDistributionHistory,
   getTipDistributionSummary,
+  getEmployeeTipRoutingOverview,
   type TipDistributionBatchDetail,
   type TipDistributionBatchListRow,
   type TipDistributionEmployeeRow,
@@ -46,6 +47,8 @@ function formatDistributionDate(iso: string | null, locale: string): string {
   });
 }
 
+const HISTORY_PAGE_SIZE = 20;
+
 function newIdempotencyKey(): string {
   return `tip-dist-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
@@ -57,6 +60,10 @@ export function TipDistributionPage() {
   const [summary, setSummary] = useState<TipDistributionSummary | null>(null);
   const [employees, setEmployees] = useState<TipDistributionEmployeeRow[]>([]);
   const [history, setHistory] = useState<TipDistributionBatchListRow[]>([]);
+  const [historyTotal, setHistoryTotal] = useState(0);
+  const [historyLoadingMore, setHistoryLoadingMore] = useState(false);
+  /** Read-only: shares CareTip holds until employees connect Stripe (null = unavailable). */
+  const [heldPlatformCents, setHeldPlatformCents] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedEmployee, setSelectedEmployee] = useState<TipDistributionEmployeeRow | null>(null);
@@ -70,14 +77,18 @@ export function TipDistributionPage() {
     setError(null);
     setLoading(true);
     try {
-      const [nextSummary, nextEmployees, nextHistory] = await Promise.all([
+      const [nextSummary, nextEmployees, nextHistory, overview] = await Promise.all([
         getTipDistributionSummary(),
         getTipDistributionEmployees(),
-        getTipDistributionHistory({ take: 20 }),
+        getTipDistributionHistory({ take: HISTORY_PAGE_SIZE }),
+        // Supplementary read-only figure; the workspace must not fail if it is unavailable.
+        getEmployeeTipRoutingOverview().catch(() => null),
       ]);
       setSummary(nextSummary);
       setEmployees(nextEmployees.items);
       setHistory(nextHistory.items);
+      setHistoryTotal(nextHistory.total);
+      setHeldPlatformCents(overview ? overview.heldPlatformCents : null);
     } catch (err) {
       logClientError("TipDistributionPage.load", err);
       setError(toUserFriendlyMessage(err) || t("business.tipDistribution.loadError"));
@@ -90,6 +101,28 @@ export function TipDistributionPage() {
     void load();
   }, [load]);
 
+  const loadMoreHistory = async () => {
+    setHistoryLoadingMore(true);
+    try {
+      const next = await getTipDistributionHistory({ take: HISTORY_PAGE_SIZE, skip: history.length });
+      setHistory((prev) => {
+        const seen = new Set(prev.map((row) => row.id));
+        return [...prev, ...next.items.filter((row) => !seen.has(row.id))];
+      });
+      setHistoryTotal(next.total);
+    } catch (err) {
+      logClientError("TipDistributionPage.historyMore", err);
+      setError(toUserFriendlyMessage(err) || t("business.tipDistribution.loadError"));
+    } finally {
+      setHistoryLoadingMore(false);
+    }
+  };
+
+  /**
+   * The routing setting only decides where NEW tips go. Viewing outstanding shares and history is
+   * always available; "Record distribution" is offered only on rows where the business still holds
+   * an employee share (the backend enforces the same: held_business payables only).
+   */
   const isDirectToEmployee = summary?.routingMode === "direct_to_employee";
   const awaitingEmployees = useMemo(
     () => employees.filter((row) => row.remainingCents > 0 && row.employeeId),
@@ -179,10 +212,11 @@ export function TipDistributionPage() {
 
         {loading ? (
           <p className="text-sm text-muted-foreground">{t("business.tipDistribution.loading")}</p>
-        ) : isDirectToEmployee ? (
-          <TipDistributionDirectToEmployeeStatus />
         ) : (
           <div className="tip-distribution-workspace">
+            {isDirectToEmployee ? (
+              <TipDistributionDirectToEmployeeStatus outstandingCents={summary?.totalToDistributeCents ?? 0} />
+            ) : null}
             <section className="tip-distribution-kpi-strip" aria-label={t("business.tipDistribution.title")}>
               <div className="tip-distribution-kpi tip-distribution-kpi--primary">
                 <p className="tip-distribution-kpi__label">{t("business.tipDistribution.summary.toDistribute")}</p>
@@ -203,6 +237,13 @@ export function TipDistributionPage() {
                     : t("business.tipDistribution.summary.noneRecorded")}
                 </p>
               </div>
+              {heldPlatformCents != null && heldPlatformCents > 0 ? (
+                <div className="tip-distribution-kpi" data-tip-distribution-kpi="held-platform">
+                  <p className="tip-distribution-kpi__label">{t("business.tipDistribution.summary.heldByCareTip")}</p>
+                  <p className="tip-distribution-kpi__value">{centsToEur(heldPlatformCents)}</p>
+                  <p className="tip-distribution-kpi__hint">{t("business.tipDistribution.summary.heldByCareTipHint")}</p>
+                </div>
+              ) : null}
             </section>
 
             {summary?.sinceLastDistribution ? (
@@ -409,6 +450,24 @@ export function TipDistributionPage() {
                   </tbody>
                 </table>
               </div>
+              {history.length < historyTotal ? (
+                <div className="pt-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="min-h-11 w-full sm:w-auto"
+                    disabled={historyLoadingMore}
+                    onClick={() => void loadMoreHistory()}
+                  >
+                    {historyLoadingMore
+                      ? t("business.tipDistribution.history.loadingMore")
+                      : t("business.tipDistribution.history.loadMore", {
+                          shown: history.length,
+                          total: historyTotal,
+                        })}
+                  </Button>
+                </div>
+              ) : null}
             </section>
           </div>
         )}
@@ -472,7 +531,12 @@ export function TipDistributionPage() {
               {detailBatch.items.map((item) => (
                 <div key={item.id} className="rounded-lg border border-border/70 p-3">
                   <p className="font-medium">{item.employeeName ?? t("business.tipDistribution.unassignedEmployee")}</p>
-                  <p className="text-sm tabular-nums text-muted-foreground">{centsToEur(item.amountCents)}</p>
+                  <p className="text-sm tabular-nums text-muted-foreground">
+                    {centsToEur(item.amountCents)}
+                    {item.allocations.length > 0
+                      ? ` · ${t("business.tipDistribution.detail.coversTips", { count: item.allocations.length })}`
+                      : ""}
+                  </p>
                 </div>
               ))}
             </div>

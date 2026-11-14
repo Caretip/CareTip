@@ -3599,6 +3599,8 @@ export type EmployeePayableActivityStatus =
 export type EmployeePayablePresentationKind =
   | "held"
   | "held_venue"
+  /** Business recorded an off-platform distribution for this tip. Not a Stripe payout. */
+  | "venue_distributed"
   | "transferring"
   | "transferred"
   | "destination_routed"
@@ -3606,7 +3608,16 @@ export type EmployeePayablePresentationKind =
   | "failed"
   | "disputed";
 
-export type EmployeePayableActivityFilter = "all" | "tips" | "transfers" | "pending" | "issues";
+export type EmployeePayableActivityFilter =
+  | "all"
+  | "tips"
+  | "transfers"
+  | "pending"
+  | "distributed"
+  | "issues";
+
+/** Off-platform distribution progress for a venue-routed tip (display only). */
+export type EmployeePayableDistributionState = "not_applicable" | "awaiting" | "partial" | "distributed";
 
 export interface EmployeePayableActivityItem {
   id: string;
@@ -3633,6 +3644,12 @@ export interface EmployeePayableActivityItem {
   receiptNumber?: string | null;
   locationName?: string | null;
   tableName?: string | null;
+  /** Sum of the business's recorded distribution allocations for this tip (cents). */
+  distributedCents?: number;
+  /** Date of the latest distribution batch that covered this tip. */
+  lastDistributedAt?: string | null;
+  distributionState?: EmployeePayableDistributionState;
+  businessName?: string | null;
 }
 
 export async function listEmployeePayableActivity(params?: {

@@ -18,10 +18,39 @@ export function employeeTipActivityDisplayAt(row: EmployeePayableActivityItem): 
 export function employeeTipActivityPrimaryAmountCents(row: EmployeePayableActivityItem): number {
   const kind = employeeTipActivityKind(row);
   if (kind === "refunded") return row.refundedCents;
-  if (kind === "transferred" || kind === "destination_routed" || kind === "transferring") {
+  if (
+    kind === "transferred" ||
+    kind === "destination_routed" ||
+    kind === "transferring" ||
+    kind === "venue_distributed"
+  ) {
     return row.activityCents;
   }
   return row.grossCents ?? row.payableCents;
+}
+
+/**
+ * Business-recorded distribution line for a venue-routed tip, or null when nothing was recorded.
+ * Amounts come from the same allocation rows the business Tip Distribution page sums.
+ */
+export function employeeTipActivityDistributionNote(row: EmployeePayableActivityItem): {
+  key: "employee.tipActivity.distribution.full" | "employee.tipActivity.distribution.partial";
+  distributedCents: number;
+  outstandingCents: number;
+  at: string | null;
+} | null {
+  const distributedCents = Math.max(0, row.distributedCents ?? 0);
+  if (distributedCents <= 0) return null;
+  const outstandingCents = Math.max(0, (row.remainingPayableCents ?? 0) - distributedCents);
+  return {
+    key:
+      row.distributionState === "partial"
+        ? "employee.tipActivity.distribution.partial"
+        : "employee.tipActivity.distribution.full",
+    distributedCents,
+    outstandingCents,
+    at: row.lastDistributedAt ?? null,
+  };
 }
 
 export function employeeTipActivityVenueLabel(row: EmployeePayableActivityItem): string | null {
@@ -57,5 +86,6 @@ export const TIP_ACTIVITY_FILTERS: EmployeePayableActivityFilter[] = [
   "tips",
   "transfers",
   "pending",
+  "distributed",
   "issues",
 ];

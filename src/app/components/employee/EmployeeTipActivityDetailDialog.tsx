@@ -3,6 +3,7 @@ import type { EmployeePayableActivityItem } from "../../lib/api";
 import { formatEur } from "../../lib/formatEur";
 import { formatVenueDateTime, resolveBusinessTimezone } from "../../lib/businessVenueTime";
 import {
+  employeeTipActivityDistributionNote,
   employeeTipActivityKind,
   employeeTipActivityReference,
   employeeTipActivityVenueLabel,
@@ -39,6 +40,8 @@ export function EmployeeTipActivityDetailDialog({
     row.routingMode === "business_distribution" ? 0 : directEarningsEur;
   const venue = employeeTipActivityVenueLabel(row);
   const ref = employeeTipActivityReference(row);
+  const distribution = employeeTipActivityDistributionNote(row);
+  const isVenueRouted = row.routingMode === "business_distribution";
 
   return (
     <Dialog open={row != null} onOpenChange={(open) => !open && onClose()}>
@@ -99,6 +102,33 @@ export function EmployeeTipActivityDetailDialog({
             </dt>
             <dd className="mt-0.5">{t(`employee.payouts.activityStatus.${kind}`)}</dd>
           </div>
+          {isVenueRouted ? (
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t("employee.tipActivity.detail.distributedByVenue")}
+              </dt>
+              <dd className="mt-0.5 tabular-nums font-medium">
+                {distribution ? formatEur(distribution.distributedCents / 100) : t("employee.tipActivity.detail.notYetDistributed")}
+              </dd>
+              {distribution?.at ? (
+                <dd className="mt-0.5 text-xs text-muted-foreground">
+                  {t("employee.tipActivity.detail.distributedOn", {
+                    date: formatVenueDateTime(distribution.at, tz, locale),
+                  })}
+                </dd>
+              ) : null}
+              {distribution && distribution.outstandingCents > 0 ? (
+                <dd className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+                  {t("employee.tipActivity.detail.stillToDistribute", {
+                    amount: formatEur(distribution.outstandingCents / 100),
+                  })}
+                </dd>
+              ) : null}
+              <dd className="mt-1 text-xs text-muted-foreground">
+                {t("employee.tipActivity.detail.distributionDisclaimer")}
+              </dd>
+            </div>
+          ) : null}
           {ref ? (
             <div>
               <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">

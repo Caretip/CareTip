@@ -2,10 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FixPrompt, type FixPromptDensity } from "../FixPrompt";
 import { EMPLOYEE_PAYMENTS_CONNECT_HREF } from "./employeeDashboardNav";
-import {
-  employeeConnectIsBusinessDistribution,
-  isEmployeePayoutReady,
-} from "./employeePayoutAccountPresentation";
+import { employeeStripeConnectPromptActive } from "./employeePayoutAccountPresentation";
 import { getEmployeeConnectStatus, type EmployeeConnectStatus } from "../../lib/api";
 import { logClientError } from "../../lib/clientLog";
 
@@ -44,13 +41,7 @@ export function EmployeeStripeConnectPrompt({ density, className }: EmployeeStri
     };
   }, []);
 
-  const issueActive =
-    !loading &&
-    !error &&
-    data != null &&
-    data.stripeConfigured !== false &&
-    !employeeConnectIsBusinessDistribution(data) &&
-    !isEmployeePayoutReady(data);
+  const issueActive = !loading && !error && employeeStripeConnectPromptActive(data);
   const conditionVersion = data?.connectionState ?? "not_connected";
 
   return (

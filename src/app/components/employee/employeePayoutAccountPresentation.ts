@@ -66,35 +66,76 @@ export function employeeConnectIsBusinessDistribution(
 }
 
 /**
- * BUSINESS_RECEIVES: hide the Stripe account block when there is nothing to show
- * besides a Connect-to-receive-tips prompt.
+ * The Stripe account block is always shown. The Business routing setting decides where NEW tips go;
+ * it must not block an employee from connecting (tips held by CareTip can only be released to a
+ * connected account, and the venue may switch modes later). `businessDistribution` is accepted for
+ * call-site compatibility and deliberately ignored.
  */
 export function employeePayoutShowAccountSection(
-  businessDistribution: boolean,
-  phase: EmployeePayoutUiPhase,
+  _businessDistribution: boolean,
+  _phase: EmployeePayoutUiPhase,
 ): boolean {
-  if (phase === "loading" || phase === "error") return true;
-  if (businessDistribution && phase === "not_connected") return false;
   return true;
 }
 
 /**
- * DIRECT: existing Connect / Complete / Update CTAs.
- * BUSINESS_RECEIVES: never Connect or Complete-for-tips; Update only if already connected.
+ * Connect / Complete / Update CTA whenever the phase has one — in both routing modes.
+ * Visibility is not payout eligibility: the backend still enforces employee activation,
+ * account ownership and Stripe readiness before any onboarding link or payout.
  */
 export function employeePayoutShowPrimaryStripeCta(
-  businessDistribution: boolean,
+  _businessDistribution: boolean,
   phase: EmployeePayoutUiPhase,
 ): boolean {
-  if (businessDistribution) return phase === "ready";
   return employeePayoutPrimaryCta(phase) != null;
 }
 
+/** Explanatory copy for the account card; venue-distribution mode gets mode-aware wording. */
 export function employeePayoutAccountBodyKey(
   businessDistribution: boolean,
   phase: EmployeePayoutUiPhase,
   state: EmployeePayoutConnectionState,
 ): string | null {
-  if (businessDistribution) return null;
+  if (businessDistribution) {
+    if (phase === "not_connected") return "employee.payouts.businessMode.notConnectedBody";
+    if (phase === "setup_incomplete") return "employee.payouts.businessMode.incompleteBody";
+    if (phase === "attention") return "employee.payouts.attentionBody";
+    if (phase === "ready") return "employee.payouts.businessMode.readyBody";
+  }
   return employeePayoutBodyKey(phase, state);
+}
+
+/**
+ * Dashboard "fix" prompt for Stripe Connect. Direct mode: whenever the account is not ready.
+ * Venue-distribution mode: Connect is optional, so prompt only when there is a concrete reason —
+ * tips held by CareTip for this employee, or an onboarding the employee already started.
+ */
+export function employeeStripeConnectPromptActive(
+  data:
+    | Pick<
+        EmployeeConnectStatus,
+        "stripeConfigured" | "hasAccount" | "connectionState" | "payoutsEnabled" | "heldPlatformCents" | "employeeTipPayoutMode"
+      >
+    | null
+    | undefined,
+): boolean {
+  if (!data || data.stripeConfigured === false) return false;
+  if (isEmployeePayoutReady(data)) return false;
+  if (!employeeConnectIsBusinessDistribution(data)) return true;
+  const held = (data.heldPlatformCents ?? 0) > 0;
+  const started = data.hasAccount === true && data.connectionState !== "not_connected";
+  return held || started;
+}
+
+/**
+ * Tips CareTip is holding because this account cannot receive transfers yet (held_platform /
+ * failed release on the payable ledger). Shown in either routing mode; never shown once ready.
+ */
+export function employeePayoutHeldBufferCents(
+  data: Pick<EmployeeConnectStatus, "heldPlatformCents"> | null | undefined,
+  phase: EmployeePayoutUiPhase,
+): number {
+  if (phase === "ready" || phase === "loading" || phase === "error") return 0;
+  const cents = data?.heldPlatformCents ?? 0;
+  return Number.isFinite(cents) && cents > 0 ? cents : 0;
 }

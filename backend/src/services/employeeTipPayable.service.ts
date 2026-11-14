@@ -18,12 +18,14 @@ import {
 import { runSerializedByKey } from "../utils/serializedByKey.js";
 import type { PaidTipConnectSnapshot } from "./employeeTipRouting.service.js";
 import {
+  employeePayableDistributionState,
   employeePayablePresentationKind,
+  type EmployeePayableDistributionState,
   type EmployeePayablePresentationKind,
 } from "./employeePayableActivityPresentation.js";
 
-export type { EmployeePayablePresentationKind };
-export { employeePayablePresentationKind };
+export type { EmployeePayableDistributionState, EmployeePayablePresentationKind };
+export { employeePayableDistributionState, employeePayablePresentationKind };
 
 /** Avoid read/modify/write races that could clear rel_durable on concurrent refund/dispute. */
 function mergePayableLastTransferErrorUpdate(
@@ -583,7 +585,13 @@ export async function employeePayableSummaryForEmployee(employeeId: string): Pro
   };
 }
 
-export type EmployeePayableActivityFilter = "all" | "tips" | "transfers" | "pending" | "issues";
+export type EmployeePayableActivityFilter =
+  | "all"
+  | "tips"
+  | "transfers"
+  | "pending"
+  | "distributed"
+  | "issues";
 
 export type EmployeePayableActivityItem = {
   id: string;
@@ -610,6 +618,21 @@ export type EmployeePayableActivityItem = {
   receiptNumber: string | null;
   locationName: string | null;
   tableName: string | null;
+  /**
+   * Sum of EmployeeTipDistributionAllocation rows the business recorded against this payable
+   * (off-platform distribution — never a Stripe transfer or a bank payout).
+   */
+  distributedCents: number;
+  /** Latest EmployeeTipDistributionBatch.completedAt that allocated to this payable. */
+  lastDistributedAt: string | null;
+  distributionState: EmployeePayableDistributionState;
+  businessName: string | null;
+};
+
+/** Venue-routed payables — same predicate the business distribution workspace uses. */
+const VENUE_DISTRIBUTION_WHERE: Prisma.EmployeeTipPayableWhereInput = {
+  routingMode: EmployeeTipPayoutMode.business_distribution,
+  chargeModel: EmployeeTipChargeModel.destination_business,
 };
 
 function employeePayableActivityFilterWhere(
@@ -629,13 +652,21 @@ function employeePayableActivityFilterWhere(
   }
   if (filter === "pending") {
     return {
-      status: {
-        in: [
-          EmployeeTipPayableStatus.held_platform,
-          EmployeeTipPayableStatus.held_business,
-          EmployeeTipPayableStatus.transferring,
-        ],
-      },
+      OR: [
+        {
+          status: {
+            in: [EmployeeTipPayableStatus.held_platform, EmployeeTipPayableStatus.transferring],
+          },
+        },
+        // Venue-held shares with no distribution recorded against them yet.
+        { status: EmployeeTipPayableStatus.held_business, distributionAllocations: { none: {} } },
+      ],
+    };
+  }
+  if (filter === "distributed") {
+    return {
+      ...VENUE_DISTRIBUTION_WHERE,
+      distributionAllocations: { some: {} },
     };
   }
   if (filter === "issues") {
@@ -660,7 +691,13 @@ function employeePayableActivityFilterWhere(
 
 export function employeePayableActivityCents(row: EmployeePayableMoneyRow & {
   status: EmployeeTipPayableStatus;
+  /** venue_distributed rows present the recorded distribution amount. */
+  presentationKind?: EmployeePayablePresentationKind;
+  distributedCents?: number;
 }): number {
+  if (row.presentationKind === "venue_distributed") {
+    return Math.max(0, row.distributedCents ?? 0);
+  }
   if (
     row.status === EmployeeTipPayableStatus.destination_settled ||
     row.status === EmployeeTipPayableStatus.transferred
@@ -716,6 +753,14 @@ export async function listEmployeePayableActivityForEmployee(
             table: { select: { name: true } },
           },
         },
+        business: { select: { name: true } },
+        // The same allocation rows the business workspace sums — no second employee ledger.
+        distributionAllocations: {
+          select: {
+            amountCents: true,
+            item: { select: { batch: { select: { completedAt: true } } } },
+          },
+        },
       },
     }),
   ]);
@@ -723,7 +768,18 @@ export async function listEmployeePayableActivityForEmployee(
     total,
     items: rows.map((row) => {
       const remaining = remainingPayableCents(row);
-      const activityAt = employeePayableActivityTimestamp(row);
+      let distributedCents = 0;
+      let lastDistributedAt: Date | null = null;
+      for (const allocation of row.distributionAllocations) {
+        distributedCents += allocation.amountCents;
+        const at = allocation.item.batch.completedAt;
+        if (!lastDistributedAt || at > lastDistributedAt) lastDistributedAt = at;
+      }
+      const presentationKind = employeePayablePresentationKind({ ...row, distributedCents });
+      const activityAt =
+        presentationKind === "venue_distributed" && lastDistributedAt
+          ? lastDistributedAt
+          : employeePayableActivityTimestamp(row);
       return {
         id: row.id,
         createdAt: row.createdAt.toISOString(),
@@ -732,7 +788,7 @@ export async function listEmployeePayableActivityForEmployee(
         status: row.status,
         routingMode: row.routingMode,
         chargeModel: row.chargeModel,
-        presentationKind: employeePayablePresentationKind(row),
+        presentationKind,
         grossCents: row.grossCents,
         platformFeeCents: row.platformFeeCents,
         payableCents: row.payableCents,
@@ -742,12 +798,22 @@ export async function listEmployeePayableActivityForEmployee(
         remainingPayableCents: remaining,
         disputedOpenCents: row.disputedOpenCents,
         disputedLostCents: row.disputedLostCents,
-        activityCents: employeePayableActivityCents(row),
+        activityCents: employeePayableActivityCents({ ...row, presentationKind, distributedCents }),
         transactionId: row.transactionId,
         transactionCreatedAt: row.transaction.createdAt.toISOString(),
         receiptNumber: row.transaction.receiptNumber,
         locationName: row.transaction.location?.name ?? null,
         tableName: row.transaction.table?.name ?? null,
+        distributedCents,
+        lastDistributedAt: lastDistributedAt?.toISOString() ?? null,
+        distributionState: employeePayableDistributionState({
+          status: row.status,
+          chargeModel: row.chargeModel,
+          routingMode: row.routingMode,
+          obligationCents: remaining,
+          distributedCents,
+        }),
+        businessName: row.business.name ?? null,
       };
     }),
   };

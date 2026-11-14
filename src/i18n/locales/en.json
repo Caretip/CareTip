@@ -4177,7 +4177,8 @@
         "tips": "Tips received",
         "transfers": "Transfers",
         "pending": "Pending",
-        "issues": "Issues"
+        "issues": "Issues",
+        "distributed": "Distributed"
       },
       "groupToday": "Today",
       "groupYesterday": "Yesterday",
@@ -4201,7 +4202,8 @@
         "destination_routed": "Payment confirmed",
         "refunded": "Tip refunded",
         "failed": "Transfer failed",
-        "disputed": "Payment under review"
+        "disputed": "Payment under review",
+        "venue_distributed": "Distributed by your venue"
       },
       "support": {
         "held": "Payment confirmed — earnings awaiting release to Stripe",
@@ -4211,7 +4213,8 @@
         "destination_routed": "Your earnings were routed to Stripe",
         "refunded": "Refund processed for this tip",
         "failed": "Earnings require another transfer attempt",
-        "disputed": "Stripe is reviewing a payment issue for this tip"
+        "disputed": "Stripe is reviewing a payment issue for this tip",
+        "venue_distributed": "Recorded by your venue as paid outside CareTip — not a CareTip or Stripe payout"
       },
       "detail": {
         "amount": "Tip amount",
@@ -4223,7 +4226,17 @@
         "routingBusiness": "Business",
         "routingStripe": "Your Stripe",
         "status": "Status",
-        "reference": "Reference"
+        "reference": "Reference",
+        "distributedByVenue": "Distributed by venue",
+        "notYetDistributed": "Not recorded yet",
+        "distributedOn": "Recorded {{date}}",
+        "stillToDistribute": "{{amount}} still to distribute",
+        "distributionDisclaimer": "Your venue pays this share directly. CareTip records it but does not move this money."
+      },
+      "distribution": {
+        "full": "{{business}} recorded {{amount}} as paid to you",
+        "partial": "{{business}} recorded {{amount}} as paid · {{outstanding}} still to distribute",
+        "yourVenue": "Your venue"
       }
     },
     "tipHistory": {
@@ -4412,13 +4425,6 @@
       "title": "Payouts",
       "connectTitle": "Connect",
       "connectSubtitle": "Your Stripe payout account and available funds.",
-      "distribution": {
-        "kicker": "Tip distribution",
-        "title": "Your business manages tip distribution.",
-        "titleNamed": "{{name}} manages tip distribution.",
-        "body": "Your business receives employee tips and distributes your share.",
-        "note": "Not paid to your Stripe account."
-      },
       "history": {
         "title": "Payout history",
         "subtitle": "Transfers to Stripe and payouts to your bank.",
@@ -4620,7 +4626,8 @@
         "refunded": "Refund adjustment",
         "failed": "Release to Stripe failed",
         "failedHint": "Not paid to your Stripe account yet.",
-        "disputed": "Under dispute review"
+        "disputed": "Under dispute review",
+        "venue_distributed": "Distributed by venue"
       },
       "activityStatus": {
         "held": "Pending",
@@ -4631,7 +4638,18 @@
         "destination_routed": "Completed",
         "refunded": "Refunded",
         "failed": "Not paid yet",
-        "disputed": "Pending"
+        "disputed": "Pending",
+        "venue_distributed": "Recorded by venue"
+      },
+      "businessMode": {
+        "notConnectedBody": "Your venue currently pays your tip share itself. Connecting Stripe is optional, but it is needed to receive tips CareTip holds for you, or new tips if your venue switches to paying through CareTip.",
+        "incompleteBody": "Finish your Stripe setup so any tips CareTip holds for you can be released to your account.",
+        "readyBody": "Your Stripe account is ready. Your venue currently pays your tip share itself."
+      },
+      "heldBuffer": {
+        "title": "{{amount}} held for you by CareTip",
+        "bodyConnect": "Connect Stripe to receive it. It is released to your account once Stripe confirms setup.",
+        "bodyFinish": "Finish your Stripe setup to receive it. It is released once Stripe confirms your account can receive transfers."
       }
     },
     "hero": {
@@ -7172,7 +7190,10 @@
       "submitError": "Could not record the distribution.",
       "directToEmployee": {
         "title": "No distributions require action",
-        "description": "Employee tips are paid directly through Stripe. There are currently no business distributions waiting for payment."
+        "description": "Employee tips are paid directly through Stripe. There are currently no business distributions waiting for payment.",
+        "modeTitle": "New tips are paid to employees through CareTip",
+        "modeBody": "Your earlier distributions remain available below for your records.",
+        "modeBodyOutstanding": "Tips your business received before this change still need to be distributed. They are listed below with your distribution history."
       },
       "unassignedEmployee": "Unassigned employee",
       "summary": {
@@ -7180,7 +7201,9 @@
         "allDistributed": "All employee tips have been distributed.",
         "employeesAwaiting": "Employees awaiting",
         "lastDistribution": "Last distribution",
-        "noneRecorded": "None recorded"
+        "noneRecorded": "None recorded",
+        "heldByCareTip": "Held by CareTip",
+        "heldByCareTipHint": "Released once employees connect Stripe. Not in your balance."
       },
       "sinceLast": {
         "title": "Since last distribution",
@@ -7227,11 +7250,15 @@
         "reference": "Reference",
         "empty": "No distributions recorded yet.",
         "employeeCount_one": "{{count}} employee",
-        "employeeCount_other": "{{count}} employees"
+        "employeeCount_other": "{{count}} employees",
+        "loadMore": "Show more ({{shown}} of {{total}})",
+        "loadingMore": "Loading…"
       },
       "detail": {
         "title": "Distribution batch",
-        "total": "Total recorded: {{amount}}"
+        "total": "Total recorded: {{amount}}",
+        "coversTips_one": "covers {{count}} tip",
+        "coversTips_other": "covers {{count}} tips"
       },
       "payoutScheduleNav": {
         "title": "Payout schedule",

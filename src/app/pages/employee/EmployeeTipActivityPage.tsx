@@ -24,6 +24,7 @@ import {
   TIP_ACTIVITY_FILTERS,
   employeeTipActivityDateGroup,
   employeeTipActivityDisplayAt,
+  employeeTipActivityDistributionNote,
   employeeTipActivityKind,
   employeeTipActivityPrimaryAmountCents,
   employeeTipActivityVenueLabel,
@@ -249,6 +250,14 @@ export function EmployeeTipActivityPage() {
                               ),
                             })
                           : null;
+                      const distribution = employeeTipActivityDistributionNote(row);
+                      const distributionNote = distribution
+                        ? t(distribution.key, {
+                            amount: formatEur(distribution.distributedCents / 100),
+                            outstanding: formatEur(distribution.outstandingCents / 100),
+                            business: row.businessName?.trim() || t("employee.tipActivity.distribution.yourVenue"),
+                          })
+                        : null;
 
                       return (
                         <li key={row.id}>
@@ -274,6 +283,9 @@ export function EmployeeTipActivityPage() {
                               </p>
                               {earningsNote ? (
                                 <p className="employee-tip-activity-item__support">{earningsNote}</p>
+                              ) : null}
+                              {distributionNote ? (
+                                <p className="employee-tip-activity-item__support">{distributionNote}</p>
                               ) : null}
                               {showSupport ? (
                                 <p className="employee-tip-activity-item__support">{support}</p>

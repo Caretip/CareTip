@@ -131,6 +131,7 @@ export async function getMyEmployeePayableActivity(req: Request, res: Response) 
       filterRaw === "tips" ||
       filterRaw === "transfers" ||
       filterRaw === "pending" ||
+      filterRaw === "distributed" ||
       filterRaw === "issues"
         ? filterRaw
         : "all";

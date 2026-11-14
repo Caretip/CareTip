@@ -8,7 +8,6 @@ import { EmployeePayoutDashboardMetrics } from "../../components/employee/Employ
 import { EmployeeReceivingPausedBanner } from "../../components/employee/EmployeeReceivingPausedBanner";
 import { EmployeeStripeBankPayoutList } from "../../components/employee/EmployeeStripeBankPayoutList";
 import { EmployeeBankPayoutScheduleCard } from "../../components/employee/EmployeeBankPayoutScheduleCard";
-import { EmployeeTipDistributionNotice } from "../../components/employee/EmployeeTipDistributionNotice";
 import { isEmployeeBusinessDistributionMode } from "../../components/employee/employeePayoutActivityPresentation";
 import { EMPLOYEE_PAYMENTS_HISTORY_HREF } from "../../components/employee/employeeDashboardNav";
 import { employeeUi } from "../../components/employee/employeeDashboardUi";
@@ -25,7 +24,6 @@ import { Button } from "../../components/ui/button";
 export function EmployeePaymentsConnectPage() {
   const { t } = useTranslation();
   const [receivingPaused, setReceivingPaused] = useState(false);
-  const [businessName, setBusinessName] = useState("");
   const [routingReady, setRoutingReady] = useState(false);
   const [businessDistribution, setBusinessDistribution] = useState(false);
   /** null until known. false = no Stripe account yet: the Connect card leads and the payout schedule
@@ -53,7 +51,6 @@ export function EmployeePaymentsConnectPage() {
     void getEmployeeProfile({ silent: true })
       .then((p) => {
         setReceivingPaused(p.receivingPaused === true);
-        setBusinessName(p.businessName?.trim() ?? "");
       })
       .catch(() => undefined);
     void getEmployeeConnectStatus()
@@ -92,7 +89,6 @@ export function EmployeePaymentsConnectPage() {
           }
         />
         <EmployeeReceivingPausedBanner receivingPaused={receivingPaused} onReactivated={load} />
-        {businessDistribution ? <EmployeeTipDistributionNotice businessName={businessName} /> : null}
         <EmployeePayoutDashboardMetrics
           eligibility={eligibility}
           loading={metricsLoading || !routingReady}
@@ -101,8 +97,9 @@ export function EmployeePaymentsConnectPage() {
         />
         <div className="caretip-payout-layout min-w-0 gap-4">
           <div className="min-w-0">
-            {hasConnectAccount === false && !businessDistribution ? (
+            {hasConnectAccount === false ? (
               // No Stripe account yet: the one useful action comes first, not after disabled settings.
+              // Applies in both routing modes — the venue's setting never blocks connecting.
               <EmployeePayoutAccountCard
                 businessDistribution={businessDistribution}
                 last4={eligibility?.destinationLast4 ?? null}
@@ -125,7 +122,7 @@ export function EmployeePaymentsConnectPage() {
               onSharedReload={reloadEligibility}
               onSharedEligibilityChange={setEligibility}
             />
-            {hasConnectAccount === false && !businessDistribution ? null : (
+            {hasConnectAccount === false ? null : (
               <EmployeePayoutAccountCard
                 businessDistribution={businessDistribution}
                 last4={eligibility?.destinationLast4 ?? null}

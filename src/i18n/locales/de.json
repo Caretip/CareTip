@@ -4177,7 +4177,8 @@
         "tips": "Trinkgelder erhalten",
         "transfers": "Überweisungen",
         "pending": "Ausstehend",
-        "issues": "Probleme"
+        "issues": "Probleme",
+        "distributed": "Verteilt"
       },
       "groupToday": "Heute",
       "groupYesterday": "Gestern",
@@ -4201,7 +4202,8 @@
         "destination_routed": "Zahlung bestätigt",
         "refunded": "Trinkgeld erstattet",
         "failed": "Überweisung fehlgeschlagen",
-        "disputed": "Zahlung in Prüfung"
+        "disputed": "Zahlung in Prüfung",
+        "venue_distributed": "Von Ihrem Betrieb verteilt"
       },
       "support": {
         "held": "Zahlung bestätigt — Auszahlung an Stripe ausstehend",
@@ -4211,7 +4213,8 @@
         "destination_routed": "Ihre Einnahmen wurden an Stripe weitergeleitet",
         "refunded": "Erstattung für dieses Trinkgeld verarbeitet",
         "failed": "Einnahmen benötigen einen weiteren Überweisungsversuch",
-        "disputed": "Stripe prüft ein Zahlungsproblem für dieses Trinkgeld"
+        "disputed": "Stripe prüft ein Zahlungsproblem für dieses Trinkgeld",
+        "venue_distributed": "Von Ihrem Betrieb als außerhalb von CareTip bezahlt erfasst – keine CareTip- oder Stripe-Auszahlung"
       },
       "detail": {
         "amount": "Trinkgeldbetrag",
@@ -4223,7 +4226,17 @@
         "routingBusiness": "Betrieb",
         "routingStripe": "Ihr Stripe-Konto",
         "status": "Status",
-        "reference": "Referenz"
+        "reference": "Referenz",
+        "distributedByVenue": "Vom Betrieb verteilt",
+        "notYetDistributed": "Noch nicht erfasst",
+        "distributedOn": "Erfasst am {{date}}",
+        "stillToDistribute": "{{amount}} noch zu verteilen",
+        "distributionDisclaimer": "Ihr Betrieb zahlt diesen Anteil direkt. CareTip erfasst ihn, bewegt dieses Geld aber nicht."
+      },
+      "distribution": {
+        "full": "{{business}} hat {{amount}} als an Sie bezahlt erfasst",
+        "partial": "{{business}} hat {{amount}} als bezahlt erfasst · {{outstanding}} noch zu verteilen",
+        "yourVenue": "Ihr Betrieb"
       }
     },
     "tipHistory": {
@@ -4412,13 +4425,6 @@
       "title": "Auszahlungen",
       "connectTitle": "Verbinden",
       "connectSubtitle": "Ihr Stripe-Auszahlungskonto und verfügbare Beträge.",
-      "distribution": {
-        "kicker": "Trinkgeldverteilung",
-        "title": "Ihr Betrieb verwaltet die Trinkgeldverteilung.",
-        "titleNamed": "{{name}} verwaltet die Trinkgeldverteilung.",
-        "body": "Ihr Betrieb erhält Mitarbeiter-Trinkgelder und verteilt Ihren Anteil.",
-        "note": "Nicht auf Ihr Stripe-Konto ausgezahlt."
-      },
       "history": {
         "title": "Auszahlungshistorie",
         "subtitle": "Überweisungen an Stripe und Auszahlungen auf Ihr Bankkonto.",
@@ -4620,7 +4626,8 @@
         "refunded": "Erstattungsanpassung",
         "failed": "Freigabe an Stripe fehlgeschlagen",
         "failedHint": "Noch nicht auf Ihr Stripe-Konto überwiesen.",
-        "disputed": "In Streitprüfung"
+        "disputed": "In Streitprüfung",
+        "venue_distributed": "Vom Betrieb verteilt"
       },
       "activityStatus": {
         "held": "Ausstehend",
@@ -4631,7 +4638,18 @@
         "destination_routed": "Abgeschlossen",
         "refunded": "Erstattet",
         "failed": "Noch nicht ausgezahlt",
-        "disputed": "Ausstehend"
+        "disputed": "Ausstehend",
+        "venue_distributed": "Vom Betrieb erfasst"
+      },
+      "businessMode": {
+        "notConnectedBody": "Ihr Betrieb zahlt Ihren Trinkgeldanteil derzeit selbst aus. Die Verbindung mit Stripe ist optional, wird aber benötigt, um Trinkgelder zu erhalten, die CareTip für Sie hält, oder neue Trinkgelder, falls Ihr Betrieb auf Auszahlung über CareTip umstellt.",
+        "incompleteBody": "Schließen Sie Ihre Stripe-Einrichtung ab, damit Trinkgelder, die CareTip für Sie hält, auf Ihr Konto freigegeben werden können.",
+        "readyBody": "Ihr Stripe-Konto ist bereit. Ihr Betrieb zahlt Ihren Trinkgeldanteil derzeit selbst aus."
+      },
+      "heldBuffer": {
+        "title": "{{amount}} von CareTip für Sie gehalten",
+        "bodyConnect": "Verbinden Sie Stripe, um den Betrag zu erhalten. Er wird freigegeben, sobald Stripe die Einrichtung bestätigt.",
+        "bodyFinish": "Schließen Sie Ihre Stripe-Einrichtung ab, um den Betrag zu erhalten. Er wird freigegeben, sobald Stripe bestätigt, dass Ihr Konto Überweisungen empfangen kann."
       }
     },
     "hero": {
@@ -7169,7 +7187,10 @@
       "submitError": "Auszahlung konnte nicht erfasst werden.",
       "directToEmployee": {
         "title": "Keine Verteilungen erfordern eine Aktion",
-        "description": "Mitarbeiter-Trinkgelder werden direkt über Stripe ausgezahlt. Derzeit stehen keine betrieblichen Verteilungen zur Auszahlung aus."
+        "description": "Mitarbeiter-Trinkgelder werden direkt über Stripe ausgezahlt. Derzeit stehen keine betrieblichen Verteilungen zur Auszahlung aus.",
+        "modeTitle": "Neue Trinkgelder werden über CareTip an Mitarbeitende ausgezahlt",
+        "modeBody": "Ihre bisherigen Verteilungen bleiben unten für Ihre Unterlagen verfügbar.",
+        "modeBodyOutstanding": "Trinkgelder, die Ihr Betrieb vor dieser Änderung erhalten hat, müssen noch verteilt werden. Sie stehen unten zusammen mit Ihrem Verteilungsverlauf."
       },
       "unassignedEmployee": "Nicht zugewiesener Mitarbeiter",
       "summary": {
@@ -7177,7 +7198,9 @@
         "allDistributed": "Alle Trinkgelder wurden verteilt.",
         "employeesAwaiting": "Mitarbeiter ausstehend",
         "lastDistribution": "Letzte Verteilung",
-        "noneRecorded": "Keine erfasst"
+        "noneRecorded": "Keine erfasst",
+        "heldByCareTip": "Von CareTip gehalten",
+        "heldByCareTipHint": "Wird freigegeben, sobald Mitarbeitende Stripe verbinden. Nicht in Ihrem Guthaben."
       },
       "sinceLast": {
         "title": "Seit letzter Verteilung",
@@ -7224,11 +7247,15 @@
         "reference": "Referenz",
         "empty": "Noch keine Verteilungen erfasst.",
         "employeeCount_one": "{{count}} Mitarbeiter",
-        "employeeCount_other": "{{count}} Mitarbeiter"
+        "employeeCount_other": "{{count}} Mitarbeiter",
+        "loadMore": "Mehr anzeigen ({{shown}} von {{total}})",
+        "loadingMore": "Wird geladen…"
       },
       "detail": {
         "title": "Verteilungsbatch",
-        "total": "Erfasster Gesamtbetrag: {{amount}}"
+        "total": "Erfasster Gesamtbetrag: {{amount}}",
+        "coversTips_one": "umfasst {{count}} Trinkgeld",
+        "coversTips_other": "umfasst {{count}} Trinkgelder"
       },
       "payoutScheduleNav": {
         "title": "Auszahlungsrhythmus",

@@ -11,6 +11,7 @@ import {
   type EmployeeConnectStatus,
 } from "../../lib/api";
 import { toUserFriendlyMessage } from "../../lib/errorMessages";
+import { formatEur } from "../../lib/formatEur";
 import { logClientError } from "../../lib/clientLog";
 import { performExternalStripeRedirect } from "../../lib/externalStripeRedirect";
 import { useClearStaleStripeRedirectBusy } from "../../hooks/useClearStaleStripeRedirectBusy";
@@ -25,6 +26,7 @@ import type { FinanceStatusTone } from "../finance/FinanceStatusDot";
 import {
   employeeConnectIsBusinessDistribution,
   employeePayoutAccountBodyKey,
+  employeePayoutHeldBufferCents,
   employeePayoutPrimaryCta,
   employeePayoutPrimaryCtaKey,
   employeePayoutShowAccountSection,
@@ -134,6 +136,7 @@ export function EmployeePayoutAccountCard(props: {
     employeeConnectIsBusinessDistribution(data) || props.businessDistribution === true;
   const bodyKey = employeePayoutAccountBodyKey(businessDistribution, phase, state);
   const showPrimaryCta = employeePayoutShowPrimaryStripeCta(businessDistribution, phase);
+  const heldBufferCents = employeePayoutHeldBufferCents(data, phase);
 
   if (!employeePayoutShowAccountSection(businessDistribution, phase)) {
     return null;
@@ -190,6 +193,24 @@ export function EmployeePayoutAccountCard(props: {
               </p>
             ) : bodyKey ? (
               <p className="max-w-xl text-sm leading-snug text-muted-foreground">{t(bodyKey)}</p>
+            ) : null}
+            {heldBufferCents > 0 ? (
+              <div
+                className="max-w-xl rounded-lg border border-border bg-muted/40 px-3 py-2.5"
+                role="note"
+                data-payout-held-buffer
+              >
+                <p className="text-sm font-medium text-foreground">
+                  {t("employee.payouts.heldBuffer.title", { amount: formatEur(heldBufferCents / 100) })}
+                </p>
+                <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+                  {t(
+                    phase === "not_connected"
+                      ? "employee.payouts.heldBuffer.bodyConnect"
+                      : "employee.payouts.heldBuffer.bodyFinish",
+                  )}
+                </p>
+              </div>
             ) : null}
             {props.layout === "rail" && (props.last4 || ready) ? (
               <div className="pt-1">
