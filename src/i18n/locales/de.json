@@ -183,6 +183,7 @@
       "findingRecipient": "Wir bereiten vor, wen Sie tippen möchten…",
       "checkout": "Ihr sicherer Checkout wird vorbereitet…",
       "stripeRedirect": "Weiterleitung zum sicheren Checkout…",
+      "stripeRedirectSlow": "Sichere Verbindung wird hergestellt. Bitte lassen Sie diese Seite geöffnet.",
       "stripeReturn": "Ihr Trinkgeld wird bestätigt…",
       "finishing": "Gleich geschafft…",
       "receipt": "Ihre Quittung wird vorbereitet…",

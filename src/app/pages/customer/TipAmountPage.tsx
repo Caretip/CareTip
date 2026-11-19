@@ -2,6 +2,9 @@ import { useNavigate, useSearchParams } from "react-router";
 import { useCallback, useState, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+
+/** When the checkout loader switches to "still connecting, keep this page open". */
+const CHECKOUT_SLOW_NOTICE_MS = 4000;
 import { useTipFlow } from "../../context/TipFlowContext";
 import { logClientError } from "../../lib/clientLog";
 import { DEV_BYPASS_ENABLED, DEV_MOCK } from "../../lib/devCustomerBypass";
@@ -64,6 +67,16 @@ export function TipAmountPage() {
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [guestEmail, setGuestEmail] = useState("");
   const [processing, setProcessing] = useState(false);
+  // After a few seconds on the checkout loader, reassure the guest that it is still working.
+  const [checkoutSlow, setCheckoutSlow] = useState(false);
+  useEffect(() => {
+    if (!processing) {
+      setCheckoutSlow(false);
+      return;
+    }
+    const id = window.setTimeout(() => setCheckoutSlow(true), CHECKOUT_SLOW_NOTICE_MS);
+    return () => window.clearTimeout(id);
+  }, [processing]);
   const resetTipCheckoutLaunch = useCallback(() => {
     clearGuestTipCheckoutInFlightForStaleRestore();
     setProcessing(false);
@@ -322,6 +335,7 @@ export function TipAmountPage() {
         stepTitle={t("tipFlow.tipAmount.choosePrompt")}
       loading={journeyLoading}
       loadingContext={journeyLoadingContext}
+      loadingMessage={processing && checkoutSlow ? t("common.loading.stripeRedirectSlow") : undefined}
       loadingRegistrationKey="customer-tip-journey"
       mainClassName={cf.mainCompact}
       bottomBar={

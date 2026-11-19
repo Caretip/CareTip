@@ -656,15 +656,22 @@ export async function createTipCheckoutSession(
   }
   const tipForRecord = total;
 
-  await assertEmployeeEligibleForTipPayment(employeeId, businessId);
-  const routing = await resolveTipCheckoutRouting(businessId, employeeId);
-
-  const { locationId: locId, tableId: tblId } = await resolveTipVenueIds(
-    businessId,
-    employeeId,
-    input.locationId,
-    input.tableId,
-  );
+  /*
+   * The three pre-checks are independent reads, so they run together: each is several sequential
+   * database round trips, and running them one after another kept guests on the checkout loader.
+   * Failures surface in the original order (eligibility, then routing, then venue), so the error a
+   * guest sees is the same as before.
+   */
+  const [eligibility, routingResult, venueResult] = await Promise.allSettled([
+    assertEmployeeEligibleForTipPayment(employeeId, businessId),
+    resolveTipCheckoutRouting(businessId, employeeId),
+    resolveTipVenueIds(businessId, employeeId, input.locationId, input.tableId),
+  ]);
+  if (eligibility.status === "rejected") throw eligibility.reason;
+  if (routingResult.status === "rejected") throw routingResult.reason;
+  if (venueResult.status === "rejected") throw venueResult.reason;
+  const routing = routingResult.value;
+  const { locationId: locId, tableId: tblId } = venueResult.value;
 
   assertTipAmountInRangeEur(total);
 

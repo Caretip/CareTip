@@ -183,6 +183,7 @@
       "findingRecipient": "Finding who you'd like to tip…",
       "checkout": "Preparing your secure checkout…",
       "stripeRedirect": "Taking you to secure checkout…",
+      "stripeRedirectSlow": "Still connecting securely. Please keep this page open.",
       "stripeReturn": "Confirming your tip…",
       "finishing": "Almost there…",
       "receipt": "Preparing your receipt…",
