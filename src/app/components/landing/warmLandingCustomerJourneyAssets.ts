@@ -1,7 +1,7 @@
 import akonaHotelImg from "@/assets/landing/customerjourney/akona-hotel.webp";
 import teamselectionImg from "@/assets/landing/customerjourney/teamselection.webp";
 import tipamountImg from "@/assets/landing/customerjourney/tipamount.webp";
-import tipsuccessImg from "@/assets/landing/customerjourney/tipsuccess.webp";
+import tipsuccessImg from "@/assets/landing/customerjourney/tipcomplete.webp";
 
 const JOURNEY_IMAGE_SRCS = [akonaHotelImg, teamselectionImg, tipamountImg, tipsuccessImg] as const;
 

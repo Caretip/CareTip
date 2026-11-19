@@ -2467,7 +2467,12 @@
       "acceptAll": "Accept all",
       "reject": "Reject non-essential",
       "settings": "Cookie settings",
-      "privacyPolicy": "Privacy policy"
+      "privacyPolicy": "Privacy policy",
+      "compact": "We use cookies to keep CareTip running smoothly and, with your consent, to understand how it is used.",
+      "privacyShort": "Privacy",
+      "rejectShort": "Reject",
+      "settingsShort": "Settings",
+      "actionsLabel": "Cookie choices"
     },
     "settings": {
       "title": "Cookie settings",

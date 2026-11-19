@@ -15,4 +15,13 @@ export const cookieConsentClasses = {
   actionsRow: "cookie-consent-panel__actions-row",
   action: "cookie-consent-panel__action",
   actionPrimary: "cookie-consent-panel__action cookie-consent-panel__action--primary",
+  /** Compact consent bar (the first-visit banner). */
+  bar: "cookie-bar",
+  barMark: "cookie-bar__mark",
+  barText: "cookie-bar__text",
+  barPrivacy: "cookie-bar__privacy",
+  barActions: "cookie-bar__actions",
+  barAction: "cookie-bar__action",
+  barActionQuiet: "cookie-bar__action--quiet",
+  barActionAccept: "cookie-bar__action--accept",
 } as const;

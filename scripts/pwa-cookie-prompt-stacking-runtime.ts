@@ -21,18 +21,20 @@ const cookieBanner = read("src/app/components/cookie/CookieConsentBanner.tsx");
 const cookieCss = read("src/styles/caretip-cookie-consent.css");
 
 assert(
-  cookieBanner.includes("actionsRow") || cookieBanner.includes("cookie-consent-panel__actions-row"),
-  "cookie banner must use compact two-row action layout",
+  cookieBanner.includes("cc.bar") && cookieBanner.includes("cc.barActions"),
+  "cookie banner must use the compact consent bar",
 );
 assert(
-  cookieCss.includes("cookie-consent-panel__actions-row") &&
-    cookieCss.includes("grid-template-columns: repeat(2"),
-  "cookie banner CSS must define compact action grid",
+  cookieCss.includes(".cookie-bar {") && cookieCss.includes("min-height: 44px"),
+  "consent bar CSS must define the compact bar with 44px action targets",
 );
 assert(
-  cookieCss.includes(".cookie-consent-panel--banner") &&
-    cookieCss.includes("padding: 1rem 1.125rem"),
-  "desktop banner must not inherit large modal padding at 1024px",
+  cookieBanner.includes("rejectNonEssential") && cookieBanner.includes("acceptAll") && cookieBanner.includes("openSettings"),
+  "consent bar must offer reject, accept and settings in one step",
+);
+assert(
+  cookieCss.includes("html[data-caretip-mobile-drawer-open] .cookie-bar"),
+  "consent bar must step aside while the mobile menu is open",
 );
 
 assert(

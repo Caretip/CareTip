@@ -1253,3 +1253,28 @@ html:not(.dark) .caretip-landing #final-cta .caretip-trust-strip__check,
     padding: 3.25rem 0 3rem !important;
   }
 }
+
+/*
+ * Hero scrim, editorial (2026-11-19). The old overlay washed the whole photo in blue-grey
+ * (28-38% even over the subject, 45% at the bottom), so the person read grey and flat while the
+ * copy had 10-18:1 contrast it did not need. Now a near-neutral dark scrim sits behind the copy and
+ * falls away across the image, leaving the subject almost untouched. Faint top and bottom bands
+ * keep the nav and section edge seated. Narrow screens, where copy spans the full width, keep an
+ * even scrim behind the text and lighten only below the actions.
+ */
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-bg-overlay--dark,
+.caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-bg-overlay {
+  background:
+    radial-gradient(ellipse 62% 105% at 0% 48%, rgba(15, 14, 13, 0.78) 0%, rgba(15, 14, 13, 0.6) 34%, rgba(15, 14, 13, 0.26) 62%, rgba(15, 14, 13, 0) 86%),
+    linear-gradient(90deg, rgba(15, 14, 13, 0.32) 0%, rgba(15, 14, 13, 0.14) 40%, rgba(15, 14, 13, 0) 60%),
+    linear-gradient(180deg, rgba(15, 14, 13, 0.3) 0%, rgba(15, 14, 13, 0) 16%, rgba(15, 14, 13, 0) 82%, rgba(15, 14, 13, 0.2) 100%) !important;
+}
+
+@media (max-width: 1023px) {
+  .caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-bg-overlay--dark,
+  .caretip-landing .caretip-hero-section--fullbleed-dark .caretip-hero-bg-overlay {
+    background:
+      linear-gradient(180deg, rgba(15, 14, 13, 0.54) 0%, rgba(15, 14, 13, 0.5) 42%, rgba(15, 14, 13, 0.44) 72%, rgba(15, 14, 13, 0.1) 100%),
+      linear-gradient(90deg, rgba(15, 14, 13, 0.16) 0%, rgba(15, 14, 13, 0) 70%) !important;
+  }
+}

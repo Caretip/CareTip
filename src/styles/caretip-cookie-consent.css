@@ -365,3 +365,211 @@ html[data-caretip-mobile-drawer-open] .cookie-consent-panel--banner,
 html[data-caretip-mobile-drawer-open] .cookie-consent-backdrop--passive {
   display: none;
 }
+
+/* ==========================================================================
+   Compact consent bar (2026-11-19) — replaces the banner card.
+   Desktop: one floating pill along the bottom. Phones: a short card, sentence over a
+   row of three text actions. Text actions, not buttons. Reject and Accept share size and
+   weight; Accept is marked by a brand-orange underline (orange text on white would be ~2:1).
+   Every action keeps a 44px hit area.
+   ========================================================================== */
+.cookie-bar {
+  position: fixed;
+  z-index: 9990;
+  left: max(16px, env(safe-area-inset-left, 0px));
+  right: max(16px, env(safe-area-inset-right, 0px));
+  bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  margin-inline: auto;
+  width: fit-content;
+  max-width: min(62rem, calc(100vw - 32px));
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.375rem 0.5rem 0.375rem 0.625rem;
+  border-radius: 999px;
+  border: 1px solid rgb(17 17 17 / 0.08);
+  background: rgb(255 255 255 / 0.96);
+  -webkit-backdrop-filter: saturate(1.4) blur(14px);
+  backdrop-filter: saturate(1.4) blur(14px);
+  box-shadow: 0 14px 40px -12px rgb(17 17 17 / 0.28), 0 2px 6px rgb(17 17 17 / 0.06);
+  color: hsl(var(--foreground));
+  outline: none;
+}
+
+.cookie-bar[data-state="open"] {
+  animation: cookie-consent-panel-in-banner 220ms ease-out both;
+}
+
+.cookie-bar__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: rgb(235 153 44 / 0.14);
+  color: #eb992c;
+}
+
+.cookie-bar__text {
+  margin: 0;
+  min-width: 0;
+  max-width: 36rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: hsl(var(--foreground) / 0.78);
+}
+
+.cookie-bar__privacy {
+  color: hsl(var(--foreground));
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: hsl(var(--foreground) / 0.3);
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+
+.cookie-bar__privacy:hover {
+  text-decoration-color: currentColor;
+}
+
+.cookie-bar__actions {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 0.125rem;
+  padding-left: 0.625rem;
+  border-left: 1px solid rgb(17 17 17 / 0.1);
+}
+
+.cookie-bar__action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 0.75rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: hsl(var(--foreground));
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-decoration-color: transparent;
+  text-underline-offset: 6px;
+  transition: text-decoration-color 160ms ease, color 160ms ease, background-color 160ms ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.cookie-bar__action:hover {
+  text-decoration-color: hsl(var(--foreground) / 0.35);
+}
+
+.cookie-bar__action--quiet {
+  font-weight: 600;
+  color: hsl(var(--foreground) / 0.62);
+}
+
+.cookie-bar__action--quiet:hover {
+  color: hsl(var(--foreground));
+}
+
+.cookie-bar__action--accept,
+.cookie-bar__action--accept:hover {
+  text-decoration-color: #eb992c;
+}
+
+.cookie-bar__action--accept:hover {
+  text-underline-offset: 4px;
+}
+
+.cookie-bar__action:active {
+  background: rgb(17 17 17 / 0.05);
+}
+
+.cookie-bar__action:focus-visible,
+.cookie-bar__privacy:focus-visible {
+  outline: 2px solid #eb992c;
+  outline-offset: 2px;
+}
+
+.dark .cookie-bar {
+  border-color: rgb(255 255 255 / 0.08);
+  background: hsl(var(--card) / 0.96);
+  box-shadow: 0 14px 40px -12px rgb(0 0 0 / 0.6), 0 0 0 1px rgb(255 255 255 / 0.04);
+}
+
+.dark .cookie-bar__mark {
+  color: #eb992c;
+  background: rgb(235 153 44 / 0.16);
+}
+
+.dark .cookie-bar__actions {
+  border-left-color: rgb(255 255 255 / 0.1);
+}
+
+.dark .cookie-bar__action--accept {
+  color: #eb992c;
+}
+
+.dark .cookie-bar__action:active {
+  background: rgb(255 255 255 / 0.06);
+}
+
+/* Phones and narrow tablets: a short card, sentence on top, actions in one row. */
+@media (max-width: 767px) {
+  .cookie-bar {
+    left: 8px;
+    right: 8px;
+    bottom: max(8px, env(safe-area-inset-bottom, 0px));
+    width: auto;
+    max-width: none;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 0.25rem 0.625rem;
+    padding: 0.75rem 0.5rem 0.25rem 0.75rem;
+    border-radius: 18px;
+  }
+
+  .cookie-bar__mark {
+    width: 1.75rem;
+    height: 1.75rem;
+    margin-top: 0.0625rem;
+  }
+
+  .cookie-bar__text {
+    max-width: none;
+    padding-right: 0.25rem;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+
+  .cookie-bar__actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .cookie-bar__action {
+    padding: 0 0.625rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cookie-bar[data-state="open"] {
+    animation: none;
+  }
+}
+
+/* The open mobile menu is modal: the bar steps aside and returns on close. */
+html[data-caretip-mobile-drawer-open] .cookie-bar {
+  display: none;
+}

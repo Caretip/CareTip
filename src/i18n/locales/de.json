@@ -2468,7 +2468,12 @@
       "acceptAll": "Alle akzeptieren",
       "reject": "Nicht notwendige ablehnen",
       "settings": "Cookie-Einstellungen",
-      "privacyPolicy": "Datenschutzerklärung"
+      "privacyPolicy": "Datenschutzerklärung",
+      "compact": "Wir nutzen Cookies, damit CareTip zuverlässig läuft, und mit Ihrer Einwilligung, um die Nutzung zu verstehen.",
+      "privacyShort": "Datenschutz",
+      "rejectShort": "Ablehnen",
+      "settingsShort": "Einstellungen",
+      "actionsLabel": "Cookie-Auswahl"
     },
     "settings": {
       "title": "Cookie-Einstellungen",

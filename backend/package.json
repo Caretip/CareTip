@@ -321,6 +321,7 @@
     "stripe": "^17.0.0"
   },
   "overrides": {
+    "effect": "3.22.5",
     "@fastify/busboy": "3.2.2",
     "proxy-addr": "2.0.8",
     "source-map-js": "1.2.2",

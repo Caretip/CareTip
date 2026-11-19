@@ -183,7 +183,6 @@ function IndustryPhotoCard({
           className="caretip-industry-photo-card__cta no-underline"
           aria-busy={pending || undefined}
         >
-          <span className="caretip-industry-photo-card__cta-rule" aria-hidden />
           <span className="caretip-industry-photo-card__cta-text">{ctaLabel}</span>
           <span className="caretip-industry-photo-card__cta-icon" aria-hidden>
             {pending ? (

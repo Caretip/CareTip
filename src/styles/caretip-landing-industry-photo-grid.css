@@ -241,13 +241,13 @@ html.caretip-document-hidden .caretip-landing .caretip-industry-photo-card--anim
   background: linear-gradient(transparent, rgba(20, 27, 30, 0.86));
 }
 
-/* "Learn more" (2026-11-19): an editorial link, not a button. A short brand-orange rule leads into
-   white text and an orange arrow; on hover/focus the rule draws out and the arrow slides on.
+/* "Learn more" (2026-11-19): an editorial link, not a button. White text underlined in brand orange,
+   paired with an orange arrow; on hover/focus the underline tightens and the arrow slides on.
    No fill or pill. 44px tall hit area for touch; spinner while the page loads. */
 .caretip-landing .caretip-industry-photo-card .caretip-industry-photo-card__cta {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   margin-top: 6px;
   min-height: 44px;
   padding: 0;
@@ -267,13 +267,12 @@ html.caretip-document-hidden .caretip-landing .caretip-industry-photo-card--anim
   touch-action: manipulation;
 }
 
-.caretip-landing .caretip-industry-photo-card__cta-rule {
-  display: block;
-  width: 22px;
-  height: 2px;
-  border-radius: 2px;
-  background: #eb992c;
-  transition: width 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+.caretip-landing .caretip-industry-photo-card__cta-text {
+  text-decoration-line: underline;
+  text-decoration-color: #eb992c;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 7px;
+  transition: text-underline-offset 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .caretip-landing .caretip-industry-photo-card__cta-icon {
@@ -292,9 +291,9 @@ html.caretip-document-hidden .caretip-landing .caretip-industry-photo-card--anim
   transform: none;
 }
 
-.caretip-landing .caretip-industry-photo-card:hover .caretip-industry-photo-card__cta-rule,
-.caretip-landing .caretip-industry-photo-card__cta:focus-visible .caretip-industry-photo-card__cta-rule {
-  width: 44px;
+.caretip-landing .caretip-industry-photo-card:hover .caretip-industry-photo-card__cta-text,
+.caretip-landing .caretip-industry-photo-card__cta:focus-visible .caretip-industry-photo-card__cta-text {
+  text-underline-offset: 4px;
 }
 
 .caretip-landing .caretip-industry-photo-card:hover .caretip-industry-photo-card__cta-icon,
@@ -310,10 +309,6 @@ html.caretip-document-hidden .caretip-landing .caretip-industry-photo-card--anim
 
 .caretip-landing .caretip-industry-photo-card .caretip-industry-photo-card__cta:active .caretip-industry-photo-card__cta-text {
   opacity: 0.8;
-}
-
-.caretip-landing .caretip-industry-photo-card--pending .caretip-industry-photo-card__cta-rule {
-  width: 44px;
 }
 
 .caretip-industry-photo-card__cta-spin {
@@ -334,7 +329,7 @@ html.caretip-document-hidden .caretip-landing .caretip-industry-photo-card--anim
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .caretip-landing .caretip-industry-photo-card__cta-rule,
+  .caretip-landing .caretip-industry-photo-card__cta-text,
   .caretip-landing .caretip-industry-photo-card__cta-icon {
     transition: none;
   }
