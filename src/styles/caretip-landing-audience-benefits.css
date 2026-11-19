@@ -573,3 +573,153 @@ html:lang(de)
     padding-bottom: 9.058%;
   }
 }
+
+/* ------------------------------------------------------------------------------------------
+   Matched premium frames (2026-11-19). Both visuals share one 4:5 portrait frame at every
+   width, so the owner dashboard and the employee payout phone are always the same height.
+   The phone photo is shown whole (hands included); the dashboard sits on a padded panel.
+   ------------------------------------------------------------------------------------------ */
+.caretip-landing .caretip-audience-benefits__visual.caretip-audience-benefits__visual--matched,
+.caretip-landing .caretip-audience-benefits__visual--dashboard.caretip-audience-benefits__visual--matched,
+.caretip-landing .caretip-audience-benefits__visual--phone.caretip-audience-benefits__visual--matched {
+  aspect-ratio: 4 / 5;
+  width: 100%;
+  height: auto;
+  max-height: none;
+  min-height: 0;
+  margin-top: 0;
+  overflow: hidden;
+  position: relative;
+  border-radius: 1.25rem;
+  border: 1px solid hsl(var(--border) / 0.8);
+  box-shadow:
+    0 1px 2px hsl(var(--foreground) / 0.04),
+    0 24px 48px -28px hsl(var(--foreground) / 0.22);
+  align-self: stretch;
+}
+
+/* Phone: full-bleed photo, framed so the phone and both hands stay in view. The older desktop
+   offset that lined the photo up with the tablet mockup does not apply to the matched frames. */
+.caretip-landing .caretip-audience-benefits__visual--phone.caretip-audience-benefits__visual--matched {
+  padding: 0;
+}
+.caretip-landing .caretip-audience-benefits__visual--phone .caretip-audience-benefits__visual-card {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  width: 100%;
+  height: 100%;
+}
+.caretip-landing .caretip-audience-benefits__visual--phone .caretip-audience-benefits__visual-card picture,
+.caretip-landing .caretip-audience-benefits__visual--phone .caretip-audience-benefits__visual-card img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: 50% 30%;
+}
+
+/* Dashboard: centred on a warm neutral panel with even breathing room. */
+.caretip-landing .caretip-audience-benefits__visual--dashboard.caretip-audience-benefits__visual--matched {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1rem, 4.5%, 2rem);
+  background:
+    radial-gradient(120% 80% at 85% 0%, rgba(235, 153, 44, 0.12), rgba(235, 153, 44, 0) 60%),
+    linear-gradient(180deg, hsl(36 33% 97%), hsl(30 14% 94%));
+}
+.caretip-landing .caretip-audience-benefits__visual--dashboard .caretip-audience-benefits__owner-shot {
+  width: 100%;
+  max-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.caretip-landing .caretip-audience-benefits__visual--dashboard .caretip-audience-benefits__owner-shot img {
+  width: auto;
+  max-width: 100%;
+  max-height: 100%;
+  height: auto;
+  border-radius: 0.875rem;
+  border: 1px solid hsl(var(--border) / 0.7);
+  box-shadow: 0 18px 40px -24px hsl(var(--foreground) / 0.35);
+  background: hsl(var(--card));
+}
+
+html.dark .caretip-landing .caretip-audience-benefits__visual--dashboard.caretip-audience-benefits__visual--matched {
+  background:
+    radial-gradient(120% 80% at 85% 0%, rgba(235, 153, 44, 0.14), rgba(235, 153, 44, 0) 60%),
+    linear-gradient(180deg, hsl(var(--card)), hsl(var(--muted)));
+}
+
+/* Desktop: both columns align their frames at the top; copy starts on one line. */
+@media (min-width: 1024px) {
+  .caretip-landing .caretip-audience-benefits__grid > .caretip-audience-benefits__column {
+    align-content: start;
+  }
+}
+
+/* Small phones: keep the frames generous but never taller than the viewport. */
+@media (max-width: 639px) {
+  .caretip-landing .caretip-audience-benefits__visual.caretip-audience-benefits__visual--matched {
+    max-height: 82svh;
+  }
+}
+
+/* Dashboard stage: screenshot plus two quiet stat chips, filling the 4:5 panel intentionally. */
+.caretip-landing .caretip-audience-benefits__owner-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: clamp(0.75rem, 2.5%, 1.25rem);
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+.caretip-landing .caretip-audience-benefits__visual--dashboard .caretip-audience-benefits__owner-stage .caretip-audience-benefits__owner-shot {
+  flex: 0 1 auto;
+  min-height: 0;
+}
+.caretip-landing .caretip-audience-benefits__owner-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(0.5rem, 2%, 0.875rem);
+}
+.caretip-landing .caretip-audience-benefits__owner-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: clamp(0.65rem, 2.4%, 1rem) clamp(0.75rem, 2.8%, 1.125rem);
+  border-radius: 0.875rem;
+  background: hsl(var(--card) / 0.92);
+  border: 1px solid hsl(var(--border) / 0.7);
+  box-shadow: 0 10px 24px -20px hsl(var(--foreground) / 0.35);
+  text-align: left;
+}
+.caretip-landing .caretip-audience-benefits__owner-stat-kicker {
+  font-family: var(--font-hero-display, inherit);
+  font-weight: 800;
+  font-size: clamp(1.05rem, 2.1vw, 1.375rem);
+  letter-spacing: -0.02em;
+  color: hsl(var(--foreground));
+  line-height: 1.1;
+}
+.caretip-landing .caretip-audience-benefits__owner-stat-kicker::before {
+  content: "";
+  display: inline-block;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: #eb992c;
+  margin-right: 0.45rem;
+  vertical-align: 0.18em;
+}
+.caretip-landing .caretip-audience-benefits__owner-stat-value {
+  font-size: clamp(0.75rem, 1.1vw, 0.8125rem);
+  color: hsl(var(--muted-foreground));
+  line-height: 1.35;
+}

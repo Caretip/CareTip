@@ -1886,13 +1886,13 @@
       "markAllRead": "Mark all read",
       "empty": "You're all caught up",
       "emptyHint": "No new notifications right now.",
-      "unreadCountLine": "{{count}} unread notification",
-      "unreadCountLine_plural": "{{count}} unread notifications",
+      "unreadCountLine_one": "{{count}} unread notification",
+      "unreadCountLine_other": "{{count}} unread notifications",
       "viewAll": "View all notifications",
       "close": "Close",
       "read": "Read",
-      "unreadSummary": "You have {{count}} unread notification",
-      "unreadSummary_plural": "You have {{count}} unread notifications",
+      "unreadSummary_one": "You have {{count}} unread notification",
+      "unreadSummary_other": "You have {{count}} unread notifications",
       "justNow": "Just now",
       "minutesAgo": "{{count}}m ago",
       "hoursAgo": "{{count}}h ago",
@@ -1942,7 +1942,7 @@
     },
     "categories": {
       "tips": "Tips",
-      "payouts": "Tip records",
+      "payouts": "Payouts",
       "team": "Team",
       "feedback": "Feedback",
       "goals": "Goals",
@@ -1981,7 +1981,7 @@
         "body": "{{amount}} was added to your tip history. This is not a Stripe bank payout."
       },
       "login_security": {
-        "title": "New sign in",
+        "title": "New sign-in",
         "body": "Your CareTip account was used to sign in. If this wasn't you, change your password."
       },
       "employee_invited_manager": {
@@ -2029,7 +2029,7 @@
       },
       "support_status_resolved": {
         "title": "Support request resolved",
-        "body": "Your support request has been marked resolved."
+        "body": "Your support request has been marked as resolved."
       },
       "support_status_closed": {
         "title": "Support ticket closed",
@@ -2037,7 +2037,7 @@
       },
       "support_status_updated": {
         "title": "Ticket status updated",
-        "body": "Ticket status updated to {{status}}."
+        "body": "Your ticket status is now: {{status}}."
       },
       "support_inbox_title": {
         "title": "[TICKET] [{{status}}] {{ticketNumber}}: {{subject}}"
@@ -7475,6 +7475,7 @@
           "paid": "Paid",
           "failed": "Failed",
           "canceled": "Canceled",
+          "returned": "Returned by bank",
           "unknown": "Unknown"
         },
         "reconciliation": {

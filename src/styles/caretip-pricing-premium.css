@@ -932,6 +932,11 @@ html.dark .caretip-pricing-billing-toggle[data-cycle="yearly"] .caretip-pricing-
   padding-inline: 0.5rem;
 }
 
+/* Monthly matches the two-line Yearly option instead of sitting 13px shorter beside it (also lifts it past 44px for touch). */
+.caretip-pricing-billing-toggle__option {
+  align-self: stretch;
+}
+
 html.dark .caretip-pricing-billing-toggle__option {
   color: rgb(163 163 163);
 }

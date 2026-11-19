@@ -98,7 +98,7 @@ function isLocalhostDatabaseAllowed(): boolean {
   return (
     process.env.CI === "true" ||
     process.env.DATABASE_ALLOW_LOCALHOST === "true" ||
-    process.env.NODE_ENV === "test"
+    isTestProcess()
   );
 }
 
@@ -114,8 +114,53 @@ function applyPoolParams(url: string, connectionLimit: number): string {
  * Normalize Supabase pooler URLs for Prisma runtime.
  * Rewrites session pooler (5432) → transaction pooler (6543) unless DATABASE_USE_SESSION_POOLER=true.
  */
+/** A test process: Node test mode, the isolation wrapper, or any `npm run test:*` script. */
+export function isTestProcess(env: NodeJS.ProcessEnv = process.env): boolean {
+  return (
+    env.NODE_ENV === "test" ||
+    env.CARETIP_TEST_ISOLATION === "1" ||
+    (env.npm_lifecycle_event ?? "").startsWith("test")
+  );
+}
+
+/**
+ * A test may use a remote database only when the operator names it exactly:
+ * CARETIP_ALLOW_REMOTE_TEST_DATABASE must equal the hostname of DATABASE_URL (a plain "1" or
+ * "true" is not accepted), and CI never qualifies. Naming the host is the explicit intent; a
+ * stray or inherited variable for a different database does nothing.
+ */
+export function remoteTestDatabaseAcknowledged(rawUrl: string, env: NodeJS.ProcessEnv = process.env): boolean {
+  if (env.CI === "true") return false;
+  const ack = env.CARETIP_ALLOW_REMOTE_TEST_DATABASE?.trim().toLowerCase() ?? "";
+  if (!ack || ack === "1" || ack === "true" || ack === "yes") return false;
+  let host = "";
+  try {
+    host = new URL(rawUrl).hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+  return host.length > 0 && ack === host;
+}
+
+/** Nothing listens here: queries fail with "connection refused" instead of reaching a real database. */
+export const TEST_GUARD_DATABASE_URL = "postgresql://test-guard@127.0.0.1:9/refused_non_local_database";
+let warnedTestGuard = false;
+
 export function getDatabaseUrlForPrisma(): string {
   const raw = process.env.DATABASE_URL?.trim();
+  // Test scripts load the real .env files. A test may only use a loopback (disposable) database,
+  // unless CARETIP_ALLOW_REMOTE_TEST_DATABASE=1 names a dedicated remote test database. The URL is
+  // never printed.
+  if (raw && isTestProcess() && !isLocalDatabaseUrl(raw.toLowerCase()) && !remoteTestDatabaseAcknowledged(raw)) {
+    if (!warnedTestGuard) {
+      warnedTestGuard = true;
+      console.warn(
+        "[database] test run with a non-local DATABASE_URL: database access is blocked. " +
+          "Use scripts/safe-test.mjs with CARETIP_ISOLATED_POSTGRES_URL for database tests.",
+      );
+    }
+    return TEST_GUARD_DATABASE_URL;
+  }
   if (!raw) {
     throw new Error(
       "DATABASE_URL is required. Set it in .env to your Supabase pooler URL (see backend/.env.example).",

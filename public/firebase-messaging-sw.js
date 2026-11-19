@@ -29,7 +29,14 @@ messaging.onBackgroundMessage(function (payload) {
 self.addEventListener("notificationclick", function (event) {
   event.notification.close();
   var data = event.notification.data || {};
-  var target = data.url || "/";
+  // Only open pages on this CareTip origin; anything else falls back to the app home.
+  var target = "/";
+  try {
+    var parsed = new URL(data.url || "/", self.location.origin);
+    if (parsed.origin === self.location.origin) target = parsed.pathname + parsed.search + parsed.hash;
+  } catch (e) {
+    target = "/";
+  }
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {
       for (var i = 0; i < list.length; i++) {

@@ -441,6 +441,7 @@ model User {
   settings                UserSettings?
   pushDeviceTokens        PushDeviceToken[]
   notifications           Notification[]
+  notificationEmailDeliveries NotificationEmailDelivery[]
   setupNotificationStates SetupNotificationState[]
   announcementsCreated    Announcement[]           @relation("AnnouncementCreatedBy")
   supportTicketsCreated   SupportTicket[]          @relation("SupportTicketCreatedBy")
@@ -2505,4 +2506,80 @@ model StripeCustomerCreation {
   updatedAt        DateTime  @updatedAt @map("updated_at")
 
   @@map("stripe_customer_creations")
+}
+
+/// Durable outbox for notification emails. Rows hold the fully rendered message so every
+/// retry is byte-identical and the Resend idempotency key deduplicates repeats.
+enum NotificationEmailDeliveryStatus {
+  pending
+  processing
+  retry_scheduled
+  delivered
+  failed
+  cancelled
+}
+
+model NotificationEmailDelivery {
+  id                String                          @id @default(cuid())
+  /// Stable per logical email; sent as the Resend Idempotency-Key.
+  idempotencyKey    String                          @unique @map("idempotency_key") @db.VarChar(191)
+  userId            String                          @map("user_id")
+  businessId        String?                         @map("business_id")
+  notificationId    String?                         @map("notification_id")
+  kind              String                          @db.VarChar(64)
+  toEmail           String                          @map("to_email") @db.VarChar(320)
+  subject           String                          @db.VarChar(512)
+  html              String                          @db.Text
+  text              String                          @db.Text
+  status            NotificationEmailDeliveryStatus @default(pending)
+  attemptCount      Int                             @default(0) @map("attempt_count")
+  maxAttempts       Int                             @default(8) @map("max_attempts")
+  nextAttemptAt     DateTime                        @default(now()) @map("next_attempt_at")
+  lastAttemptAt     DateTime?                       @map("last_attempt_at")
+  leaseOwner        String?                         @map("lease_owner") @db.VarChar(64)
+  leaseUntil        DateTime?                       @map("lease_until")
+  lastErrorKind     String?                         @map("last_error_kind") @db.VarChar(32)
+  lastHttpStatus    Int?                            @map("last_http_status")
+  providerMessageId String?                         @map("provider_message_id") @db.VarChar(128)
+  deliveredAt       DateTime?                       @map("delivered_at")
+  failedAt          DateTime?                       @map("failed_at")
+  createdAt         DateTime                        @default(now()) @map("created_at")
+  updatedAt         DateTime                        @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, nextAttemptAt])
+  @@index([status, leaseUntil])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([createdAt])
+  @@map("notification_email_deliveries")
+}
+
+/// A payout Stripe reported as paid and the bank later returned (payout.failed after payout.paid).
+/// Append-only audit record: the original payout row keeps its paid status and paid timestamp.
+/// One row per Stripe payout. No foreign keys, so the financial record outlives deleted people.
+model StripePayoutReturn {
+  id                          String   @id @default(cuid())
+  /// "employee" (EmployeeStripePayout) or "business" (StripeConnectPayout)
+  payoutKind                  String   @map("payout_kind") @db.VarChar(16)
+  payoutRowId                 String   @map("payout_row_id")
+  stripePayoutId              String   @unique @map("stripe_payout_id") @db.VarChar(128)
+  stripeAccountId             String   @map("stripe_account_id") @db.VarChar(128)
+  businessId                  String   @map("business_id")
+  employeeId                  String?  @map("employee_id")
+  amountCents                 Int      @map("amount_cents")
+  currency                    String   @db.VarChar(8)
+  originalPaidAt              DateTime? @map("original_paid_at")
+  returnedAt                  DateTime @map("returned_at")
+  failureCode                 String?  @map("failure_code") @db.VarChar(64)
+  failureMessage              String?  @map("failure_message") @db.VarChar(255)
+  failureBalanceTransactionId String?  @map("failure_balance_transaction_id") @db.VarChar(128)
+  stripeEventId               String?  @map("stripe_event_id") @db.VarChar(128)
+  detectedVia                 String   @map("detected_via") @db.VarChar(32)
+  createdAt                   DateTime @default(now()) @map("created_at")
+
+  @@index([businessId, returnedAt(sort: Desc)])
+  @@index([employeeId, returnedAt(sort: Desc)])
+  @@index([payoutKind, payoutRowId])
+  @@map("stripe_payout_returns")
 }

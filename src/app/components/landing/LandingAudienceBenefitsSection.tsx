@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, type ImgHTMLAttributes, type ReactNode } from "react";
+import { useEffect, useMemo, type ImgHTMLAttributes, type ReactNode } from "react";
 import { useTranslation, Trans } from "react-i18next";
 import { LayoutDashboard, Smartphone } from "lucide-react";
 import { LandingBenefitCheckMark } from "@/components/landing/LandingCheckBadge";
@@ -15,10 +15,11 @@ import ownerVisualDeWebp from "../../../../images/owner-dashboard-de.webp";
 import ownerVisualDeAvif from "../../../../images/owner-dashboard-de.avif";
 import ownerVisualEnWebp from "../../../../images/owner-dashboard-en.webp";
 import ownerVisualEnAvif from "../../../../images/owner-dashboard-en.avif";
-import teamsVisualDeWebp from "../../../../images/emp.webp";
-import teamsVisualDeAvif from "../../../../images/emp.avif";
-import teamsVisualEnWebp from "../../../../images/new-imo.webp";
-import teamsVisualEnAvif from "../../../../images/new-imo.avif";
+// Real single-shot photo (images/benefits-phone-photo.*) with the CareTip payout screen fitted to its display.
+import teamsVisualDeWebp from "../../../../images/benefits-phone-payout-de.webp";
+import teamsVisualDeAvif from "../../../../images/benefits-phone-payout-de.avif";
+import teamsVisualEnWebp from "../../../../images/benefits-phone-payout-en.webp";
+import teamsVisualEnAvif from "../../../../images/benefits-phone-payout-en.avif";
 
 type BenefitPoint = { title: string; body: string };
 
@@ -74,42 +75,10 @@ export function LandingAudienceBenefitsSection() {
   const { t, i18n } = useTranslation();
   const prefix = "landing.audienceBenefits";
   const subtitle = t(`${prefix}.subtitle`);
-  const dashboardVisualRef = useRef<HTMLDivElement>(null);
-  const phoneVisualRef = useRef<HTMLDivElement>(null);
-
+  // Both visuals share one 4:5 frame in CSS, so their heights always match without measuring.
   useEffect(() => {
     const isDe = i18n.language?.toLowerCase().startsWith("de");
     warmTeamsPhoneImage(isDe ? teamsVisualDeAvif : teamsVisualEnAvif, "high");
-
-    const dashboard = dashboardVisualRef.current;
-    const phone = phoneVisualRef.current;
-    if (!dashboard || !phone) return;
-
-    const mq = window.matchMedia("(min-width: 1024px)");
-
-    const syncPhoneVisualHeight = () => {
-      if (!mq.matches) {
-        phone.style.height = "";
-        return;
-      }
-      const height = Math.round(dashboard.getBoundingClientRect().height);
-      if (height > 0) {
-        phone.style.height = `${height}px`;
-      }
-    };
-
-    const observer = new ResizeObserver(syncPhoneVisualHeight);
-    observer.observe(dashboard);
-    mq.addEventListener("change", syncPhoneVisualHeight);
-    window.addEventListener("resize", syncPhoneVisualHeight);
-    syncPhoneVisualHeight();
-
-    return () => {
-      observer.disconnect();
-      mq.removeEventListener("change", syncPhoneVisualHeight);
-      window.removeEventListener("resize", syncPhoneVisualHeight);
-      phone.style.height = "";
-    };
   }, [i18n.language]);
 
   const cards = useMemo((): AudienceCardConfig[] => {
@@ -140,6 +109,7 @@ export function LandingAudienceBenefitsSection() {
         photoClass: "caretip-audience-benefits__visual--dashboard",
         // The real CareTip dashboard (team activity, leaderboard, goals) with a live tip and a guest review.
         cardVisual: (
+          <div className="caretip-audience-benefits__owner-stage">
           <picture className="caretip-audience-benefits__owner-shot block w-full">
             <source type="image/avif" srcSet={ownerVisualAvif} />
             <img
@@ -154,6 +124,17 @@ export function LandingAudienceBenefitsSection() {
               draggable={false}
             />
           </picture>
+          <div className="caretip-audience-benefits__owner-stats" aria-hidden>
+            <div className="caretip-audience-benefits__owner-stat">
+              <span className="caretip-audience-benefits__owner-stat-kicker">{t(`${prefix}.calloutVolumeKicker`)}</span>
+              <span className="caretip-audience-benefits__owner-stat-value">{t(`${prefix}.calloutVolumeValue`)}</span>
+            </div>
+            <div className="caretip-audience-benefits__owner-stat">
+              <span className="caretip-audience-benefits__owner-stat-kicker">{t(`${prefix}.calloutRatingKicker`)}</span>
+              <span className="caretip-audience-benefits__owner-stat-value">{t(`${prefix}.calloutRatingValue`)}</span>
+            </div>
+          </div>
+          </div>
         ),
       },
       {
@@ -229,7 +210,7 @@ export function LandingAudienceBenefitsSection() {
             >
               {card.cardVisual ? (
                 <div
-                  ref={dashboardVisualRef}
+
                   className={cn(
                     "caretip-audience-benefits__visual",
                     "caretip-audience-benefits__visual--matched",
@@ -241,7 +222,7 @@ export function LandingAudienceBenefitsSection() {
                 </div>
               ) : card.image ? (
                 <div
-                  ref={phoneVisualRef}
+
                   className={cn(
                     "caretip-audience-benefits__visual",
                     "caretip-audience-benefits__visual--matched",

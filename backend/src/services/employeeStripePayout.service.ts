@@ -7,11 +7,13 @@ import { prisma } from "../prisma.js";
 import { runSerializedByKey } from "../utils/serializedByKey.js";
 import { isPrismaUniqueViolation } from "../utils/prismaErrors.js";
 import {
+  detectPayoutReturn,
   parsePayoutObject,
   retryPayoutWriteOnConflict,
   shouldApplyPayoutEvent,
   type HandleConnectPayoutResult,
 } from "./stripeConnectPayout.service.js";
+import { recordPayoutReturn } from "./payoutReturns.service.js";
 import type Stripe from "stripe";
 
 function accountSuffix(accountId: string): string {
@@ -57,13 +59,45 @@ export async function persistEmployeeConnectPayout(args: {
         incomingEventCreated: eventCreated,
       });
       if (!decision.apply) {
+        // paid then failed (either delivery order) is a bank return: the row keeps its paid
+        // history and the return is recorded separately.
+        const returned = detectPayoutReturn({
+          storedStatus: existing.status,
+          storedEventCreated: existing.lastStripeEventCreated,
+          storedPaidAt: existing.paidAt,
+          incomingStatus: parsed.status,
+          incomingEventCreated: eventCreated,
+        });
+        let returnRecorded = false;
+        if (returned) {
+          const failed = parsed.status === StripeConnectPayoutStatus.failed ? parsed : null;
+          const rec = await recordPayoutReturn({
+            payoutKind: "employee",
+            payoutRowId: existing.id,
+            stripePayoutId: existing.stripePayoutId,
+            stripeAccountId: existing.stripeAccountId,
+            businessId: existing.businessId,
+            employeeId,
+            amountCents: existing.amountCents,
+            currency: existing.currency,
+            originalPaidAt: returned.originalPaidAt,
+            returnedAt: failed ? new Date(Math.max(eventCreated, 1) * 1000) : (existing.failedAt ?? now),
+            failureCode: failed?.failureCode ?? existing.failureCode,
+            failureMessage: failed?.failureMessage ?? existing.failureMessage,
+            failureBalanceTransactionId: failed?.failureBalanceTransactionId ?? null,
+            stripeEventId: eventId,
+            detectedVia: eventType === "payout.api_sync" ? "api_sync" : "webhook",
+          });
+          returnRecorded = rec.created;
+        }
         return {
           matched: true,
           skippedStale: true,
           payoutRowId: existing.id,
           businessId: existing.businessId,
           employeeId,
-          reason: decision.reason,
+          reason: returned ? "payout_returned" : decision.reason,
+          ...(returnRecorded ? { returnRecorded: true } : {}),
         };
       }
 
@@ -170,9 +204,25 @@ export async function persistEmployeeConnectPayout(args: {
     };
   };
 
-  return runSerializedByKey(`employee-connect-payout:${parsed.stripePayoutId}`, () =>
+  const result = await runSerializedByKey(`employee-connect-payout:${parsed.stripePayoutId}`, () =>
     retryPayoutWriteOnConflict(persistOnce, parsed.stripePayoutId),
   );
+  // Notify only after a write was applied (never for stale or rejected events). Deduplicated
+  // per payout and status, so webhook retries and sync reruns cannot notify twice.
+  if (result.matched && result.payoutRowId && (!result.skippedStale || result.returnRecorded)) {
+    const rowId = result.payoutRowId;
+    const returned = result.returnRecorded === true;
+    void import("./notifications/payoutNotifications.service.js")
+      .then(({ notifyEmployeePayoutChange, notifyEmployeePayoutReturn }) =>
+        returned ? notifyEmployeePayoutReturn(rowId) : notifyEmployeePayoutChange(rowId),
+      )
+      .catch((err) => {
+        console.error("[stripe.employeePayout] notification failed; the sweep will retry", {
+          reason: err instanceof Error ? err.message.slice(0, 200) : "unknown",
+        });
+      });
+  }
+  return result;
 }
 
 export async function persistEmployeePayoutFromStripeObject(args: {

@@ -4,6 +4,7 @@ import {
   emailDocClose,
   emailDocOpen,
   emailFrameClose,
+  emailFooterBlock,
   emailFrameOpen,
   emailHeadline,
   emailHairline,
@@ -11,6 +12,12 @@ import {
   emailPreheader,
 } from "./emailLayout.js";
 import type { EmailLocale } from "./i18nEmail.js";
+import { getCareTipSupportEmail } from "../config/emailEnv.js";
+
+const SECURITY_FOOTER: Record<EmailLocale, string> = {
+  en: "This is a security notice about your CareTip account.",
+  de: "Dies ist ein Sicherheitshinweis zu Ihrem CareTip-Konto.",
+};
 
 export type AccountSecurityEmailKind =
   | "email_change_approve"
@@ -138,6 +145,8 @@ export function buildAccountSecurityEmail(input: {
   const locale: EmailLocale = input.locale === "de" ? "de" : "en";
   const copy = COPY[locale][input.kind];
   const cta = copy.cta && input.ctaUrl ? { label: copy.cta, href: input.ctaUrl } : null;
+  const copyright = `© ${new Date().getFullYear()} CareTip`;
+  const supportEmail = getCareTipSupportEmail();
   const inner = [
     emailFrameOpen("CareTip"),
     emailHeadline(copy.subject),
@@ -146,8 +155,25 @@ export function buildAccountSecurityEmail(input: {
     cta ? emailHairline() : "",
     cta ? emailCta(cta.href, cta.label) : "",
     emailFrameClose(),
+    emailFooterBlock(null, SECURITY_FOOTER[locale], {
+      brandLine: "CareTip",
+      copyrightLine: copyright,
+      supportEmail,
+    }),
   ].join("");
   const html = [emailDocOpen(locale, copy.subject), emailPreheader(copy.lines[0]), emailPageWrap(inner), emailDocClose()].join("");
-  const text = [copy.subject, "", ...copy.lines, ...(copy.warn ? ["", copy.warn] : []), ...(cta ? ["", `${cta.label}: ${cta.href}`] : [])].join("\n");
+  const text = [
+    copy.subject,
+    "",
+    ...copy.lines,
+    ...(copy.warn ? ["", copy.warn] : []),
+    ...(cta ? ["", `${cta.label}: ${cta.href}`] : []),
+    "",
+    "CareTip",
+    copyright,
+    supportEmail,
+    "",
+    SECURITY_FOOTER[locale],
+  ].join("\n");
   return { subject: copy.subject, html, text };
 }

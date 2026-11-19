@@ -70,6 +70,7 @@ import { getObservabilityHealthDiagnostics } from "./config/observabilityEnv.js"
 import { securityHeadersMiddleware } from "./middleware/securityHeaders.middleware.js";
 import { authenticatedApiRateLimit } from "./middleware/securityRateLimit.middleware.js";
 import { configureTrustProxy, noteForwardedChain } from "./lib/clientIp.js";
+import { startNotificationWorker, stopNotificationWorker } from "./services/notifications/notificationWorker.js";
 import { closeSocketServer, socketAdapterReady } from "./socket/socketServer.js";
 import { closeRateLimitStore, warmRateLimitStore } from "./utils/rateLimitStore.js";
 import { checkPersistentRedisOutage, getRedisHealthSnapshot } from "./lib/redisHealth.js";
@@ -336,6 +337,7 @@ function shutdownGracefully(signal: string): void {
   markProcessDraining();
   console.info(`[server] ${signal}: draining (up to ${SHUTDOWN_DRAIN_MS}ms)`);
   if (redisHealthTimer) clearInterval(redisHealthTimer);
+  stopNotificationWorker();
   let finished = false;
   const finish = (reason: string) => {
     if (finished) return;
@@ -375,6 +377,8 @@ async function waitForRedisBeforeListening(): Promise<void> {
 void assertEnvForAuth().then(waitForRedisBeforeListening).then(() => {
   httpServer.listen(PORT, () => {
     console.log(`Caretip API running on http://localhost:${PORT}`);
+    // Production only by default (see notificationWorker.ts); claims are safe across instances.
+    startNotificationWorker();
     // Non-financial raw SQL still compares bound dates with `timestamp` columns and is only correct
     // when the database session TimeZone is UTC (the Supabase default). Make a drift visible.
     void import("./lib/databaseSessionTimezone.js").then(({ warnIfDatabaseSessionNotUtc }) => warnIfDatabaseSessionNotUtc());

@@ -78,6 +78,9 @@ async function withMockedResend<T>(
 ): Promise<T> {
   const calls: CapturedResend[] = [];
   const original = globalThis.fetch;
+  // fetch is replaced below, so the adapter may run past its test-mode block (nothing leaves the process).
+  const savedMockFlag = process.env.CARETIP_RESEND_FETCH_IS_MOCKED;
+  process.env.CARETIP_RESEND_FETCH_IS_MOCKED = "1";
   globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     const rawBody = init?.body ? JSON.parse(String(init.body)) : {};
@@ -94,6 +97,8 @@ async function withMockedResend<T>(
     return await impl(calls);
   } finally {
     globalThis.fetch = original;
+    if (savedMockFlag === undefined) delete process.env.CARETIP_RESEND_FETCH_IS_MOCKED;
+    else process.env.CARETIP_RESEND_FETCH_IS_MOCKED = savedMockFlag;
   }
 }
 

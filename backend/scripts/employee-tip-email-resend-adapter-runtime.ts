@@ -153,11 +153,13 @@ const orchestrator = readFileSync(
   "utf8",
 );
 const emailBranch = orchestrator.slice(orchestrator.indexOf('if (channels.includes("email"))'));
-assert.match(emailBranch, /sendLocalizedUserNotificationEmail\(/);
-assert.match(emailBranch, /\.catch\(\(err\) => \{\s*logServerError\("notifications\.deliverUserNotification\.email"/);
-const emailLog = emailBranch.slice(emailBranch.indexOf('"[notifications] email"'), emailBranch.indexOf(".catch("));
-assert.match(emailLog, /messageId: result\.messageId/);
-assert.match(emailLog, /accepted: result\.accepted/);
+// Durable path: the email is persisted in the outbox (same Resend adapter, same idempotency key).
+assert.match(emailBranch, /queueLocalizedUserNotificationEmail\(/);
+assert.match(emailBranch, /idempotencyKey: `notification-email:\$\{notification\.id\}`/);
+assert.match(emailBranch, /catch \(err\) \{\s*logServerError\("notifications\.deliverUserNotification\.email"/);
+const emailLog = emailBranch.slice(emailBranch.indexOf('"[notifications] email"'), emailBranch.indexOf("} catch (err)"));
+assert.match(emailLog, /deliveryId: queued\.deliveryId/);
+assert.match(emailLog, /accepted: queued\.result\.accepted/);
 assert.doesNotMatch(emailLog, /\bto\b|user\.email/, "acceptance log omits the recipient address");
 const beforeEmail = orchestrator.slice(0, orchestrator.indexOf('if (channels.includes("email"))'));
 assert.match(beforeEmail, /if \(!notification\) return \{ notification: null, skipped: true \}/);

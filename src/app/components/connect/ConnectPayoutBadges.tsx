@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 function statusDotClass(status: ConnectPayoutStatus | string): string {
   if (status === "paid") return "bg-emerald-700 dark:bg-emerald-400";
-  if (status === "failed") return "bg-red-700 dark:bg-red-400";
+  if (status === "failed" || status === "returned") return "bg-red-700 dark:bg-red-400";
   if (status === "canceled") return "bg-neutral-500";
   if (status === "unknown") return "bg-neutral-400";
   return "bg-amber-700 dark:bg-amber-400";
@@ -13,7 +13,7 @@ function statusDotClass(status: ConnectPayoutStatus | string): string {
 
 function statusTextClass(status: ConnectPayoutStatus | string): string {
   if (status === "paid") return "font-semibold text-foreground";
-  if (status === "failed") return "font-semibold text-red-800 dark:text-red-200";
+  if (status === "failed" || status === "returned") return "font-semibold text-red-800 dark:text-red-200";
   if (status === "canceled") return "font-medium text-muted-foreground";
   if (status === "unknown") return "font-medium text-muted-foreground";
   return "font-semibold text-foreground";
@@ -31,13 +31,17 @@ export function reconStatusClass(status: ConnectPayoutReconciliationStatus | str
 }
 
 export function ConnectPayoutStatusBadge({
-  status,
+  status: storedStatus,
+  returnedAt,
   className,
 }: {
   status: ConnectPayoutStatus | string;
+  /** The bank returned this paid payout: shown as returned (red), stored status stays paid. */
+  returnedAt?: string | null;
   className?: string;
 }) {
   const { t } = useTranslation();
+  const status = returnedAt ? "returned" : storedStatus;
   const label = t(payoutStatusI18nKey(status), { defaultValue: status });
   return (
     <span className={cn("inline-flex max-w-full flex-wrap items-center gap-2 text-sm", statusTextClass(status), className)}>

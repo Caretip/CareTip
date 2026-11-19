@@ -89,7 +89,7 @@ function sectionStaticRegression() {
   } else fail("platform admin recipient resolution not wired");
 
   if (
-    orchestrator.includes("sendLocalizedUserNotificationEmail") &&
+    orchestrator.includes("queueLocalizedUserNotificationEmail") &&
     orchestrator.includes("email: false") &&
     localizedEmail.includes("sendResendEmail")
   ) {
@@ -142,7 +142,7 @@ function sectionTemplateCopy() {
     pass("EN admin template title/body include business and order id");
   } else fail("EN admin template copy");
 
-  if (de.title === "Physische QR Bestellung bezahlt" && de.body.includes("Demo Venue")) {
+  if (de.title === "Physische QR-Bestellung bezahlt" && de.body.includes("Demo Venue")) {
     pass("DE admin template localized");
   } else fail("DE admin template copy");
 
@@ -198,19 +198,24 @@ function sectionBusinessTemplateUnchanged() {
   });
   const delivered = renderNotificationTemplate("en", { id: "physical_qr_delivered" });
 
-  if (en.title === "Payment received") pass("business paid template unchanged (Basic)");
+  if (en.title === "Payment received for your QR order") pass("business paid template names the QR order (Basic)");
   else fail("business paid template changed");
 
   if (
-    included.title === "Order received" &&
+    included.title === "We received your QR order" &&
     /received and is now being processed/i.test(included.body) &&
     !/paid for/i.test(included.body)
   ) {
     pass("business Pro/included template uses Order received");
   } else fail("business Pro/included template missing or still payment copy");
 
-  if (printing.title === "Printing" && shipped.title === "Shipped" && delivered.title === "Delivered") {
-    pass("printing/shipped/delivered business templates unchanged");
+  if (
+    printing.title === "Your QR order is being printed" &&
+    shipped.title === "Your QR order has shipped" &&
+    shipped.body.endsWith("Tracking number: TRACK1.") &&
+    delivered.title === "Your QR order was delivered"
+  ) {
+    pass("printing/shipped/delivered business templates name the QR order");
   } else fail("fulfillment business templates changed");
 }
 

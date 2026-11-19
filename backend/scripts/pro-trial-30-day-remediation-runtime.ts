@@ -47,7 +47,8 @@ assert(reminder.includes('REMINDER_DAYS: TrialReminderDay[] = ["7", "3", "1"]'),
 assert(reminder.includes("cancelAtPeriodEnd: false"), "cancelled-at-period-end trials skipped");
 assert(reminder.includes("trialReminderSent"), "idempotency field preserved");
 assert(reminder.includes("try {"), "per-subscription try/catch for failure isolation");
-assert(reminder.includes("sendLocalizedUserNotificationEmail"), "Resend notification path preserved");
+assert(reminder.includes("queueLocalizedUserNotificationEmail"), "Resend notification path preserved (durable outbox)");
+assert(reminder.includes("trial-reminder:${sub.id}:${dueDay}"), "reminder idempotency key preserved");
 
 const jobs = read("backend/src/routes/internalJobs.routes.ts");
 assert(jobs.includes('router.post("/trial-reminders"'), "trial-reminders job route exists");

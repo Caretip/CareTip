@@ -38,6 +38,16 @@ export function formatNotificationDateTime(iso: string, locale: EmailLocale): st
   }).format(d);
 }
 
+/** Amounts in minor units with the Stripe currency; arrival date only when Stripe supplies one. */
+export type PayoutTemplateParams = { amountCents: number; currency: string; arrivalDateIso?: string | null };
+
+function formatPayoutArrival(iso: string | null | undefined, locale: EmailLocale): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return new Intl.DateTimeFormat(locale === "de" ? "de-DE" : "en-GB", { dateStyle: "medium", timeZone: "UTC" }).format(d);
+}
+
 export type NotificationTemplate =
   | { id: "tip_received_employee"; params: { amount: number; customerName: string | null } }
   | { id: "tip_received_business"; params: { amount: number; employeeName: string } }
@@ -93,6 +103,13 @@ export type NotificationTemplate =
   | { id: "physical_qr_delivered" }
   | { id: "employee_inactivity_warning" }
   | { id: "employee_inactivity_admin"; params: { employeeName: string } }
+  | { id: "employee_payout_started"; params: PayoutTemplateParams }
+  | { id: "employee_payout_paid"; params: PayoutTemplateParams }
+  | { id: "employee_payout_failed"; params: PayoutTemplateParams }
+  | { id: "employee_payout_canceled"; params: PayoutTemplateParams }
+  | { id: "business_payout_failed"; params: PayoutTemplateParams }
+  | { id: "employee_payout_returned"; params: PayoutTemplateParams }
+  | { id: "business_payout_returned"; params: PayoutTemplateParams }
   | {
       id: "scheduled_payout_ops_incident";
       params: {
@@ -103,6 +120,19 @@ export type NotificationTemplate =
         detectedAtIso: string;
       };
     };
+
+const SUPPORT_STATUS_LABELS: Record<string, { en: string; de: string }> = {
+  OPEN: { en: "Open", de: "Offen" },
+  PENDING: { en: "Pending", de: "In Bearbeitung" },
+  RESOLVED: { en: "Resolved", de: "Gelöst" },
+  CLOSED: { en: "Closed", de: "Geschlossen" },
+};
+
+/** Same labels as the web inbox (support.status.*), never the raw enum. */
+function supportStatusLabel(status: string, locale: EmailLocale): string {
+  const entry = SUPPORT_STATUS_LABELS[String(status ?? "").trim().toUpperCase()];
+  return entry ? entry[locale === "de" ? "de" : "en"] : String(status ?? "");
+}
 
 export function renderNotificationTemplate(
   locale: EmailLocale,
@@ -138,24 +168,25 @@ export function renderNotificationTemplate(
     }
     case "payout_completed": {
       const amount = formatNotificationAmount(template.params.amount, locale);
+      // Same meaning as the web inbox copy: this records a tip transfer, not a bank payout.
       return de
         ? {
-            title: "Auszahlung abgeschlossen",
-            body: `Eine Auszahlung über ${amount} wurde verarbeitet.`,
+            title: "Trinkgeld erfasst",
+            body: `${amount} wurde in Ihrer Trinkgeldhistorie erfasst. Das ist keine Stripe-Bankauszahlung.`,
           }
         : {
-            title: "Payout completed",
-            body: `A payout of ${amount} was processed.`,
+            title: "Tip recorded",
+            body: `${amount} was added to your tip history. This is not a Stripe bank payout.`,
           };
     }
     case "login_security":
       return de
         ? {
             title: "Neue Anmeldung",
-            body: "Ihr CareTip Konto wurde verwendet. Wenn Sie das nicht waren, ändern Sie Ihr Passwort.",
+            body: "Ihr CareTip-Konto wurde für eine Anmeldung verwendet. Wenn Sie das nicht waren, ändern Sie Ihr Passwort.",
           }
         : {
-            title: "New sign in",
+            title: "New sign-in",
             body: "Your CareTip account was used to sign in. If this wasn't you, change your password.",
           };
     case "employee_invited_manager":
@@ -191,8 +222,8 @@ export function renderNotificationTemplate(
     case "qr_scan":
       return de
         ? {
-            title: "QR Code gescannt",
-            body: `Ein Gast hat die Trinkgeld Seite für ${template.params.place} geöffnet.`,
+            title: "QR-Code gescannt",
+            body: `Ein Gast hat die Trinkgeldseite für ${template.params.place} geöffnet.`,
           }
         : {
             title: "QR code scanned",
@@ -202,7 +233,7 @@ export function renderNotificationTemplate(
       const amount = formatNotificationAmount(template.params.amount, locale);
       return de
         ? {
-            title: "QR Zahlung erhalten",
+            title: "QR-Zahlung erhalten",
             body: `${amount} per QR für ${template.params.employeeName}.`,
           }
         : {
@@ -255,8 +286,8 @@ export function renderNotificationTemplate(
     case "support_created_business":
       return de
         ? {
-            title: `Support Anfrage erhalten: ${template.params.ticketNumber}`,
-            body: `Wir haben Ihre Nachricht zu „${template.params.subject}" erhalten. Unser Team antwortet in Kürze.`,
+            title: `Support-Anfrage erhalten: ${template.params.ticketNumber}`,
+            body: `Wir haben Ihre Nachricht zu „${template.params.subject}“ erhalten. Unser Team antwortet in Kürze.`,
           }
         : {
             title: `Support request received: ${template.params.ticketNumber}`,
@@ -285,33 +316,35 @@ export function renderNotificationTemplate(
     case "support_status_resolved":
       return de
         ? {
-            title: "Support Anfrage erledigt",
-            body: "Ihre Support Anfrage wurde als erledigt markiert.",
+            title: "Support-Anfrage erledigt",
+            body: "Ihre Support-Anfrage wurde als erledigt markiert.",
           }
         : {
             title: "Support request resolved",
-            body: "Your support request has been marked resolved.",
+            body: "Your support request has been marked as resolved.",
           };
     case "support_status_closed":
       return de
         ? {
-            title: "Support Ticket geschlossen",
-            body: "Dieses Support Ticket ist jetzt geschlossen.",
+            title: "Support-Ticket geschlossen",
+            body: "Dieses Support-Ticket ist jetzt geschlossen.",
           }
         : {
             title: "Support ticket closed",
             body: "This support ticket is now closed.",
           };
-    case "support_status_updated":
+    case "support_status_updated": {
+      const status = supportStatusLabel(template.params.status, locale);
       return de
         ? {
             title: "Ticketstatus aktualisiert",
-            body: `Ticketstatus geändert auf ${template.params.status}.`,
+            body: `Der Status Ihres Tickets ist jetzt: ${status}.`,
           }
         : {
             title: "Ticket status updated",
-            body: `Ticket status updated to ${template.params.status}.`,
+            body: `Your ticket status is now: ${status}.`,
           };
+    }
     case "support_inbox_title":
       return de
         ? {
@@ -325,21 +358,21 @@ export function renderNotificationTemplate(
     case "physical_qr_paid":
       return de
         ? {
-            title: "Zahlung eingegangen",
-            body: "Ihre physische QR Bestellung wurde bezahlt und wird jetzt bearbeitet.",
+            title: "Zahlung für Ihre QR-Bestellung eingegangen",
+            body: "Ihre physische QR-Bestellung wurde bezahlt und wird jetzt bearbeitet.",
           }
         : {
-            title: "Payment received",
+            title: "Payment received for your QR order",
             body: "Your physical QR order has been paid for and is now being processed.",
           };
     case "physical_qr_order_received":
       return de
         ? {
-            title: "Bestellung eingegangen",
-            body: "Ihre physische QR Bestellung ist eingegangen und wird jetzt bearbeitet.",
+            title: "Ihre QR-Bestellung ist eingegangen",
+            body: "Ihre physische QR-Bestellung ist eingegangen und wird jetzt bearbeitet.",
           }
         : {
-            title: "Order received",
+            title: "We received your QR order",
             body: "Your physical QR order has been received and is now being processed.",
           };
     case "physical_qr_paid_admin": {
@@ -366,12 +399,12 @@ export function renderNotificationTemplate(
       const quantity = Number(params.quantity) || 0;
       return de
         ? {
-            title: "Physische QR Bestellung bezahlt",
+            title: "Physische QR-Bestellung bezahlt",
             body:
-              `${businessName} hat eine physische QR Bestellung bezahlt. Bereit zur Bearbeitung. ` +
+              `${businessName} hat eine physische QR-Bestellung bezahlt. Bereit zur Bearbeitung. ` +
               `Bestellung: ${orderId}. Positionen (${itemLineCount}): ${itemsLine}. ` +
               `Gesamtmenge: ${quantity}. Betrag: ${amount}. Zahlung: Bezahlt. ` +
-              `Fulfillment: In Bearbeitung. Bezahlt am: ${paidAt}.`,
+              `Abwicklung: In Bearbeitung. Bezahlt am: ${paidAt}.`,
           }
         : {
             title: "Physical QR order paid",
@@ -401,12 +434,12 @@ export function renderNotificationTemplate(
       const quantity = Number(params.quantity) || 0;
       return de
         ? {
-            title: "Physische QR Bestellung eingegangen",
+            title: "Physische QR-Bestellung eingegangen",
             body:
-              `${businessName} hat eine physische QR Bestellung aufgegeben (im Plan enthalten). Bereit zur Bearbeitung. ` +
+              `${businessName} hat eine physische QR-Bestellung aufgegeben (im Tarif enthalten). Bereit zur Bearbeitung. ` +
               `Bestellung: ${orderId}. Positionen (${itemLineCount}): ${itemsLine}. ` +
-              `Gesamtmenge: ${quantity}. Zahlung: Im Plan enthalten. ` +
-              `Fulfillment: In Bearbeitung. Eingegangen am: ${receivedAt}.`,
+              `Gesamtmenge: ${quantity}. Zahlung: Im Tarif enthalten. ` +
+              `Abwicklung: In Bearbeitung. Eingegangen am: ${receivedAt}.`,
           }
         : {
             title: "Physical QR order received",
@@ -420,48 +453,48 @@ export function renderNotificationTemplate(
     case "physical_qr_printing":
       return de
         ? {
-            title: "Druck",
-            body: "Ihre physische QR Bestellung wird jetzt gedruckt.",
+            title: "Ihre QR-Bestellung wird gedruckt",
+            body: "Ihre physische QR-Bestellung wird jetzt gedruckt.",
           }
         : {
-            title: "Printing",
+            title: "Your QR order is being printed",
             body: "Your physical QR order is now being printed.",
           };
     case "physical_qr_shipped": {
       const tracking = template.params.trackingNumber?.trim();
       return de
         ? {
-            title: "Versendet",
+            title: "Ihre QR-Bestellung wurde versendet",
             body: tracking
-              ? `Ihre physische QR Bestellung wurde versendet. Sendungsnummer: ${tracking}`
-              : "Ihre physische QR Bestellung wurde versendet.",
+              ? `Ihre physische QR-Bestellung wurde versendet. Sendungsnummer: ${tracking}.`
+              : "Ihre physische QR-Bestellung wurde versendet.",
           }
         : {
-            title: "Shipped",
+            title: "Your QR order has shipped",
             body: tracking
-              ? `Your physical QR order has been shipped. Tracking number: ${tracking}`
+              ? `Your physical QR order has been shipped. Tracking number: ${tracking}.`
               : "Your physical QR order has been shipped.",
           };
     }
     case "physical_qr_delivered":
       return de
         ? {
-            title: "Zugestellt",
-            body: "Ihre physische QR Bestellung wurde zugestellt.",
+            title: "Ihre QR-Bestellung wurde zugestellt",
+            body: "Ihre physische QR-Bestellung wurde zugestellt.",
           }
         : {
-            title: "Delivered",
+            title: "Your QR order was delivered",
             body: "Your physical QR order has been delivered.",
           };
     case "employee_inactivity_warning":
       return de
         ? {
             title: "Ihr Profil wird in 10 Tagen inaktiv gesetzt",
-            body: "Ihr Profil wird in 10 Tagen wegen Inaktivität inaktiv gesetzt.",
+            body: "Für Ihr CareTip-Profil ist seit längerer Zeit kein Trinkgeld eingegangen. Es wird daher in 10 Tagen inaktiv gesetzt.",
           }
         : {
-            title: "Your profile will be set to inactive in 10 days due to inactivity",
-            body: "Your profile will be set to inactive in 10 days due to inactivity",
+            title: "Your profile will become inactive in 10 days",
+            body: "Your CareTip profile has not received a tip for some time, so it will be set to inactive in 10 days.",
           };
     case "employee_inactivity_admin":
       return de
@@ -473,6 +506,95 @@ export function renderNotificationTemplate(
             title: "A team member was set inactive due to inactivity",
             body: `${template.params.employeeName} was set inactive in CareTip after 45 days without an eligible tip. Their Stripe account was not disconnected.`,
           };
+    case "employee_payout_started": {
+      const amount = formatNotificationAmountCents(template.params.amountCents, template.params.currency, locale);
+      const arrival = formatPayoutArrival(template.params.arrivalDateIso, locale);
+      return de
+        ? {
+            title: "Auszahlung gestartet",
+            body: arrival
+              ? `Eine Auszahlung über ${amount} auf Ihr Bankkonto wurde gestartet. Voraussichtliche Ankunft laut Stripe: ${arrival}.`
+              : `Eine Auszahlung über ${amount} auf Ihr Bankkonto wurde gestartet.`,
+          }
+        : {
+            title: "Payout started",
+            body: arrival
+              ? `A payout of ${amount} to your bank account has started. Stripe expects it to arrive on ${arrival}.`
+              : `A payout of ${amount} to your bank account has started.`,
+          };
+    }
+    case "employee_payout_paid": {
+      const amount = formatNotificationAmountCents(template.params.amountCents, template.params.currency, locale);
+      return de
+        ? {
+            title: "Auszahlung an Ihre Bank gesendet",
+            body: `Ihre Auszahlung über ${amount} wurde an Ihr Bankkonto gesendet. Je nach Bank kann es etwas dauern, bis der Betrag sichtbar ist.`,
+          }
+        : {
+            title: "Payout sent to your bank",
+            body: `Your payout of ${amount} has been sent to your bank account. Depending on your bank, it can take a little while to appear.`,
+          };
+    }
+    case "employee_payout_failed": {
+      const amount = formatNotificationAmountCents(template.params.amountCents, template.params.currency, locale);
+      return de
+        ? {
+            title: "Auszahlung fehlgeschlagen",
+            body: `Ihre Auszahlung über ${amount} konnte nicht abgeschlossen werden. Der Betrag geht zurück auf Ihr Stripe-Guthaben. Bitte prüfen Sie Ihre Auszahlungsdaten in CareTip.`,
+          }
+        : {
+            title: "Payout could not be completed",
+            body: `Your payout of ${amount} could not be completed. The amount returns to your Stripe balance. Please check your payout details in CareTip.`,
+          };
+    }
+    case "employee_payout_canceled": {
+      const amount = formatNotificationAmountCents(template.params.amountCents, template.params.currency, locale);
+      return de
+        ? {
+            title: "Auszahlung storniert",
+            body: `Ihre Auszahlung über ${amount} wurde storniert. Der Betrag bleibt auf Ihrem Stripe-Guthaben.`,
+          }
+        : {
+            title: "Payout cancelled",
+            body: `Your payout of ${amount} was cancelled. The amount stays in your Stripe balance.`,
+          };
+    }
+    case "business_payout_failed": {
+      const amount = formatNotificationAmountCents(template.params.amountCents, template.params.currency, locale);
+      return de
+        ? {
+            title: "Auszahlung an Ihren Betrieb fehlgeschlagen",
+            body: `Eine Auszahlung über ${amount} auf das Bankkonto Ihres Betriebs konnte nicht abgeschlossen werden. Bitte prüfen Sie Ihre Bankdaten bei Stripe.`,
+          }
+        : {
+            title: "Business payout could not be completed",
+            body: `A payout of ${amount} to your business bank account could not be completed. Please check your bank details in Stripe.`,
+          };
+    }
+    case "employee_payout_returned": {
+      const amount = formatNotificationAmountCents(template.params.amountCents, template.params.currency, locale);
+      return de
+        ? {
+            title: "Auszahlung von Ihrer Bank zurückgebucht",
+            body: `Ihre Auszahlung über ${amount} wurde von Ihrer Bank zurückgebucht. Stripe bucht den Betrag auf Ihr Stripe-Guthaben zurück. Dort wird er sichtbar, sobald die Rückbuchung abgeschlossen ist. Bitte prüfen Sie Ihre Bankdaten in CareTip.`,
+          }
+        : {
+            title: "Payout returned by your bank",
+            body: `Your payout of ${amount} was returned by your bank. Stripe is moving the amount back to your Stripe balance, where it will show once the return is complete. Please check your bank details in CareTip.`,
+          };
+    }
+    case "business_payout_returned": {
+      const amount = formatNotificationAmountCents(template.params.amountCents, template.params.currency, locale);
+      return de
+        ? {
+            title: "Auszahlung an Ihren Betrieb zurückgebucht",
+            body: `Eine Auszahlung über ${amount} auf das Bankkonto Ihres Betriebs wurde von der Bank zurückgebucht. Stripe bucht den Betrag auf das Stripe-Guthaben zurück. Bitte prüfen Sie Ihre Bankdaten bei Stripe.`,
+          }
+        : {
+            title: "Business payout returned by the bank",
+            body: `A payout of ${amount} to your business bank account was returned by the bank. Stripe is moving the amount back to the Stripe balance. Please check your bank details in Stripe.`,
+          };
+    }
     case "scheduled_payout_ops_incident": {
       const category = template.params.category as ScheduledPayoutOpsIncidentCategory;
       const payoutLabel = de

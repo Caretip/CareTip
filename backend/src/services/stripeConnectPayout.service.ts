@@ -231,6 +231,9 @@ export type ConnectPayoutBalanceLineDto = {
 
 export type ConnectPayoutDto = {
   id: string;
+  /** Set when the bank returned this paid payout (stripe_payout_returns). Status stays paid for history. */
+  returnedAt?: string | null;
+  returnFailureCode?: string | null;
   stripePayoutId: string;
   amountCents: number;
   amountEur: number;
@@ -408,6 +411,8 @@ export function parsePayoutObject(obj: Stripe.Payout): {
   stripeCreatedAt: Date;
   applicationFeeAmountCents: number | null;
   stripeApplicationFeeId: string | null;
+  /** Set by Stripe when a failed payout's funds go back to the account balance. */
+  failureBalanceTransactionId: string | null;
 } | null {
   const stripePayoutId = obj.id?.trim();
   if (!stripePayoutId || !stripePayoutId.startsWith("po_")) return null;
@@ -429,7 +434,52 @@ export function parsePayoutObject(obj: Stripe.Payout): {
     stripeCreatedAt: unixToDate(obj.created) ?? new Date(),
     applicationFeeAmountCents: Number.isInteger(obj.application_fee_amount) ? obj.application_fee_amount : null,
     stripeApplicationFeeId: applicationFeeIdFromPayout(obj),
+    failureBalanceTransactionId: balanceTransactionIdOf(obj.failure_balance_transaction),
   };
+}
+
+function balanceTransactionIdOf(raw: unknown): string | null {
+  if (typeof raw === "string") return raw.startsWith("txn_") ? raw.slice(0, 128) : null;
+  if (raw && typeof raw === "object" && typeof (raw as { id?: unknown }).id === "string") {
+    const id = (raw as { id: string }).id;
+    return id.startsWith("txn_") ? id.slice(0, 128) : null;
+  }
+  return null;
+}
+
+export type PayoutReturnDetection = { originalPaidAt: Date | null } | null;
+
+/**
+ * A payout that Stripe reported as paid and later as failed was returned by the bank. Stripe only
+ * sends payout.paid after the payout reached that status, so both delivery orders mean a return:
+ * - stored paid, newer failed (the usual order)
+ * - stored failed, older paid arriving late
+ * The stored payout row keeps its first terminal status; the return is recorded separately.
+ */
+export function detectPayoutReturn(args: {
+  storedStatus: StripeConnectPayoutStatus;
+  storedEventCreated: number;
+  storedPaidAt: Date | null;
+  incomingStatus: StripeConnectPayoutStatus;
+  incomingEventCreated: number;
+}): PayoutReturnDetection {
+  const { storedStatus, storedEventCreated, storedPaidAt, incomingStatus, incomingEventCreated } = args;
+  if (
+    storedStatus === StripeConnectPayoutStatus.paid &&
+    incomingStatus === StripeConnectPayoutStatus.failed &&
+    incomingEventCreated >= storedEventCreated
+  ) {
+    return { originalPaidAt: storedPaidAt };
+  }
+  if (
+    storedStatus === StripeConnectPayoutStatus.failed &&
+    incomingStatus === StripeConnectPayoutStatus.paid &&
+    incomingEventCreated > 0 &&
+    incomingEventCreated < storedEventCreated
+  ) {
+    return { originalPaidAt: new Date(incomingEventCreated * 1000) };
+  }
+  return null;
 }
 
 export type HandleConnectPayoutResult = {
@@ -439,6 +489,8 @@ export type HandleConnectPayoutResult = {
   businessId?: string | null;
   employeeId?: string | null;
   reason?: string;
+  /** This event recorded a new bank return for the payout (see stripe_payout_returns). */
+  returnRecorded?: boolean;
 };
 
 type ParsedConnectPayout = NonNullable<ReturnType<typeof parsePayoutObject>>;
@@ -506,12 +558,44 @@ async function persistAttributedConnectPayout(args: {
             await reconcileAfterPersist(existing.id, eventType);
           }
         }
+        // paid then failed (either delivery order) is a bank return: the row keeps its paid
+        // history and the return is recorded separately.
+        const returned = detectPayoutReturn({
+          storedStatus: existing.status,
+          storedEventCreated: existing.lastStripeEventCreated,
+          storedPaidAt: existing.paidAt,
+          incomingStatus: parsed.status,
+          incomingEventCreated: eventCreated,
+        });
+        let returnRecorded = false;
+        if (returned) {
+          const failed = parsed.status === StripeConnectPayoutStatus.failed ? parsed : null;
+          const { recordPayoutReturn } = await import("./payoutReturns.service.js");
+          const rec = await recordPayoutReturn({
+            payoutKind: "business",
+            payoutRowId: existing.id,
+            stripePayoutId: existing.stripePayoutId,
+            stripeAccountId: existing.stripeAccountId,
+            businessId,
+            amountCents: existing.amountCents,
+            currency: existing.currency,
+            originalPaidAt: returned.originalPaidAt,
+            returnedAt: failed ? new Date(Math.max(eventCreated, 1) * 1000) : (existing.failedAt ?? now),
+            failureCode: failed?.failureCode ?? existing.failureCode,
+            failureMessage: failed?.failureMessage ?? existing.failureMessage,
+            failureBalanceTransactionId: failed?.failureBalanceTransactionId ?? null,
+            stripeEventId: eventId,
+            detectedVia: eventType === "payout.api_sync" ? "api_sync" : "webhook",
+          });
+          returnRecorded = rec.created;
+        }
         return {
           matched: true,
           skippedStale: true,
           payoutRowId: existing.id,
           businessId,
-          reason: decision.reason,
+          reason: returned ? "payout_returned" : decision.reason,
+          ...(returnRecorded ? { returnRecorded: true } : {}),
         };
       }
 
@@ -647,9 +731,21 @@ async function persistAttributedConnectPayout(args: {
     return { matched: true, payoutRowId: created.id, businessId, reason: "created" };
   };
 
-  return runSerializedByKey(`connect-payout:${parsed.stripePayoutId}`, () =>
+  const result = await runSerializedByKey(`connect-payout:${parsed.stripePayoutId}`, () =>
     retryPayoutWriteOnConflict(persistOnce, parsed.stripePayoutId),
   );
+  // Notify only after a write was applied (never for stale or rejected events). Deduplicated
+  // per payout and status, so webhook retries and sync reruns cannot notify twice.
+  if (result.matched && result.payoutRowId && (!result.skippedStale || result.returnRecorded)) {
+    const rowId = result.payoutRowId;
+    const returned = result.returnRecorded === true;
+    void import("./notifications/payoutNotifications.service.js")
+      .then(({ notifyBusinessPayoutChange, notifyBusinessPayoutReturn }) =>
+        returned ? notifyBusinessPayoutReturn(rowId) : notifyBusinessPayoutChange(rowId),
+      )
+      .catch((err) => logServerError("connectPayout.notify", err));
+  }
+  return result;
 }
 
 const PAYOUT_WRITE_CONFLICT_ATTEMPTS = 5;
@@ -1076,7 +1172,17 @@ export async function listPayoutsForBusiness(
     assertSafeDto(dto);
     return dto;
   });
-  return { items, total };
+  return { items: await withPayoutReturns(items), total };
+}
+
+/** Mark payouts the bank returned, without changing their stored paid status. */
+async function withPayoutReturns<T extends ConnectPayoutDto>(dtos: T[]): Promise<T[]> {
+  const { payoutReturnsByRowId } = await import("./payoutReturns.service.js");
+  const returns = await payoutReturnsByRowId("business", dtos.map((d) => d.id));
+  return dtos.map((d) => {
+    const r = returns.get(d.id);
+    return { ...d, returnedAt: r?.returnedAt ?? null, returnFailureCode: r?.failureCode ?? null };
+  });
 }
 
 export async function getPayoutForBusiness(
@@ -1111,7 +1217,8 @@ export async function getPayoutForBusiness(
   );
   assertSafeDto(dto);
   const { enrichBusinessConnectPayoutDto } = await import("./connectPayoutDisplayEnrichment.service.js");
-  return enrichBusinessConnectPayoutDto(dto, {
+  const [withReturn] = await withPayoutReturns([dto]);
+  return enrichBusinessConnectPayoutDto(withReturn, {
     businessId: row.businessId,
     stripeAccountId: row.stripeAccountId,
     stripePayoutId: row.stripePayoutId,
@@ -1218,7 +1325,7 @@ export async function listPlatformConnectPayouts(opts?: PlatformConnectPayoutLis
     assertSafeDto(dto);
     return dto;
   });
-  return { items, total };
+  return { items: await withPayoutReturns(items), total };
 }
 
 export async function getPlatformConnectPayout(payoutId: string): Promise<PlatformConnectPayoutDto | null> {
@@ -1269,7 +1376,8 @@ export async function getPlatformConnectPayout(payoutId: string): Promise<Platfo
     stripeDashboardPayoutUrl: dash.stripeDashboardPayoutUrl,
   };
   assertSafeDto(dto);
-  return dto;
+  const [withReturn] = await withPayoutReturns([dto]);
+  return withReturn;
 }
 
 export async function retryPlatformConnectPayoutReconciliation(

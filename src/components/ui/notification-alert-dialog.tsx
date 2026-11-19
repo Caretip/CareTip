@@ -7,7 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/app/components/ui/popover";
-import { getNotificationCategoryStyle } from "@/app/lib/notificationInboxUi";
+import { getNotificationCategoryStyle, type NotificationIconTone } from "@/app/lib/notificationInboxUi";
 import type { NotificationCategory } from "@/app/lib/notificationNavigation";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +20,8 @@ export type NotificationAlertItem = {
   /** @deprecated Bell dropdown uses category icons instead of initials. */
   initials?: string;
   category?: NotificationCategory;
+  /** Semantic state colour (failed payout, suspicious sign-in...); brand when omitted. */
+  tone?: NotificationIconTone;
 };
 
 export type NotificationAlertDialogLabels = {
@@ -64,7 +66,7 @@ const NotificationRow = memo(function NotificationRow({
   readLabel: string;
 }) {
   const category = notification.category ?? "system";
-  const style = getNotificationCategoryStyle(category);
+  const style = getNotificationCategoryStyle(category, notification.tone ?? "brand");
   const Icon = style.icon;
 
   return (

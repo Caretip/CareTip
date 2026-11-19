@@ -13,6 +13,7 @@ import {
   getNotificationCategory,
   resolveInboxNotificationDestination,
 } from "@/app/lib/notificationNavigation";
+import { resolveNotificationTone } from "@/app/lib/notificationInboxUi";
 import "@/styles/notification-bell-dropdown-premium.css";
 import { getAuthUser, subscribeAuthUser } from "@/app/lib/authUserStore";
 import { getAuthSessionFlags, subscribeAuthSessionFlags } from "@/app/lib/authSessionBootstrap";
@@ -123,6 +124,7 @@ export const NotificationBell = memo(function NotificationBell({ className }: No
       time: formatGroupTime(n.createdAt, i18n.language, t),
       read: n.read,
       category: getNotificationCategory(n),
+      tone: resolveNotificationTone(n),
     }));
   }, [list, i18n.language, t]);
 

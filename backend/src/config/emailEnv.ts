@@ -114,3 +114,18 @@ export function assertProductionEmailEnv(): void {
     process.exit(1);
   }
 }
+
+/** Demo / sales / general inquiry inbox — backend env only (never from request body). */
+export function getLeadsInbox(): string {
+  return (
+    process.env.LEADS_INBOX_EMAIL?.trim() ||
+    process.env.INFO_INBOX_EMAIL?.trim() ||
+    process.env.SALES_INBOX_EMAIL?.trim() ||
+    "info@caretip.de"
+  );
+}
+
+/** Technical support inbox — backend env only (never from request body). */
+export function getSupportInbox(): string {
+  return process.env.SUPPORT_INBOX_EMAIL?.trim() || "support@caretip.de";
+}

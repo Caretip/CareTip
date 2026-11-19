@@ -20,6 +20,7 @@ export type InternalJobSpec = {
 export const INTERNAL_JOBS: InternalJobSpec[] = [
   { path: "trial-reminders", schedule: "0 7 * * *", purpose: "Trial ending reminders", destructive: false },
   { path: "subscription-billing-reconciliation", schedule: "30 5 * * *", purpose: "Stripe and subscription mirror drift", destructive: false },
+  { path: "notification-delivery-tick", schedule: "*/5 * * * *", purpose: "Retry notification emails; repair missed payout notifications (backup for the in-process worker)", destructive: false },
   { path: "subscription-billing-notification-retry", schedule: "*/15 * * * *", purpose: "Retry billing emails", destructive: false },
   { path: "scheduled-bank-payout-tick", schedule: "see render.yaml", purpose: "Scheduled bank payouts", destructive: false },
   { path: "scheduled-payout-incident-sync", schedule: "*/30 * * * *", purpose: "Keep payout incident records current", destructive: false },

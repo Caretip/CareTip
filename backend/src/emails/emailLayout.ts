@@ -1,6 +1,8 @@
 /**
  * Shared CareTip transactional email layout — table-based, email-client safe.
- * One light surface, 1px hairline frame, centered type — no nested cards.
+ * One light surface, 1px hairline frame, centered type, no nested cards.
+ * Inline styles carry the design; the small head <style> only tightens spacing on phones,
+ * so clients that drop it still render the desktop layout correctly.
  */
 
 import { resolveCareTipEmailLogoRemoteUrl } from "./emailLogo.js";
@@ -47,6 +49,13 @@ export function emailDocOpen(locale: string, title: string): string {
 <meta name="color-scheme" content="light">
 <meta name="supported-color-schemes" content="light">
 <title>${esc(title)}</title>
+<style type="text/css">
+@media only screen and (max-width:600px){
+.ct-page{padding:16px 8px 32px!important;}
+.ct-body{padding:28px 20px 32px!important;}
+.ct-h1{font-size:24px!important;}
+}
+</style>
 <!--[if mso]><style type="text/css">body,table,td{font-family:Arial,Helvetica,sans-serif!important;}</style><![endif]-->
 </head>
 <body style="margin:0;padding:0;background-color:${EMAIL.pageBg};-webkit-text-size-adjust:100%;font-family:${EMAIL.font};">`;
@@ -58,7 +67,7 @@ export function emailDocClose(): string {
 
 export function emailPageWrap(inner: string): string {
   return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:${EMAIL.pageBg};">
-<tr><td align="center" style="padding:24px 16px 40px;">
+<tr><td class="ct-page" align="center" style="padding:24px 16px 40px;">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%;">
 ${inner}
 </table>
@@ -100,7 +109,7 @@ export function emailCardClose(): string {
 }
 
 export function emailCardBody(padding = "32px 40px 40px"): string {
-  return `<tr><td align="center" style="padding:${padding};${CENTER}">`;
+  return `<tr><td class="ct-body" align="center" style="padding:${padding};${CENTER}">`;
 }
 
 export function emailCardBodyEnd(): string {
@@ -117,7 +126,7 @@ export function emailFrameClose(): string {
 }
 
 export function emailHeadline(text: string): string {
-  return `<h1 style="margin:0 0 16px;font-size:28px;line-height:1.25;font-weight:700;letter-spacing:-0.03em;color:${EMAIL.text};${CENTER}">${esc(text)}</h1>`;
+  return `<h1 class="ct-h1" style="margin:0 0 16px;font-size:28px;line-height:1.25;font-weight:700;letter-spacing:-0.03em;color:${EMAIL.text};${CENTER}">${esc(text)}</h1>`;
 }
 
 export function emailGreeting(text: string): string {
@@ -163,7 +172,7 @@ export function emailHairline(): string {
 export function emailCta(href: string, label: string, centered = true): string {
   const align = centered ? "center" : "left";
   return `<table role="presentation" cellspacing="0" cellpadding="0" border="0" align="${align}" style="margin:28px auto 0;">
-<tr><td align="center" style="border-radius:8px;background-color:${EMAIL.brandOrange};">
+<tr><td align="center" bgcolor="${EMAIL.brandOrange}" style="border-radius:8px;background-color:${EMAIL.brandOrange};mso-padding-alt:12px 22px;">
 <a href="${esc(href)}" style="display:inline-block;padding:12px 22px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px;line-height:1.25;text-align:center;">${esc(label)}</a>
 </td></tr>
 </table>`;

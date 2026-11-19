@@ -7,6 +7,7 @@ import i18n from "../../i18n/i18n";
 import {
   isApiRequestError,
   EMAIL_NOT_VERIFIED_CODE,
+  LOGIN_TEMPORARILY_LOCKED_CODE,
   GOOGLE_ACCOUNT_NOT_REGISTERED_CODE,
   OAUTH_ACCOUNT_NOT_REGISTERED_CODE,
   OAUTH_LINKING_REQUIRED_CODE,
@@ -465,6 +466,11 @@ export function toUserFriendlyMessage(error: unknown, options?: ToUserFriendlyMe
   }
 
   if (isApiRequestError(error) && error.code === EMAIL_NOT_VERIFIED_CODE) {
+    return error.message;
+  }
+
+  // Localized on the server (request locale) and includes the wait time.
+  if (isApiRequestError(error) && error.code === LOGIN_TEMPORARILY_LOCKED_CODE && error.message.trim()) {
     return error.message;
   }
 

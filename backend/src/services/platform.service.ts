@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { Prisma, Role, TipStatus } from "@prisma/client";
 import { prisma } from "../prisma.js";
+import { toSafeAppPath } from "../config/frontendUrl.js";
 import {
   emitBusinessDataChanged,
   emitPlatformDataUpdated,
@@ -554,6 +555,12 @@ export async function sendPlatformAnnouncement(input: {
   if (!title || !body) {
     throw new Error("title and body are required");
   }
+  // Announcement links open from push, inbox and email: only CareTip app paths are allowed.
+  const rawUrl = input.url?.trim() || "";
+  const safeUrl = rawUrl ? toSafeAppPath(rawUrl) : null;
+  if (rawUrl && !safeUrl) {
+    throw new Error("The link must be a CareTip page, for example /dashboard/billing.");
+  }
 
   const channelList: string[] = [];
   const ch = input.channels ?? { inApp: true, push: true, email: false };
@@ -571,7 +578,7 @@ export async function sendPlatformAnnouncement(input: {
       audience: input.audience,
       priority: input.priority ?? "normal",
       channels: channelList,
-      url: input.url?.trim() || null,
+      url: safeUrl,
       recipientCount: userIds.length,
     },
   });
@@ -587,7 +594,7 @@ export async function sendPlatformAnnouncement(input: {
       type: NotificationType.ADMIN_ANNOUNCEMENT,
       title,
       body,
-      url: input.url?.trim() || undefined,
+      url: safeUrl ?? undefined,
       timestamp: new Date().toISOString(),
       metadata: { entityId: announcement.id, announcementId: announcement.id },
     },

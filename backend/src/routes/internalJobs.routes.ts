@@ -390,4 +390,24 @@ router.post("/subscription-billing-notification-retry", async (req, res) => {
   return res.json({ ok: true, ...result });
 });
 
+/**
+ * POST /api/internal/jobs/notification-delivery-tick
+ * Drains the notification email outbox and repairs missed payout notifications. Backup for the
+ * in-process worker; safe to overlap with it (rows are claimed with SKIP LOCKED). The response
+ * carries counts only, never addresses or message content.
+ */
+router.post("/notification-delivery-tick", async (req, res) => {
+  if (!authorizeCronRequest(req)) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  const queue = await import("../services/notifications/notificationEmailQueue.service.js");
+  const { sweepRecentPayoutNotifications } = await import("../services/notifications/payoutNotifications.service.js");
+  const { repairMissingNotificationEmails } = await import("../services/notifications/notificationEmailRepair.service.js");
+  const delivery = await queue.runNotificationEmailDeliveryTick({ limit: 50 });
+  const repaired = await repairMissingNotificationEmails({ limit: 100 });
+  const payouts = await sweepRecentPayoutNotifications({ limit: 100 });
+  const health = await queue.getNotificationEmailQueueHealth();
+  return res.json({ ok: true, delivery, repaired, payouts, health });
+});
+
 export default router;

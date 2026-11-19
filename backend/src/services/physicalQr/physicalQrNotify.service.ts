@@ -176,7 +176,7 @@ export function notifyPhysicalQrPaymentReceived(input: { businessId: string; ord
     const included = isIncludedPhysicalQrOrder(order.totalAmount);
     await notifyBusinessOrder({
       ...input,
-      title: included ? "Order received" : "Payment received",
+      title: included ? "We received your QR order" : "Payment received for your QR order",
       body: included
         ? "Your physical QR order has been received and is now being processed."
         : "Your physical QR order has been paid for and is now being processed.",
@@ -193,7 +193,7 @@ export function notifyPhysicalQrPaymentReceived(input: { businessId: string; ord
 export function notifyPhysicalQrPrinting(input: { businessId: string; orderId: string }): void {
   void notifyBusinessOrder({
     ...input,
-    title: "Printing",
+    title: "Your QR order is being printed",
     body: "Your physical QR order is now being printed.",
     template: { id: "physical_qr_printing" },
     dedupeKey: `physical-qr:${input.orderId}:printing`,
@@ -209,9 +209,9 @@ export function notifyPhysicalQrShipped(input: {
   const tracking = input.trackingNumber?.trim() || "";
   void notifyBusinessOrder({
     ...input,
-    title: "Shipped",
+    title: "Your QR order has shipped",
     body: tracking
-      ? `Your physical QR order has been shipped. Tracking number: ${tracking}`
+      ? `Your physical QR order has been shipped. Tracking number: ${tracking}.`
       : "Your physical QR order has been shipped.",
     template: { id: "physical_qr_shipped", params: { trackingNumber: tracking || null } },
     dedupeKey: `physical-qr:${input.orderId}:shipped`,
@@ -222,7 +222,7 @@ export function notifyPhysicalQrShipped(input: {
 export function notifyPhysicalQrDelivered(input: { businessId: string; orderId: string }): void {
   void notifyBusinessOrder({
     ...input,
-    title: "Delivered",
+    title: "Your QR order was delivered",
     body: "Your physical QR order has been delivered.",
     template: { id: "physical_qr_delivered" },
     dedupeKey: `physical-qr:${input.orderId}:delivered`,

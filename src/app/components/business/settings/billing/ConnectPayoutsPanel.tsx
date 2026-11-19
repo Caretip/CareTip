@@ -347,7 +347,7 @@ export function ConnectPayoutsPanel({ loading: bootLoading }: { loading?: boolea
                               : t("business.billing.payouts.methodUnknown")}
                         </td>
                         <td className="py-3 pr-4">
-                          <ConnectPayoutStatusBadge status={payout.status} />
+                          <ConnectPayoutStatusBadge status={payout.status} returnedAt={payout.returnedAt} />
                         </td>
                         <td className="py-3 pr-4 text-muted-foreground">
                           {formatConnectPayoutDate(payout.arrivalDate, locale)}
@@ -802,7 +802,7 @@ function PayoutMobileRow({
           <p className="text-base font-semibold tabular-nums text-foreground">
             {formatConnectPayoutAmount(payout.amountCents, payout.currency, locale)}
           </p>
-          <ConnectPayoutStatusBadge className="mt-1 max-w-[8rem] justify-end leading-snug" status={payout.status} />
+          <ConnectPayoutStatusBadge className="mt-1 max-w-[8rem] justify-end leading-snug" status={payout.status} returnedAt={payout.returnedAt} />
         </div>
       </div>
       {issue ? <p className="mt-2 text-xs text-destructive">{issue}</p> : null}

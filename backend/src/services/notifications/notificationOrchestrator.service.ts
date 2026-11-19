@@ -2,8 +2,8 @@ import type { NotificationPriority } from "@prisma/client";
 import { localizeNotificationPayload } from "../../notifications/notificationI18n.js";
 import { resolveUserPreferredLocale } from "../../emails/i18nEmail.js";
 import { prisma } from "../../prisma.js";
-import { sendLocalizedUserNotificationEmail } from "../localizedNotificationEmail.service.js";
-import { employeeTipEmailCopy } from "./employeeTipNotificationPrefs.js";
+import { queueLocalizedUserNotificationEmail } from "../localizedNotificationEmail.service.js";
+import { employeeTipEmailCopy, employeeTipEmailRequest } from "./employeeTipNotificationPrefs.js";
 import { sendNotification } from "../push/notification.service.js";
 import type { NotificationPayload, NotificationType } from "../push/notification.types.js";
 import {
@@ -16,6 +16,7 @@ import {
   emitNotificationUnreadCount,
 } from "../../socket/socketEmitters.js";
 import { logServerError } from "../../utils/httpErrors.js";
+import { toSafeAppPath } from "../../config/frontendUrl.js";
 
 export type DeliveryChannel = "in_app" | "push" | "email";
 
@@ -81,8 +82,14 @@ export async function deliverUserNotification(
     localeTemplate: input.payload.localeTemplate,
   });
 
+  // The link is followed from the inbox, a push click and the email button: keep only CareTip app paths.
+  const safeUrl = input.payload.url ? toSafeAppPath(input.payload.url) : null;
+  if (input.payload.url && !safeUrl) {
+    console.warn("[notifications] unsafe link dropped", { type: input.payload.type });
+  }
   const deliveryPayload = {
     ...input.payload,
+    url: safeUrl ?? undefined,
     title: localized.title,
     body: localized.body,
   };
@@ -185,29 +192,39 @@ export async function deliverUserNotification(
     if (user?.email) {
       const privateEmail =
         input.emailPrivacy === "employee_tip"
-          ? employeeTipEmailCopy(resolveUserPreferredLocale(user.preferredLocale) === "de" ? "de" : "en")
+          ? employeeTipEmailRequest(resolveUserPreferredLocale(user.preferredLocale) === "de" ? "de" : "en")
           : null;
-      void sendLocalizedUserNotificationEmail({
-        to: user.email,
-        userId: input.userId,
-        preferredLocale: user.preferredLocale,
-        title: privateEmail?.title ?? deliveryPayload.title,
-        bodyText: privateEmail?.bodyText ?? deliveryPayload.body,
-        actionUrl: deliveryPayload.url ?? null,
-      })
-        .then((result) => {
-          console.info("[notifications] email", {
-            notificationId: notification?.id ?? null,
-            type: deliveryPayload.type,
-            userId: input.userId,
-            accepted: result.accepted,
-            outcome: result.outcome,
-            messageId: result.messageId ?? null,
-          });
-        })
-        .catch((err) => {
-          logServerError("notifications.deliverUserNotification.email", err);
+      const emailBusinessId =
+        typeof deliveryPayload.metadata?.businessId === "string" ? deliveryPayload.metadata.businessId : null;
+      try {
+        // Persisted in the delivery outbox before returning; the send and any retries run in the
+        // background. One email per notification row: retries reuse the key and Resend drops repeats.
+        const queued = await queueLocalizedUserNotificationEmail({
+          to: user.email,
+          userId: input.userId,
+          preferredLocale: user.preferredLocale,
+          title: privateEmail?.title ?? deliveryPayload.title,
+          bodyText: privateEmail?.bodyText ?? deliveryPayload.body,
+          preheader: privateEmail?.preheader,
+          actionLabel: privateEmail?.actionLabel,
+          footerNote: privateEmail?.footerNote,
+          actionUrl: deliveryPayload.url ?? null,
+          idempotencyKey: `notification-email:${notification.id}`,
+          kind: deliveryPayload.localeTemplate?.id ?? deliveryPayload.type,
+          businessId: emailBusinessId,
+          notificationId: notification.id,
         });
+        console.info("[notifications] email", {
+          notificationId: notification.id,
+          type: deliveryPayload.type,
+          userId: input.userId,
+          mode: queued.mode,
+          ...(queued.mode === "queued" ? { deliveryId: queued.deliveryId } : {}),
+          ...(queued.mode === "direct" ? { accepted: queued.result.accepted, outcome: queued.result.outcome } : {}),
+        });
+      } catch (err) {
+        logServerError("notifications.deliverUserNotification.email", err);
+      }
     }
   }
 

@@ -21,7 +21,7 @@ import { useNotifications, type NotificationListFilters } from "@/app/hooks/useN
 import type { InboxNotification } from "@/app/lib/api";
 import {
   filterInboxNotifications,
-  getNotificationCategoryStyle,
+  getNotificationIconStyle,
   groupNotificationsByDate,
   INBOX_FILTER_CHIPS,
   type InboxCategoryFilter,
@@ -76,7 +76,7 @@ function NotificationCard({
 }) {
   const { t, i18n } = useTranslation();
   const category = getNotificationCategory(notification);
-  const style = getNotificationCategoryStyle(category);
+  const style = getNotificationIconStyle(notification);
   const Icon = style.icon;
   const actionLabel = inboxNotificationActionLabel(notification, navOpts, t);
   const hasAction = inboxNotificationHasOpenAction(notification, navOpts);
@@ -205,7 +205,7 @@ function NotificationDetailPanel({
 }) {
   const { t, i18n } = useTranslation();
   const category = getNotificationCategory(notification);
-  const style = getNotificationCategoryStyle(category);
+  const style = getNotificationIconStyle(notification);
   const Icon = style.icon;
   const actionLabel = inboxNotificationActionLabel(notification, navOpts, t);
   const hasAction = inboxNotificationHasOpenAction(notification, navOpts);

@@ -1,6 +1,6 @@
-import { SubscriptionStatus } from "@prisma/client";
+import { Prisma, SubscriptionStatus } from "@prisma/client";
 import { prisma } from "../prisma.js";
-import { sendLocalizedUserNotificationEmail } from "./localizedNotificationEmail.service.js";
+import { queueLocalizedUserNotificationEmail } from "./localizedNotificationEmail.service.js";
 import { isSubscriptionTrialEnabled } from "../config/subscriptionTrial.js";
 
 export type TrialReminderDay = "7" | "3" | "1";
@@ -10,6 +10,9 @@ export type TrialRemindersSent = Partial<Record<TrialReminderDay, string>>;
 const REMINDER_DAYS: TrialReminderDay[] = ["7", "3", "1"];
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+/** Subscription billing page (the route `/dashboard/billing` redirects here). */
+export const TRIAL_REMINDER_BILLING_PATH = "/dashboard/billing/subscription";
 
 function parseRemindersSent(raw: unknown): TrialRemindersSent {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
@@ -90,6 +93,7 @@ export async function runTrialReminderEmails(): Promise<TrialReminderRunResult> 
     },
     select: {
       id: true,
+      businessId: true,
       trialEndsAt: true,
       trialReminderSent: true,
       business: {
@@ -132,25 +136,62 @@ export async function runTrialReminderEmails(): Promise<TrialReminderRunResult> 
 
       const locale = resolveLocale(manager.preferredLocale);
       const copy = reminderCopy(dueDay, locale);
-      await sendLocalizedUserNotificationEmail({
+
+      // Claim the reminder before sending so a second job run cannot send it too.
+      // The claim only matches while the column still holds what this run read.
+      const updatedSent: TrialRemindersSent = {
+        ...sentMap,
+        [dueDay]: now.toISOString(),
+      };
+      const unchanged =
+        sub.trialReminderSent == null
+          ? { equals: Prisma.AnyNull }
+          : { equals: sub.trialReminderSent as Prisma.InputJsonValue };
+      const claim = await prisma.subscription.updateMany({
+        where: { id: sub.id, trialReminderSent: unchanged },
+        data: { trialReminderSent: updatedSent },
+      });
+      if (claim.count === 0) {
+        skipped += 1;
+        continue;
+      }
+
+      // Durable: once the reminder is in the delivery outbox, the queue worker retries it until
+      // Resend accepts it, so a Resend outage on reminder day no longer loses it.
+      const delivery = await queueLocalizedUserNotificationEmail({
         to: manager.email,
         userId: manager.id,
         preferredLocale: manager.preferredLocale,
         title: copy.title,
         bodyText: copy.body,
-        actionUrl: "/dashboard/settings",
+        actionUrl: TRIAL_REMINDER_BILLING_PATH,
         actionLabel: locale === "de" ? "Abrechnung öffnen" : "Open billing",
+        idempotencyKey: `trial-reminder:${sub.id}:${dueDay}`,
+        kind: "trial_reminder",
+        businessId: sub.businessId,
       });
+      const result =
+        delivery.mode === "direct"
+          ? delivery.result
+          : { accepted: delivery.mode === "queued", outcome: delivery.mode };
 
-      const updatedSent: TrialRemindersSent = {
-        ...sentMap,
-        [dueDay]: now.toISOString(),
-      };
-
-      await prisma.subscription.update({
-        where: { id: sub.id },
-        data: { trialReminderSent: updatedSent },
-      });
+      if (!result.accepted) {
+        // Not delivered: release the claim so the next run tries again.
+        await prisma.subscription.updateMany({
+          where: { id: sub.id, trialReminderSent: { equals: updatedSent } },
+          data: {
+            trialReminderSent:
+              sub.trialReminderSent == null ? Prisma.DbNull : (sub.trialReminderSent as Prisma.InputJsonValue),
+          },
+        });
+        console.warn("[trial-reminder] email not accepted; will retry on the next run", {
+          subscriptionId: sub.id,
+          day: dueDay,
+          outcome: result.outcome,
+        });
+        skipped += 1;
+        continue;
+      }
 
       sent += 1;
     } catch {

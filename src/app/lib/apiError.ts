@@ -1,4 +1,6 @@
 export const EMAIL_NOT_VERIFIED_CODE = "EMAIL_NOT_VERIFIED" as const;
+/** Password sign-in is locked for a few minutes; the server message is already localized. */
+export const LOGIN_TEMPORARILY_LOCKED_CODE = "LOGIN_TEMPORARILY_LOCKED" as const;
 
 /** Uniform public OAuth failure (no account-existence oracle). Prefer this over legacy codes. */
 export const OAUTH_SIGN_IN_FAILED_CODE = "OAUTH_SIGN_IN_FAILED" as const;

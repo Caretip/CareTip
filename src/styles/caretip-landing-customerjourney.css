@@ -357,3 +357,32 @@ html.dark .caretip-customerjourney__stepbadge {
     scroll-behavior: auto;
   }
 }
+
+/*
+ * Larger guest-journey mockups (2026-11-19). The phones rendered at about half their column width
+ * (162px wide in ~325px desktop columns, 115px on tablets, 46vw on phones). Taller frames on
+ * desktop/tablet and wider ones on phones; width still caps at the column.
+ */
+.caretip-customerjourney {
+  --caretip-journeymockup-h: clamp(19rem, 30vw, 28rem);
+}
+
+.caretip-customerjourney__mockup {
+  max-width: min(100%, 18rem);
+}
+
+.caretip-customerjourney__visual_akona-hotel .caretip-customerjourney__mockup {
+  max-width: min(100%, 22rem);
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .caretip-customerjourney {
+    --caretip-journeymockup-h: clamp(19rem, 44vw, 27rem);
+  }
+}
+
+@media (max-width: 639px) {
+  .caretip-customerjourney {
+    --caretip-journeymockup-w: clamp(12rem, 60vw, 15.5rem);
+  }
+}

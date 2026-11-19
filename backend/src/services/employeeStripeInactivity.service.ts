@@ -78,8 +78,8 @@ async function defaultNotify(args: {
       userId: args.employeeUserId,
       payload: {
         type: NotificationType.SYSTEM_ALERT,
-        title: "Your profile will be set to inactive in 10 days due to inactivity",
-        body: "Your profile will be set to inactive in 10 days due to inactivity",
+        title: "Your profile will become inactive in 10 days",
+        body: "Your CareTip profile has not received a tip for some time, so it will be set to inactive in 10 days.",
         localeTemplate: { id: "employee_inactivity_warning" },
         url: "/employee/dashboard",
         metadata: { employeeId: args.employeeId },

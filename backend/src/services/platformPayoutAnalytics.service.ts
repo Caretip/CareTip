@@ -12,6 +12,8 @@ export type PlatformPayoutAnalytics = {
     paidCount: number;
     pendingCount: number;
     failedCount: number;
+    /** Paid payouts the bank later returned; counted here instead of in paidCount. */
+    returnedCount: number;
   };
   volumeByDay: Array<{
     date: string;
@@ -100,6 +102,10 @@ export async function getPlatformPayoutAnalytics(input: {
     else if (failedStatuses.has(row.status)) failedCount += c;
   }
 
+  // A returned payout keeps status paid for history; report it as returned, not paid.
+  const returnedCount = await countReturnedPayoutsCreatedBetween(startUtc, endUtc);
+  paidCount = Math.max(0, paidCount - returnedCount);
+
   const bizDaily = new Map<string, { eur: number; count: number }>();
   const empDaily = new Map<string, { eur: number; count: number }>();
   for (const r of dailyRows) {
@@ -128,6 +134,7 @@ export async function getPlatformPayoutAnalytics(input: {
       paidCount,
       pendingCount,
       failedCount,
+      returnedCount,
     },
     volumeByDay,
     statusBreakdown: statusRows.map((r) => ({
@@ -135,4 +142,22 @@ export async function getPlatformPayoutAnalytics(input: {
       count: Number(r.c ?? 0),
     })),
   };
+}
+
+async function countReturnedPayoutsCreatedBetween(startUtc: Date, endUtc: Date): Promise<number> {
+  try {
+    const rows = await prisma.$queryRaw<Array<{ c: number }>>(Prisma.sql`
+      SELECT COUNT(*)::int AS c FROM stripe_payout_returns r
+      LEFT JOIN stripe_connect_payouts b ON r.payout_kind = 'business' AND b.id = r.payout_row_id
+      LEFT JOIN employee_stripe_payouts e ON r.payout_kind = 'employee' AND e.id = r.payout_row_id
+      WHERE COALESCE(b.status, e.status) = 'paid'
+        AND COALESCE(b.stripe_created_at, e.stripe_created_at) >= ${sqlUtcTimestamp(startUtc)}
+        AND COALESCE(b.stripe_created_at, e.stripe_created_at) <= ${sqlUtcTimestamp(endUtc)}
+    `);
+    return Number(rows[0]?.c ?? 0);
+  } catch (err) {
+    // Before the returns migration runs there is nothing to subtract.
+    if (/stripe_payout_returns/.test(String((err as Error)?.message ?? err))) return 0;
+    throw err;
+  }
 }

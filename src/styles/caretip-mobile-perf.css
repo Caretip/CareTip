@@ -80,3 +80,28 @@ html[data-caretip-mobile-drawer-open] .caretip-pwa-install-banner {
     padding-block: 0.25rem;
   }
 }
+
+/*
+ * Touch tablets at desktop width (e.g. iPad landscape) get the desktop header, whose links are
+ * 34px, the language pill 27px and Sign in 40px. Keep the look; extend each hit area to 44px tall
+ * (vertical only, so neighbours never overlap). Mouse users are unaffected.
+ */
+@media (min-width: 1024px) and (pointer: coarse) {
+  header .caretip-public-nav-link,
+  header .caretip-lang-select__trigger,
+  header .caretip-btn-primary--compact {
+    position: relative;
+  }
+
+  header .caretip-public-nav-link::after,
+  header .caretip-lang-select__trigger::after,
+  header .caretip-btn-primary--compact::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: max(44px, 100%);
+    transform: translateY(-50%);
+  }
+}

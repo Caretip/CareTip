@@ -1,5 +1,6 @@
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import { PrefetchLink } from "@/app/components/PrefetchLink";
+import { prefetchPublicRoute } from "@/app/lib/prefetchPublicRoutes";
 import {
   ALL_INDUSTRY_PAGE_IDS,
   industryPath,
@@ -11,7 +12,8 @@ import type { ImgHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
+import { useNavigation } from "react-router";
 
 type IndustryPhotoGridProps = {
   className?: string;
@@ -60,6 +62,21 @@ export function IndustryPhotoGrid({ className }: IndustryPhotoGridProps) {
     for (const id of ALL_INDUSTRY_PAGE_IDS) {
       void warmIndustryHero(id, { priority: "low" });
     }
+    /*
+     * The grid mounts only when scrolled near. Fetch the (shared, small) industry page code now so
+     * "Learn more" opens instantly; before, a tap waited for it (about 1s on slow 4G, no feedback).
+     * Code only: hero images keep their own low-priority warm above. Skipped under Save-Data.
+     */
+    const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
+    if (saveData) return;
+    const warmCode = () => prefetchPublicRoute(industryPath(ALL_INDUSTRY_PAGE_IDS[0]), { warmImages: false });
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
+    if (w.requestIdleCallback) {
+      const id = w.requestIdleCallback(warmCode, { timeout: 1500 });
+      return () => w.cancelIdleCallback?.(id);
+    }
+    const t = window.setTimeout(warmCode, 400);
+    return () => window.clearTimeout(t);
   }, []);
 
   return (
@@ -109,12 +126,16 @@ function IndustryPhotoCard({
   animate: boolean;
   snippet?: string;
 }) {
+  // Instant feedback while React Router is still fetching this card's page.
+  const navigation = useNavigation();
+  const pending = navigation.state === "loading" && navigation.location?.pathname === card.href;
   return (
     <article
       role="listitem"
       className={cn(
         "caretip-industry-photo-card",
         animate && "caretip-industry-photo-card--animate",
+        pending && "caretip-industry-photo-card--pending",
       )}
       data-industry={card.id}
       style={{ animationDelay: `${index * 0.08}s` }}
@@ -157,9 +178,20 @@ function IndustryPhotoCard({
       <div className="caretip-industry-photo-card__label">
         <small>{card.title}</small>
         <strong>{card.teaser}</strong>
-        <PrefetchLink to={card.href} className="caretip-industry-photo-card__cta no-underline">
-          {ctaLabel}
-          <ArrowUpRight size={14} strokeWidth={2.2} aria-hidden />
+        <PrefetchLink
+          to={card.href}
+          className="caretip-industry-photo-card__cta no-underline"
+          aria-busy={pending || undefined}
+        >
+          <span className="caretip-industry-photo-card__cta-rule" aria-hidden />
+          <span className="caretip-industry-photo-card__cta-text">{ctaLabel}</span>
+          <span className="caretip-industry-photo-card__cta-icon" aria-hidden>
+            {pending ? (
+              <Loader2 size={16} strokeWidth={2.4} className="caretip-industry-photo-card__cta-spin" />
+            ) : (
+              <ArrowRight size={16} strokeWidth={2.4} />
+            )}
+          </span>
         </PrefetchLink>
       </div>
     </article>

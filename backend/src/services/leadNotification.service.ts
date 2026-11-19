@@ -25,20 +25,9 @@ export type CrmLeadPayload = {
   };
 };
 
-/** Demo / sales / general inquiry inbox — backend env only (never from request body). */
-export function getLeadsInbox(): string {
-  return (
-    process.env.LEADS_INBOX_EMAIL?.trim() ||
-    process.env.INFO_INBOX_EMAIL?.trim() ||
-    process.env.SALES_INBOX_EMAIL?.trim() ||
-    "info@caretip.de"
-  );
-}
-
-/** Technical support inbox — backend env only (never from request body). */
-export function getSupportInbox(): string {
-  return process.env.SUPPORT_INBOX_EMAIL?.trim() || "support@caretip.de";
-}
+// Inbox resolution lives in config/emailEnv.ts so the Resend adapter can scope live tests to it.
+export { getLeadsInbox, getSupportInbox } from "../config/emailEnv.js";
+import { getLeadsInbox, getSupportInbox } from "../config/emailEnv.js";
 
 export function resolveLeadDestination(type: LeadType): string {
   return type === "demo" ? getLeadsInbox() : getSupportInbox();

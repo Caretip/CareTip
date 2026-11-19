@@ -65,6 +65,8 @@ import {
   parseMerchantLegalAcceptedFlag,
 } from "../lib/merchantLegalAcceptance.js";
 import * as mfaLoginService from "../services/mfaLogin.service.js";
+import * as loginLockout from "../services/loginLockout.service.js";
+import { localeFromAcceptLanguage } from "../emails/i18nEmail.js";
 import {
   isAllowedAccessJwtType,
   resolveJwtSubject,
@@ -446,6 +448,69 @@ async function respondRegisterExistingAccount(req: Request, res: Response) {
   });
 }
 
+function lockoutResponseLocale(req: Request): "en" | "de" {
+  const body = req.body as Record<string, unknown> | undefined;
+  const explicit = typeof body?.locale === "string" ? body.locale.trim().toLowerCase() : "";
+  if (explicit.startsWith("de")) return "de";
+  if (explicit.startsWith("en")) return "en";
+  return localeFromAcceptLanguage(req.get("accept-language")) ?? "en";
+}
+
+/** 429 with the same copy for every email, so a lock never shows whether an account exists. */
+function respondLoginLocked(req: Request, res: Response, retryAfterMs: number): void {
+  const retryAfterSeconds = Math.max(1, Math.ceil(retryAfterMs / 1000));
+  res.setHeader("Retry-After", String(retryAfterSeconds));
+  res.status(429).json({
+    message: loginLockout.loginLockedMessage(lockoutResponseLocale(req), retryAfterMs),
+    code: loginLockout.LOGIN_TEMPORARILY_LOCKED_CODE,
+    retryAfterSeconds,
+  });
+}
+
+/**
+ * Password check under the progressive account lockout. Returns null after responding when the
+ * account is locked. Other errors propagate unchanged to the caller's existing error mapping.
+ */
+async function validateCredentialsWithLockout(
+  req: Request,
+  res: Response,
+  email: string,
+  password: string,
+): Promise<Awaited<ReturnType<typeof authService.validateLoginCredentials>> | null> {
+  const attempt = await loginLockout.beginLoginAttempt(email);
+  if (!attempt.allowed) {
+    respondLoginLocked(req, res, attempt.retryAfterMs);
+    return null;
+  }
+  const { ticket } = attempt;
+  let user: Awaited<ReturnType<typeof authService.validateLoginCredentials>>;
+  try {
+    user = await authService.validateLoginCredentials({ email, password });
+  } catch (err) {
+    if (err instanceof EmailNotVerifiedLoginError) {
+      // The password was correct; only verification is missing.
+      await loginLockout.recordLoginSuccess(ticket);
+      throw err;
+    }
+    if (err instanceof Error && err.message === AUTH_INVALID_CREDENTIALS_MESSAGE) {
+      const failure = await loginLockout.recordLoginFailure(ticket);
+      if (failure.locked) {
+        respondLoginLocked(req, res, failure.retryAfterMs);
+        return null;
+      }
+      throw err;
+    }
+    await loginLockout.releaseLoginAttempt(ticket);
+    throw err;
+  }
+  const cleared = await loginLockout.recordLoginSuccess(ticket);
+  if (cleared.hadLockout) {
+    console.info("[auth.lockout] successful sign-in after lockout", { userId: user.id });
+    void auditService.writeAuditLog({ userId: user.id, action: "auth.login_after_lockout" });
+  }
+  return user;
+}
+
 export async function login(req: Request, res: Response) {
   try {
     const body = req.body as Record<string, unknown>;
@@ -457,10 +522,8 @@ export async function login(req: Request, res: Response) {
     if (!email || typeof password !== "string") {
       return res.status(400).json({ message: "Email and password are required" });
     }
-    const user = await authService.validateLoginCredentials({
-      email,
-      password,
-    });
+    const user = await validateCredentialsWithLockout(req, res, email, password);
+    if (!user) return;
 
     const loginClientLocale =
       typeof body.locale === "string" && body.locale.trim() ? body.locale.trim() : undefined;
@@ -1092,13 +1155,33 @@ export async function resendVerificationEmail(req: Request, res: Response) {
     const locale =
       typeof body.locale === "string" && body.locale.trim() ? body.locale.trim() : undefined;
     const platform = resolveAuthLinkPlatform(req);
-    await authService.resendVerificationEmail({
-      email,
-      password,
-      explicitLocale: locale,
-      acceptLanguage,
-      platform,
-    });
+    // This endpoint also confirms a password, so it shares the sign-in lockout.
+    const attempt = await loginLockout.beginLoginAttempt(email);
+    if (!attempt.allowed) {
+      respondLoginLocked(req, res, attempt.retryAfterMs);
+      return;
+    }
+    try {
+      await authService.resendVerificationEmail({
+        email,
+        password,
+        explicitLocale: locale,
+        acceptLanguage,
+        platform,
+      });
+    } catch (err) {
+      if (err instanceof Error && err.message === AUTH_INVALID_CREDENTIALS_MESSAGE) {
+        const failure = await loginLockout.recordLoginFailure(attempt.ticket);
+        if (failure.locked) {
+          respondLoginLocked(req, res, failure.retryAfterMs);
+          return;
+        }
+      } else {
+        await loginLockout.releaseLoginAttempt(attempt.ticket);
+      }
+      throw err;
+    }
+    await loginLockout.recordLoginSuccess(attempt.ticket);
     return res.json({
       ok: true,
       message: "We sent a new verification link to your email.",

@@ -583,7 +583,7 @@ export function buildLoginAlertContent(input: {
             variant === "suspicious"
               ? "We noticed a sign-in to your account."
               : "Your CareTip account was used to sign in.",
-          headline: variant === "suspicious" ? "Sign-in activity" : "New sign in",
+          headline: variant === "suspicious" ? "Sign-in activity" : "New sign-in",
           intro:
             variant === "suspicious"
               ? "Someone signed in to your CareTip account from a new device or location. Here are the details:"
@@ -656,6 +656,25 @@ export function buildLoginAlertContent(input: {
   return { subject: copy.subject, html, text: textLines.join("\n") };
 }
 
+/** Footer for account notifications. They are triggered by account activity, not requested by the reader. */
+const NOTIFICATION_FOOTER: Record<EmailLocale, string> = {
+  en: "You are receiving this email because of activity on your CareTip account.",
+  de: "Sie erhalten diese E-Mail aufgrund von Aktivitäten in Ihrem CareTip-Konto.",
+};
+
+const PREHEADER_MAX = 120;
+
+/** First sentence of the body, so the inbox preview says what happened instead of a generic line. */
+export function notificationPreheaderFromBody(body: string): string {
+  const flat = body.replace(/\s+/g, " ").trim();
+  if (!flat) return "";
+  const sentence = flat.match(/^.+?[.!?](?=\s|$)/)?.[0] ?? flat;
+  if (sentence.length <= PREHEADER_MAX) return sentence;
+  const cut = sentence.slice(0, PREHEADER_MAX);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > 60 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`;
+}
+
 export function buildGenericNotificationContent(input: {
   locale: EmailLocale;
   title: string;
@@ -664,6 +683,10 @@ export function buildGenericNotificationContent(input: {
   actionLabel?: string | null;
   recipientName?: string | null;
   businessName?: string | null;
+  /** Inbox preview text. Defaults to the first sentence of the body. */
+  preheader?: string | null;
+  /** Closing line under the footer. Defaults to the account-notification footer. */
+  footerNote?: string | null;
 }): { subject: string; html: string; text: string } {
   const loc = input.locale === "de" ? "de" : "en";
   const b = bundle(loc);
@@ -673,7 +696,10 @@ export function buildGenericNotificationContent(input: {
   const body = input.bodyText.trim() || "";
   const url = input.actionUrl?.trim();
   const preheader =
-    loc === "de" ? "Neue Benachrichtigung von CareTip." : "New notification from CareTip.";
+    input.preheader?.trim() ||
+    notificationPreheaderFromBody(body) ||
+    (loc === "de" ? "Neue Benachrichtigung von CareTip." : "New notification from CareTip.");
+  const footerNote = input.footerNote?.trim() || NOTIFICATION_FOOTER[loc];
 
   const greeting = formatEmailGreeting(loc, {
     recipientName: input.recipientName,
@@ -691,7 +717,7 @@ export function buildGenericNotificationContent(input: {
     emailBodyTextLast(lastParagraph),
     ...(url && url.length > 0 ? [emailHairline(), emailCta(url, actionLabel)] : []),
     emailFrameClose(),
-    emailFooterBlock(null, b.footer, footerExtras(loc)),
+    emailFooterBlock(null, footerNote, footerExtras(loc)),
   ].join("");
 
   const html = [
@@ -702,7 +728,7 @@ export function buildGenericNotificationContent(input: {
   ].join("");
 
   const ctaText = url && url.length > 0 ? `\n${actionLabel}: ${url}\n` : "";
-  const text = `${greeting}\n\n${subject}\n\n${body}${ctaText}\n${b.footerBrand}\n${b.footerCopyright}\n${getCareTipSupportEmail()}\n\n${b.footer}`;
+  const text = `${greeting}\n\n${subject}\n\n${body}${ctaText}\n${b.footerBrand}\n${b.footerCopyright}\n${getCareTipSupportEmail()}\n\n${footerNote}`;
 
   return { subject, html, text };
 }

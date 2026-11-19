@@ -244,7 +244,7 @@ export function onLoginSecurityAlert(
       userId,
       payload: {
         type: NotificationType.LOGIN_SECURITY,
-        title: suspicious ? "Sign-in activity" : "New sign in",
+        title: suspicious ? "Sign-in activity" : "New sign-in",
         body: suspicious
           ? "A sign-in from a new device or location was detected."
           : "Your CareTip account was used to sign in.",

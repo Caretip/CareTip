@@ -70,3 +70,28 @@ export function employeeTipEmailCopy(locale: "de" | "en"): { title: string; body
     bodyText: "A new tip was recorded in CareTip. Open CareTip to view it.",
   };
 }
+
+/**
+ * PROTECTED CONTENT. The German employee tip email must render exactly as it did before the
+ * notification footer and preheader defaults changed. These are the frame strings it has always
+ * shown. Do not edit, proofread or translate them. Checked by
+ * scripts/employee-tip-email-protected-content-runtime.ts.
+ */
+const EMPLOYEE_TIP_EMAIL_FRAME_DE = {
+  preheader: "Neue Benachrichtigung von CareTip.",
+  actionLabel: "In der App öffnen",
+  footerNote: "Wenn Sie diese E-Mail nicht angefordert haben, können Sie sie ignorieren.",
+} as const;
+
+/** Everything the notification email service needs for an employee tip email, except recipient and link. */
+export function employeeTipEmailRequest(locale: "de" | "en"): {
+  title: string;
+  bodyText: string;
+  preheader?: string;
+  actionLabel?: string;
+  footerNote?: string;
+} {
+  const copy = employeeTipEmailCopy(locale);
+  if (locale === "de") return { ...copy, ...EMPLOYEE_TIP_EMAIL_FRAME_DE };
+  return copy;
+}

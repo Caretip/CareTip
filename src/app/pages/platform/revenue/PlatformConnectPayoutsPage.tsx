@@ -410,7 +410,7 @@ export function PlatformConnectPayoutsPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <ConnectPayoutStatusBadge status={payout.status} />
+                        <ConnectPayoutStatusBadge status={payout.status} returnedAt={payout.returnedAt} />
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {formatConnectPayoutDate(payout.stripeCreatedAt, i18n.language, ADMIN_FINANCIAL_TIMEZONE)}
@@ -504,7 +504,7 @@ function AdminPayoutCard({
       </div>
       <p className="mt-1 text-xs text-muted-foreground">{t(movementI18nKey(payout))}</p>
       <div className="mt-2 flex flex-wrap gap-2">
-        <ConnectPayoutStatusBadge status={payout.status} />
+        <ConnectPayoutStatusBadge status={payout.status} returnedAt={payout.returnedAt} />
         <ConnectPayoutReconBadge status={payout.reconciliationStatus} lineCount={payout.balanceLineCount} />
       </div>
       {failure ? <p className="mt-2 text-xs text-muted-foreground">{failure}</p> : null}

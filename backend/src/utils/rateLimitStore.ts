@@ -118,11 +118,30 @@ async function connectRedis(url: string): Promise<RedisClient | null> {
     redisClient = client;
     redisReady = true;
     reportRedisState("rateLimit", "ready");
+    void logRedisEngine(client);
     return redisClient;
   } catch (err) {
     client?.disconnect();
     markRedisUnavailable(err);
     return null;
+  }
+}
+
+/** Log which engine and version is behind REDIS_URL (Valkey reports a Redis-compatible redis_version). */
+async function logRedisEngine(client: RedisClient): Promise<void> {
+  try {
+    const info = await (client as unknown as { info(section: string): Promise<string> }).info("server");
+    const { describeRedisEngine, engineSupportsLockoutScripts } = await import("../lib/redisEngine.js");
+    const engine = describeRedisEngine(info);
+    const log = engineSupportsLockoutScripts(engine) ? console.info : console.error;
+    log("[rateLimit] shared store engine", {
+      engine: engine.engine,
+      version: engine.version,
+      redisCompatVersion: engine.redisCompatVersion,
+      lockoutScriptsSupported: engineSupportsLockoutScripts(engine),
+    });
+  } catch {
+    // INFO may be disabled on managed services; the scripts report their own errors.
   }
 }
 
@@ -179,6 +198,15 @@ export function setRateLimitRedisClientForTests(client: RedisClient | null): voi
   testClientActive = client != null;
   redisClient = client;
   redisReady = client != null;
+}
+
+/**
+ * The shared Redis connection used by the rate limiter, or null when it is not configured or
+ * currently unreachable. Other shared counters (login lockout) reuse it rather than opening
+ * their own connection.
+ */
+export async function getRateLimitRedisClient(): Promise<RedisClient | null> {
+  return getRedis();
 }
 
 /** True when shared storage is configured and currently reachable. */

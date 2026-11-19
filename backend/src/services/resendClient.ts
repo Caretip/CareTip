@@ -10,6 +10,8 @@ import {
   getResendFromRaw,
   getResendSendingDomain,
   getCareTipSupportEmail,
+  getLeadsInbox,
+  getSupportInbox,
   isValidResendFromFormat,
 } from "../config/emailEnv.js";
 import {
@@ -22,6 +24,9 @@ const DEFAULT_RESEND_FROM = "CareTip <no-reply@mail.caretip.com>";
 const DEFAULT_LEAD_SENDING_DOMAIN = "mail.caretip.de";
 
 let warnedInvalidResendFrom = false;
+
+/** Upper bound for one Resend API request. */
+export const RESEND_REQUEST_TIMEOUT_MS = 20_000;
 
 function wrapCareTipFrom(emailOrNamed: string): string {
   const raw = emailOrNamed.trim();
@@ -103,6 +108,11 @@ export type ResendMailPayload = {
   replyTo?: string | string[];
   /** Optional attachments (inline CID logos, etc.). */
   attachments?: ResendMailAttachment[];
+  /**
+   * Sent as the Resend `Idempotency-Key` header. Resend answers a repeated key with the
+   * original result, so retrying a request cannot deliver the same email twice.
+   */
+  idempotencyKey?: string;
 };
 
 /** Normalize to a non-empty list of emails; drops blanks. Never returns []. */
@@ -183,6 +193,31 @@ export function classifyResendHttpFailure(httpStatus: number, responseBody: stri
   return { kind: "retryable", httpStatus, errorCode };
 }
 
+/**
+ * A test run may send real email only when explicitly scoped, and never in CI:
+ * - CARETIP_ALLOW_LIVE_EMAIL_TEST=1 with CARETIP_LIVE_EMAIL_TEST_RECIPIENTS=<a@x,b@y>: only those
+ *   exact addresses may receive mail. Without the list, nothing is sent.
+ * - LEAD_EMAIL_E2E=1: only CareTip's own leads and support inboxes (server config, never request data).
+ * Every recipient of the message must be allowed; one stray address blocks the whole send.
+ */
+function liveTestSendAllowed(to: string[]): boolean {
+  if (process.env.CI === "true") return false;
+  const recipients = to.map((a) => a.trim().toLowerCase()).filter(Boolean);
+  if (recipients.length === 0) return false;
+  const allowed = new Set<string>();
+  if (process.env.CARETIP_ALLOW_LIVE_EMAIL_TEST === "1") {
+    for (const a of (process.env.CARETIP_LIVE_EMAIL_TEST_RECIPIENTS ?? "").split(",")) {
+      const v = a.trim().toLowerCase();
+      if (v.includes("@")) allowed.add(v);
+    }
+  }
+  if (process.env.LEAD_EMAIL_E2E === "1") {
+    allowed.add(getLeadsInbox().toLowerCase());
+    allowed.add(getSupportInbox().toLowerCase());
+  }
+  return allowed.size > 0 && recipients.every((r) => allowed.has(r));
+}
+
 export async function sendResendEmailWithOutcome(
   logTag: string,
   payload: ResendMailPayload,
@@ -196,8 +231,12 @@ export async function sendResendEmailWithOutcome(
   }
 
   // A test process never sends real mail, whatever credentials reach it. Test seams run above this.
-  const testProcess = process.env.NODE_ENV === "test" || process.env.CARETIP_TEST_ISOLATION === "1";
-  if (testProcess && process.env.CARETIP_RESEND_FETCH_IS_MOCKED !== "1") {
+  // Any `npm run test:*` counts too: those scripts load the real .env, so they must opt in to email.
+  const testProcess =
+    process.env.NODE_ENV === "test" ||
+    process.env.CARETIP_TEST_ISOLATION === "1" ||
+    (process.env.npm_lifecycle_event ?? "").startsWith("test");
+  if (testProcess && process.env.CARETIP_RESEND_FETCH_IS_MOCKED !== "1" && !liveTestSendAllowed(payload.to)) {
     console.info(`[resend][${logTag}] test environment: email not sent.`);
     return { kind: "not_configured" };
   }
@@ -247,12 +286,17 @@ export async function sendResendEmailWithOutcome(
   }
 
   try {
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${resendKey}`,
+      "Content-Type": "application/json",
+    };
+    const idempotencyKey = payload.idempotencyKey?.trim();
+    if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey.slice(0, 256);
     const r = await fetch("https://api.resend.com/emails", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendKey}`,
-        "Content-Type": "application/json",
-      },
+      // A hung connection must not outlive a queue worker's lease; a timeout is a retryable failure.
+      signal: AbortSignal.timeout(RESEND_REQUEST_TIMEOUT_MS),
+      headers,
       body: JSON.stringify(body),
     });
     if (!r.ok) {

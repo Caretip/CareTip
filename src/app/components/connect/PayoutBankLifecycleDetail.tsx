@@ -24,6 +24,8 @@ export type PayoutBankLifecycleModel = {
   paidAt?: string | null;
   failedAt?: string | null;
   canceledAt?: string | null;
+  /** The bank returned this paid payout (status stays paid for history). */
+  returnedAt?: string | null;
   method?: string | null;
   payoutType?: string | null;
   failureCode?: string | null;
@@ -112,7 +114,7 @@ export function PayoutBankLifecycleDetail({
         <p className="text-2xl font-semibold tabular-nums tracking-tight">
           {formatConnectPayoutAmount(payout.amountCents, payout.currency, locale)}
         </p>
-        <ConnectPayoutStatusBadge status={payout.status} />
+        <ConnectPayoutStatusBadge status={payout.status} returnedAt={payout.returnedAt} />
         <p className="text-xs text-muted-foreground">{t(`${i18nPrefix}.timeline.statusLead`)}</p>
       </div>
 

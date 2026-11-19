@@ -1886,29 +1886,30 @@
       "markAllRead": "Alle als gelesen markieren",
       "empty": "Alles erledigt",
       "emptyHint": "Derzeit keine neuen Benachrichtigungen.",
-      "unreadCountLine": "{{count}} ungelesene Benachrichtigung",
-      "unreadCountLine_plural": "{{count}} ungelesene Benachrichtigungen",
+      "unreadCountLine_one": "{{count}} ungelesene Benachrichtigung",
+      "unreadCountLine_other": "{{count}} ungelesene Benachrichtigungen",
       "viewAll": "Alle Benachrichtigungen anzeigen",
       "close": "Schließen",
       "read": "Gelesen",
-      "unreadSummary": "Sie haben {{count}} ungelesene Benachrichtigung",
-      "unreadSummary_plural": "Sie haben {{count}} ungelesene Benachrichtigungen",
+      "unreadSummary_one": "Sie haben {{count}} ungelesene Benachrichtigung",
+      "unreadSummary_other": "Sie haben {{count}} ungelesene Benachrichtigungen",
       "justNow": "Gerade eben",
       "minutesAgo": "vor {{count}} Min.",
       "hoursAgo": "vor {{count}} Std.",
-      "daysAgo": "vor {{count}} T."
+      "daysAgo_one": "vor {{count}} Tag",
+      "daysAgo_other": "vor {{count}} Tagen"
     },
     "inbox": {
       "badge": "Posteingang",
       "title": "Benachrichtigungen",
       "subtitle": "",
-      "subtitleAdmin": "Support-Tickets, Verifizierungs-Hinweise und Plattform-Updates",
+      "subtitleAdmin": "Support-Tickets, Verifizierungshinweise und Plattform-Updates",
       "markAllRead": "Alle als gelesen markieren",
       "emptyTitle": "Noch keine Benachrichtigungen",
       "emptyBody": "Trinkgeld, Hinweise und Ankündigungen erscheinen hier.",
       "loadErrorTitle": "Benachrichtigungen konnten nicht geladen werden",
       "loadError": "Benachrichtigungen konnten nicht geladen werden. Bitte erneut versuchen.",
-      "loadErrorUnreadHint": "Es sind {{count}} ungelesene Meldungen gemeldet, aber die Liste konnte nicht geladen werden.",
+      "loadErrorUnreadHint": "Ungelesen laut Posteingang: {{count}}. Die Liste konnte jedoch nicht geladen werden.",
       "retry": "Erneut versuchen",
       "loadMore": "Mehr laden",
       "search": "Suchen",
@@ -1942,7 +1943,7 @@
     },
     "categories": {
       "tips": "Trinkgeld",
-      "payouts": "Trinkgeld-Einträge",
+      "payouts": "Auszahlungen",
       "team": "Team",
       "feedback": "Feedback",
       "goals": "Ziele",
@@ -1978,11 +1979,11 @@
       },
       "payout_completed": {
         "title": "Trinkgeld erfasst",
-        "body": "{{amount}} wurde in Ihrer Trinkgeld-Historie erfasst. Das ist keine Stripe-Bankauszahlung."
+        "body": "{{amount}} wurde in Ihrer Trinkgeldhistorie erfasst. Das ist keine Stripe-Bankauszahlung."
       },
       "login_security": {
         "title": "Neue Anmeldung",
-        "body": "Ihr CareTip Konto wurde verwendet. Wenn Sie das nicht waren, ändern Sie Ihr Passwort."
+        "body": "Ihr CareTip-Konto wurde für eine Anmeldung verwendet. Wenn Sie das nicht waren, ändern Sie Ihr Passwort."
       },
       "employee_invited_manager": {
         "title": "Teameinladung gesendet",
@@ -1993,11 +1994,11 @@
         "body": "Ihr Konto für {{businessName}} ist bereit. Sie können sich anmelden und Trinkgelder erhalten."
       },
       "qr_scan": {
-        "title": "QR Code gescannt",
-        "body": "Ein Gast hat die Trinkgeld Seite für {{place}} geöffnet."
+        "title": "QR-Code gescannt",
+        "body": "Ein Gast hat die Trinkgeldseite für {{place}} geöffnet."
       },
       "qr_payment_success": {
-        "title": "QR Zahlung erhalten",
+        "title": "QR-Zahlung erhalten",
         "body": "{{amount}} per QR für {{employeeName}}."
       },
       "verification_document_uploaded": {
@@ -2017,7 +2018,7 @@
         "body": "{{businessName}}, {{category}}. Ticket öffnen, um zu antworten."
       },
       "support_created_business": {
-        "title": "Support Anfrage erhalten: {{ticketNumber}}",
+        "title": "Support-Anfrage erhalten: {{ticketNumber}}",
         "body": "Wir haben Ihre Nachricht zu „{{subject}}“ erhalten. Unser Team antwortet in Kürze."
       },
       "support_reply_admin": {
@@ -2028,16 +2029,16 @@
         "title": "CareTip hat geantwortet: {{ticketNumber}}"
       },
       "support_status_resolved": {
-        "title": "Support Anfrage erledigt",
-        "body": "Ihre Support Anfrage wurde als erledigt markiert."
+        "title": "Support-Anfrage erledigt",
+        "body": "Ihre Support-Anfrage wurde als erledigt markiert."
       },
       "support_status_closed": {
-        "title": "Support Ticket geschlossen",
-        "body": "Dieses Support Ticket ist jetzt geschlossen."
+        "title": "Support-Ticket geschlossen",
+        "body": "Dieses Support-Ticket ist jetzt geschlossen."
       },
       "support_status_updated": {
         "title": "Ticketstatus aktualisiert",
-        "body": "Ticketstatus geändert auf {{status}}."
+        "body": "Der Status Ihres Tickets ist jetzt: {{status}}."
       },
       "support_inbox_title": {
         "title": "[TICKET] [{{status}}] {{ticketNumber}}: {{subject}}"
@@ -7472,6 +7473,7 @@
           "paid": "Ausgezahlt",
           "failed": "Fehlgeschlagen",
           "canceled": "Storniert",
+          "returned": "Von der Bank zurückgebucht",
           "unknown": "Unbekannt"
         },
         "reconciliation": {

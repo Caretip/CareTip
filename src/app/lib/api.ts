@@ -4062,6 +4062,9 @@ export type ConnectPayout = {
   stripeCreatedAt: string;
   paidAt: string | null;
   failedAt: string | null;
+  /** Set when the bank returned this paid payout; status stays "paid" for history. */
+  returnedAt?: string | null;
+  returnFailureCode?: string | null;
   canceledAt: string | null;
   reconciliationStatus: ConnectPayoutReconciliationStatus;
   reconciliationLastError?: string | null;

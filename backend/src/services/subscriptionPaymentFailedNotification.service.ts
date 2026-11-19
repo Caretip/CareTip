@@ -364,6 +364,9 @@ async function deliverNotificationRow(notificationId: string): Promise<boolean> 
       subject,
       html,
       text,
+      // Stable per notification row: a reclaimed send after a crash cannot deliver twice
+      // (Resend keeps keys for 24 hours). Retry scheduling is unchanged.
+      idempotencyKey: `billing-notification:${notificationId}`,
     });
 
     if (outcome.kind !== "sent") {

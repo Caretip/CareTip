@@ -1,6 +1,7 @@
 import type { TFunction } from "i18next";
 import type { InboxNotification } from "./api";
 import { isSupportTicketNotification } from "./api";
+import { toSafeInternalPath } from "./safeInternalPath";
 
 export type InboxNavigationRole = "employee" | "business" | "platform_admin" | "admin" | string | undefined;
 
@@ -132,7 +133,8 @@ export function resolveInboxNotificationDestination(
     return "/platform-admin/businesses/kyc-verification";
   }
 
-  const raw = notification.url?.trim() ?? metaString(meta, "url");
+  // Stored links are only followed when they stay inside the CareTip app.
+  const raw = toSafeInternalPath(notification.url?.trim() ?? metaString(meta, "url"));
   if (!raw) return null;
   if (isGenericInboxDestination(raw, role)) return null;
 

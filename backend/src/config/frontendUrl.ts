@@ -134,6 +134,44 @@ export function resolveCheckoutFrontendBaseUrl(env: NodeJS.ProcessEnv = process.
  * Accepts an app path (`/employee/tip-history`) or an absolute URL already on that origin.
  * Throws when FRONTEND_URL is missing/invalid or the target leaves the trusted origin.
  */
+/**
+ * In-app destination for stored links (notification and announcement URLs). Returns the
+ * normalized path, query and hash on the CareTip app origin, or null for anything else:
+ * other hosts, protocol-relative `//host`, backslashes, control characters, encoded slashes
+ * that decode into `//`, and non-http schemes such as `javascript:` or `data:`.
+ * An absolute URL on FRONTEND_URL is accepted and reduced to its path.
+ */
+export function toSafeAppPath(target: string | null | undefined, env: NodeJS.ProcessEnv = process.env): string | null {
+  const raw = typeof target === "string" ? target.trim() : "";
+  if (!raw || raw.length > 2048) return null;
+  if (/[\u0000-\u001f\u007f\\]/.test(raw)) return null;
+  let decoded = raw;
+  try {
+    // Two decoding passes catch %2F%2F and double-encoded %252F%252F tricks.
+    decoded = decodeURIComponent(decodeURIComponent(raw));
+  } catch {
+    return null;
+  }
+  if (/[\u0000-\u001f\u007f\\]/.test(decoded)) return null;
+  let base: URL;
+  try {
+    base = new URL(`${resolveCheckoutFrontendBaseUrl(env)}/`);
+  } catch {
+    return null;
+  }
+  const isPath = raw.startsWith("/") && !raw.startsWith("//") && !decoded.startsWith("//");
+  if (!isPath && !/^https?:\/\//i.test(raw)) return null;
+  let url: URL;
+  try {
+    url = new URL(raw, base);
+  } catch {
+    return null;
+  }
+  if (url.origin !== base.origin || url.username || url.password) return null;
+  if (url.pathname.startsWith("//")) return null;
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
 export function buildTrustedAppUrl(target: string, env: NodeJS.ProcessEnv = process.env): string {
   const raw = target.trim();
   if (!raw) throw new Error("App link target is empty");
