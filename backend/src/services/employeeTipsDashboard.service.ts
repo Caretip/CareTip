@@ -502,6 +502,12 @@ export async function loadEmployeeAccountSummary(employeeId: string): Promise<{
   totalSupporters: number;
   /** Gross tips without a payable row (pre-ledger era). */
   prePayableGrossTipsEur: number;
+  /** Paid/Pending are verifiable for at least one tip (CareTip-managed). */
+  hasCareTipManagedTips: boolean;
+  /** Some tips are paid out by the business itself (not verifiable by CareTip). */
+  hasBusinessManagedTips: boolean;
+  /** Business-managed tips settled to the business's Stripe account, not yet recorded as distributed. */
+  businessHeldEur: number;
 }> {
   return getCachedOrLoad(`emp-account:${employeeId}`, EMPLOYEE_PERIOD_CACHE_TTL_MS, async () => {
     const { loadEmployeeFinancialMetrics } = await import("./employeeFinancialMetrics.service.js");
@@ -518,6 +524,9 @@ export async function loadEmployeeAccountSummary(employeeId: string): Promise<{
       paidOutEur: metrics.paidToStripeEur,
       totalSupporters: metrics.totalSupporters,
       prePayableGrossTipsEur: metrics.prePayableGrossTipsEur,
+      hasCareTipManagedTips: metrics.hasCareTipManagedTips,
+      hasBusinessManagedTips: metrics.hasBusinessManagedTips,
+      businessHeldEur: metrics.businessHeldEur,
     };
   });
 }
@@ -535,5 +544,8 @@ export function employeeAccountSummaryApiFields(
     availableBalanceEur: accountSummary.availableBalanceEur,
     paidOutEur: accountSummary.paidOutEur,
     totalSupporters: accountSummary.totalSupporters,
+    hasCareTipManagedTips: accountSummary.hasCareTipManagedTips,
+    hasBusinessManagedTips: accountSummary.hasBusinessManagedTips,
+    businessHeldEur: accountSummary.businessHeldEur,
   };
 }

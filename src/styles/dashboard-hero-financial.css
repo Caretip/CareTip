@@ -675,3 +675,54 @@
     overflow-wrap: break-word;
   }
 }
+
+/* Employee hero (2026-11-20): Gross tips, then one row with a cell per place the money is
+   (Paid to you, Held by CareTip, Held by workplace). Only the cells that apply are rendered, so the
+   row has 1, 2 or 3 columns; it never wraps to a second row and stays one line tall on phones. */
+html body .caretip-dashboard-shell .employee-dashboard-hero .dashboard-hero-financial-panel.dashboard-hero-financial--payout-1 .dashboard-hero-financial__payout-grid {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+html body .caretip-dashboard-shell .employee-dashboard-hero .dashboard-hero-financial-panel.dashboard-hero-financial--payout-3 .dashboard-hero-financial__payout-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+html body .caretip-dashboard-shell .employee-dashboard-hero .dashboard-hero-financial-panel.dashboard-hero-financial--payout-3 .dashboard-hero-financial__payout-cell {
+  padding-top: 0.125rem !important;
+}
+
+/* Icons mark where the money sits; they inherit the label colour so they never compete with amounts. */
+html body .caretip-dashboard-shell .employee-dashboard-hero .dashboard-hero-financial--employee-compact .dashboard-hero-financial__payout-cell svg {
+  flex: none;
+  opacity: 0.85;
+}
+
+/* Three narrow cells on phones: slightly smaller amounts so a four-digit euro value fits one line. */
+@media (max-width: 479px) {
+  html body .caretip-dashboard-shell .employee-dashboard-hero .dashboard-hero-financial-panel.dashboard-hero-financial--payout-3 .dashboard-hero-financial__value--payout {
+    font-size: 0.9375rem !important;
+    white-space: nowrap;
+  }
+}
+
+/* Three cells: words never split mid-word ("workplace"). On phones, where labels wrap, every label
+   reserves the same two lines so the three amounts share one baseline. */
+html body .caretip-dashboard-shell .employee-dashboard-hero .dashboard-hero-financial-panel.dashboard-hero-financial--payout-3 .dashboard-hero-financial__payout-cell .dashboard-hero-financial__label {
+  min-height: 0 !important;
+  align-items: flex-start;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  hyphens: manual;
+}
+
+@media (max-width: 479px) {
+  html body .caretip-dashboard-shell .employee-dashboard-hero .dashboard-hero-financial-panel.dashboard-hero-financial--payout-3 .dashboard-hero-financial__payout-cell .dashboard-hero-financial__label {
+    min-height: 2.7em !important;
+    font-size: 0.625rem !important;
+    column-gap: 0.25rem;
+  }
+
+  html body .caretip-dashboard-shell .employee-dashboard-hero .dashboard-hero-financial-panel.dashboard-hero-financial--payout-3 .dashboard-hero-financial__payout-cell {
+    padding-inline: 0.25rem !important;
+  }
+}

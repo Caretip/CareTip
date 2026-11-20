@@ -197,3 +197,15 @@
     transform: none !important;
   }
 }
+
+/* Phones (2026-11-20): a shorter 16:9 photo frame so the hero is less tall. The crop sits above
+   centre to keep both faces, the phone and the handshake (the QR sign is cropped); tablets keep 5:4. */
+@media (max-width: 767px) {
+  .caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .employee-hero-illustration-card {
+    aspect-ratio: 16 / 9 !important;
+  }
+
+  .caretip-dashboard-shell.employee-dashboard .employee-dashboard-hero .employee-hero-illustration {
+    object-position: center 30%;
+  }
+}

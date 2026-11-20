@@ -2869,6 +2869,12 @@ export interface EmployeeTipsResponse {
   /** @deprecated Prefer paidToStripeEur */
   paidOutEur?: number;
   totalSupporters?: number;
+  /** Paid/Pending are verifiable for at least one tip (CareTip-managed). */
+  hasCareTipManagedTips?: boolean;
+  /** Some tips are paid out by the business itself (not verifiable by CareTip). */
+  hasBusinessManagedTips?: boolean;
+  /** Business-managed tips settled to the workplace's Stripe account, not yet recorded as distributed. */
+  businessHeldEur?: number;
   /** Period-scoped guest ratings (summary scope). */
   averageRating?: number | null;
   ratingCount?: number;
@@ -2977,6 +2983,12 @@ export type EmployeeAccountSnapshot = {
   /** @deprecated Prefer paidToStripeEur */
   paidOutEur: number;
   totalSupporters: number;
+  /** Paid/Pending are verifiable for at least one tip (CareTip-managed). Absent on older responses. */
+  hasCareTipManagedTips?: boolean;
+  /** Some tips are paid out by the business itself, which CareTip cannot verify. */
+  hasBusinessManagedTips?: boolean;
+  /** Business-managed tips settled to the workplace's Stripe account, not yet recorded as distributed. */
+  businessHeldEur?: number;
 };
 
 function employeeTipsCacheKey(timeframe: string, scope: EmployeeTipsScope = "full"): string {
@@ -3077,6 +3089,11 @@ export async function getEmployeeAccountSnapshot(
     availableBalanceEur: paidToStripe,
     paidOutEur: paidToStripe,
     totalSupporters: typeof data.totalSupporters === "number" ? data.totalSupporters : 0,
+    hasCareTipManagedTips:
+      typeof data.hasCareTipManagedTips === "boolean" ? data.hasCareTipManagedTips : undefined,
+    hasBusinessManagedTips:
+      typeof data.hasBusinessManagedTips === "boolean" ? data.hasBusinessManagedTips : undefined,
+    businessHeldEur: typeof data.businessHeldEur === "number" ? data.businessHeldEur : undefined,
   };
 }
 

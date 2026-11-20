@@ -124,6 +124,7 @@
     "test:employee-tip-direct-routing": "dotenv -e ../.env -e .env -- tsx scripts/employee-tip-direct-routing-runtime.ts",
     "test:employee-transfer-failed-recovery": "dotenv -e ../.env -e .env -- tsx scripts/employee-transfer-failed-recovery-runtime.ts",
     "test:employee-financial-metrics": "dotenv -e ../.env -e .env -- tsx scripts/employee-financial-metrics-runtime.ts",
+    "test:employee-hero-metrics": "tsx scripts/employee-hero-metrics-runtime.ts",
     "test:employee-analytics-stripe": "tsx scripts/employee-analytics-stripe-runtime.ts",
     "test:employee-transfer-recovery-generalized": "dotenv -e ../.env -e .env -- tsx scripts/employee-transfer-recovery-generalized-runtime.ts",
     "test:employee-transfer-failure-injection": "dotenv -e ../.env -e .env -- tsx scripts/employee-transfer-failure-injection-runtime.ts",

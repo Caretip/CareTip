@@ -252,6 +252,9 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
           totalEarningsEur:
             heroAccountSnapshot.grossTipsEur ?? heroAccountSnapshot.totalEarningsEur ?? 0,
           totalSupporters: heroAccountSnapshot.totalSupporters ?? 0,
+          hasCareTipManagedTips: heroAccountSnapshot.hasCareTipManagedTips,
+          hasBusinessManagedTips: heroAccountSnapshot.hasBusinessManagedTips,
+          businessHeldEur: heroAccountSnapshot.businessHeldEur,
           loaded: true,
         }
       : heroAccountReady && heroPayload
@@ -264,6 +267,9 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
             totalEarningsEur:
               heroPayload.grossTipsEur ?? heroPayload.totalEarningsEur ?? 0,
             totalSupporters: heroPayload.totalSupporters ?? 0,
+            hasCareTipManagedTips: heroPayload.hasCareTipManagedTips,
+            hasBusinessManagedTips: heroPayload.hasBusinessManagedTips,
+            businessHeldEur: heroPayload.businessHeldEur,
             loaded: true,
           }
         : {
@@ -273,6 +279,9 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
             pendingReleaseEur: 0,
             totalEarningsEur: 0,
             totalSupporters: 0,
+            hasCareTipManagedTips: undefined as boolean | undefined,
+            hasBusinessManagedTips: undefined as boolean | undefined,
+            businessHeldEur: undefined as number | undefined,
             loaded: false,
           };
 
@@ -519,11 +528,21 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
                 metrics={
                   displayAccountSummary.loaded
                     ? {
-                        employeeEarningsEur: displayAccountSummary.employeeEarningsEur,
-                        paidToStripeEur: displayAccountSummary.paidToStripeEur,
-                        pendingReleaseEur: displayAccountSummary.pendingReleaseEur,
                         grossTipsEur: displayAccountSummary.grossTipsEur,
-                        totalSupporters: displayAccountSummary.totalSupporters,
+                        paidToYouEur: displayAccountSummary.paidToStripeEur,
+                        heldByCareTipEur: displayAccountSummary.pendingReleaseEur,
+                        hasCareTipManagedTips:
+                          "hasCareTipManagedTips" in displayAccountSummary
+                            ? displayAccountSummary.hasCareTipManagedTips
+                            : undefined,
+                        hasBusinessManagedTips:
+                          "hasBusinessManagedTips" in displayAccountSummary
+                            ? displayAccountSummary.hasBusinessManagedTips
+                            : undefined,
+                        heldByWorkplaceEur:
+                          "businessHeldEur" in displayAccountSummary
+                            ? displayAccountSummary.businessHeldEur
+                            : undefined,
                       }
                     : null
                 }

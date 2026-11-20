@@ -663,6 +663,34 @@ export async function businessDistributionRemainingObligationForBusiness(
   };
 }
 
+/**
+ * One employee's share of the same obligation: business-managed tips that Stripe settled to the
+ * business's Connect account (destination charge, status held_business), after CareTip fees,
+ * refunds, reversals and disputes, minus what the business has recorded as distributed to them.
+ * Same rows and arithmetic as the business's "to distribute" figure, so both sides always agree.
+ * Scoped to payables attributed to this employee; each business is evaluated separately.
+ */
+export async function remainingDistributableCentsForEmployee(employeeId: string): Promise<number> {
+  const id = employeeId.trim();
+  if (!id) return 0;
+  const businesses = await prisma.employeeTipPayable.findMany({
+    where: {
+      employeeId: id,
+      routingMode: EmployeeTipPayoutMode.business_distribution,
+      chargeModel: EmployeeTipChargeModel.destination_business,
+      status: EmployeeTipPayableStatus.held_business,
+    },
+    distinct: ["businessId"],
+    select: { businessId: true },
+  });
+  let total = 0;
+  for (const { businessId } of businesses) {
+    const rows = await loadEligiblePayables(businessId, id);
+    for (const row of rows) total += remainingDistributableCents(row);
+  }
+  return total;
+}
+
 /** Authoritative remaining business-distribution obligation minus recorded off-platform distributions. */
 export async function totalRemainingDistributableCentsForBusiness(businessId: string): Promise<number> {
   const snapshot = await businessDistributionRemainingObligationForBusiness(businessId);

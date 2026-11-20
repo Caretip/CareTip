@@ -76,6 +76,9 @@ type AnalyticsPayload = {
   availableBalanceEur?: number;
   paidOutEur?: number;
   totalSupporters?: number;
+  hasCareTipManagedTips?: boolean;
+  hasBusinessManagedTips?: boolean;
+  businessHeldEur?: number;
 };
 
 function logEmployeePeriodPayload(
@@ -187,6 +190,11 @@ function payloadFromResponse(data: EmployeeTipsResponse): AnalyticsPayload {
     ratingCount: typeof data.ratingCount === "number" ? data.ratingCount : 0,
     chartSeries: Array.isArray(data.chartSeries) ? data.chartSeries : [],
     grossTipsEur: typeof data.grossTipsEur === "number" ? data.grossTipsEur : undefined,
+    hasCareTipManagedTips:
+      typeof data.hasCareTipManagedTips === "boolean" ? data.hasCareTipManagedTips : undefined,
+    hasBusinessManagedTips:
+      typeof data.hasBusinessManagedTips === "boolean" ? data.hasBusinessManagedTips : undefined,
+    businessHeldEur: typeof data.businessHeldEur === "number" ? data.businessHeldEur : undefined,
     employeeEarningsEur:
       typeof data.employeeEarningsEur === "number" ? data.employeeEarningsEur : undefined,
     paidToStripeEur:
