@@ -445,6 +445,8 @@ export interface CreateTipCheckoutSessionInput {
 export interface CreateTipCheckoutSessionResult {
   sessionId: string;
   url: string | null;
+  /** Server-side stage durations for latency diagnostics (no identifiers or amounts). */
+  timings?: { checksMs: number; stripeMs: number };
 }
 
 /** Stripe cancel returns to tip amount. Never accepts a client-supplied URL. */
@@ -662,6 +664,7 @@ export async function createTipCheckoutSession(
    * Failures surface in the original order (eligibility, then routing, then venue), so the error a
    * guest sees is the same as before.
    */
+  const checksStartedAt = performance.now();
   const [eligibility, routingResult, venueResult] = await Promise.allSettled([
     assertEmployeeEligibleForTipPayment(employeeId, businessId),
     resolveTipCheckoutRouting(businessId, employeeId),
@@ -672,6 +675,7 @@ export async function createTipCheckoutSession(
   if (venueResult.status === "rejected") throw venueResult.reason;
   const routing = routingResult.value;
   const { locationId: locId, tableId: tblId } = venueResult.value;
+  const checksMs = Math.round(performance.now() - checksStartedAt);
 
   assertTipAmountInRangeEur(total);
 
@@ -705,6 +709,7 @@ export async function createTipCheckoutSession(
   if (fb) metadata.feedback = fb.slice(0, 500);
 
   let session: Stripe.Checkout.Session;
+  const stripeStartedAt = performance.now();
   try {
     session = await createCheckoutSession({
       mode: "payment",
@@ -756,6 +761,7 @@ export async function createTipCheckoutSession(
     }
     throw e;
   }
+  const stripeMs = Math.round(performance.now() - stripeStartedAt);
 
   recordCheckoutFunnelEvent("started", {
     sessionId: session.id,
@@ -766,6 +772,7 @@ export async function createTipCheckoutSession(
   return {
     sessionId: session.id,
     url: session.url,
+    timings: { checksMs, stripeMs },
   };
 }
 

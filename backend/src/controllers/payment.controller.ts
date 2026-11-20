@@ -94,6 +94,7 @@ export function findClientControlledConnectPaymentField(req: {
  * Public — guest tipping (no auth).
  */
 export async function createTipSession(req: Request, res: Response) {
+  const handlerStartedAt = performance.now();
   try {
     const forbidden = findClientControlledConnectPaymentField(req);
     if (forbidden) {
@@ -179,6 +180,15 @@ export async function createTipSession(req: Request, res: Response) {
       locationId: locationId ?? null,
       tableId: tableId ?? null,
     });
+
+    // Latency diagnostics: stage durations only (no IDs, amounts, emails or keys). Visible in the
+    // browser's network panel (Server-Timing) and in the server log for correlation by time.
+    const totalMs = Math.round(performance.now() - handlerStartedAt);
+    if (result.timings) {
+      const { checksMs, stripeMs } = result.timings;
+      res.setHeader("Server-Timing", `checks;dur=${checksMs}, stripe;dur=${stripeMs}, total;dur=${totalMs}`);
+      console.info("[checkout.timing]", { checksMs, stripeMs, totalMs });
+    }
 
     return res.json({
       sessionId: result.sessionId,
