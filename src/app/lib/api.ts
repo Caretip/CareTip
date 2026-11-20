@@ -28,6 +28,7 @@ import {
 import { hasClientStoredSession } from "./authUserStore";
 import { hasClientSessionHint } from "./authSessionHint";
 import { resolveApiBaseUrl, resolveLegacyApiBaseUrl } from "./apiOrigin";
+import { classifyFileUrl } from "./authedFileUrl";
 import { withAuthCredentialExchangeDeadline } from "./authCredentialExchangeDeadline";
 import { logClientError } from "./clientLog";
 import type { OAuthProviderId } from "./oauthProviderIds";
@@ -1029,7 +1030,17 @@ export async function fetchAuthedObjectUrl(inputUrl: string): Promise<string> {
     return fetchAuthedObjectUrl(data.url);
   }
 
-  const url = apiPath(inputUrl);
+  // Only CareTip's own file URLs may carry the user's bearer token and cookies. Public storage
+  // objects (e.g. business logos on Supabase) open directly with no credentials; anything else is
+  // refused without making a request.
+  const decision = classifyFileUrl(apiPath(inputUrl), {
+    pageOrigin: typeof window !== "undefined" ? window.location.origin : "http://localhost",
+    apiBase: resolveApiBaseUrl(),
+    legacyApiBase: resolveLegacyApiBaseUrl(),
+  });
+  if (decision.kind === "public") return decision.url;
+  if (decision.kind === "refused") throw new Error("This file link can't be opened.");
+  const url = decision.url;
   if (requestUsesCaretipProtectedApi(url) && isSessionBootstrapInProgress()) {
     await whenSessionBootstrapSettled();
   }
