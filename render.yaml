@@ -23,7 +23,7 @@ services:
       - key: CRON_SECRET
         sync: false
       - key: CARE_TIP_API_ORIGIN
-        value: https://caretip.onrender.com
+        value: https://api.caretip.de
       - key: CARE_TIP_INTERNAL_JOB_PATH
         value: /api/internal/jobs/trial-reminders
 
@@ -40,7 +40,7 @@ services:
       - key: CRON_SECRET
         sync: false
       - key: CARE_TIP_API_ORIGIN
-        value: https://caretip.onrender.com
+        value: https://api.caretip.de
       - key: CARE_TIP_INTERNAL_JOB_PATH
         value: /api/internal/jobs/subscription-billing-reconciliation
 
@@ -57,7 +57,7 @@ services:
       - key: CRON_SECRET
         sync: false
       - key: CARE_TIP_API_ORIGIN
-        value: https://caretip.onrender.com
+        value: https://api.caretip.de
       - key: CARE_TIP_INTERNAL_JOB_PATH
         value: /api/internal/jobs/subscription-billing-notification-retry
 
@@ -76,7 +76,7 @@ services:
       - key: CRON_SECRET
         sync: false
       - key: CARE_TIP_API_ORIGIN
-        value: https://caretip.onrender.com
+        value: https://api.caretip.de
       - key: CARE_TIP_INTERNAL_JOB_PATH
         value: /api/internal/jobs/category-retention-sweep
 
@@ -94,7 +94,7 @@ services:
       - key: CRON_SECRET
         sync: false
       - key: CARE_TIP_API_ORIGIN
-        value: https://caretip.onrender.com
+        value: https://api.caretip.de
       - key: CARE_TIP_INTERNAL_JOB_PATH
         value: /api/internal/jobs/category-retention-tick
 
@@ -111,7 +111,7 @@ services:
       - key: CRON_SECRET
         sync: false
       - key: CARE_TIP_API_ORIGIN
-        value: https://caretip.onrender.com
+        value: https://api.caretip.de
       - key: CARE_TIP_INTERNAL_JOB_PATH
         value: /api/internal/jobs/employee-stripe-inactivity-tick
 
@@ -128,7 +128,7 @@ services:
       - key: CRON_SECRET
         sync: false
       - key: CARE_TIP_API_ORIGIN
-        value: https://caretip.onrender.com
+        value: https://api.caretip.de
       - key: CARE_TIP_INTERNAL_JOB_PATH
         value: /api/internal/jobs/employee-tip-release-reconciliation-tick
 
@@ -146,6 +146,6 @@ services:
       - key: CRON_SECRET
         sync: false
       - key: CARE_TIP_API_ORIGIN
-        value: https://caretip.onrender.com
+        value: https://api.caretip.de
       - key: CARE_TIP_INTERNAL_JOB_PATH
         value: /api/internal/jobs/scheduled-bank-payout-tick

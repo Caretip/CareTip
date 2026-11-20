@@ -33,9 +33,9 @@ Expected result after the move: database round trips drop from roughly 160 ms to
 | Redis / Valkey (`REDIS_URL`) | If it is a Render Key Value instance, its internal URL only works inside its own region. Create a new Key Value instance in Frankfurt and point the new service at it. Login lockout counters and rate-limit windows start fresh; that is acceptable. If `REDIS_URL` points to an external provider, check its region and prefer Frankfurt too. |
 | Custom domain `api.caretip.de` | Move from the Oregon service to the Frankfurt service (step 6). |
 | Supabase | Nothing changes. The database already lives in Frankfurt. |
-| Frontend (Vercel) | Nothing to rebuild if `VITE_API_URL` is `https://api.caretip.de`. Confirm this in the Vercel project settings first. |
-| Render cron jobs (`render.yaml`) | They call the API over HTTPS. `scripts/render-category-retention-http.mjs` defaults to `https://caretip.onrender.com` unless `CARE_TIP_API_ORIGIN` is set. Set `CARE_TIP_API_ORIGIN=https://api.caretip.de` on every cron before cut-over so they follow the domain. Moving the crons themselves to Frankfurt is optional; they make one request each. |
-| Stripe webhook endpoint | Check its URL in the Stripe Dashboard (Developers → Webhooks). If it uses `caretip.onrender.com`, change it to `https://api.caretip.de/api/webhooks` before cut-over. The signing secret (`STRIPE_WEBHOOK_SECRET`) stays the same when only the URL changes. |
+| Frontend (Netlify) | The site calls `https://api.caretip.de` directly (built with `VITE_API_URL`), so nothing to rebuild. `public/_redirects` also proxies `caretip.de/api/*` (used by the Google sign-in redirect); since 2026-11-20 it targets `https://api.caretip.de`, so it follows the domain. |
+| Render cron jobs (`render.yaml`) | They call the API over HTTPS using `CARE_TIP_API_ORIGIN`. Since 2026-11-20 `render.yaml` sets it to `https://api.caretip.de` for all 8 crons, so they follow the domain. If the crons were created by hand rather than from the Blueprint, set the same value in each cron's Environment tab. Moving the crons themselves to Frankfurt is optional; they make one request each. |
+| Stripe webhook endpoints (two) | In the Stripe Dashboard (Developers → Webhooks), check both: the platform endpoint `…/api/webhooks/stripe` (secret `STRIPE_WEBHOOK_SECRET`) and the Connect endpoint `…/api/webhooks/stripe-connect` (secret `STRIPE_CONNECT_WEBHOOK_SECRET`). If either uses `caretip.onrender.com`, change only the host to `api.caretip.de`. Editing the URL keeps each endpoint's signing secret. |
 | Google OAuth redirect URIs | In Google Cloud Console, check that the authorised redirect URIs use `api.caretip.de` (or the frontend domain), not `caretip.onrender.com`. |
 | CSP `connect-src` (`vercel.json`, `public/_headers`) | Already allows `https://*.caretip.de` and `wss://*.caretip.de`. No change needed while the frontend talks to `api.caretip.de`. |
 
@@ -44,8 +44,8 @@ Expected result after the move: database round trips drop from roughly 160 ms to
 1. **Freeze deploys** to the API for the window. Pick a quiet hour (early morning CET); expect 30 to 60 minutes of work and a few minutes of DNS propagation.
 2. **Inventory.** Export the Oregon service's environment variables and record: plan, instance count, health check path, build and start commands, `REDIS_URL` host, the Stripe webhook URL, and the Google redirect URIs.
 3. **Make the external URLs domain-based** (safe to do days ahead; they keep working against Oregon because `api.caretip.de` still points there):
-   - Stripe webhook URL → `https://api.caretip.de/api/webhooks`.
-   - Every cron: `CARE_TIP_API_ORIGIN=https://api.caretip.de`.
+   - Both Stripe webhook URLs → `https://api.caretip.de/api/webhooks/stripe` and `https://api.caretip.de/api/webhooks/stripe-connect`.
+   - Every cron: `CARE_TIP_API_ORIGIN=https://api.caretip.de` (done in `render.yaml`; check the dashboard values match).
    - Google redirect URIs on `api.caretip.de`.
 4. **Create the Frankfurt Key Value instance** (if Redis is on Render) and note its internal URL.
 5. **Create the Frankfurt web service.** Same repo and branch, region **Frankfurt**, same plan, health check `/api/health`, environment group attached, `REDIS_URL` set to the Frankfurt instance. Leave **auto-deploy off** until cut-over is done.
@@ -70,5 +70,5 @@ Move `api.caretip.de` back to the Oregon service (step 7 in reverse). Nothing in
 
 ## Afterwards
 
-- Update `render.yaml` defaults: `scripts/render-category-retention-http.mjs` falls back to `https://caretip.onrender.com`. Change the default to `https://api.caretip.de` once the old service is gone.
+- `scripts/render-category-retention-http.mjs` still falls back to `https://caretip.onrender.com` when `CARE_TIP_API_ORIGIN` is unset. Change that default to `https://api.caretip.de` once the old service is gone.
 - Several live-check scripts in `backend/scripts/` hard-code `https://caretip.onrender.com`. They only affect manual verification runs; update them when convenient.

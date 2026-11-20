@@ -925,7 +925,7 @@ await test("F2 Netlify redirects: missing assets 404 before the SPA fallback; AP
   const idx = (prefix: string) => lines.findIndex((l) => l.replace(/\s+/g, " ").startsWith(prefix));
   assert.ok(idx("/assets/* /404.html 404") >= 0);
   assert.ok(idx("/assets/* /404.html 404") < idx("/* /index.html 200"));
-  assert.ok(idx("/api/* https://caretip.onrender.com/api/:splat 200") >= 0);
+  assert.ok(idx("/api/* https://api.caretip.de/api/:splat 200") >= 0, "API proxy goes to the first-party API domain");
   assert.ok(idx("/robots.txt /robots.txt 200") >= 0);
   assert.equal(lines.at(-1)!.replace(/\s+/g, " "), "/* /index.html 200");
   assert.doesNotMatch(read("netlify.toml"), /\[\[headers\]\]/, "single authoritative header file");
