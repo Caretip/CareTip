@@ -12,6 +12,7 @@ import { reconcileEmployeeDirectPayables } from "./employeePayoutReconciliation.
 import { listEmployeeStripeBankPayoutsForUser } from "./employeeStripeBankPayouts.service.js";
 import { getEmployeeInstantPayoutEligibilityForStripeAccount } from "./employeeInstantPayout.service.js";
 import { getStripeClient, isStripeConfigured } from "./stripe.service.js";
+import type { PendingReleaseDto } from "./stripePendingReleases.service.js";
 import { resolveActiveEmployeeForConnect } from "./employeeStripeConnect.service.js";
 
 export type EmployeeAnalyticsPeriod = "today" | "week" | "month" | "year" | "all";
@@ -67,6 +68,9 @@ export type EmployeeAnalyticsBundle = {
     readable: boolean;
     availableCents: number | null;
     pendingCents: number | null;
+    /** Stripe available_on per day for pendingCents; null when Stripe could not be read. */
+    pendingReleases: PendingReleaseDto[] | null;
+    pendingReleasesComplete: boolean;
     instantAvailableCents: number | null;
     currency: string | null;
     transfers: EmployeeAnalyticsStripeTransfer[];
@@ -287,6 +291,8 @@ export async function loadEmployeeAnalyticsForUser(
   let stripeReadable = false;
   let availableCents: number | null = null;
   let pendingCents: number | null = null;
+  let pendingReleases: PendingReleaseDto[] | null = null;
+  let pendingReleasesComplete = false;
   let instantAvailableCents: number | null = null;
   let currency: string | null = null;
   const transfers: EmployeeAnalyticsStripeTransfer[] = [];
@@ -317,6 +323,8 @@ export async function loadEmployeeAnalyticsForUser(
               stripeReadable = true;
               availableCents = instant.availableCents;
               pendingCents = instant.pendingCents;
+              pendingReleases = instant.pendingReleases;
+              pendingReleasesComplete = instant.pendingReleasesComplete;
               currency = instant.currency;
               instantAvailableCents = instant.instantAvailableGrossCents;
             }
@@ -356,6 +364,8 @@ export async function loadEmployeeAnalyticsForUser(
       readable: stripeReadable,
       availableCents,
       pendingCents,
+      pendingReleases,
+      pendingReleasesComplete,
       instantAvailableCents,
       currency,
       transfers,

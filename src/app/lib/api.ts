@@ -3868,6 +3868,9 @@ export type EmployeeAnalyticsBundle = {
     readable: boolean;
     availableCents: number | null;
     pendingCents: number | null;
+    /** Stripe available_on per day for pendingCents; null when Stripe could not be read. */
+    pendingReleases?: PendingRelease[] | null;
+    pendingReleasesComplete?: boolean;
     instantAvailableCents: number | null;
     currency: string | null;
     transfers: Array<{

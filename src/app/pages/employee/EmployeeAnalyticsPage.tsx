@@ -13,6 +13,7 @@ import { CheckCircle2, TrendingUp } from "lucide-react";
 import { EmployeeTransferStatusCard } from "../../components/employee/EmployeeTransferStatusCard";
 import { EmployeePageHeader } from "../../components/employee/EmployeePageHeader";
 import { EmployeeViewInStripeButton } from "../../components/employee/EmployeeViewInStripeButton";
+import { PendingReleaseList } from "../../components/finance/payout/PendingReleaseList";
 import { EmployeeEmptyState } from "../../components/employee/EmployeeEmptyState";
 import { DashboardAnalyticsPeriodToggle } from "../../components/dashboard/DashboardAnalyticsPeriodToggle";
 import { DashboardChartSkeleton } from "../../components/dashboard/DashboardAnalyticsLoader";
@@ -432,10 +433,18 @@ export function EmployeeAnalyticsPage() {
                   : t("employee.analytics.stripeUnavailable")}
               </p>
               {data?.stripe.readable ? (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {t("employee.analytics.stripePending")}:{" "}
-                  {formatStripeCents(data.stripe.pendingCents, data.stripe.currency)}
-                </p>
+                <>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {t("employee.analytics.stripePending")}:{" "}
+                    {formatStripeCents(data.stripe.pendingCents, data.stripe.currency)}
+                  </p>
+                  <PendingReleaseList
+                    releases={data.stripe.pendingReleases}
+                    complete={data.stripe.pendingReleasesComplete}
+                    pendingCents={data.stripe.pendingCents ?? 0}
+                    currency={data.stripe.currency || "eur"}
+                  />
+                </>
               ) : null}
             </div>
             <div className="employee-analytics-stripe-card">

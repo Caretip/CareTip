@@ -14,6 +14,7 @@ import {
   __setInstantPayoutStripeFnsForTests,
   evaluateInstantPayoutForStripeAccount,
 } from "../src/services/stripeConnectInstantPayout.service.js";
+import { getEmployeeInstantPayoutEligibilityForStripeAccount } from "../src/services/employeeInstantPayout.service.js";
 
 const day = (iso: string) => Math.floor(Date.parse(`${iso}T00:00:00Z`) / 1000);
 const tx = (availableOn: string, net: number, status = "pending", currency = "eur"): BalanceTxnLike => ({
@@ -88,6 +89,14 @@ try {
   assert.equal(snap.pendingCents, 121721);
   assert.equal(snap.pendingReleases?.length, 4);
   assert.equal(snap.pendingReleasesComplete, true);
+
+  // Employee payments page and employee analytics both read this wrapper.
+  const employee = await getEmployeeInstantPayoutEligibilityForStripeAccount("emp_test", {
+    stripeAccountId: "acct_test",
+    stripePayoutsEnabled: true,
+  });
+  assert.deepEqual(employee.pendingReleases, snap.pendingReleases, "employee DTO keeps Stripe release dates");
+  assert.equal(employee.pendingReleasesComplete, true);
 
   __resetInstantPayoutStripeFnsForTests();
   __setInstantPayoutStripeFnsForTests({ ...mocks, scanBalanceTransactions: async () => null });
