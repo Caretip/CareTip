@@ -70,6 +70,35 @@
   color: hsl(var(--muted-foreground));
 }
 
+.caretip-payout-releases {
+  margin-top: 0.625rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid hsl(var(--border) / 0.65);
+}
+
+.caretip-payout-releases__title {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: hsl(var(--muted-foreground));
+}
+
+.caretip-payout-releases__list {
+  margin-top: 0.25rem;
+  display: grid;
+  gap: 0.125rem;
+}
+
+.caretip-payout-releases__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+  color: hsl(var(--foreground));
+}
+
 .caretip-payout-destination {
   border-radius: var(--payout-panel-radius);
   border: 1px solid hsl(var(--border) / 0.85);

@@ -11,6 +11,7 @@ import {
   PayoutFinancialMetric,
   PayoutFinancialMetricStrip,
 } from "../finance/payout/PayoutFinancialMetric";
+import { PendingReleaseList } from "../finance/payout/PendingReleaseList";
 import { PayoutWorkspacePanel } from "../finance/payout/PayoutWorkspacePanel";
 
 const INSTANT_KPI_HIDDEN_REASONS = new Set([
@@ -108,6 +109,15 @@ export function EmployeePayoutDashboardMetrics({
       hint: unavailable
         ? t("employee.payouts.dashboard.kpiUnavailable")
         : t("employee.payouts.dashboard.kpiPendingHint"),
+      detail:
+        !loading && balancesOk && eligibility ? (
+          <PendingReleaseList
+            releases={eligibility.pendingReleases}
+            complete={eligibility.pendingReleasesComplete}
+            pendingCents={eligibility.pendingCents}
+            currency={eligibility.currency || "eur"}
+          />
+        ) : null,
     },
     {
       label: t("employee.payouts.dashboard.kpiInstant"),
@@ -126,6 +136,7 @@ export function EmployeePayoutDashboardMetrics({
           label={metric.label}
           value={metric.value}
           hint={metric.hint}
+          detail={"detail" in metric ? metric.detail : null}
         />
       ))}
     </PayoutFinancialMetricStrip>

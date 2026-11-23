@@ -98,6 +98,14 @@
     "instantTerms": {
       "required": "Please confirm that you have read and agree to the Terms & Conditions, Privacy Policy, Data Processing Agreement (DPA), and Price and Services List.",
       "accepted": "Legal documents accepted."
+    },
+    "pendingReleases": {
+      "title": "Becomes available",
+      "more_one": "+{{count}} later date",
+      "more_other": "+{{count}} later dates",
+      "partial": "These dates cover part of the pending balance.",
+      "unavailable": "Release dates could not be loaded from Stripe right now.",
+      "note": "Stripe sets these dates. Your payout schedule decides when available funds go to your bank."
     }
   },
   "format": {
@@ -4536,10 +4544,8 @@
         "title": "Payout schedule",
         "lead": "Choose how often your available earnings are paid to your bank account.",
         "speedNote": "This controls payout frequency, not how quickly card payments become available in Stripe.",
-        "settlementNote": "Stripe typically makes card funds available after about {{days}} calendar day(s) before they can be paid out (settlement). Bank processing may add more time. This is not a guarantee of when money arrives in your bank.",
-        "settlementNoteFallback": "Estimated settlement delay (from Stripe account settings): about {{days}} day(s). Confirm in Stripe Dashboard; bank processing may add more time.",
-        "settlementUnavailable": "Settlement timing could not be read from Stripe right now. Payout frequency below still applies once funds are available.",
-        "settlementStripeSupport": "CareTip could not confirm your Stripe settlement timing (3 business days for eligible German accounts). Contact CareTip support if payouts still look delayed.",
+        "settlementNote": "Card payments settle in Stripe before they can be paid out. Stripe sets how long this takes, and each pending amount shows the date it becomes available. Bank processing may add more time, so this is not a guarantee of when money arrives in your bank.",
+        "settlementStripeSupport": "CareTip could not confirm your Stripe settlement settings. Pending amounts still show the date Stripe makes them available. Contact CareTip support if payouts still look delayed.",
         "policyPartialSuccess": "Payout schedule update: {{schedule}}. Settlement configuration: {{settlement}}.",
         "firstPayoutHoldNote": "Stripe may apply a separate first-payout or risk review period in addition to normal settlement timing.",
         "scheduleDriftNotice": "Your Stripe payout interval does not match this setting. Save your schedule again or contact support if this persists.",
@@ -7533,10 +7539,8 @@
           "title": "Payout schedule",
           "lead": "Choose how often available funds are sent to your bank account.",
           "speedNote": "This controls payout frequency, not how quickly card payments become available in Stripe.",
-          "settlementNote": "Stripe typically makes card funds available after about {{days}} calendar day(s) before they can be paid out (settlement). Bank processing may add more time. This is not a guarantee of when money arrives in your bank.",
-          "settlementNoteFallback": "Estimated settlement delay (from Stripe account settings): about {{days}} day(s). Confirm in Stripe Dashboard; bank processing may add more time.",
-          "settlementUnavailable": "Settlement timing could not be read from Stripe right now. Payout frequency below still applies once funds are available.",
-          "settlementStripeSupport": "CareTip could not confirm your Stripe settlement timing (3 business days for eligible German accounts). Contact CareTip support if payouts still look delayed.",
+          "settlementNote": "Card payments settle in Stripe before they can be paid out. Stripe sets how long this takes, and each pending amount shows the date it becomes available. Bank processing may add more time, so this is not a guarantee of when money arrives in your bank.",
+          "settlementStripeSupport": "CareTip could not confirm your Stripe settlement settings. Pending amounts still show the date Stripe makes them available. Contact CareTip support if payouts still look delayed.",
           "policyPartialSuccess": "Payout schedule update: {{schedule}}. Settlement configuration: {{settlement}}.",
           "firstPayoutHoldNote": "Stripe may apply a separate first-payout or risk review period in addition to normal settlement timing.",
           "scheduleDriftNotice": "Your Stripe payout interval does not match this setting. Save your schedule again or contact support if this persists.",

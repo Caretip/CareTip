@@ -80,18 +80,10 @@ export function BusinessBankPayoutScheduleCard({ disabled }: { disabled?: boolea
           <p className="mt-1 text-xs text-muted-foreground">
             {t("business.billing.payouts.schedule.speedNote")}
           </p>
-          {data?.settlement?.source === "unavailable" ? (
+          {/* No day count here: Stripe's settings can disagree with the available_on it applies. */}
+          {data ? (
             <p className="mt-1 text-xs text-muted-foreground">
-              {t("business.billing.payouts.schedule.settlementUnavailable")}
-            </p>
-          ) : typeof data?.settlement?.effectiveDelayDays === "number" ? (
-            <p className="mt-1 text-xs text-muted-foreground">
-              {t(
-                data.settlement.source === "accounts_v1_fallback"
-                  ? "business.billing.payouts.schedule.settlementNoteFallback"
-                  : "business.billing.payouts.schedule.settlementNote",
-                { days: data.settlement.effectiveDelayDays },
-              )}
+              {t("business.billing.payouts.schedule.settlementNote")}
             </p>
           ) : null}
           {data?.lastPolicyApply && !data.lastPolicyApply.policyComplete ? (

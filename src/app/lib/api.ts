@@ -3913,6 +3913,12 @@ export type InstantPayoutTermsRequirement = {
   context: "instant_payout_employee" | "instant_payout_business";
 };
 
+export type PendingRelease = {
+  /** ISO timestamp: start of the Stripe settlement day (UTC). */
+  availableOn: string;
+  amountCents: number;
+};
+
 export type InstantPayoutEligibility = {
   connected: boolean;
   eligible: boolean;
@@ -3925,6 +3931,10 @@ export type InstantPayoutEligibility = {
   pendingCents: number;
   /** False when Stripe Balance was not retrieved — do not treat cents as €0.00. */
   balancesRetrieved?: boolean;
+  /** When pending funds become available (Stripe available_on), oldest first. Null if unreadable. */
+  pendingReleases?: PendingRelease[] | null;
+  /** True when pendingReleases add up to pendingCents. */
+  pendingReleasesComplete?: boolean;
   platformFeeCents: number;
   feeConfigured: boolean;
   targetTotalFeeBps: number;

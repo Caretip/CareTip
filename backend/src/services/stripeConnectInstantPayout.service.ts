@@ -25,6 +25,13 @@ import {
   invalidateConnectPayoutListSyncThrottle,
   type ConnectPayoutDto,
 } from "./stripeConnectPayout.service.js";
+import {
+  NO_PENDING_RELEASES,
+  pendingReleasesFromScan,
+  scanRecentBalanceTransactions,
+  type PendingReleaseDto,
+  type PendingTxnScan,
+} from "./stripePendingReleases.service.js";
 
 /** Fanny’s intended user-facing total after Platform Pricing is set to 2.5%. */
 export const CARETIP_INSTANT_PAYOUT_TARGET_TOTAL_FEE_BPS = 250;
@@ -71,6 +78,12 @@ export type InstantPayoutEligibilityDto = {
    * When false, available/pending/instant cents are not Stripe-authoritative (do not display as €0.00).
    */
   balancesRetrieved: boolean;
+  /**
+   * When pending funds become available, from Stripe `available_on`, oldest first.
+   * Null when Stripe could not be read; may be partial when pendingReleasesComplete is false.
+   */
+  pendingReleases: PendingReleaseDto[] | null;
+  pendingReleasesComplete: boolean;
   platformFeeCents: number;
   feeConfigured: boolean;
   targetTotalFeeBps: number;
@@ -89,6 +102,7 @@ export type InstantAccountSnapshot = InstantPayoutEligibilityDto & {
 type InstantSnapshot = InstantAccountSnapshot;
 
 type RetrieveBalanceFn = (stripeAccountId: string) => Promise<Stripe.Balance>;
+type ScanBalanceTransactionsFn = (stripeAccountId: string) => Promise<PendingTxnScan | null>;
 type ListExternalAccountsFn = (stripeAccountId: string) => Promise<Stripe.ApiList<Stripe.BankAccount | Stripe.Card>>;
 type RetrieveAccountFn = (stripeAccountId: string) => Promise<Pick<Stripe.Account, "country" | "payouts_enabled" | "charges_enabled">>;
 type CreateInstantPayoutFn = (args: {
@@ -100,17 +114,21 @@ type CreateInstantPayoutFn = (args: {
 }) => Promise<Stripe.Payout>;
 
 let retrieveBalanceFn: RetrieveBalanceFn | null = null;
+let scanBalanceTransactionsFn: ScanBalanceTransactionsFn | null = null;
 let listExternalAccountsFn: ListExternalAccountsFn | null = null;
 let retrieveAccountFn: RetrieveAccountFn | null = null;
 let createInstantPayoutFn: CreateInstantPayoutFn | null = null;
 
 export function __setInstantPayoutStripeFnsForTests(fns: {
   retrieveBalance?: RetrieveBalanceFn | null;
+  scanBalanceTransactions?: ScanBalanceTransactionsFn | null;
   listExternalAccounts?: ListExternalAccountsFn | null;
   retrieveAccount?: RetrieveAccountFn | null;
   createInstantPayout?: CreateInstantPayoutFn | null;
 }): void {
   retrieveBalanceFn = fns.retrieveBalance === undefined ? retrieveBalanceFn : fns.retrieveBalance;
+  scanBalanceTransactionsFn =
+    fns.scanBalanceTransactions === undefined ? scanBalanceTransactionsFn : fns.scanBalanceTransactions;
   listExternalAccountsFn = fns.listExternalAccounts === undefined ? listExternalAccountsFn : fns.listExternalAccounts;
   retrieveAccountFn = fns.retrieveAccount === undefined ? retrieveAccountFn : fns.retrieveAccount;
   createInstantPayoutFn = fns.createInstantPayout === undefined ? createInstantPayoutFn : fns.createInstantPayout;
@@ -118,6 +136,7 @@ export function __setInstantPayoutStripeFnsForTests(fns: {
 
 export function __resetInstantPayoutStripeFnsForTests(): void {
   retrieveBalanceFn = null;
+  scanBalanceTransactionsFn = null;
   listExternalAccountsFn = null;
   retrieveAccountFn = null;
   createInstantPayoutFn = null;
@@ -175,6 +194,7 @@ function emptyEligibility(partial: Partial<InstantPayoutEligibilityDto> & { reas
     availableCents: 0,
     pendingCents: 0,
     balancesRetrieved: false,
+    ...NO_PENDING_RELEASES,
     platformFeeCents: 0,
     feeConfigured: false,
     targetTotalFeeBps: CARETIP_INSTANT_PAYOUT_TARGET_TOTAL_FEE_BPS,
@@ -206,16 +226,26 @@ function withStandardStripeBalances(
   partial: Partial<InstantPayoutEligibilityDto> & { reason: InstantPayoutReason },
   balance: Stripe.Balance,
   currency: string,
+  scan: PendingTxnScan | null,
 ): InstantPayoutEligibilityDto {
+  const pendingCents = balanceAmount(balance.pending, currency);
   return {
     ...emptyEligibility({
       ...partial,
       currency,
       balancesRetrieved: true,
       availableCents: balanceAmount(balance.available, currency),
-      pendingCents: balanceAmount(balance.pending, currency),
+      pendingCents,
+      ...pendingReleasesFromScan(scan, currency, pendingCents),
     }),
   };
+}
+
+/** Release dates are best-effort: tests that mock the balance but not this get none. */
+function scanBalanceTransactions(stripeAccountId: string): Promise<PendingTxnScan | null> {
+  if (scanBalanceTransactionsFn) return scanBalanceTransactionsFn(stripeAccountId);
+  if (retrieveBalanceFn) return Promise.resolve(null);
+  return scanRecentBalanceTransactions(stripeAccountId);
 }
 
 async function retrieveBalance(stripeAccountId: string): Promise<Stripe.Balance> {
@@ -284,11 +314,13 @@ export async function evaluateInstantPayoutForStripeAccount(args: {
   let account: Pick<Stripe.Account, "country" | "payouts_enabled" | "charges_enabled">;
   let balance: Stripe.Balance;
   let externals: Stripe.ApiList<Stripe.BankAccount | Stripe.Card>;
+  let scan: PendingTxnScan | null;
   try {
-    [account, balance, externals] = await Promise.all([
+    [account, balance, externals, scan] = await Promise.all([
       retrieveAccount(stripeAccountId),
       retrieveBalance(stripeAccountId),
       listExternalAccounts(stripeAccountId),
+      scanBalanceTransactions(stripeAccountId),
     ]);
   } catch (err) {
     logServerError("stripeConnectInstantPayout.eligibility_stripe", err, args.logContext ?? {});
@@ -311,6 +343,7 @@ export async function evaluateInstantPayoutForStripeAccount(args: {
         },
         balance,
         standardCurrency,
+        scan,
       ),
       stripeAccountId,
       destinationId: null,
@@ -361,6 +394,7 @@ export async function evaluateInstantPayoutForStripeAccount(args: {
         availableCents: balanceAmount(balance.available, currency),
         pendingCents: balanceAmount(balance.pending, currency),
         balancesRetrieved: true,
+        ...pendingReleasesFromScan(scan, currency, balanceAmount(balance.pending, currency)),
         canOpenExpressDashboard: true,
       }),
       stripeAccountId,
@@ -394,6 +428,7 @@ export async function evaluateInstantPayoutForStripeAccount(args: {
     availableCents: balanceAmount(balance.available, currency),
     pendingCents: balanceAmount(balance.pending, currency),
     balancesRetrieved: true,
+    ...pendingReleasesFromScan(scan, currency, balanceAmount(balance.pending, currency)),
     platformFeeCents,
     feeConfigured,
     targetTotalFeeBps: CARETIP_INSTANT_PAYOUT_TARGET_TOTAL_FEE_BPS,

@@ -74,6 +74,8 @@ function emptyEmployeeEligibility(reason: InstantPayoutReason): EmployeeInstantP
       availableCents: 0,
       pendingCents: 0,
       balancesRetrieved: false,
+      pendingReleases: null,
+      pendingReleasesComplete: false,
       platformFeeCents: 0,
       feeConfigured: false,
       targetTotalFeeBps: CARETIP_INSTANT_PAYOUT_TARGET_TOTAL_FEE_BPS,

@@ -98,6 +98,14 @@
     "instantTerms": {
       "required": "Bitte bestätigen Sie, dass Sie die Allgemeinen Geschäftsbedingungen, die Datenschutzerklärung, den Auftragsverarbeitungsvertrag (AVV) sowie das Preis- und Leistungsverzeichnis gelesen haben und akzeptieren.",
       "accepted": "Rechtliche Dokumente akzeptiert."
+    },
+    "pendingReleases": {
+      "title": "Wird verfügbar",
+      "more_one": "+{{count}} späterer Termin",
+      "more_other": "+{{count}} spätere Termine",
+      "partial": "Diese Termine decken nur einen Teil des ausstehenden Guthabens ab.",
+      "unavailable": "Die Verfügbarkeitstermine konnten gerade nicht von Stripe geladen werden.",
+      "note": "Diese Termine legt Stripe fest. Der Auszahlungsplan bestimmt, wann verfügbares Guthaben auf das Bankkonto überwiesen wird."
     }
   },
   "format": {
@@ -4537,10 +4545,8 @@
         "title": "Auszahlungsrhythmus",
         "lead": "Legen Sie fest, wie oft verfügbare Einnahmen auf Ihr Bankkonto ausgezahlt werden.",
         "speedNote": "Dies steuert die Auszahlungsfrequenz, nicht wie schnell Kartenzahlungen in Stripe verfügbar werden.",
-        "settlementNote": "Stripe stellt Kartengelder in der Regel nach etwa {{days}} Kalendertag(en) für Auszahlungen bereit (Abrechnung). Die Bankbearbeitung kann zusätzliche Zeit benötigen. Dies ist keine Garantie für den Bankgutschriftstermin.",
-        "settlementNoteFallback": "Geschätzte Abrechnungsverzögerung (aus Stripe-Kontoeinstellungen): etwa {{days}} Tag(e). Bitte im Stripe-Dashboard prüfen; die Bankbearbeitung kann zusätzliche Zeit benötigen.",
-        "settlementUnavailable": "Die Abrechnungszeit konnte gerade nicht von Stripe gelesen werden. Die Auszahlungsfrequenz unten gilt, sobald Gelder verfügbar sind.",
-        "settlementStripeSupport": "CareTip konnte die Stripe-Abrechnungszeit (3 Werktage für berechtigte deutsche Konten) nicht bestätigen. Wenden Sie sich an den CareTip-Support, wenn Auszahlungen weiterhin verzögert wirken.",
+        "settlementNote": "Kartenzahlungen werden bei Stripe abgerechnet, bevor sie ausgezahlt werden können. Wie lange das dauert, legt Stripe fest; bei jedem ausstehenden Betrag steht das Datum, ab dem er verfügbar ist. Die Bankbearbeitung kann zusätzliche Zeit benötigen. Dies ist keine Garantie für den Bankgutschriftstermin.",
+        "settlementStripeSupport": "CareTip konnte Ihre Stripe-Abrechnungseinstellungen nicht bestätigen. Ausstehende Beträge zeigen weiterhin das Datum, an dem Stripe sie verfügbar macht. Wenden Sie sich an den CareTip-Support, wenn Auszahlungen weiterhin verzögert wirken.",
         "policyPartialSuccess": "Auszahlungsrhythmus: {{schedule}}. Abrechnungskonfiguration: {{settlement}}.",
         "firstPayoutHoldNote": "Stripe kann zusätzlich zur normalen Abrechnungszeit eine separate Wartezeit für die erste Auszahlung oder eine Risikoprüfung anwenden.",
         "scheduleDriftNotice": "Ihr Stripe-Auszahlungsintervall passt nicht zu dieser Einstellung. Speichern Sie den Rhythmus erneut oder kontaktieren Sie den Support.",
@@ -7531,10 +7537,8 @@
           "title": "Auszahlungsrhythmus",
           "lead": "Legen Sie fest, wie oft verfügbares Guthaben auf Ihr Bankkonto überwiesen wird.",
           "speedNote": "Dies betrifft die Häufigkeit der Auszahlung, nicht wie schnell Kartenzahlungen in Stripe verfügbar werden.",
-          "settlementNote": "Stripe stellt Kartengelder in der Regel nach etwa {{days}} Kalendertag(en) für Auszahlungen bereit (Abrechnung). Die Bankbearbeitung kann zusätzliche Zeit benötigen. Dies ist keine Garantie für den Bankgutschriftstermin.",
-          "settlementNoteFallback": "Geschätzte Abrechnungsverzögerung (aus Stripe-Kontoeinstellungen): etwa {{days}} Tag(e). Bitte im Stripe-Dashboard prüfen; die Bankbearbeitung kann zusätzliche Zeit benötigen.",
-          "settlementUnavailable": "Die Abrechnungszeit konnte gerade nicht von Stripe gelesen werden. Die Auszahlungsfrequenz unten gilt, sobald Gelder verfügbar sind.",
-          "settlementStripeSupport": "CareTip konnte die Stripe-Abrechnungszeit (3 Werktage für berechtigte deutsche Konten) nicht bestätigen. Wenden Sie sich an den CareTip-Support, wenn Auszahlungen weiterhin verzögert wirken.",
+          "settlementNote": "Kartenzahlungen werden bei Stripe abgerechnet, bevor sie ausgezahlt werden können. Wie lange das dauert, legt Stripe fest; bei jedem ausstehenden Betrag steht das Datum, ab dem er verfügbar ist. Die Bankbearbeitung kann zusätzliche Zeit benötigen. Dies ist keine Garantie für den Bankgutschriftstermin.",
+          "settlementStripeSupport": "CareTip konnte Ihre Stripe-Abrechnungseinstellungen nicht bestätigen. Ausstehende Beträge zeigen weiterhin das Datum, an dem Stripe sie verfügbar macht. Wenden Sie sich an den CareTip-Support, wenn Auszahlungen weiterhin verzögert wirken.",
           "policyPartialSuccess": "Auszahlungsrhythmus: {{schedule}}. Abrechnungskonfiguration: {{settlement}}.",
           "firstPayoutHoldNote": "Stripe kann zusätzlich zur normalen Abrechnungszeit eine separate Wartezeit für die erste Auszahlung oder eine Risikoprüfung anwenden.",
           "scheduleDriftNotice": "Ihr Stripe-Auszahlungsintervall passt nicht zu dieser Einstellung. Speichern Sie den Rhythmus erneut oder kontaktieren Sie den Support.",

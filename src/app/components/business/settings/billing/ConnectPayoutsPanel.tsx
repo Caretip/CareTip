@@ -48,6 +48,7 @@ import {
   PayoutFinancialMetric,
   PayoutFinancialMetricStrip,
 } from "../../../finance/payout/PayoutFinancialMetric";
+import { PendingReleaseList } from "../../../finance/payout/PendingReleaseList";
 import { PayoutDestinationCard } from "../../../finance/payout/PayoutDestinationCard";
 import { PayoutInstantBreakdown } from "../../../finance/payout/PayoutInstantBreakdown";
 import { PayoutWorkspacePanel } from "../../../finance/payout/PayoutWorkspacePanel";
@@ -959,6 +960,15 @@ function BusinessPayoutMetrics({
       label: t("business.stripe.payoutsWorkspace.business.kpiPending"),
       hint: t("business.stripe.payoutsWorkspace.business.kpiPendingHint"),
       value: formatStandard(eligibility?.pendingCents),
+      detail:
+        balancesOk && eligibility ? (
+          <PendingReleaseList
+            releases={eligibility.pendingReleases}
+            complete={eligibility.pendingReleasesComplete}
+            pendingCents={eligibility.pendingCents}
+            currency={currency}
+          />
+        ) : null,
     },
     {
       label: t("business.stripe.payoutsWorkspace.business.kpiInstant"),
@@ -975,6 +985,7 @@ function BusinessPayoutMetrics({
           label={metric.label}
           value={metric.value}
           hint={metric.hint}
+          detail={"detail" in metric ? metric.detail : null}
         />
       ))}
     </PayoutFinancialMetricStrip>

@@ -5,11 +5,14 @@ export function PayoutFinancialMetric({
   label,
   value,
   hint,
+  detail,
   className,
 }: {
   label: string;
   value: string;
   hint?: string;
+  /** Extra content under the hint, e.g. pending release dates. */
+  detail?: ReactNode;
   className?: string;
 }) {
   return (
@@ -17,6 +20,7 @@ export function PayoutFinancialMetric({
       <p className="caretip-payout-metric__label">{label}</p>
       <p className="caretip-payout-metric__value text-foreground">{value}</p>
       {hint ? <p className="caretip-payout-metric__hint">{hint}</p> : null}
+      {detail}
     </div>
   );
 }

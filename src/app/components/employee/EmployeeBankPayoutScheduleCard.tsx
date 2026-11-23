@@ -90,18 +90,10 @@ export function EmployeeBankPayoutScheduleCard({
           <p className="mt-1 text-xs text-muted-foreground">
             {t("employee.payouts.schedule.speedNote")}
           </p>
-          {data?.settlement?.source === "unavailable" ? (
+          {/* No day count here: Stripe's settings can disagree with the available_on it applies. */}
+          {data ? (
             <p className="mt-1 text-xs text-muted-foreground">
-              {t("employee.payouts.schedule.settlementUnavailable")}
-            </p>
-          ) : typeof data?.settlement?.effectiveDelayDays === "number" ? (
-            <p className="mt-1 text-xs text-muted-foreground">
-              {t(
-                data.settlement.source === "accounts_v1_fallback"
-                  ? "employee.payouts.schedule.settlementNoteFallback"
-                  : "employee.payouts.schedule.settlementNote",
-                { days: data.settlement.effectiveDelayDays },
-              )}
+              {t("employee.payouts.schedule.settlementNote")}
             </p>
           ) : null}
           {data?.lastPolicyApply && !data.lastPolicyApply.policyComplete ? (
