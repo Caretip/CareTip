@@ -1,33 +1,31 @@
-import { useMemo, useState } from "react";
-import { useNavigate, useParams, Link } from "react-router";
-import { useTranslation } from "react-i18next";
-import "@/styles/bundles/auth.css";
-import { KeyRound } from "lucide-react";
-import { AuthErrorSlot, AuthStableSubmitButton } from "@/app/components/auth/AuthFormStability";
-import { AuthFieldGroup } from "@/app/components/auth/AuthFieldGroup";
-import { AuthSplitLayout } from "@/app/components/auth/AuthSplitLayout";
-import { AuthCardBrandMark } from "@/app/components/auth/AuthCardBrandMark";
-import { AuthBackToHomeNav } from "@/app/components/auth/AuthBackToHomeNav";
-import { AuthTrustStrip } from "@/app/components/auth/AuthTrustStrip";
-import { validateInviteCode } from "../lib/api";
-import { toUserFriendlyMessage } from "../lib/errorMessages";
-import { logClientError } from "../lib/clientLog";
-import { saveValidatedInviteContext } from "../lib/inviteContextStore";
+import { useMemo, useState } from 'react';
+import { useNavigate, useParams, Link } from 'react-router';
+import { useTranslation } from 'react-i18next';
+import '@/styles/bundles/auth.css';
+import '@/styles/caretip-auth-join.css';
+import { ArrowLeft, KeyRound } from 'lucide-react';
+import { CareTipLogo } from '@/app/components/CareTipLogo';
+import { AuthStableSubmitButton } from '@/app/components/auth/AuthFormStability';
+import { AuthTrustStrip } from '@/app/components/auth/AuthTrustStrip';
+import { validateInviteCode } from '../lib/api';
+import { toUserFriendlyMessage } from '../lib/errorMessages';
+import { logClientError } from '../lib/clientLog';
+import { saveValidatedInviteContext } from '../lib/inviteContextStore';
 
 export function JoinPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const params = useParams();
-  const prefilledCode = useMemo(() => (params.code ? String(params.code) : ""), [params.code]);
+  const prefilledCode = useMemo(() => (params.code ? String(params.code) : ''), [params.code]);
   const [code, setCode] = useState(prefilledCode);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   const handleContinue = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleaned = code.trim();
     if (!cleaned) return;
-    setError("");
+    setError('');
     setBusy(true);
     try {
       const validated = await validateInviteCode(cleaned);
@@ -38,73 +36,74 @@ export function JoinPage() {
         businessSlug: validated.businessSlug,
         businessLocation: validated.businessLocation,
       });
-      navigate("/join/signup", { replace: true });
+      navigate('/join/signup', { replace: true });
     } catch (err) {
-      logClientError("JoinPage.validateInvite", err);
-      setError(toUserFriendlyMessage(err) || t("join.invalidCodeFallback"));
+      logClientError('JoinPage.validateInvite', err);
+      setError(toUserFriendlyMessage(err) || t('join.invalidCodeFallback'));
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <div className="caretip-auth-page caretip-auth-join-stage font-sans">
-      <AuthSplitLayout
-        authLane="employee"
-        marketingScene="invite"
-        hideBackToHome
-        topSlot={<AuthBackToHomeNav showLogo={false} />}
-      >
-        <div className="caretip-auth-card-wrap">
-          <div className="caretip-auth-card caretip-auth-card--stable caretip-auth-card--recovery">
-            <AuthCardBrandMark />
-            <div className="caretip-auth-header">
-              <p className="text-sm font-semibold text-muted-foreground">{t("join.eyebrow")}</p>
-              <h1 className="caretip-auth-title !pt-2">{t("join.title")}</h1>
-              <p className="caretip-auth-subtitle">{t("join.subtitle")}</p>
-            </div>
-            <div className="caretip-auth-card-body caretip-auth-card-body--recovery">
-              <form onSubmit={handleContinue} className="caretip-auth-form">
-                <AuthFieldGroup label={t("join.inviteLabel")} htmlFor="join-invite-code">
-                  <div className="relative">
-                    <KeyRound className="caretip-auth-field-icon" aria-hidden />
-                    <input
-                      id="join-invite-code"
-                      value={code}
-                      onChange={(e) => setCode(e.target.value)}
-                      inputMode="numeric"
-                      placeholder={t("join.placeholder")}
-                      className="caretip-auth-field caretip-auth-field--has-icon"
-                      autoComplete="one-time-code"
-                    />
-                  </div>
-                </AuthFieldGroup>
+    <div className="caretip-join font-sans" data-caretip-route-ready="">
+      <nav className="caretip-join__bar" aria-label={t('staticPages.common.backToHome')}>
+        <Link to="/" className="caretip-join__back touch-manipulation">
+          <ArrowLeft strokeWidth={2.25} aria-hidden />
+          {t('staticPages.common.backToHome')}
+        </Link>
+        <CareTipLogo size="auth" variant="wordmark" tone="white" className="caretip-join__logo" />
+      </nav>
 
-                <AuthErrorSlot>{error || null}</AuthErrorSlot>
+      <main className="caretip-join__main">
+        <header>
+          <p className="caretip-join__eyebrow">{t('join.eyebrow')}</p>
+          <h1 className="caretip-join__title">{t('join.title')}</h1>
+          <p className="caretip-join__subtitle">{t('join.subtitle')}</p>
+        </header>
 
-                <AuthStableSubmitButton
-                  type="submit"
-                  loading={busy}
-                  loadingAriaLabel={t("join.checking")}
-                  disabled={!code.trim()}
-                  className="disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {t("join.continue")}
-                </AuthStableSubmitButton>
-
-                <AuthTrustStrip />
-              </form>
-
-              <p className="caretip-auth-form-footer mt-4">
-                {t("join.footerPrompt")}{" "}
-                <Link to="/employee/login" className="font-semibold text-primary hover:underline">
-                  {t("join.signIn")}
-                </Link>
-              </p>
-            </div>
+        <section className="caretip-join__card" aria-label={t('join.title')}>
+          <div className="caretip-join__icon" aria-hidden>
+            <KeyRound />
           </div>
-        </div>
-      </AuthSplitLayout>
+          <form onSubmit={handleContinue} noValidate>
+            <label className="caretip-join__label" htmlFor="join-invite-code">
+              {t('join.inviteLabel')}
+            </label>
+            <input
+              id="join-invite-code"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              inputMode="numeric"
+              placeholder={t('join.placeholder')}
+              className="caretip-join__code"
+              autoComplete="one-time-code"
+              aria-invalid={Boolean(error) || undefined}
+              aria-describedby={error ? 'join-invite-error' : undefined}
+            />
+            {error ? (
+              <p id="join-invite-error" className="caretip-join__error" role="alert">
+                {error}
+              </p>
+            ) : null}
+            <div className="caretip-join__submit">
+              <AuthStableSubmitButton
+                type="submit"
+                loading={busy}
+                loadingAriaLabel={t('join.checking')}
+                disabled={!code.trim()}
+                className="disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {t('join.continue')}
+              </AuthStableSubmitButton>
+            </div>
+            <AuthTrustStrip />
+          </form>
+          <p className="caretip-join__footer">
+            {t('join.footerPrompt')} <Link to="/employee/login">{t('join.signIn')}</Link>
+          </p>
+        </section>
+      </main>
     </div>
   );
 }

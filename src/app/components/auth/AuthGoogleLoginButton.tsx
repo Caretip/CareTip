@@ -21,6 +21,10 @@ type AuthGoogleLoginButtonProps = {
 const GSI_MIN_WIDTH = 200;
 const GSI_MAX_WIDTH = 400;
 const GSI_BUTTON_HEIGHT = 40;
+/** Google's button has a fixed 40px height: scaled evenly to our control size (see the frame's CSS). */
+const GSI_SCALE = 1.2;
+/** Extra width so Google's own side borders fall outside the frame, which draws the outline. */
+const GSI_BLEED = 8;
 /** After returning to this tab, wait this long for the popup credential before offering recovery. */
 const POPUP_STALL_GRACE_MS = 4000;
 
@@ -62,7 +66,7 @@ export function AuthGoogleLoginButton({
     const el = hostRef.current;
     if (!el) return;
     const measure = () => {
-      const next = clampGsiWidth(el.getBoundingClientRect().width);
+      const next = clampGsiWidth(el.getBoundingClientRect().width / GSI_SCALE + GSI_BLEED);
       setWidth((prev) => (prev === next ? prev : next));
     };
     measure();
@@ -144,23 +148,25 @@ export function AuthGoogleLoginButton({
       }}
     >
       {scriptLoadedSuccessfully && width != null ? (
-        <GoogleLogin
-          onSuccess={handleSuccess}
-          onError={handleError}
-          useOneTap={false}
-          type="standard"
-          theme="outline"
-          size="large"
-          text="continue_with"
-          shape="rectangular"
-          logo_alignment="center"
-          width={width}
-          {...(redirect ? { ux_mode: "redirect" as const, login_uri: loginUri } : {})}
-          containerProps={{
-            className: "caretip-oauth-gsi-host",
-            style: { width, minHeight: GSI_BUTTON_HEIGHT },
-          }}
-        />
+        <div className="caretip-oauth-google-button__frame">
+          <GoogleLogin
+            onSuccess={handleSuccess}
+            onError={handleError}
+            useOneTap={false}
+            type="standard"
+            theme="outline"
+            size="large"
+            text="continue_with"
+            shape="rectangular"
+            logo_alignment="center"
+            width={width}
+            {...(redirect ? { ux_mode: "redirect" as const, login_uri: loginUri } : {})}
+            containerProps={{
+              className: "caretip-oauth-gsi-host",
+              style: { width, height: GSI_BUTTON_HEIGHT, transform: `scale(${GSI_SCALE})` },
+            }}
+          />
+        </div>
       ) : scriptFailed ? (
         // The Google script was blocked or failed: say so instead of showing an empty, dead box.
         <div
@@ -173,8 +179,7 @@ export function AuthGoogleLoginButton({
         </div>
       ) : (
         <div
-          className="caretip-oauth-google-button__placeholder"
-          style={{ width: width ?? "100%", maxWidth: GSI_MAX_WIDTH, height: GSI_BUTTON_HEIGHT }}
+          className="caretip-oauth-google-button__frame caretip-oauth-google-button__placeholder"
           aria-hidden
         />
       )}
