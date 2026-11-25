@@ -1,46 +1,23 @@
 /**
- * Employee "Accept your invitation" page: one edge-to-edge brand canvas with a floating invitation
- * card. Deliberately unlike the business login (curved panel / orange header with a white sheet).
- * Text on the canvas is black in both themes: white on this orange is hard to read.
+ * Employee "Accept your invitation" page. Calm neutral page, one clear task; the brand colour is kept
+ * for the action and small accents. Deliberately unlike the business login (curved orange panel).
  */
 .caretip-join {
-  position: relative;
+  --join-soft: #fdf4e7;
+  --join-ink: hsl(var(--foreground));
+
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   min-height: 100dvh;
-  overflow: hidden;
   padding: max(0.75rem, env(safe-area-inset-top, 0px)) max(1.25rem, env(safe-area-inset-right, 0px))
     max(1.5rem, env(safe-area-inset-bottom, 0px)) max(1.25rem, env(safe-area-inset-left, 0px));
-  background: #eb992c;
-  color: #000;
-  isolation: isolate;
+  background: hsl(var(--background));
+  color: var(--join-ink);
 }
 
-/* Quiet rings, as on the other brand panels. */
-.caretip-join::before,
-.caretip-join::after {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  border: 1px solid rgb(255 255 255 / 0.28);
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.caretip-join::before {
-  right: -9rem;
-  bottom: -11rem;
-  width: 26rem;
-  height: 26rem;
-}
-
-.caretip-join::after {
-  right: -15rem;
-  bottom: -17rem;
-  width: 38rem;
-  height: 38rem;
-  border-color: rgb(255 255 255 / 0.18);
+.dark .caretip-join {
+  --join-soft: rgb(235 153 44 / 0.08);
 }
 
 .caretip-join__bar {
@@ -48,131 +25,133 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  width: 100%;
-  max-width: 64rem;
   min-height: 2.75rem;
-  margin-inline: auto;
+  margin-bottom: 1.75rem;
+}
+
+.caretip-join__logo {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  margin-left: -0.4375rem;
+  border-radius: 0.5rem;
 }
 
 .caretip-join__back {
   display: inline-flex;
+  flex: none;
   align-items: center;
   gap: 0.5rem;
   min-height: 2.75rem;
-  border-radius: 0.5rem;
-  color: #000;
-  font-size: 0.9375rem;
-  font-weight: 500;
+  padding-inline: 0.875rem 1rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 999px;
+  color: var(--join-ink);
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: background-color 150ms ease;
+}
+
+.caretip-join__back:hover {
+  background: hsl(var(--muted) / 0.7);
 }
 
 .caretip-join__back svg {
-  width: 1.25rem;
-  height: 1.25rem;
-}
-
-.caretip-join__logo img {
-  margin-right: -0.4375rem;
-  filter: brightness(0);
+  width: 1rem;
+  height: 1rem;
 }
 
 .caretip-join__main {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 1.75rem;
   width: 100%;
-  max-width: 26rem;
-  margin-inline: auto;
-  padding-top: 1.75rem;
+  max-width: 28rem;
+  margin: 0 auto;
+}
+
+.caretip-join__badge {
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 1rem;
+  background: var(--join-soft);
+  color: #eb992c;
+}
+
+.caretip-join__badge svg {
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 .caretip-join__eyebrow {
+  margin-top: 1.25rem;
+  color: hsl(var(--muted-foreground));
   font-size: 0.875rem;
   font-weight: 600;
 }
 
-.caretip-join .caretip-join__title {
-  margin-top: 0.375rem;
-  color: #000;
-  font-size: clamp(1.875rem, 8.6vw, 2.25rem);
+.caretip-join__title {
+  margin-top: 0.25rem;
+  font-size: clamp(1.75rem, 7.6vw, 2.125rem);
   font-weight: 800;
-  letter-spacing: -0.032em;
-  line-height: 1.06;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
   text-wrap: balance;
 }
 
 .caretip-join__subtitle {
-  max-width: 30rem;
   margin-top: 0.75rem;
+  color: hsl(var(--muted-foreground));
   font-size: 0.9375rem;
-  line-height: 1.5;
+  line-height: 1.55;
   text-wrap: pretty;
 }
 
-.caretip-join__card {
-  padding: 1.5rem 1.25rem 1.25rem;
-  border-radius: 1.5rem;
-  background: hsl(var(--background));
-  color: hsl(var(--foreground));
-  box-shadow: 0 18px 40px -20px rgb(66 38 0 / 0.45);
-}
-
-.caretip-join__icon {
-  display: grid;
-  place-items: center;
-  width: 3rem;
-  height: 3rem;
-  margin: 0 auto 1rem;
-  border-radius: 50%;
-  background: rgb(235 153 44 / 0.16);
-  color: hsl(var(--foreground));
-}
-
-.caretip-join__icon svg {
-  width: 1.375rem;
-  height: 1.375rem;
+.caretip-join__form {
+  margin-top: 1.75rem;
 }
 
 .caretip-join__label {
   display: block;
   font-size: 0.875rem;
   font-weight: 600;
-  text-align: center;
 }
 
 .caretip-join__code {
   width: 100%;
-  height: 3.75rem;
+  height: 3.5rem;
   margin-top: 0.5rem;
-  padding-inline: 0.75rem;
+  padding-inline: 1rem;
   border: 1.5px solid hsl(var(--border));
   border-radius: 0.875rem;
-  background: hsl(var(--muted) / 0.45);
-  color: hsl(var(--foreground));
-  font-size: 1.5rem;
-  font-weight: 700;
+  background: hsl(var(--background));
+  color: var(--join-ink);
+  font-size: 1.25rem;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.12em;
-  text-align: center;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   transition:
     border-color 150ms ease,
-    box-shadow 150ms ease,
-    background-color 150ms ease;
+    box-shadow 150ms ease;
+}
+
+.dark .caretip-join__code {
+  background: hsl(var(--input-background));
 }
 
 .caretip-join__code::placeholder {
   color: hsl(var(--muted-foreground));
-  font-size: 1.0625rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
   opacity: 1;
 }
 
 .caretip-join__code:focus {
   border-color: #eb992c;
-  background: hsl(var(--background));
   outline: none;
-  box-shadow: 0 0 0 4px rgb(235 153 44 / 0.24);
+  box-shadow: 0 0 0 4px rgb(235 153 44 / 0.2);
 }
 
 .caretip-join__code[aria-invalid="true"] {
@@ -185,7 +164,6 @@
   font-size: 0.875rem;
   font-weight: 500;
   line-height: 1.4;
-  text-align: center;
 }
 
 .dark .caretip-join__error {
@@ -196,7 +174,6 @@
   margin-top: 1rem;
 }
 
-.caretip-join__submit .caretip-auth-submit,
 .caretip-join__submit button {
   width: 100%;
   min-height: 3.25rem;
@@ -204,25 +181,23 @@
   box-shadow: none;
 }
 
-.caretip-join__card .caretip-auth-trust {
+.caretip-join__form .caretip-auth-trust {
   justify-content: center;
   width: 100%;
-  margin-top: 1rem;
+  margin-top: 0.875rem;
 }
 
 .caretip-join__footer {
-  margin-top: 1.125rem;
-  padding-top: 1.125rem;
-  border-top: 1px dashed hsl(var(--border));
+  margin-top: 1rem;
   color: hsl(var(--muted-foreground));
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   text-align: center;
 }
 
 .caretip-join__footer a {
   display: inline-block;
-  padding-block: 0.5rem;
-  color: hsl(var(--foreground));
+  padding-block: 0.625rem;
+  color: var(--join-ink);
   font-weight: 700;
   text-decoration: underline;
   text-decoration-color: #eb992c;
@@ -230,45 +205,321 @@
   text-underline-offset: 0.2em;
 }
 
+/* Brand panel: black text in both themes (white on this orange is hard to read). */
+.caretip-join__aside {
+  position: relative;
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  background: #eb992c;
+  color: #000;
+  isolation: isolate;
+}
+
+.caretip-join__aside::before,
+.caretip-join__aside::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  border: 1px solid rgb(255 255 255 / 0.3);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.caretip-join__aside::before {
+  top: -7rem;
+  right: -7rem;
+  width: 15rem;
+  height: 15rem;
+}
+
+.caretip-join__aside::after {
+  top: -11rem;
+  right: -11rem;
+  width: 23rem;
+  height: 23rem;
+}
+
+.caretip-join .caretip-join__aside-title {
+  color: #000;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.caretip-join__benefits {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.875rem;
+}
+
+.caretip-join__benefits li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.35;
+  font-weight: 500;
+}
+
+.caretip-join__benefits span {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.75rem;
+  background: #fff;
+  color: #eb992c;
+}
+
+.caretip-join__benefits svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
 .caretip-join a:focus-visible {
-  outline: 2px solid currentcolor;
+  outline: 2px solid #eb992c;
   outline-offset: 3px;
 }
 
 @media (min-width: 640px) {
-  .caretip-join__card {
-    padding: 2rem 2rem 1.5rem;
+  .caretip-join {
+    background: #f8f8f7;
+  }
+
+  .dark .caretip-join {
+    background: hsl(var(--background));
+  }
+
+  .caretip-join__main {
+    margin-block: auto;
+    overflow: hidden;
+    border-radius: 1.5rem;
+    background: hsl(var(--background));
+    box-shadow:
+      0 1px 3px rgb(23 20 17 / 0.06),
+      0 24px 60px -32px rgb(23 20 17 / 0.35);
+  }
+
+  .dark .caretip-join__main {
+    background: hsl(var(--card));
+  }
+
+  .caretip-join__task {
+    padding: 1.5rem 2.25rem;
+  }
+
+  .caretip-join__aside {
+    margin: 0;
+    padding: 1.5rem 2.25rem;
+    border-radius: 0;
   }
 }
 
 @media (min-width: 900px) {
-  .caretip-join {
-    padding-inline: 2.5rem;
-  }
-
   .caretip-join__main {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 26rem);
-    align-items: center;
-    gap: 4rem;
-    max-width: 64rem;
-    padding-block: 2rem;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    max-width: 60rem;
   }
 
-  .caretip-join .caretip-join__title {
-    margin-top: 0.5rem;
-    font-size: clamp(2.75rem, 4.4vw, 3.75rem);
-    line-height: 1.02;
+  .caretip-join__task {
+    padding: 2rem 3rem;
   }
 
-  .caretip-join__subtitle {
-    margin-top: 1.125rem;
-    font-size: 1.0625rem;
+  .caretip-join__aside {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 3rem;
+  }
+
+  .caretip-join .caretip-join__aside-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+  }
+
+  .caretip-join__benefits {
+    gap: 1.125rem;
+    margin-top: 1.5rem;
+  }
+
+  .caretip-join__benefits li {
+    gap: 0.875rem;
+    font-size: 1rem;
+  }
+
+  .caretip-join__benefits span {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.875rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .caretip-join__code {
+  .caretip-join__code,
+  .caretip-join__back {
     transition: none;
+  }
+}
+
+/*
+ * Phones: an inset invitation card carries the brand, then the one task, then the benefits as a light
+ * strip, with sign-in at the foot of the page. Inset on purpose: no orange touches the screen edges.
+ */
+@media (max-width: 639px) {
+  .caretip-join__main {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    margin: 0 auto;
+  }
+
+  .caretip-join__task {
+    display: contents;
+  }
+
+  .caretip-join__bar {
+    flex-direction: row-reverse;
+    margin-bottom: 0.75rem;
+  }
+
+  .caretip-join__logo {
+    margin: 0 -0.4375rem 0 0;
+  }
+
+  .caretip-join__back {
+    padding-inline: 0;
+    border: 0;
+    font-size: 0.9375rem;
+    font-weight: 500;
+  }
+
+  .caretip-join__back:hover {
+    background: none;
+  }
+
+  .caretip-join__back svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .caretip-join__head {
+    position: relative;
+    padding: 1.375rem 1.25rem 1.5rem;
+    overflow: hidden;
+    border-radius: 1.5rem;
+    background: #eb992c;
+    color: #000;
+    isolation: isolate;
+  }
+
+  .caretip-join__head::before,
+  .caretip-join__head::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    border: 1px solid rgb(255 255 255 / 0.3);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .caretip-join__head::before {
+    top: -6rem;
+    right: -5rem;
+    width: 13rem;
+    height: 13rem;
+  }
+
+  .caretip-join__head::after {
+    top: -9rem;
+    right: -8rem;
+    width: 19rem;
+    height: 19rem;
+  }
+
+  .caretip-join__badge {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.875rem;
+    background: #fff;
+  }
+
+  .caretip-join__badge svg {
+    width: 1.375rem;
+    height: 1.375rem;
+  }
+
+  .caretip-join__eyebrow {
+    margin-top: 1rem;
+    color: #000;
+  }
+
+  .caretip-join .caretip-join__title {
+    color: #000;
+    font-size: clamp(1.5rem, 7.4vw, 1.875rem);
+  }
+
+  .caretip-join__subtitle {
+    margin-top: 0.5rem;
+    color: #000;
+    line-height: 1.45;
+  }
+
+  .caretip-join__form {
+    margin-top: 1.5rem;
+  }
+
+  .caretip-join__aside {
+    order: 1;
+    margin-top: 1.5rem;
+    padding: 1.25rem 0 0;
+    overflow: visible;
+    border-top: 1px solid hsl(var(--border));
+    border-radius: 0;
+    background: none;
+    color: inherit;
+  }
+
+  .caretip-join__aside::before,
+  .caretip-join__aside::after {
+    content: none;
+  }
+
+  .caretip-join .caretip-join__aside-title {
+    color: inherit;
+    font-size: 0.9375rem;
+    text-align: center;
+  }
+
+  .caretip-join__benefits {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .caretip-join__benefits li {
+    flex-direction: column;
+    gap: 0.5rem;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.8125rem;
+    text-align: center;
+    text-wrap: balance;
+  }
+
+  .caretip-join__benefits span {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.875rem;
+    background: var(--join-soft);
+  }
+
+  .caretip-join__footer {
+    order: 2;
+    margin-top: auto;
+    padding-top: 1.25rem;
   }
 }
