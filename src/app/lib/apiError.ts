@@ -46,6 +46,9 @@ export const MFA_CHALLENGE_EXPIRED = "MFA_CHALLENGE_EXPIRED" as const;
 
 /** Returned when the pending MFA JWT is malformed or already used. */
 export const MFA_CHALLENGE_INVALID = "MFA_CHALLENGE_INVALID" as const;
+/** The server refused to renew this session (as opposed to: the refresh could not be completed). */
+export const SESSION_REFRESH_REJECTED_CODE = "SESSION_REFRESH_REJECTED" as const;
+
 export class ApiRequestError extends Error {
   constructor(
     message: string,

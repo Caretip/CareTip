@@ -165,7 +165,7 @@ export function MobileWebAuthShell({
                 </button>
               </p>
               ) : null}
-              {error ? <p className="mw-auth-error">{error}</p> : <p className="mw-auth-error" />}
+              <p className="mw-auth-error" role="alert">{error}</p>
               <AuthButton loading={busy} loadingLabel={t("auth.mobileWebAuth.verifying")}>
                 {t("auth.mobileWebAuth.verify")}
               </AuthButton>
@@ -284,7 +284,7 @@ export function MobileWebAuthShell({
               />
             ) : null}
 
-            {error ? <p className="mw-auth-error">{error}</p> : <p className="mw-auth-error" />}
+            <p className="mw-auth-error" role="alert">{error}</p>
 
             {isLogin && showResendVerification ? (
               <AuthButton

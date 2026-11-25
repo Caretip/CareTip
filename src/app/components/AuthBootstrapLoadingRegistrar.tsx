@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import type { ReactNode } from "react";
 import { useLocation } from "react-router";
 import { useAuth } from "../hooks/useAuth";
+import { useLoginBootstrapWaitExpired } from "../hooks/useLoginBootstrapWaitExpired";
 import { hasPendingStoredSessionWithoutUser, isAuthRestorePending } from "../lib/authRestore";
 import { isPublicAuthenticationPath } from "../lib/authSession";
 import { requiresAuthBootstrapBeforeLoginPaint } from "../lib/authBootstrapUi";
@@ -57,9 +58,12 @@ export function AuthBootstrapLoadingRegistrar({ children }: { children: ReactNod
   const { t } = useTranslation();
   const { authStatus, user } = useAuth();
   const { pathname } = useLocation();
+  const loginWaitExpired = useLoginBootstrapWaitExpired(authStatus);
   const suppressBootstrap = shouldSuppressSessionBootstrapOverlay();
   const authBootstrapBlocking =
-    !suppressBootstrap && shouldBlockGlobalAuthLoader(pathname, authStatus, user);
+    !suppressBootstrap &&
+    !(loginWaitExpired && isPublicAuthenticationPath(pathname)) &&
+    shouldBlockGlobalAuthLoader(pathname, authStatus, user);
   const releaseAppBootOverlay = useReleaseAppBootOverlay();
 
   useAppLoadingRegistration(

@@ -59,6 +59,7 @@ import {
   AuthStableSubmitButton,
 } from './auth/AuthFormStability';
 import { sessionMatchesBusinessStaffAuthTarget, shouldShowLoginSessionResumeUi } from '../lib/authSession';
+import { useLoginBootstrapWaitExpired } from '../hooks/useLoginBootstrapWaitExpired';
 import { shouldShowAuthBootstrapShell } from '../lib/authBootstrapUi';
 import { AuthBootstrapShell } from './auth/AuthBootstrapShell';
 import {
@@ -162,6 +163,7 @@ export function AuthPage() {
   const [otpCode, setOtpCode] = useState('');
   const [merchantLegalAccepted, setMerchantLegalAccepted] = useState(false);
   const { login, register, loginWithOAuth, logout, user, sessionValidated, authStatus, completeAuthLogin } = useAuth();
+  const loginWaitExpired = useLoginBootstrapWaitExpired(authStatus);
   const authInFlightRef = useRef(false);
   const postAuthRedirectRef = useRef<string | null>(null);
   const navigationRecoveryCancelRef = useRef<(() => void) | null>(null);
@@ -358,16 +360,27 @@ export function AuthPage() {
     setUnlockedFields(new Set());
   }, [isLogin, location.pathname]);
 
+  // Login and sign-up routes share this component: an error belongs to the page it happened on.
+  const errorPathRef = useRef(location.pathname);
+  useEffect(() => {
+    if (errorPathRef.current === location.pathname) return;
+    errorPathRef.current = location.pathname;
+    setError('');
+    setShowResendVerification(false);
+  }, [location.pathname]);
+
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
+
+  const resumeSessionPending = user != null && !sessionValidated && !loginWaitExpired;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setShowResendVerification(false);
 
-    if (user != null && !sessionValidated) return;
+    if (resumeSessionPending) return;
     if (user != null && sessionValidated) {
       setAuthFlowInProgress(true);
       setIsSubmitting(true);
@@ -736,8 +749,6 @@ export function AuthPage() {
 
   const showEmployeeSignupFields = !isLogin && authLane === 'employee';
 
-  const resumeSessionPending = user != null && !sessionValidated;
-
   const logoutHandoffActive = useSyncExternalStore(
     subscribeAuthLogoutTransition,
     isAuthLogoutTransitionActive,
@@ -765,6 +776,7 @@ export function AuthPage() {
         authStatus,
         authTransitionPending,
         allowImmediateLoginPaint: true,
+        waitExpired: loginWaitExpired,
       }));
   useSignalLogoutAuthPageReady(loginChromeReady);
 
@@ -775,8 +787,11 @@ export function AuthPage() {
     return <AuthBootstrapShell />;
   }
 
+  // Once the page shows, the form stays: an anonymous first frame, a slow restore and a running
+  // sign-in used to leave the desktop card empty.
   const showSignInForm =
-    authStatus !== "initializing" &&
+    authFlowInProgress ||
+    isSubmitting ||
     (!user ||
       !sessionValidated ||
       (!isLogin && !sessionMatchesBusinessStaffAuthTarget(user.role, role)));
@@ -882,8 +897,9 @@ export function AuthPage() {
             onMerchantLegalAcceptedChange={setMerchantLegalAccepted}
             sessionBanner={showAuthenticatedSessionHint ? sessionHintBanner : null}
           />
-        ) : null}
-        <div className={cn(isMobileWebAuth && "caretip-auth-desktop-only")}>
+        ) : (
+        // Exactly one form: phones used to mount this one too, hidden by CSS, with a second Google
+        // and Facebook setup and a second set of fields.
         <SignInCard2
           isLogin={isLogin}
           onToggleMode={toggleAuthMode}
@@ -1254,7 +1270,7 @@ export function AuthPage() {
           </form>
           ) : null}
         </SignInCard2>
-        </div>
+        )}
     </div>
     </>
   );

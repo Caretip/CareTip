@@ -7,6 +7,9 @@ import { ensureAuthEntryRouteCode } from "../routing/routeLazy";
 
 type PrefetchLinkProps = LinkProps;
 
+/** Longest a tap on Login / Sign up stays on the current page for page code that is nearly there. */
+const AUTH_CODE_WAIT_MAX_MS = 120;
+
 function routePathFromTo(to: LinkProps["to"]): string {
   if (typeof to === "string") return to.split("#")[0].split("?")[0];
   if (to && typeof to === "object" && "pathname" in to && to.pathname) {
@@ -58,10 +61,10 @@ export function PrefetchLink({
   };
 
   /**
-   * Signed-out entry pages (login / sign-up) are code-split behind a full-screen Suspense fallback.
-   * Navigating before their code has arrived committed the route and showed that fallback over a
-   * page that was already on screen — the Login-button loader flash. Wait for the code instead and
-   * navigate when it is there, as React Router does for `lazy` routes; nothing else is delayed.
+   * Signed-out entry pages (login / sign-up) are code-split behind a Suspense fallback.
+   * When the code is warm, or lands within a moment, the form follows directly with no
+   * intermediate frame. Otherwise navigate anyway: waiting for the download kept phones on the
+   * landing page for seconds. The route then shows AuthEntrySkeleton (page-shaped, not a loader).
    */
   const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {
     onClick?.(e);
@@ -77,7 +80,8 @@ export function PrefetchLink({
     pendingRef.current = true;
     setPending(true);
     const keyAtClick = currentHistoryKey();
-    void codeReady.then(() => {
+    const bound = new Promise<void>((resolve) => window.setTimeout(resolve, AUTH_CODE_WAIT_MAX_MS));
+    void Promise.race([codeReady, bound]).then(() => {
       pendingRef.current = false;
       setPending(false);
       // The user went somewhere else meanwhile: do not pull them back.

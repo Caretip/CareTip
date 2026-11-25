@@ -1,5 +1,7 @@
 /** Prefetch lazy public route chunks on hover/focus/idle — faster nav clicks. */
 
+import { authPageLazy } from "../routing/routeLazy";
+
 type RouteImporter = () => Promise<unknown>;
 
 const PUBLIC_ROUTE_IMPORTERS: Record<string, RouteImporter> = {
@@ -9,8 +11,9 @@ const PUBLIC_ROUTE_IMPORTERS: Record<string, RouteImporter> = {
   "/pricing": () => import("../pages/PricingPage"),
   "/contact": () => import("../pages/ContactPage"),
   "/faq": () => import("../pages/FAQPage"),
-  "/login": () => import("../components/AuthPage"),
-  "/signup": () => import("../components/AuthPage"),
+  // The route's own loader, so a warmed page renders synchronously (and brings its CSS).
+  "/login": () => authPageLazy(),
+  "/signup": () => authPageLazy(),
   "/privacy": () => import("../pages/PrivacyPage"),
   "/terms": () => import("../pages/TermsPage"),
   "/cookies": () => import("../pages/CookiesPage"),
@@ -53,7 +56,8 @@ export function prefetchPublicRoute(path: string, options?: { warmImages?: boole
   const factory = PUBLIC_ROUTE_IMPORTERS[normalized];
   if (!factory) return;
   prefetched.add(normalized);
-  void factory();
+  // A failed warm-up (offline blip) must not block a later one.
+  factory().catch(() => prefetched.delete(normalized));
   if (warmImages && normalized === "/") {
     warmLandingHeroAssets();
   }

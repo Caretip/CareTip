@@ -21,6 +21,7 @@ import {
   OAUTH_EMAIL_REQUIRED_CODE,
   OAUTH_SIGN_IN_FAILED_CODE,
   PENDING_VERIFICATION_CODE,
+  SESSION_REFRESH_REJECTED_CODE,
   SUBSCRIPTION_REQUIRED_CODE,
   PLAN_CAPABILITY_REQUIRED_CODE,
   PLAN_LIMIT_EXCEEDED_CODE,
@@ -74,7 +75,8 @@ import {
   hasRecentPeerRefreshSuccess,
   RefreshCoordinationTimeoutError,
 } from "./authRefreshCoordination";
-import { markSessionExpiredNotice } from "./sessionExpiredNotice";
+import { clearSessionExpiredNotice, markSessionExpiredNotice } from "./sessionExpiredNotice";
+import { getSessionEpoch } from "./authSessionEpoch";
 import { clearSessionConnectivityDegraded } from "./authSessionBootstrap";
 import { recordAuthSessionDiagnostic } from "./authSessionDiagnostics";
 import {
@@ -124,6 +126,7 @@ export function getBrowserTimeZone(): string | undefined {
 }
 
 export function clearClientSessionRevoked(): void {
+  clearSessionExpiredNotice();
   try {
     localStorage.removeItem(SESSION_REVOKED_STORAGE_KEY);
   } catch {
@@ -212,6 +215,9 @@ type RefreshAttemptOptions = {
 
 const REFRESH_CONFLICT_RETRY_DELAY_MS = 400;
 
+/** A refresh that lands after a newer sign-in / sign-out must not put the old account's token back. */
+const SUPERSEDED_REFRESH: RefreshSessionResult = { ok: false, status: 0, shouldClearSession: false };
+
 async function readRefreshRetryable(res: Response): Promise<boolean> {
   const body = (await res.json().catch(() => null)) as { retryable?: unknown } | null;
   return body?.retryable === true;
@@ -237,6 +243,7 @@ async function runRefreshAuthWithRetries(
     return { ok: false, shouldClearSession: false, status: 503 };
   }
 
+  const epochAtStart = getSessionEpoch();
   for (let attempt = 0; attempt < 2; attempt++) {
     let res: Response;
     try {
@@ -264,6 +271,7 @@ async function runRefreshAuthWithRetries(
 
     if (res.ok) {
       const raw = await res.json().catch(() => null);
+      if (getSessionEpoch() !== epochAtStart) return SUPERSEDED_REFRESH;
       const parsed = parseAuthRefreshPayload(raw);
       if (parsed) {
         setToken(parsed.token);
@@ -271,8 +279,12 @@ async function runRefreshAuthWithRetries(
         noteCurrentHostSessionEstablished();
         return { ok: true, data: parsed };
       }
-      return { ok: false, shouldClearSession: true, status: res.status };
+      // A 200 that is not our payload (captive portal, SPA fallback page) says nothing about the session.
+      refreshFailureCooldownUntil = Date.now() + REFRESH_FAILURE_COOLDOWN_MS;
+      return { ok: false, shouldClearSession: false, status: 502 };
     }
+
+    if (getSessionEpoch() !== epochAtStart) return SUPERSEDED_REFRESH;
 
     if (res.status === 401) {
       const body = (await res.json().catch(() => null)) as { code?: unknown } | null;
@@ -281,7 +293,8 @@ async function runRefreshAuthWithRetries(
       }
       return { ok: false, shouldClearSession: true, status: res.status };
     }
-    if (res.status === 403) {
+    // Only the API itself can refuse a session; a firewall or proxy page answers 403 with HTML.
+    if (res.status === 403 && (res.headers.get("content-type") ?? "").includes("application/json")) {
       return { ok: false, shouldClearSession: true, status: res.status };
     }
 
@@ -299,12 +312,9 @@ async function runRefreshAuthWithRetries(
       continue;
     }
 
-    if (res.status === 409 || res.status === 429 || res.status >= 500) {
-      refreshFailureCooldownUntil = Date.now() + REFRESH_FAILURE_COOLDOWN_MS;
-      return { ok: false, shouldClearSession: false, status: res.status };
-    }
-
-    return { ok: false, shouldClearSession: true, status: res.status };
+    // 409, 429, 5xx, and anything the refresh endpoint never answers (404 during a deploy, 405, ...).
+    refreshFailureCooldownUntil = Date.now() + REFRESH_FAILURE_COOLDOWN_MS;
+    return { ok: false, shouldClearSession: false, status: res.status };
   }
 
   refreshFailureCooldownUntil = Date.now() + REFRESH_FAILURE_COOLDOWN_MS;
@@ -444,7 +454,14 @@ function clearAuthStorage(options?: { sessionExpired?: boolean }): void {
   clearClientAuthStorage();
 }
 
+/** Only a browser that held a session can lose one: a visitor's 401 is not an expiry. */
+function hasClientSessionEvidence(): boolean {
+  return Boolean(getToken()?.trim()) || hasClientStoredSession() || hasClientSessionHint();
+}
+
 function clearAuthStorageForDefinitiveFailure(status: number, reason = "definitive_auth_failure"): void {
+  // Nothing to end: never signed in, or a concurrent 401 already ended it (and announced it once).
+  if (!hasClientSessionEvidence()) return;
   recordAuthSessionDiagnostic("AUTH_SESSION_INVALIDATION_REASON", { reason, status });
   if (status === 401 || status === 403) {
     clearAuthStorage({ sessionExpired: true });
@@ -484,6 +501,7 @@ export function isCredentialExchangeAuthPath(p: string): boolean {
     p === "/api/auth/oauth" ||
     p.startsWith("/api/auth/login/mfa/") ||
     p === "/api/auth/facebook/complete" ||
+    p === "/api/auth/resend-verification-email" ||
     p === "/api/auth/mobile-web-handoff/consume"
   );
 }
@@ -552,6 +570,12 @@ function attachLatestBearer(init?: RequestInit): RequestInit {
 /** Restore access JWT from HttpOnly refresh cookie when memory was cleared (HMR, new tab, etc.). */
 async function ensureAccessTokenForProtectedRequest(url: string): Promise<void> {
   if (isAuthRefreshRequestUrl(url) || !requestUsesCaretipProtectedApi(url)) return;
+  if (isCredentialExchangeAuthPath(requestUrlPathname(url))) {
+    // Signing in needs no session, so it starts no refresh. One already in flight must settle first:
+    // its response could otherwise replace the new session's cookie with the old account's.
+    if (refreshSingleton) await refreshSingleton.catch(() => undefined);
+    return;
+  }
   if (getToken()?.trim()) return;
   if (isClientSessionRevoked()) return;
   if (!hasClientStoredSession() && !hasClientSessionHint()) return;
@@ -985,7 +1009,12 @@ async function apiRequestOnce<T>(url: string, init?: RequestInit): Promise<T> {
 
     // Only clear when refresh proved the session is invalid — not for resource-level 401s or
     // transient refresh failures (aligns with fetchAuthedObjectUrl).
-    if (res.status === 401 && isCaretipApi && mayClearClientAuthStorage()) {
+    if (
+      res.status === 401 &&
+      isCaretipApi &&
+      !isCredentialExchangeAuthPath(requestUrlPathname(url)) &&
+      mayClearClientAuthStorage()
+    ) {
       const hasTokenAfterRecovery = Boolean(getToken()?.trim());
       if (refreshDeemedInvalid || (!hasTokenAfterRecovery && !refreshTemporarilyUnavailable)) {
         recordAuthSessionDiagnostic("AUTH_API_401_OUTCOME", {
@@ -1692,7 +1721,12 @@ export async function refreshSessionAPI(): Promise<AuthResponse> {
     throw new Error(m ?? SERVER_ERROR_MESSAGE);
   }
   if (r.status === 401 || r.status === 403) {
-    throw new Error(fallbackMessageForHttpStatus(401) ?? "Your session has expired. Please sign in again.");
+    if (!r.shouldClearSession) throw new Error(SERVICE_UNAVAILABLE_CLIENT_MESSAGE);
+    throw new ApiRequestError(
+      fallbackMessageForHttpStatus(401) ?? "Your session has expired. Please sign in again.",
+      r.status,
+      SESSION_REFRESH_REJECTED_CODE,
+    );
   }
   if (r.status === 0) {
     throw new Error(fallbackMessageForHttpStatus(503) ?? SERVICE_UNAVAILABLE_CLIENT_MESSAGE);

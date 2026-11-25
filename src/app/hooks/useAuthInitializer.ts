@@ -7,7 +7,6 @@ import {
   clearClientAuthStorage,
   clearClientSessionRevoked,
   isClientSessionRevoked,
-  markClientSessionRevoked,
   refreshSessionAPI,
 } from "../lib/api";
 import { ensureAuthSessionBootstrap } from "../lib/authBootstrap";
@@ -96,8 +95,8 @@ function settleTransientBootstrapDegraded(reason: string): SessionBootstrapResul
 function forceDefinitiveLogout(reason: string): SessionBootstrapResult {
   authDebug("session_bootstrap", { outcome: reason });
   recordAuthSessionDiagnostic("AUTH_BOOTSTRAP_REDIRECT_REASON", { reason });
+  // Not marked revoked: that browser-wide flag is for sign-out and would stop other tabs verifying.
   clearStoredSession();
-  markClientSessionRevoked();
   publishSessionEnded("expired");
   setAuthUser(null);
   markSessionBootstrapSettled();
@@ -287,7 +286,6 @@ export function useAuthInitializer(): void {
             reason: "expired_local_session",
           });
           clearStoredSession();
-          markClientSessionRevoked();
           publishSessionEnded("expired");
         } else {
           authDebug("session_bootstrap", { outcome: "anonymous_no_refresh_session" });

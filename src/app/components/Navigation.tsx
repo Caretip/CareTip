@@ -15,6 +15,7 @@ import { IndustriesNavDropdown } from "./IndustriesNavDropdown";
 import {
   prefetchCoreMarketingNavRoutes,
   prefetchExtendedMarketingNavRoutes,
+  prefetchPublicRoute,
 } from "../lib/prefetchPublicRoutes";
 import { usePublicMountProbe } from "@/lib/publicMountProbe";
 import { isMobileViewport, scheduleMobileDeferredWork } from "@/lib/mobilePerf";
@@ -44,6 +45,9 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
     if (primaryNavPrefetchScheduled) return;
     primaryNavPrefetchScheduled = true;
     scheduleMobileDeferredWork(() => {
+      // Login first: its page is split out and the tap must not wait for it. Data saver: menu-open only.
+      const { connection } = navigator as Navigator & { connection?: { saveData?: boolean } };
+      if (!connection?.saveData) prefetchPublicRoute("/login");
       prefetchCoreMarketingNavRoutes();
       if (!isMobileViewport()) {
         prefetchExtendedMarketingNavRoutes();
@@ -53,6 +57,7 @@ export const Navigation = memo(function Navigation({ variant: _variant = "defaul
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
+    prefetchPublicRoute("/login");
     const root = document.documentElement;
     root.dataset.caretipMobileDrawerOpen = "";
     return () => {

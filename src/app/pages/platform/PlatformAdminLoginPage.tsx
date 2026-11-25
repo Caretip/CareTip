@@ -11,6 +11,7 @@ import { isApiRequestError, EMAIL_NOT_VERIFIED_CODE } from "../../lib/apiError";
 import { classifyMfaVerifyFailure, MFA_CHALLENGE_INVALID } from "../../lib/mfaLoginErrors";
 import { logClientError } from "../../lib/clientLog";
 import { isPlatformAdminSessionRole, shouldShowLoginSessionResumeUi } from "../../lib/authSession";
+import { useLoginBootstrapWaitExpired } from "../../hooks/useLoginBootstrapWaitExpired";
 import { shouldShowAuthBootstrapShell } from "../../lib/authBootstrapUi";
 import { AuthBootstrapShell } from "@/app/components/auth/AuthBootstrapShell";
 import {
@@ -46,6 +47,7 @@ export function PlatformAdminLoginPage() {
   const [error, setError] = useState("");
   const authInFlightRef = useRef(false);
   const { login, user, sessionValidated, logout, completeAuthLogin, authStatus } = useAuth();
+  const loginWaitExpired = useLoginBootstrapWaitExpired(authStatus);
   const navigate = useNavigate();
   const location = useLocation();
   const locationState = location.state as { forceLogin?: boolean; impersonationExitFailed?: boolean } | null;
@@ -83,11 +85,16 @@ export function PlatformAdminLoginPage() {
     authStatus,
     authTransitionPending,
     allowImmediateLoginPaint: true,
+    waitExpired: loginWaitExpired,
   });
   useSignalLogoutAuthPageReady(loginChromeReady);
 
   const loginSubmitBlocked = Boolean(
-    user && !sessionValidated && isPlatformAdminSessionRole(user.role) && !forceLogin,
+    user &&
+      !sessionValidated &&
+      !loginWaitExpired &&
+      isPlatformAdminSessionRole(user.role) &&
+      !forceLogin,
   );
 
   const redirectAfterAuth = useCallback(async () => {

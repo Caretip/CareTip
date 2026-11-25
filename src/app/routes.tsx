@@ -68,6 +68,8 @@ import { JoinPage } from './pages/JoinPage';
 import { AuthLogoutHandoffCover } from "./components/auth/AuthLogoutHandoffCover";
 import { RootSpaRouteHold } from "./routing/RootSpaRouteHold";
 import { AuthBootstrapShell } from "./components/auth/AuthBootstrapShell";
+import { AuthEntrySkeleton } from "./components/auth/AuthEntrySkeleton";
+import { requiresAuthBootstrapBeforeLoginPaint } from "./lib/authBootstrapUi";
 import {
   authPageLazy,
   getLoadedAuthPage,
@@ -87,9 +89,9 @@ const PlatformAdminLoginChunk = lazy(() =>
 
 /**
  * Suspends in place, so a sign-out never lands on an empty screen while the chunk loads.
- * The fallback is the auth page's own branded loader. RootSpaRouteHold drew nothing here: these
- * routes are not RR `lazy`, so by the time the chunk suspends the navigation is already idle, and
- * #root stayed empty until the chunk arrived (a blank flash on landing → login).
+ * The fallback is the page's own frame (AuthEntrySkeleton); the branded loader only while a stored
+ * session is being restored. RootSpaRouteHold drew nothing here: these routes are not RR `lazy`, so
+ * by the time the chunk suspends the navigation is already idle and #root stayed empty.
  */
 function AuthPage() {
   // Code already loaded (prefetch, earlier visit, a Login link or logout that waited for it):
@@ -97,9 +99,18 @@ function AuthPage() {
   // committed the full-screen fallback for a frame or more. Chosen once per mount so a mounted page
   // never switches component type (which would reset the form).
   const [Loaded] = useState(getLoadedAuthPage);
+  const { pathname } = useLocation();
   if (Loaded) return <Loaded />;
   return (
-    <Suspense fallback={<AuthBootstrapShell />}>
+    <Suspense
+      fallback={
+        requiresAuthBootstrapBeforeLoginPaint() ? (
+          <AuthBootstrapShell />
+        ) : (
+          <AuthEntrySkeleton signUp={pathname.endsWith("/signup")} />
+        )
+      }
+    >
       <AuthPageChunk />
     </Suspense>
   );

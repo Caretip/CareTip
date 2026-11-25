@@ -18,6 +18,7 @@ import { clearImpersonationAdminBackup } from "./impersonationSessionBackup";
 import { clearEmployeeNotifications } from "./employeeNotificationStore";
 import { resetAllClientSessionCaches } from "./resetAllClientSessionCaches";
 import { commitAuthUser, getAuthUser } from "./authUserStore";
+import { clearSessionExpiredNotice } from "./sessionExpiredNotice";
 import { recordAuthSessionDiagnostic } from "./authSessionDiagnostics";
 
 export type LogoutSnapshot = {
@@ -50,6 +51,7 @@ export function performClientLogoutCleanup(
   clearEmployeeNotifications();
   clearImpersonationAdminBackup();
   markClientSessionRevoked();
+  clearSessionExpiredNotice();
   cancelPendingSessionRefresh();
   commitAuthUser(null);
   resetAllClientSessionCaches();
