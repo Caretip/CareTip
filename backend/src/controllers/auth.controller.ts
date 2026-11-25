@@ -1800,32 +1800,8 @@ export async function refresh(req: Request, res: Response) {
       clearRefreshCookie(res);
     }
 
-    const authHeader = req.headers.authorization;
-    const bearer = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
-    if (bearer) {
-      const { userIdFromAccessTokenForRefresh } = await import("../lib/accessTokenRefresh.js");
-      const userId = userIdFromAccessTokenForRefresh(bearer);
-      if (userId) {
-        try {
-          const rt = await issueRefreshToken(userId);
-          const result = await refreshAuthResultForUserId(userId, { refreshSessionId: rt.id });
-          setRefreshCookie(res, rt.token, { maxAgeMs: refreshCookieMaxAgeMs(rt.expiresAt) });
-          logRefreshOutcome({ reason: "bearer_fallback_ok", status: 200, userId, sessionId: rt.id });
-          return res.json(result);
-        } catch (inner) {
-          if (inner instanceof EmailNotVerifiedLoginError) {
-            clearRefreshCookie(res);
-            return res.status(403).json({
-              message: inner.message,
-              code: inner.code,
-              canResend: inner.canResend,
-            });
-          }
-          throw inner;
-        }
-      }
-    }
-
+    // Only a refresh token renews a session. An access token is never exchanged for one: it would let a
+    // leaked or support-view token outlive sign-out, password change and revocation.
     if (!rtCookie) {
       logRefreshOutcome({ reason: "missing_cookie", status: 401 });
       return res.status(401).json({ message: "Authentication required", code: "REFRESH_COOKIE_MISSING" });

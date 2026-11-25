@@ -5,7 +5,6 @@
 
 export type RefreshOutcomeReason =
   | "ok"
-  | "bearer_fallback_ok"
   | "missing_cookie"
   | "not_found"
   | "expired"
@@ -44,7 +43,7 @@ export function storeErrorCode(err: unknown): string {
 export function logRefreshOutcome(event: RefreshOutcomeEvent): void {
   try {
     const line = JSON.stringify({ event: "auth.refresh", ...event });
-    if (event.reason === "ok" || event.reason === "bearer_fallback_ok" || event.reason === "missing_cookie") {
+    if (event.reason === "ok" || event.reason === "missing_cookie") {
       console.info(line);
     } else {
       console.warn(line);

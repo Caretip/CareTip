@@ -8,7 +8,6 @@ import { fileURLToPath } from "node:url";
 import {
   isAllowedAccessJwtType,
 } from "../src/lib/jwtConfig.js";
-import { userIdFromAccessTokenForRefresh } from "../src/lib/accessTokenRefresh.js";
 import {
   needsMfaLoginChallenge,
   mfaSetupRequiredForLogin,
@@ -36,7 +35,6 @@ async function main() {
   const oauthApi = read("../src/app/lib/api.ts");
   const oauthSvc = read("src/services/oauthAuth.service.ts");
   const authRoutes = read("src/routes/auth.routes.ts");
-  const accessRefresh = read("src/lib/accessTokenRefresh.ts");
 
   if (
     controller.includes("needsMfaLoginChallenge(user)") &&
@@ -175,8 +173,8 @@ async function main() {
     pass("pending MFA JWT type is not an allowed access type");
   } else fail("pending MFA type must not pass isAllowedAccessJwtType");
 
-  if (accessRefresh.includes("isPendingMfaLoginJwt") && userIdFromAccessTokenForRefresh(pending) == null) {
-    pass("refresh Bearer fallback rejects pending MFA tokens");
+  if (!controller.includes("accessTokenRefresh") && !isAllowedAccessJwtType(MFA_LOGIN_PENDING_PURPOSE)) {
+    pass("refresh accepts no Bearer token, so a pending MFA token cannot mint a session");
   } else fail("pending MFA JWT must not mint a refresh session");
 
   if (normalizeLoginTotp("12 3456") === "123456" && normalizeLoginTotp("12345") == null && normalizeLoginTotp("abcdef") == null) {

@@ -4,7 +4,6 @@
  */
 import "dotenv/config";
 import "../src/loadEnv.js";
-import { isExpiredAccessTokenRefreshAllowed } from "../src/lib/accessTokenRefresh.js";
 import {
   isPlatformAdminAccount,
   needsMfaLoginChallenge,
@@ -21,12 +20,6 @@ const pass = (m: string) => results.push(`PASS: ${m}`);
 const fail = (m: string) => results.push(`FAIL: ${m}`);
 
 function main() {
-  if (process.env.NODE_ENV === "production" && isExpiredAccessTokenRefreshAllowed()) {
-    fail("expired access token refresh must be disabled in production by default");
-  } else {
-    pass("expired access token refresh gated for production");
-  }
-
   if (!isPlatformAdminAccount({ role: "SUPER_ADMIN", isPlatformAdmin: true })) {
     fail("platform admin detector");
   } else {
