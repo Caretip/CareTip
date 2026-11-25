@@ -8,11 +8,12 @@ import { test, expect, type Page } from "@playwright/test";
 test.use({ serviceWorkers: "block" });
 
 const EXPIRED = /session expired|session has expired|Sitzung ist abgelaufen/i;
+const DEACTIVATED = /account has been deactivated|Konto wurde deaktiviert/i;
 const USER = { id: "u1", email: "biz@e2e.local", role: "MANAGER", name: "E2E", emailVerified: true, hasCompletedOnboarding: true, businessId: "b1" };
 const AUTH_PAGE_MODULE = /\/(src\/app\/components\/AuthPage\.tsx|assets\/AuthPage-[\w-]+\.js)(\?|$)/;
 const json = (status: number, body: unknown) => ({ status, contentType: "application/json", body: JSON.stringify(body) });
 
-type Api = { refresh: "401" | "ok" | "down" | "expired"; signin: "401" | "down"; oauth: "401" | "ok"; calls: string[] };
+type Api = { refresh: "401" | "ok" | "down" | "deactivated"; signin: "401" | "down"; oauth: "401" | "ok"; calls: string[] };
 
 async function prepare(page: Page, api: Partial<Api> = {}): Promise<Api> {
   const state: Api = { refresh: "401", signin: "401", oauth: "401", calls: [], ...api };
@@ -31,6 +32,7 @@ async function prepare(page: Page, api: Partial<Api> = {}): Promise<Api> {
     if (p === "/api/auth/refresh") {
       if (state.refresh === "down") return r.abort();
       if (state.refresh === "ok") return r.fulfill(json(200, { token: "e2e", user: USER }));
+      if (state.refresh === "deactivated") return r.fulfill(json(401, { message: "Authentication required", code: "ACCOUNT_DEACTIVATED" }));
       return r.fulfill(json(401, { message: "Authentication required" }));
     }
     if (p === "/api/auth/signin") return state.signin === "down" ? r.abort() : r.fulfill(json(401, { message: "Invalid email or password" }));
@@ -228,7 +230,36 @@ for (const mobile of [true, false]) {
       await expect.poll(() => refreshes(a)).toBeGreaterThan(before);
       await page.waitForTimeout(1500);
       await expect(page).toHaveURL(/\/dashboard/);
-      expect(await page.evaluate(() => localStorage.getItem("caretip_user"))).not.toBeNull();
+      // Its session survives a reload too (the cached profile may have been cleared by the other tab).
+      await page.reload();
+      await page.waitForTimeout(2500);
+      await expect(page).toHaveURL(/dashboard/);
+    });
+
+    for (const [refresh, shown, other] of [["401", EXPIRED, DEACTIVATED], ["deactivated", DEACTIVATED, EXPIRED]] as const) {
+      test(`reload of a protected page, session refused (${refresh}): one notice, then login`, async ({ page }) => {
+        await prepare(page, { refresh });
+        await storedSession(page);
+        await page.goto("/dashboard");
+        await expect(page.getByText(shown)).toHaveCount(1);
+        await expect(page).toHaveURL(/login$/);
+        await expect(email(page)).toBeVisible();
+        await expect(page.getByText(shown)).toHaveCount(1);
+        await expect(page.getByText(other)).toHaveCount(0);
+        await page.reload();
+        await expect(email(page)).toBeVisible();
+        await expectNoExpiry(page);
+        await expect(page.getByText(DEACTIVATED)).toHaveCount(0);
+      });
+    }
+
+    test("an old session lapsing on a public page is not announced", async ({ page }) => {
+      await prepare(page);
+      await storedSession(page);
+      await page.goto("/");
+      await clickLogin(page, mobile);
+      await expect(email(page)).toBeVisible();
+      await expectNoExpiry(page);
     });
 
     test("exactly one form and one Google setup; the form never disappears while loading", async ({ page }) => {

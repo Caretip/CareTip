@@ -26,7 +26,7 @@ import { caretipBtnPrimaryCompact, caretipBtnPrimaryFull } from "@/lib/caretipBu
 import { cn } from "@/lib/utils";
 import { AuthPageAtmosphere } from "@/app/components/auth/AuthPageAtmosphere";
 import { AuthBackToHomeNav } from "@/app/components/auth/AuthBackToHomeNav";
-import { consumeSessionExpiredNotice } from "@/app/lib/sessionExpiredNotice";
+import { useSessionEndNotice } from "@/app/hooks/useSessionEndNotice";
 import { toast } from "sonner";
 
 const FIELD_CLASS = "caretip-auth-field";
@@ -55,10 +55,7 @@ export function PlatformAdminLoginPage() {
   const [authFlowInProgress, setAuthFlowInProgress] = useState(false);
   const postAuthRedirectRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (!consumeSessionExpiredNotice()) return;
-    toast.message(t("business.onboarding.toastSessionExpired"), { id: "caretip-session-expired" });
-  }, [t]);
+  useSessionEndNotice(true);
 
   const showSessionResumeUi =
     shouldShowLoginSessionResumeUi({

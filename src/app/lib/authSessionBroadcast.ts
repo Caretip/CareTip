@@ -2,12 +2,12 @@
  * Tells other tabs that this browser's session ended, so a tab cannot stay on a dashboard after
  * sign-out. Carries no token or user data.
  *
- * "logout" is a confirmed user action. "expired" only means this tab was refused: receivers verify
- * with their own refresh, so one tab's mistake cannot sign every tab out.
+ * "logout" is a confirmed user action. "expired" and "deactivated" only mean this tab was refused:
+ * receivers verify with their own refresh, so one tab's mistake cannot sign every tab out.
  *
  * BroadcastChannel is the primary transport; a localStorage write covers browsers without it.
  */
-export type SessionEndedReason = "logout" | "expired";
+export type SessionEndedReason = "logout" | "expired" | "deactivated";
 
 type SessionEndedMessage = { id: string; reason: SessionEndedReason; at: number };
 
@@ -30,7 +30,7 @@ function parseMessage(value: unknown): SessionEndedMessage | null {
   if (!value || typeof value !== "object") return null;
   const { id, reason, at } = value as Partial<SessionEndedMessage>;
   if (typeof id !== "string" || typeof at !== "number") return null;
-  if (reason !== "logout" && reason !== "expired") return null;
+  if (reason !== "logout" && reason !== "expired" && reason !== "deactivated") return null;
   return { id, reason, at };
 }
 
@@ -55,6 +55,19 @@ export function publishSessionEnded(reason: SessionEndedReason): void {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(message));
   } catch {
     // private mode: BroadcastChannel above still delivers it
+  }
+}
+
+/**
+ * True when another tab was just told the account is deactivated. Only the first tab hears that from
+ * the server (its answer clears the shared cookie); the others learn the cause here.
+ */
+export function wasAccountJustDeactivated(): boolean {
+  try {
+    const message = parseMessage(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null"));
+    return message?.reason === "deactivated" && Date.now() - message.at < MESSAGE_MAX_AGE_MS;
+  } catch {
+    return false;
   }
 }
 

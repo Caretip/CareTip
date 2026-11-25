@@ -21,6 +21,7 @@ import {
   OAUTH_EMAIL_REQUIRED_CODE,
   OAUTH_SIGN_IN_FAILED_CODE,
   PENDING_VERIFICATION_CODE,
+  ACCOUNT_DEACTIVATED_CODE,
   SESSION_REFRESH_REJECTED_CODE,
   SUBSCRIPTION_REQUIRED_CODE,
   PLAN_CAPABILITY_REQUIRED_CODE,
@@ -171,7 +172,7 @@ function isAuthRefreshRequestUrl(url: string): boolean {
 
 type RefreshSessionResult =
   | { ok: true; data: AuthResponse }
-  | { ok: false; status: number; shouldClearSession: boolean };
+  | { ok: false; status: number; shouldClearSession: boolean; accountDeactivated?: boolean };
 
 /** Single-flight refresh: shared by `refreshSessionAPI` and 401 recovery (`refreshAccessToken`). */
 let refreshSingleton: Promise<RefreshSessionResult> | null = null;
@@ -289,9 +290,16 @@ async function runRefreshAuthWithRetries(
     if (res.status === 401) {
       const body = (await res.json().catch(() => null)) as { code?: unknown } | null;
       if (body?.code === "REFRESH_COOKIE_MISSING" && shouldAttemptLegacySessionMigration()) {
-        return completeLegacySessionMigration(await migrateLegacySession(signal));
+        const migration = await migrateLegacySession(signal);
+        if (getSessionEpoch() !== epochAtStart) return SUPERSEDED_REFRESH;
+        return completeLegacySessionMigration(migration);
       }
-      return { ok: false, shouldClearSession: true, status: res.status };
+      return {
+        ok: false,
+        shouldClearSession: true,
+        status: res.status,
+        accountDeactivated: body?.code === ACCOUNT_DEACTIVATED_CODE,
+      };
     }
     // Only the API itself can refuse a session; a firewall or proxy page answers 403 with HTML.
     if (res.status === 403 && (res.headers.get("content-type") ?? "").includes("application/json")) {
@@ -367,7 +375,7 @@ async function ensureRefreshedSession(options?: RefreshAttemptOptions): Promise<
           status: out.status,
           bypassCooldown: Boolean(options?.bypassCooldown),
         });
-        clearAuthStorageForDefinitiveFailure(out.status);
+        clearAuthStorageForDefinitiveFailure(out.status, "definitive_auth_failure", out.accountDeactivated);
       } else if (out.ok) {
         clearSessionConnectivityDegraded();
       }
@@ -447,9 +455,9 @@ export function shouldMarkSessionExpiredNotice(): boolean {
   return !isClientSessionRevoked() && !isLogoutPending();
 }
 
-function clearAuthStorage(options?: { sessionExpired?: boolean }): void {
-  if (options?.sessionExpired && shouldMarkSessionExpiredNotice()) {
-    markSessionExpiredNotice();
+function clearAuthStorage(options?: { sessionEnded?: "expired" | "deactivated" }): void {
+  if (options?.sessionEnded && shouldMarkSessionExpiredNotice()) {
+    markSessionExpiredNotice(options.sessionEnded);
   }
   clearClientAuthStorage();
 }
@@ -459,13 +467,18 @@ function hasClientSessionEvidence(): boolean {
   return Boolean(getToken()?.trim()) || hasClientStoredSession() || hasClientSessionHint();
 }
 
-function clearAuthStorageForDefinitiveFailure(status: number, reason = "definitive_auth_failure"): void {
+function clearAuthStorageForDefinitiveFailure(
+  status: number,
+  reason = "definitive_auth_failure",
+  accountDeactivated = false,
+): void {
   // Nothing to end: never signed in, or a concurrent 401 already ended it (and announced it once).
   if (!hasClientSessionEvidence()) return;
   recordAuthSessionDiagnostic("AUTH_SESSION_INVALIDATION_REASON", { reason, status });
   if (status === 401 || status === 403) {
-    clearAuthStorage({ sessionExpired: true });
-    publishSessionEnded("expired");
+    const ended = accountDeactivated ? "deactivated" : "expired";
+    clearAuthStorage({ sessionEnded: ended });
+    publishSessionEnded(ended);
     return;
   }
   clearAuthStorage();
@@ -1725,7 +1738,7 @@ export async function refreshSessionAPI(): Promise<AuthResponse> {
     throw new ApiRequestError(
       fallbackMessageForHttpStatus(401) ?? "Your session has expired. Please sign in again.",
       r.status,
-      SESSION_REFRESH_REJECTED_CODE,
+      r.accountDeactivated ? ACCOUNT_DEACTIVATED_CODE : SESSION_REFRESH_REJECTED_CODE,
     );
   }
   if (r.status === 0) {
@@ -1741,7 +1754,7 @@ export async function refreshSessionAPI(): Promise<AuthResponse> {
 
 export type BootstrapRefreshResult =
   | { kind: "authenticated"; data: AuthResponse }
-  | { kind: "unauthenticated" }
+  | { kind: "unauthenticated"; accountDeactivated?: boolean }
   | { kind: "transient_error" };
 
 /**
@@ -1762,7 +1775,7 @@ export async function bootstrapRefreshSession(): Promise<BootstrapRefreshResult>
   ) {
     return { kind: "transient_error" };
   }
-  return { kind: "unauthenticated" };
+  return { kind: "unauthenticated", accountDeactivated: r.accountDeactivated };
 }
 
 // Business

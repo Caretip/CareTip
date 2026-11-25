@@ -68,6 +68,8 @@ import { JoinPage } from './pages/JoinPage';
 import { AuthLogoutHandoffCover } from "./components/auth/AuthLogoutHandoffCover";
 import { RootSpaRouteHold } from "./routing/RootSpaRouteHold";
 import { AuthBootstrapShell } from "./components/auth/AuthBootstrapShell";
+import { useSessionEndNotice } from "./hooks/useSessionEndNotice";
+import { isAuthenticatedAppShellPath } from "./lib/publicRoutes";
 import { AuthEntrySkeleton } from "./components/auth/AuthEntrySkeleton";
 import { requiresAuthBootstrapBeforeLoginPaint } from "./lib/authBootstrapUi";
 import {
@@ -249,6 +251,13 @@ function ErrorBoundary() {
   );
 }
 
+/** Inside the app, says why the session ended before the guard leaves for the login page. */
+function SessionEndNotice() {
+  const { pathname } = useLocation();
+  useSessionEndNotice(isAuthenticatedAppShellPath(pathname));
+  return null;
+}
+
 function RootLayout() {
   const markAppShellReady = useMarkAppShellReadyOptional();
   useNavigationFlashProbe();
@@ -264,6 +273,7 @@ function RootLayout() {
           <LoaderDiagRuntime />
         </React.Suspense>
       ) : null}
+      <SessionEndNotice />
       <IdleSessionController />
       <DeployUpdateRouteObserver />
       <ScrollToTop />

@@ -5004,6 +5004,7 @@
     },
     "onboarding": {
       "toastSessionExpired": "Your session expired. Please sign in again.",
+      "toastAccountDeactivated": "Your account has been deactivated. Please contact your manager or CareTip support.",
       "toastSavedLoadingDashboard": "Saved. Preparing your workspace…",
       "toastLogoDeferred": "Your logo can be added later after upgrading your plan.",
       "headline": "Create your venue",

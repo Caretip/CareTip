@@ -1665,11 +1665,27 @@ export async function unlinkOAuthAccount(req: Request, res: Response) {
 }
 
 let refreshAuthResultForUserId = authService.authResultForUserId;
+let refreshIsAccountDeactivated = authService.isAccountDeactivated;
+
+/** A refused session says why only for a deactivated account; a failed lookup stays generic. */
+async function refusedSessionBody(userId: string | undefined): Promise<{ message: string; code?: string }> {
+  const message = "Authentication required";
+  if (!userId) return { message };
+  try {
+    if (await refreshIsAccountDeactivated(userId)) return { message, code: "ACCOUNT_DEACTIVATED" };
+  } catch (err) {
+    logServerError("auth.refresh.accountStatus", err);
+  }
+  return { message };
+}
 
 /** Isolated tests only — replaces the user lookup that follows a successful rotation. */
 export const authRefreshTestHooks = {
   setAuthResultForUserId(fn: typeof authService.authResultForUserId | null): void {
     refreshAuthResultForUserId = fn ?? authService.authResultForUserId;
+  },
+  setIsAccountDeactivated(fn: typeof authService.isAccountDeactivated | null): void {
+    refreshIsAccountDeactivated = fn ?? authService.isAccountDeactivated;
   },
 };
 
@@ -1695,6 +1711,8 @@ export async function refresh(req: Request, res: Response) {
   try {
     const cookieHeader = req.headers.cookie;
     const rtCookie = parseCookie(cookieHeader, refreshCookieName());
+    /** Owner of a presented token that was ended server-side (not replayed, not aged out). */
+    let endedSessionUserId: string | undefined;
 
     if (rtCookie) {
       let outcome: RefreshRotationOutcome;
@@ -1763,7 +1781,7 @@ export async function refresh(req: Request, res: Response) {
           if (msg === "Authentication required" || msg.toLowerCase().includes("not found")) {
             clearRefreshCookie(res);
             logRefreshOutcome({ reason: "account_unavailable", status: 401, userId: outcome.userId });
-            return res.status(401).json({ message: "Authentication required" });
+            return res.status(401).json(await refusedSessionBody(outcome.userId));
           }
           logServerError("auth.refresh.session", inner);
           logRefreshOutcome({ reason: "account_unavailable", status: 503, userId: outcome.userId });
@@ -1778,6 +1796,7 @@ export async function refresh(req: Request, res: Response) {
         revokedSessions: outcome.revokedSessions,
         msSinceRotation: outcome.msSinceRotation,
       });
+      if (outcome.reason === "revoked_logout") endedSessionUserId = outcome.userId;
       clearRefreshCookie(res);
     }
 
@@ -1811,7 +1830,7 @@ export async function refresh(req: Request, res: Response) {
       logRefreshOutcome({ reason: "missing_cookie", status: 401 });
       return res.status(401).json({ message: "Authentication required", code: "REFRESH_COOKIE_MISSING" });
     }
-    return res.status(401).json({ message: "Authentication required" });
+    return res.status(401).json(await refusedSessionBody(endedSessionUserId));
   } catch (err) {
     if (isDatabaseInfrastructureError(err)) {
       logRefreshOutcome({ reason: "db_error", status: 503, errorCode: storeErrorCode(err) });

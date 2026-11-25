@@ -84,8 +84,8 @@ assert(
 // --- Phase 4: session expired UX ---
 const authPage = read("src/app/components/AuthPage.tsx");
 const adminLogin = read("src/app/pages/platform/PlatformAdminLoginPage.tsx");
-assert(authPage.includes("consumeSessionExpiredNotice"), "AuthPage shows session-expired notice");
-assert(adminLogin.includes("consumeSessionExpiredNotice"), "admin login shows session-expired notice");
+assert(authPage.includes("useSessionEndNotice(true)"), "AuthPage shows session-expired notice");
+assert(adminLogin.includes("useSessionEndNotice(true)"), "admin login shows session-expired notice");
 
 const sessionStorageShim = new Map<string, string>();
 Object.defineProperty(globalThis, "sessionStorage", {

@@ -18,7 +18,7 @@ import {
 } from "../lib/authSessionBootstrap";
 import { bumpSessionEpoch, getSessionEpoch } from "../lib/authSessionEpoch";
 import { getAuthUser, setAuthUser } from "../lib/authUserStore";
-import { publishSessionEnded, subscribeSessionEnded } from "../lib/authSessionBroadcast";
+import { publishSessionEnded, subscribeSessionEnded, type SessionEndedReason } from "../lib/authSessionBroadcast";
 import { captureLogoutSnapshot, performClientLogoutCleanup } from "../lib/clientLogout";
 import { setMemoryAccessToken } from "../lib/accessTokenStore";
 
@@ -33,6 +33,10 @@ import {
 } from "../lib/loadingStateDiagnostics";
 
 import { SERVICE_UNAVAILABLE_CLIENT_MESSAGE, userFacingErrorCopy } from "../lib/errorMessages";
+import { ACCOUNT_DEACTIVATED_CODE, isApiRequestError } from "../lib/apiError";
+import { isPublicAuthenticationPath } from "../lib/authSession";
+import { isAuthenticatedAppShellPath } from "../lib/publicRoutes";
+import { markSessionExpiredNotice } from "../lib/sessionExpiredNotice";
 import { isDefinitiveRefreshFailure } from "../lib/authRefreshFailureClassification";
 
 import type { SessionBootstrapResult } from "../lib/authSessionBootstrap";
@@ -92,12 +96,27 @@ function settleTransientBootstrapDegraded(reason: string): SessionBootstrapResul
   return { kind: "transient_error" };
 }
 
-function forceDefinitiveLogout(reason: string): SessionBootstrapResult {
+/**
+ * A stored session was refused at startup: say why where the user wanted to work (an old session
+ * lapsing while browsing public pages is not news) and tell the other tabs.
+ */
+function announceStartupSessionEnd(accountDeactivated: boolean): void {
+  const ended = accountDeactivated ? "deactivated" : "expired";
+  const path = window.location.pathname;
+  if (isAuthenticatedAppShellPath(path) || (accountDeactivated && isPublicAuthenticationPath(path))) {
+    markSessionExpiredNotice(ended);
+  }
+  publishSessionEnded(ended);
+}
+
+function forceDefinitiveLogout(reason: string, accountDeactivated: boolean): SessionBootstrapResult {
   authDebug("session_bootstrap", { outcome: reason });
   recordAuthSessionDiagnostic("AUTH_BOOTSTRAP_REDIRECT_REASON", { reason });
   // Not marked revoked: that browser-wide flag is for sign-out and would stop other tabs verifying.
+  // Already ended and announced by the API client when the shell was running degraded.
+  const hadStoredSession = loadUserFromStorage() != null;
   clearStoredSession();
-  publishSessionEnded("expired");
+  if (hadStoredSession) announceStartupSessionEnd(accountDeactivated);
   setAuthUser(null);
   markSessionBootstrapSettled();
   traceSessionValidationCompleted(true);
@@ -153,7 +172,7 @@ function applyBootstrapResult(result: SessionBootstrapResult, epochAtStart: numb
  * verify with this tab's own coordinated refresh: a refusal clears the session through the normal
  * path, and a network error leaves the user signed in.
  */
-function onSessionEndedInAnotherTab(reason: "logout" | "expired"): void {
+function onSessionEndedInAnotherTab(reason: SessionEndedReason): void {
   if (!getAuthUser()) return;
   if (reason === "logout") {
     performClientLogoutCleanup(captureLogoutSnapshot());
@@ -215,7 +234,11 @@ export function useAuthInitializer(): void {
             }
             if (isDefinitiveRefreshFailure(err)) {
               clearTransientTimers();
-              applyBootstrapResult(forceDefinitiveLogout("transient_retry_auth_invalid"), epochAtStart);
+              const deactivated = isApiRequestError(err) && err.code === ACCOUNT_DEACTIVATED_CODE;
+              applyBootstrapResult(
+                forceDefinitiveLogout("transient_retry_auth_invalid", deactivated),
+                epochAtStart,
+              );
               return;
             }
             transientRetryAttempt += 1;
@@ -286,7 +309,7 @@ export function useAuthInitializer(): void {
             reason: "expired_local_session",
           });
           clearStoredSession();
-          publishSessionEnded("expired");
+          announceStartupSessionEnd(refresh.accountDeactivated === true);
         } else {
           authDebug("session_bootstrap", { outcome: "anonymous_no_refresh_session" });
         }

@@ -364,6 +364,19 @@ async function loadUserForAuthResult(userId: string): Promise<UserForAuthResult>
   return reconcileStaleOnboardingCompletion(row);
 }
 
+/**
+ * Whether this account was deactivated. Only for callers that proved they held a session of it
+ * (refresh): public sign-in must keep the generic credentials error (no account enumeration).
+ */
+export async function isAccountDeactivated(userId: string): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isActive: true, accountStatus: true },
+  });
+  if (!user) return false;
+  return user.accountStatus === "deactivated" || (user.accountStatus === "active" && user.isActive !== true);
+}
+
 /** Used by refresh-token flow to re-issue an access token and user payload. */
 export async function authResultForUserId(
   userId: string,

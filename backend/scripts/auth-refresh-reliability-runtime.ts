@@ -181,6 +181,7 @@ const refreshEvents = () =>
     .map((l) => JSON.parse(l) as { reason: string; status: number; [k: string]: unknown });
 const lastReason = () => refreshEvents().at(-1)?.reason;
 
+authRefreshTestHooks.setIsAccountDeactivated(async () => false);
 authRefreshTestHooks.setAuthResultForUserId((async (userId: string, ctx?: { refreshSessionId?: string }) => ({
   token: `access.${ctx?.refreshSessionId}`,
   user: { id: userId, email: "user@example.test", role: "EMPLOYEE" },
@@ -428,6 +429,46 @@ await test("16 inactive account cannot restore a session", async () => {
       token: `access.${ctx?.refreshSessionId}`,
       user: { id: userId, email: "user@example.test", role: "EMPLOYEE" },
     })) as never);
+  }
+});
+
+await test("17 deactivation is named only to a browser that held a session of that account", async () => {
+  const bodyCode = (out: { body?: unknown }) => (out.body as { code?: string } | undefined)?.code;
+  const s = store;
+  authRefreshTestHooks.setIsAccountDeactivated(async () => true);
+  try {
+    const revoked = s.seed(USER, { revokedAt: new Date(nowMs - 1_000) });
+    const out = await callRefresh(revoked.token);
+    assert.equal(out.status, 401);
+    assert.equal(bodyCode(out), "ACCOUNT_DEACTIVATED", "ended session");
+    assert.ok(clearedCookie(out) && !issuedCookie(out));
+
+    const unknown = await callRefresh("unknown-token");
+    assert.equal(unknown.status, 401);
+    assert.equal(bodyCode(unknown), undefined, "unknown token learns nothing");
+
+    const expired = s.seed(USER, { expiresAt: new Date(nowMs - 1_000) });
+    assert.equal(bodyCode(await callRefresh(expired.token)), undefined, "expired token learns nothing");
+
+    const r = s.seed(USER);
+    await callRefresh(r.token);
+    nowMs += 120_000;
+    assert.equal(bodyCode(await callRefresh(r.token)), undefined, "replayed token learns nothing");
+
+    assert.equal(bodyCode(await callRefresh(null)), "REFRESH_COOKIE_MISSING");
+
+    authRefreshTestHooks.setIsAccountDeactivated(async () => {
+      throw new Error("db down");
+    });
+    const failed = await callRefresh(s.seed(USER, { revokedAt: new Date(nowMs - 1_000) }).token);
+    assert.equal(failed.status, 401);
+    assert.equal(bodyCode(failed), undefined, "a failed lookup stays generic");
+
+    authRefreshTestHooks.setIsAccountDeactivated(async () => false);
+    const active = await callRefresh(s.seed(USER, { revokedAt: new Date(nowMs - 1_000) }).token);
+    assert.equal(bodyCode(active), undefined, "an active account's ended session is an ordinary expiry");
+  } finally {
+    authRefreshTestHooks.setIsAccountDeactivated(async () => false);
   }
 });
 

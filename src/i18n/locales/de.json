@@ -5005,6 +5005,7 @@
     },
     "onboarding": {
       "toastSessionExpired": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
+      "toastAccountDeactivated": "Ihr Konto wurde deaktiviert. Bitte wenden Sie sich an Ihre Führungskraft oder den CareTip-Support.",
       "toastSavedLoadingDashboard": "Gespeichert. Ihr Arbeitsbereich wird vorbereitet…",
       "toastLogoDeferred": "Ihr Logo können Sie später nach einem Plan-Upgrade hinzufügen.",
       "headline": "Betrieb anlegen",

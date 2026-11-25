@@ -211,6 +211,27 @@ for (const [label, r] of refused) {
   check(!stores.local.has("caretip_user"), `refresh ${label}: session cleared`);
 }
 
+// Deactivated account: definitive, and told apart from an expiry (here and in other tabs).
+const deactivated: Reply = { status: 401, body: { message: "Authentication required", code: "ACCOUNT_DEACTIVATED" } };
+reset({ signedIn: true });
+reply = (p) => (p === "/api/auth/refresh" ? deactivated : unauthorized);
+await Promise.all([attempt(() => api.getMyAccountSettings()), attempt(() => api.listLinkedOAuthAccountsAPI())]);
+check(notice.consumeSessionEndNotice() === "deactivated", "deactivated account: its own notice");
+check(broadcasts.length === 1 && (broadcasts[0] as { reason: string }).reason === "deactivated", "deactivated account: other tabs told once");
+check(!stores.local.has("caretip_user"), "deactivated account: session cleared");
+notice.markSessionExpiredNotice("expired");
+check(notice.consumeSessionEndNotice() === "deactivated", "a second tab refused right after shows the same cause");
+reset({ signedIn: true });
+const deactivatedErr = await attempt(() => api.refreshSessionAPI());
+check(deactivatedErr && isDefinitiveRefreshFailure(deactivatedErr), "deactivated account: definitive");
+reset();
+const startup = await api.bootstrapRefreshSession();
+check(startup.kind === "unauthenticated" && startup.accountDeactivated === true, "deactivated account: startup knows the cause");
+reset();
+reply = () => badCredentials;
+await attempt(() => api.loginAPI("a@example.test", "bad"));
+check(notice.consumeSessionEndNotice() === null, "signing in to a deactivated account reveals nothing");
+
 // Account isolation: a refresh landing after a newer sign-in must not restore the old token.
 reset({ signedIn: true });
 reply = () => ({ status: 200, body: okSession });

@@ -48,6 +48,8 @@ export const MFA_CHALLENGE_EXPIRED = "MFA_CHALLENGE_EXPIRED" as const;
 export const MFA_CHALLENGE_INVALID = "MFA_CHALLENGE_INVALID" as const;
 /** The server refused to renew this session (as opposed to: the refresh could not be completed). */
 export const SESSION_REFRESH_REJECTED_CODE = "SESSION_REFRESH_REJECTED" as const;
+/** Server code: the session was refused because its account was deactivated. */
+export const ACCOUNT_DEACTIVATED_CODE = "ACCOUNT_DEACTIVATED" as const;
 
 export class ApiRequestError extends Error {
   constructor(
