@@ -142,6 +142,7 @@
     "test:payment-integrity-subscription": "tsx scripts/lib/runWithIsolatedPostgres.ts scripts/payment-integrity-subscription-runtime.ts",
     "test:payment-integrity-refunds": "tsx scripts/lib/runWithIsolatedPostgres.ts scripts/payment-integrity-refunds-runtime.ts",
     "test:payment-reconciliation": "tsx scripts/lib/runWithIsolatedPostgres.ts scripts/payment-reconciliation-runtime.ts",
+    "test:stripe-invoice-webhook-versions": "tsx scripts/lib/runWithIsolatedPostgres.ts scripts/stripe-invoice-webhook-versions-runtime.ts",
     "test:stripe-webhook-endpoints": "tsx scripts/lib/runWithIsolatedPostgres.ts scripts/stripe-webhook-endpoints-runtime.ts",
     "test:payment-integrity-multi-instance": "tsx scripts/lib/runWithIsolatedPostgres.ts scripts/payment-integrity-multi-instance-runtime.ts",
     "test:multi-instance-redis": "tsx scripts/lib/runWithIsolatedPostgres.ts scripts/multi-instance-redis-runtime.ts",

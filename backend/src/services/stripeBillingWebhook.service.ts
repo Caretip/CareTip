@@ -20,6 +20,7 @@ import {
   finalizeBillingWebhookClaimIgnored,
   isBillingWebhookClaimStillOwned,
 } from "./billingWebhookProcessingClaim.service.js";
+import { subscriptionIdFromInvoice } from "../lib/subscription/invoiceSubscriptionId.js";
 import { logTrialSync } from "../lib/subscription/trialSyncDebugLog.js";
 import {
   retrieveStripeSubscriptionAuthoritative,
@@ -182,7 +183,7 @@ async function handleInvoicePaymentSucceeded(
   event: Stripe.Event,
   invoice: Stripe.Invoice,
 ): Promise<void> {
-  const subId = subscriptionIdFromStripeObject(invoice.subscription);
+  const subId = subscriptionIdFromInvoice(invoice);
   if (!subId) {
     await recordIgnoredBillingEvent({
       ctx,
@@ -234,7 +235,7 @@ async function handleInvoicePaymentFailed(
   event: Stripe.Event,
   invoice: Stripe.Invoice,
 ): Promise<void> {
-  const subId = subscriptionIdFromStripeObject(invoice.subscription);
+  const subId = subscriptionIdFromInvoice(invoice);
   if (!subId) {
     await recordIgnoredBillingEvent({
       ctx,
