@@ -7,9 +7,10 @@ import { parseCookie, refreshCookieName } from "../services/refreshToken.service
 import type { RateLimitLayer } from "../utils/layeredRateLimit.js";
 import { enforceRateLimitLayersDistributed, type RateLimitFallback } from "../utils/rateLimitStore.js";
 import { userIdFromPendingMfaLoginToken } from "../services/mfaLogin.service.js";
-import { forwardedChainDepth, ipPrefixForLog, resolveClientIp } from "../lib/clientIp.js";
+import { forwardedChainDepth, ipPrefixForLog, rateLimitIp, resolveClientIp } from "../lib/clientIp.js";
 
-const clientIp = resolveClientIp;
+/** Rate-limit keys group IPv6 by /64 (lib/clientIp.ts); logs below keep using resolveClientIp. */
+const clientIp = rateLimitIp;
 
 function userIdFromReq(req: Request): string {
   if (req.user?.sub) return req.user.sub;

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { sharedRateLimit } from "../middleware/sharedRateLimit.middleware.js";
-import { resolveClientIp } from "../lib/clientIp.js";
+import { rateLimitIp } from "../lib/clientIp.js";
 import { authMiddleware, requireVerifiedEmail } from "../middleware/auth.middleware.js";
 import * as pushController from "../controllers/push.controller.js";
 
@@ -12,7 +12,7 @@ const pushTokenLimiter = sharedRateLimit({
   max: process.env.NODE_ENV === "production" ? 40 : 200,
   key: (req) => {
     const uid = req.user?.userId ?? req.user?.id;
-    return typeof uid === "string" && uid.trim() ? `user:${uid.trim()}` : `ip:${resolveClientIp(req)}`;
+    return typeof uid === "string" && uid.trim() ? `user:${uid.trim()}` : `ip:${rateLimitIp(req)}`;
   },
   message: "Too many push registration attempts. Try again later.",
 });

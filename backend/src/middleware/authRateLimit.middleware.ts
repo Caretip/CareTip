@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction, RequestHandler } from "express";
-import { resolveClientIp } from "../lib/clientIp.js";
+import { rateLimitIp } from "../lib/clientIp.js";
 import crypto from "crypto";
 import { authRateLimits } from "../config/authRateLimit.config.js";
 import type { RateLimitLayer } from "../utils/layeredRateLimit.js";
@@ -8,7 +8,8 @@ import { normalizeLoginEmail } from "../services/auth.service.js";
 import * as employeeActivationService from "../services/employeeActivation.service.js";
 import { auditMobileWebHandoff } from "../services/mobileWebHandoff.service.js";
 
-const clientIp = resolveClientIp;
+/** Rate-limit keys group IPv6 by /64 (lib/clientIp.ts). */
+const clientIp = rateLimitIp;
 
 function bodyEmail(req: Request): string {
   const body = req.body as Record<string, unknown> | undefined;

@@ -1,5 +1,8 @@
 import { Server } from "socket.io";
 import type { Server as HttpServer } from "http";
+import type { Express } from "express";
+import { rateLimitIpForRawRequest } from "../lib/clientIp.js";
+import { enforceRateLimitLayersDistributed } from "../utils/rateLimitStore.js";
 import { Role } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import { socketCorsOptions } from "../config/cors.js";
@@ -169,6 +172,7 @@ async function attachRedisAdapter(): Promise<void> {
       enableOfflineQueue: false,
       maxRetriesPerRequest: 1,
       retryStrategy,
+      connectTimeout: 5_000,
       connectionName: "caretip-socket-pub",
     });
     // Subscriber: keep its (few) subscribe commands until connected; ioredis resubscribes itself
@@ -177,6 +181,7 @@ async function attachRedisAdapter(): Promise<void> {
       enableOfflineQueue: true,
       maxRetriesPerRequest: null,
       retryStrategy,
+      connectTimeout: 5_000,
       connectionName: "caretip-socket-sub",
     });
     guardCommands(pub, ["publish"]);
@@ -250,12 +255,34 @@ export function disconnectUserSockets(userId: string): void {
   io.in(`user:${id}`).disconnectSockets(true);
 }
 
-export function initSocketServer(httpServer: HttpServer): Server {
+/**
+ * Handshakes per client address per 5 minutes. A browser opens one connection per tab and
+ * reconnects after network changes; a venue's shared Wi-Fi can carry many guests' tipping pages.
+ * Each authenticated handshake costs several database reads, so the limit runs first.
+ */
+export const SOCKET_HANDSHAKES_PER_IP_PER_5_MIN = 120;
+/** Clients send no application messages (rooms are assigned by the server), so 16 KB is ample. */
+export const SOCKET_MAX_HTTP_BUFFER_SIZE = 16 * 1024;
+
+export function initSocketServer(httpServer: HttpServer, app?: Express): Server {
   io = new Server(httpServer, {
     cors: socketCorsOptions,
     connectionStateRecovery: {},
     pingInterval: 25000,
     pingTimeout: 20000,
+    maxHttpBufferSize: SOCKET_MAX_HTTP_BUFFER_SIZE,
+  });
+
+  io.use((socket, next) => {
+    const ip = rateLimitIpForRawRequest(app, socket.request);
+    void enforceRateLimitLayersDistributed([
+      { name: "ip", key: `sec:socket-handshake:ip:${ip}`, max: SOCKET_HANDSHAKES_PER_IP_PER_5_MIN, windowMs: 5 * 60 * 1000 },
+    ])
+      .then((outcome) => {
+        if (outcome.ok) next();
+        else next(new Error("Too many connection attempts. Please wait a moment."));
+      })
+      .catch(() => next(new Error("Too many connection attempts. Please wait a moment.")));
   });
 
   io.use(async (socket, next) => {

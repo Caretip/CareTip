@@ -1,3 +1,4 @@
+import { enforceRateLimitLayersDistributed } from "../utils/rateLimitStore.js";
 import {
   buildFaqGroundingBlock,
   CARETIP_PRODUCT_CONTEXT,
@@ -248,6 +249,13 @@ export async function generateLandingAiReply(input: {
     });
   }
 
+  // Per-IP limits stop one visitor; this stops many. Over the daily budget, visitors get the same
+  // built-in answers used when no API key is configured.
+  if (!(await withinLandingAiDailyBudget())) {
+    const reply = composeFallbackReply({ userText, locale: input.locale, promptId: input.promptId });
+    return finish({ reply: polishLandingAiReply(reply), source: "knowledge", fallbackReason: "daily_budget" });
+  }
+
   const llm = await callOpenAi(input.messages, input.locale, faqGrounding, input.promptId);
   if (llm.text) {
     return finish({
@@ -350,4 +358,24 @@ export function getLandingAiConfigStatus(): {
     model: cfg?.model ?? DEFAULT_OPENAI_MODEL,
     keySource: landing ? "landing" : shared ? "shared" : "none",
   };
+}
+
+/** Paid model calls per UTC day, all visitors and instances together (LANDING_AI_DAILY_MAX_CALLS). */
+export function landingAiDailyMaxCalls(env: NodeJS.ProcessEnv = process.env): number {
+  const n = Number(env.LANDING_AI_DAILY_MAX_CALLS);
+  return Number.isInteger(n) && n >= 0 ? n : 2_000;
+}
+
+export async function withinLandingAiDailyBudget(nowMs = Date.now()): Promise<boolean> {
+  const max = landingAiDailyMaxCalls();
+  if (max === 0) return false;
+  const day = new Date(nowMs).toISOString().slice(0, 10);
+  try {
+    const outcome = await enforceRateLimitLayersDistributed([
+      { name: "global", key: `sec:landing-ai:day:${day}`, max, windowMs: 24 * 60 * 60 * 1000 },
+    ]);
+    return outcome.ok;
+  } catch {
+    return false;
+  }
 }

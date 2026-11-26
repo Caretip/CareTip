@@ -1,5 +1,5 @@
 import type { Request, RequestHandler } from "express";
-import { forwardedChainDepth, ipPrefixForLog, resolveClientIp } from "../lib/clientIp.js";
+import { forwardedChainDepth, ipPrefixForLog, rateLimitIp, resolveClientIp } from "../lib/clientIp.js";
 import { enforceRateLimitLayersDistributed } from "../utils/rateLimitStore.js";
 
 /**
@@ -15,7 +15,7 @@ export function sharedRateLimit(options: {
   key?: (req: Request) => string;
 }): RequestHandler {
   return (req, res, next) => {
-    const subject = options.key?.(req) ?? `ip:${resolveClientIp(req)}`;
+    const subject = options.key?.(req) ?? `ip:${rateLimitIp(req)}`;
     void enforceRateLimitLayersDistributed([
       { name: "key", key: `sec:${options.scope}:${subject}`, max: options.max, windowMs: options.windowMs },
     ])

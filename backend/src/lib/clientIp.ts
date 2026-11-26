@@ -1,6 +1,7 @@
 import { isIP } from "node:net";
 import jwt from "jsonwebtoken";
 import type { Express, Request } from "express";
+import type { IncomingMessage } from "node:http";
 
 /**
  * Client address resolution. Every limiter, log and alert uses this, so there is one rule.
@@ -74,6 +75,51 @@ function netlifySignedClientIp(req: Pick<Request, "ip"> & Partial<Pick<Request, 
 /** Never throws. An unusable address falls into one shared bucket rather than skipping limits. */
 export function resolveClientIp(req: Pick<Request, "ip"> & Partial<Pick<Request, "headers">>): string {
   return netlifySignedClientIp(req) ?? normalizeIp(req.ip) ?? "unknown";
+}
+
+/**
+ * Expands an IPv6 address to its eight 16-bit groups ("::" filled with zeros). Null if malformed.
+ * An embedded IPv4 tail (::ffff:1.2.3.4) is handled by normalizeIp before this is reached.
+ */
+export function expandIPv6(ip: string): string[] | null {
+  if (!ip.includes(":")) return null;
+  const [head, tail, ...rest] = ip.split("::");
+  if (rest.length > 0) return null;
+  const left = head ? head.split(":") : [];
+  const right = tail !== undefined && tail ? tail.split(":") : [];
+  const missing = 8 - left.length - right.length;
+  if (tail === undefined ? missing !== 0 : missing < 1) return null;
+  const groups = [...left, ...Array(tail === undefined ? 0 : missing).fill("0"), ...right];
+  if (groups.length !== 8 || groups.some((g) => !/^[0-9a-f]{1,4}$/i.test(g))) return null;
+  return groups.map((g) => g.toLowerCase().padStart(4, "0"));
+}
+
+/**
+ * The client address as used in rate-limit keys. IPv4 as is; IPv6 reduced to its /64 network,
+ * because one subscriber (home line, phone) normally receives a whole /64 and can rotate freely
+ * inside it. Grouping by /64 keeps one device or household in one bucket. Logs and audit records
+ * keep using the full address.
+ */
+export function rateLimitIp(req: Pick<Request, "ip"> & Partial<Pick<Request, "headers">>): string {
+  const ip = resolveClientIp(req);
+  if (!ip.includes(":")) return ip;
+  const groups = expandIPv6(ip);
+  return groups ? `${groups.slice(0, 4).join(":")}::/64` : ip;
+}
+
+/**
+ * Express's own `req.ip` for a raw Node request (for example the Socket.IO handshake), so the same
+ * trust-proxy rule applies and a forged X-Forwarded-For cannot pick its own rate-limit bucket.
+ */
+export function rateLimitIpForRawRequest(app: Express | null | undefined, raw: IncomingMessage): string {
+  if (!app) return normalizeIp(raw.socket?.remoteAddress) ?? "unknown";
+  const view = Object.create(app.request, {
+    app: { value: app },
+    headers: { value: raw.headers },
+    socket: { value: raw.socket },
+    connection: { value: raw.socket },
+  }) as Request;
+  return rateLimitIp(view);
 }
 
 /** The same address, or null when there isn't one. Network-level only, not an identity or a location. */

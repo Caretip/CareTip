@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { isPlausibleCheckoutSessionId } from "../lib/stripeCheckoutSessionId.js";
 import {
   createTipCheckoutSession,
   getTipCheckoutContext,
@@ -222,6 +223,10 @@ export async function getTipSessionContext(req: Request, res: Response) {
     const sessionId = String(req.params.sessionId ?? "").trim();
     if (!sessionId) {
       return res.status(400).json({ message: "sessionId is required" });
+    }
+    if (!isPlausibleCheckoutSessionId(sessionId)) {
+      // Same answer Stripe's "no such session" produces below, without the Stripe call.
+      return res.status(400).json({ message: CLIENT_FALLBACK.payment });
     }
     if (!isStripeConfigured()) {
       return res.status(503).json({

@@ -3,13 +3,43 @@ import { prisma } from "../prisma.js";
 import { getRedisHealthSnapshot } from "../lib/redisHealth.js";
 import { isProcessDraining } from "../lib/processLifecycle.js";
 
-async function probeDatabase(): Promise<"connected" | "disconnected"> {
+async function probeDatabaseNow(): Promise<"connected" | "disconnected"> {
   try {
     await prisma.$queryRaw`SELECT 1`;
     return "connected";
   } catch {
     return "disconnected";
   }
+}
+
+/**
+ * The endpoint is public and unthrottled (load balancers and uptime checks must reach it), so one
+ * database probe is shared by all callers for a few seconds: a flood of health checks costs one
+ * query per interval instead of one connection each.
+ */
+export const HEALTH_DB_PROBE_TTL_MS = 5_000;
+let lastProbe: { at: number; result: "connected" | "disconnected" } | null = null;
+let probeInFlight: Promise<"connected" | "disconnected"> | null = null;
+
+export async function probeDatabase(nowMs = Date.now()): Promise<"connected" | "disconnected"> {
+  if (lastProbe && nowMs - lastProbe.at < HEALTH_DB_PROBE_TTL_MS) return lastProbe.result;
+  if (!probeInFlight) {
+    probeInFlight = probeDatabaseNow()
+      .then((result) => {
+        lastProbe = { at: Date.now(), result };
+        return result;
+      })
+      .finally(() => {
+        probeInFlight = null;
+      });
+  }
+  return probeInFlight;
+}
+
+/** Test-only. */
+export function resetHealthProbeCacheForTests(): void {
+  lastProbe = null;
+  probeInFlight = null;
 }
 
 /**

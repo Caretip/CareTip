@@ -5,6 +5,7 @@ export type LandingAiFallbackReason =
   | "openai_empty"
   | "openai_timeout"
   | "openai_network"
+  | "daily_budget"
   | null;
 
 export type LandingAiOutcomeSource = "openai" | "knowledge";
@@ -52,6 +53,7 @@ function pct(num: number, den: number): number {
 export function isOutageKnowledgeFallback(reason: LandingAiFallbackReason): boolean {
   return (
     reason === "no_api_key" ||
+    reason === "daily_budget" ||
     reason === "openai_http_error" ||
     reason === "openai_empty" ||
     reason === "openai_timeout" ||

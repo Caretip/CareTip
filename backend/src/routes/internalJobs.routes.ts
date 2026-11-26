@@ -8,6 +8,12 @@ const router = Router();
 
 /** Every job run leaves a record of what ran, when, and whether it worked. */
 router.use((req, res, next) => {
+  // Only real (authorised) runs are recorded. Unauthenticated calls get their 401 from the route,
+  // without a database write each: otherwise anyone could turn requests into audit-table inserts.
+  if (!authorizeCronRequest(req)) {
+    next();
+    return;
+  }
   const startedAt = Date.now();
   res.once("finish", () => {
     void writeAuditLog({

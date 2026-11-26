@@ -34,6 +34,17 @@ const REDIS_RECONNECT_COOLDOWN_MS = 30_000;
 /** Retry-After sent when a fail-closed check cannot reach shared storage. */
 export const RATE_LIMIT_STORE_UNAVAILABLE_RETRY_MS = 30_000;
 
+/** Rate-limit checks sit on every API request: wait at most this long for one Valkey command. */
+export function redisCommandTimeoutMs(env: NodeJS.ProcessEnv = process.env): number {
+  const n = Number(env.RATE_LIMIT_REDIS_COMMAND_TIMEOUT_MS);
+  return Number.isFinite(n) && n >= 50 && n <= 10_000 ? Math.floor(n) : 500;
+}
+
+export function redisConnectTimeoutMs(env: NodeJS.ProcessEnv = process.env): number {
+  const n = Number(env.RATE_LIMIT_REDIS_CONNECT_TIMEOUT_MS);
+  return Number.isFinite(n) && n >= 200 && n <= 30_000 ? Math.floor(n) : 3_000;
+}
+
 let redisClient: RedisClient | null = null;
 let redisReady = false;
 let lastConnectAttemptMs = 0;
@@ -103,6 +114,11 @@ async function connectRedis(url: string): Promise<RedisClient | null> {
       enableOfflineQueue: false,
       lazyConnect: true,
       retryStrategy: () => null,
+      // A Valkey that accepts the connection but stops answering must not hold every rate-limited
+      // request open: a timed-out command rejects and the normal fallback (memory, or refusal for
+      // fail-closed limits) applies. Same for a connect that never completes.
+      connectTimeout: redisConnectTimeoutMs(),
+      commandTimeout: redisCommandTimeoutMs(),
     });
     client.on("error", () => {
       // absorbed — avoids ioredis "Unhandled error event" when host is unreachable

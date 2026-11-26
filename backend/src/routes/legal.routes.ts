@@ -7,6 +7,19 @@ import {
 import { legalWebhookJsonAuth } from "../middleware/legalWebhookJsonAuth.middleware.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 import type { RequestHandler } from "express";
+import { sharedRateLimit } from "../middleware/sharedRateLimit.middleware.js";
+
+/**
+ * IT-Recht Kanzlei pushes a handful of documents when texts change, from a few addresses. Its XML
+ * may carry PDFs (hence the 15 MB body), and authentication sits inside that XML, so the body must
+ * be read before it can be rejected. This limit runs before the body is read.
+ */
+const legalWebhookLimiter = sharedRateLimit({
+  scope: "legal-webhook",
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  message: "Too many requests.",
+});
 
 const router = Router();
 
@@ -39,6 +52,6 @@ router.get(
   authMiddleware,
   legalController.getMerchantLegalAcceptanceStatus,
 );
-router.post("/webhook", legalWebhookBodyParser, legalWebhookAuthGate, legalController.postLegalWebhook);
+router.post("/webhook", legalWebhookLimiter, legalWebhookBodyParser, legalWebhookAuthGate, legalController.postLegalWebhook);
 
 export default router;

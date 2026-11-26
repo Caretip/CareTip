@@ -153,9 +153,26 @@ export function logServerError(
   if (err instanceof Error && err.stack) {
     console.error(err.stack);
   }
+  if (!allowSentryEvent(context)) return;
   void import("../instrument/sentry.js").then(({ captureServerException }) => {
     captureServerException(err, { context, ...meta });
   });
+}
+
+/** Per error context, at most this many Sentry events per minute; the console still logs all. */
+export const SENTRY_EVENTS_PER_CONTEXT_PER_MINUTE = 10;
+const sentryWindows = new Map<string, { startedAt: number; count: number }>();
+
+/** Protects the Sentry quota from errors an anonymous caller can trigger in bulk. */
+export function allowSentryEvent(context: string, nowMs = Date.now()): boolean {
+  const w = sentryWindows.get(context);
+  if (!w || nowMs - w.startedAt >= 60_000) {
+    if (sentryWindows.size > 500) sentryWindows.clear();
+    sentryWindows.set(context, { startedAt: nowMs, count: 1 });
+    return true;
+  }
+  w.count += 1;
+  return w.count <= SENTRY_EVENTS_PER_CONTEXT_PER_MINUTE;
 }
 
 function prismaClientMessage(err: unknown): string | null {

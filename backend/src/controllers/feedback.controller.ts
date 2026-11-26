@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { isPlausibleCheckoutSessionId } from "../lib/stripeCheckoutSessionId.js";
 import { prisma } from "../prisma.js";
 import * as businessService from "../services/business.service.js";
 import * as feedbackService from "../services/feedback.service.js";
@@ -35,6 +36,9 @@ export async function submitTipFeedback(req: Request, res: Response) {
 
     if (!sessionId) {
       return res.status(400).json({ message: "sessionId is required" });
+    }
+    if (!isPlausibleCheckoutSessionId(sessionId)) {
+      return res.status(400).json({ message: "Could not verify payment session." });
     }
     const hasAnyContent = (rating != null && !Number.isNaN(rating)) || comment.length > 0 || tags.length > 0;
     if (!hasAnyContent) {

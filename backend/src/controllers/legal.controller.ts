@@ -213,7 +213,9 @@ async function handleItRechtXmlWebhook(req: Parameters<RequestHandler>[0], res: 
     return;
   }
 
-  const preview = tryParseItRechtRequest(rawXml);
+  // With no provider configured every request is refused below; parsing large XML only to log it
+  // would let anyone spend CPU here.
+  const preview = isLegalProviderConfigured() ? tryParseItRechtRequest(rawXml) : { parseFailed: false };
   logItRechtXmlIncoming(req, {
     requestId,
     parsed: preview.parsed,

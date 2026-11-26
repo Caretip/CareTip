@@ -6,6 +6,19 @@ import { sharedRateLimit } from "./sharedRateLimit.middleware.js";
  */
 
 /** Guest Stripe Checkout session creation (QR / public tipping). */
+/**
+ * GET /api/payments/tip-session/:sessionId: the rating page polls once a second for up to 60 s
+ * while the webhook lands, so a per-IP cap would break guests sharing venue Wi-Fi. The cap is per
+ * session instead (a minute of polling, plus reloads), on top of the global public limit per IP.
+ */
+export const tipSessionLookupLimiter = sharedRateLimit({
+  scope: "tip-session-lookup",
+  windowMs: 15 * 60 * 1000,
+  max: 150,
+  message: "Too many requests for this payment. Please wait a moment and refresh.",
+  key: (req) => `session:${String(req.params.sessionId ?? "").slice(0, 260)}`,
+});
+
 export const publicTipCheckoutLimiter = sharedRateLimit({
   scope: "tip-checkout",
   windowMs: 15 * 60 * 1000,

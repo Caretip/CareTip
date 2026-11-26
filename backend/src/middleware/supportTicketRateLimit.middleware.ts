@@ -1,8 +1,8 @@
 import type { Request } from "express";
-import { resolveClientIp } from "../lib/clientIp.js";
+import { rateLimitIp } from "../lib/clientIp.js";
 import { sharedRateLimit } from "./sharedRateLimit.middleware.js";
 
-const byUser = (req: Request) => `user:${req.user?.userId ?? req.user?.id ?? resolveClientIp(req)}`;
+const byUser = (req: Request) => `user:${req.user?.userId ?? req.user?.id ?? rateLimitIp(req)}`;
 
 /** Limit new support tickets per business manager (abuse protection). */
 export const supportTicketCreateLimiter = sharedRateLimit({

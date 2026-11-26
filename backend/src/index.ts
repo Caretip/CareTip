@@ -52,6 +52,8 @@ import landingAiRoutes from "./routes/landingAi.routes.js";
 import leadRoutes from "./routes/lead.routes.js";
 import legalRoutes from "./routes/legal.routes.js";
 import { initSocketServer } from "./socket/socketServer.js";
+import { applyHttpServerTimeouts } from "./lib/httpServerTimeouts.js";
+import { installProcessErrorHandlers } from "./lib/processErrorHandlers.js";
 import { errorHandler } from "./middleware/errorHandler.middleware.js";
 import { requestIdMiddleware } from "./middleware/requestId.middleware.js";
 import { jsonParseErrorHandler } from "./middleware/jsonParseError.middleware.js";
@@ -310,8 +312,10 @@ app.use((req, res) => {
 
 app.use(errorHandler);
 
+installProcessErrorHandlers();
 const httpServer = createServer(app);
-initSocketServer(httpServer);
+applyHttpServerTimeouts(httpServer);
+initSocketServer(httpServer, app);
 
 const SHUTDOWN_DRAIN_MS = shutdownDrainMs();
 const REDIS_HEALTH_CHECK_INTERVAL_MS = 60_000;
