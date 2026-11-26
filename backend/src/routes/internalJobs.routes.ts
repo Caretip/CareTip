@@ -335,6 +335,26 @@ router.post("/payment-refund-operations-tick", async (req, res) => {
 });
 
 /**
+ * POST /api/internal/jobs/dispute-reconciliation-tick
+ * Re-reads Stripe disputes (missed webhooks, stale open disputes), sends evidence-deadline reminders and
+ * resolves open recovery attempts. Bounded; moves no money; never submits evidence. Intended: hourly.
+ */
+router.post("/dispute-reconciliation-tick", async (req, res) => {
+  if (!authorizeCronRequest(req)) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  try {
+    const { tickStripeDisputeReconciliation } = await import("../services/disputes/stripeDisputeReconciliation.service.js");
+    const result = await tickStripeDisputeReconciliation();
+    return res.json({ ok: true, ...result });
+  } catch (err) {
+    const { logServerError } = await import("../utils/httpErrors.js");
+    logServerError("internalJobs.dispute-reconciliation-tick", err);
+    return res.status(500).json({ ok: false, message: "Dispute reconciliation failed" });
+  }
+});
+
+/**
  * POST /api/internal/jobs/payment-reconciliation
  * Stripe ↔ CareTip reconciliation for guest tips and QR print orders (detection; verified repair only
  * when PAYMENT_RECONCILIATION_REPAIR=true). Intended schedule: hourly.

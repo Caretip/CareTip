@@ -60,6 +60,7 @@ export const employeeDashboardNavEntries: readonly EmployeeDashboardNavEntry[] =
     children: [
       { labelKey: "dashboardNav.employee.paymentsConnect", href: EMPLOYEE_PAYMENTS_CONNECT_HREF },
       { labelKey: "dashboardNav.employee.paymentsHistory", href: EMPLOYEE_PAYMENTS_HISTORY_HREF },
+      { labelKey: "dashboardNav.employee.paymentsDisputes", href: "/employee/payments/disputes" },
     ],
   },
   { type: "link", labelKey: "dashboardNav.employee.settings", href: "/employee/settings", icon: "settings" },

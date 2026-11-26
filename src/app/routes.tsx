@@ -595,6 +595,7 @@ const routes: RouteObject[] = [
           { index: true, element: <Navigate to="/dashboard/stripe/connect" replace /> },
           { path: 'connect', lazy: routeLazy(() => import('./pages/business/stripe/BusinessStripePages'), 'BusinessStripeConnectPage') },
           { path: 'payouts', lazy: routeLazy(() => import('./pages/business/stripe/BusinessStripePages'), 'BusinessStripePayoutsPage') },
+          { path: 'disputes', lazy: routeLazy(() => import('./pages/disputes/ParticipantDisputesPages'), 'BusinessStripeDisputesPage') },
         ],
       },
       { path: 'locations', lazy: routeLazy(() => import('./pages/business/LocationsPage'), 'LocationsPage') },
@@ -668,6 +669,7 @@ const routes: RouteObject[] = [
       { path: 'revenue/successful-subscriptions', lazy: routeLazy(() => import('./pages/platform/revenue/PlatformSuccessfulSubscriptionsPage'), 'PlatformSuccessfulSubscriptionsPage') },
       { path: 'revenue/failed-subscriptions', lazy: routeLazy(() => import('./pages/platform/revenue/PlatformFailedSubscriptionsPage'), 'PlatformFailedSubscriptionsPage') },
       { path: 'revenue/refunds', lazy: routeLazy(() => import('./pages/platform/revenue/PlatformRefundsPage'), 'PlatformRefundsPage') },
+      { path: 'revenue/disputes', lazy: routeLazy(() => import('./pages/platform/revenue/PlatformDisputesPage'), 'PlatformDisputesPage') },
       {
         path: 'revenue/connect-payouts',
         element: <Navigate to="/platform-admin/revenue/scheduled-payout-operations" replace />,
@@ -871,6 +873,7 @@ const routes: RouteObject[] = [
               { index: true, element: <Navigate to="/employee/payments/connect" replace /> },
               { path: 'connect', lazy: routeLazy(() => import('./pages/employee/EmployeePaymentsConnectPage'), 'EmployeePaymentsConnectPage') },
               { path: 'history', lazy: routeLazy(() => import('./pages/employee/EmployeePayoutHistoryPage'), 'EmployeePayoutHistoryPage') },
+              { path: 'disputes', lazy: routeLazy(() => import('./pages/disputes/ParticipantDisputesPages'), 'EmployeeDisputesPage') },
             ],
           },
           { path: 'settings', lazy: routeLazy(() => import('./pages/employee/EmployeeSettingsPage'), 'EmployeeSettingsPage') },

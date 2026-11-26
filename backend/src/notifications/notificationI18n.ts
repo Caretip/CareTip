@@ -119,7 +119,13 @@ export type NotificationTemplate =
         ledgerRef: string;
         detectedAtIso: string;
       };
-    };
+    }
+  | {
+      id: "stripe_dispute_admin";
+      params: { event: string; disputeRef: string; businessName: string; subjectKind: string };
+    }
+  | { id: "stripe_dispute_business"; params: { event: string } }
+  | { id: "stripe_dispute_employee"; params: { event: string } };
 
 const SUPPORT_STATUS_LABELS: Record<string, { en: string; de: string }> = {
   OPEN: { en: "Open", de: "Offen" },
@@ -621,9 +627,121 @@ export function renderNotificationTemplate(
             body: `${payoutLabel} · ${template.params.subjectLabel} · ledger ${template.params.ledgerRef} · detected ${detected}. ${nextAction}`,
           };
     }
+    case "stripe_dispute_admin": {
+      const p = template.params;
+      const where = p.businessName ? ` · ${p.businessName}` : "";
+      const en: Record<string, [string, string]> = {
+        opened: ["New Stripe dispute", "A payment was disputed. Review it and decide on evidence before the Stripe deadline."],
+        evidence_due: ["Dispute evidence due soon", "The Stripe evidence deadline is close and no evidence has been submitted."],
+        evidence_failed: ["Dispute evidence was not submitted", "Stripe did not accept the evidence. Open the dispute to see the error."],
+        lost: ["Stripe dispute lost", "Stripe closed the dispute as lost. Review the financial outcome and any recovery."],
+        won: ["Stripe dispute won", "Stripe closed the dispute in CareTip's favour."],
+        funds_reinstated: ["Dispute funds reinstated", "Stripe returned withheld dispute funds to CareTip."],
+        recovery_failed: ["Dispute recovery failed", "Stripe refused the transfer reversal for a lost dispute. Review it before retrying."],
+        recovery_approved: ["Dispute recovery approved", "A recovery for a lost dispute was approved and started."],
+        recovery_insufficient_funds: ["Recovery waiting for funds", "The connected account has no available funds yet. The approved recovery stays open and is retried."],
+        recovery_partial: ["Dispute partly recovered", "Part of the approved amount was recovered. The rest stays open and is retried."],
+        recovery_succeeded: ["Dispute recovery completed", "The approved amount was recovered from the transfer."],
+        recovery_cancelled: ["Dispute recovery stopped", "The approved recovery was stopped because the dispute outcome changed or an admin cancelled it."],
+        recovery_retries_exhausted: ["Recovery retries ended", "The approved recovery could not be completed after the scheduled retries. Review it."],
+      };
+      const deMap: Record<string, [string, string]> = {
+        opened: ["Neue Stripe-Zahlungsanfechtung", "Eine Zahlung wurde angefochten. Bitte prüfen und vor der Stripe-Frist über Nachweise entscheiden."],
+        evidence_due: ["Frist für Nachweise läuft bald ab", "Die Stripe-Frist für Nachweise ist bald erreicht, es wurden noch keine eingereicht."],
+        evidence_failed: ["Nachweise wurden nicht eingereicht", "Stripe hat die Nachweise nicht angenommen. Den Fehler finden Sie in der Anfechtung."],
+        lost: ["Stripe-Anfechtung verloren", "Stripe hat die Anfechtung als verloren abgeschlossen. Bitte Ergebnis und Rückholung prüfen."],
+        won: ["Stripe-Anfechtung gewonnen", "Stripe hat die Anfechtung zugunsten von CareTip abgeschlossen."],
+        funds_reinstated: ["Anfechtungsbetrag zurückgebucht", "Stripe hat einbehaltene Beträge an CareTip zurückgebucht."],
+        recovery_failed: ["Rückholung fehlgeschlagen", "Stripe hat die Rückbuchung des Transfers für eine verlorene Anfechtung abgelehnt. Bitte vor einem neuen Versuch prüfen."],
+        recovery_approved: ["Rückholung freigegeben", "Eine Rückholung für eine verlorene Anfechtung wurde freigegeben und gestartet."],
+        recovery_insufficient_funds: ["Rückholung wartet auf Guthaben", "Das verbundene Konto hat noch kein verfügbares Guthaben. Die freigegebene Rückholung bleibt offen und wird erneut versucht."],
+        recovery_partial: ["Anfechtung teilweise zurückgeholt", "Ein Teil des freigegebenen Betrags wurde zurückgeholt. Der Rest bleibt offen und wird erneut versucht."],
+        recovery_succeeded: ["Rückholung abgeschlossen", "Der freigegebene Betrag wurde aus dem Transfer zurückgeholt."],
+        recovery_cancelled: ["Rückholung beendet", "Die freigegebene Rückholung wurde beendet, weil sich das Ergebnis der Anfechtung geändert hat oder ein Admin sie abgebrochen hat."],
+        recovery_retries_exhausted: ["Wiederholungen beendet", "Die freigegebene Rückholung konnte nach den geplanten Wiederholungen nicht abgeschlossen werden. Bitte prüfen."],
+      };
+      const pair = (de ? deMap : en)[p.event] ?? (de ? deMap.opened : en.opened);
+      return { title: pair[0], body: `${pair[1]} ${de ? "Referenz" : "Reference"} ${p.disputeRef}${where}.` };
+    }
+    case "stripe_dispute_business": {
+      const event = template.params.event;
+      if (event === "won") {
+        return de
+          ? { title: "Anfechtung einer Trinkgeldzahlung abgeschlossen", body: "Die Bank hat die Anfechtung einer Trinkgeldzahlung zugunsten von CareTip entschieden." }
+          : { title: "Tip payment dispute closed", body: "The bank decided the dispute on a tip payment in CareTip's favour." };
+      }
+      if (event === "lost") {
+        return de
+          ? { title: "Anfechtung einer Trinkgeldzahlung verloren", body: "Die Bank hat die Anfechtung einer Trinkgeldzahlung zugunsten des Karteninhabers entschieden. CareTip meldet sich, falls etwas zu tun ist." }
+          : { title: "Tip payment dispute lost", body: "The bank decided the dispute on a tip payment in the cardholder's favour. CareTip will contact you if anything is needed." };
+      }
+      const recovery = disputeRecoveryCopy(event, de, "business");
+      if (recovery) return recovery;
+      return de
+        ? { title: "Trinkgeldzahlung angefochten", body: "Ein Karteninhaber hat eine Trinkgeldzahlung bei seiner Bank angefochten. Sie müssen jetzt nichts tun; CareTip meldet sich, falls Informationen benötigt werden." }
+        : { title: "Tip payment disputed", body: "A cardholder disputed a tip payment with their bank. You don't need to do anything now; CareTip will contact you if information is needed." };
+    }
+    case "stripe_dispute_employee": {
+      const event = template.params.event;
+      const recovery = disputeRecoveryCopy(event, de, "employee");
+      if (recovery) return recovery;
+      if (event === "won") {
+        return de
+          ? { title: "Anfechtung Ihres Trinkgelds abgeschlossen", body: "Die Bank hat die Anfechtung eines Trinkgelds an Sie zugunsten von CareTip entschieden. Ihr Trinkgeld ist davon nicht mehr betroffen." }
+          : { title: "Dispute on your tip closed", body: "The bank decided the dispute on a tip paid to you in CareTip's favour. Your tip is no longer affected." };
+      }
+      if (event === "lost") {
+        return de
+          ? { title: "Anfechtung Ihres Trinkgelds verloren", body: "Die Bank hat die Anfechtung eines Trinkgelds an Sie zugunsten des Karteninhabers entschieden. Details sehen Sie in Ihrer Übersicht; CareTip meldet sich, bevor etwas zurückgeholt wird." }
+          : { title: "Dispute on your tip lost", body: "The bank decided the dispute on a tip paid to you in the cardholder's favour. You can see the details in your dashboard; CareTip will tell you before anything is recovered." };
+      }
+      return de
+        ? { title: "Trinkgeld angefochten", body: "Ein Karteninhaber hat ein Trinkgeld an Sie bei seiner Bank angefochten. Sie müssen jetzt nichts tun." }
+        : { title: "Tip disputed", body: "A cardholder disputed a tip paid to you with their bank. You don't need to do anything now." };
+    }
     default:
       return { title: "", body: "" };
   }
+}
+
+/** Recovery messages for the beneficiary (business or employee). No amounts: the dashboard shows them. */
+function disputeRecoveryCopy(event: string, de: boolean, who: "business" | "employee"): { title: string; body: string } | null {
+  const where = who === "employee" ? (de ? "in Ihrer Übersicht" : "in your dashboard") : de ? "in Ihrem Dashboard" : "in your dashboard";
+  const map: Record<string, [string, string, string, string]> = {
+    recovery_approved: [
+      "Recovery for a lost dispute",
+      `CareTip approved recovering the disputed tip amount from the original transfer. Details are ${where}.`,
+      "Rückholung für eine verlorene Anfechtung",
+      `CareTip hat die Rückholung des angefochtenen Trinkgeldbetrags aus dem ursprünglichen Transfer freigegeben. Details finden Sie ${where}.`,
+    ],
+    recovery_insufficient_funds: [
+      "Recovery still open",
+      `The recovery could not be completed yet because your Stripe account had no available funds. It stays open. Details are ${where}.`,
+      "Rückholung noch offen",
+      `Die Rückholung war noch nicht möglich, weil Ihr Stripe-Konto kein verfügbares Guthaben hatte. Sie bleibt offen. Details finden Sie ${where}.`,
+    ],
+    recovery_partial: [
+      "Recovery partly completed",
+      `Part of the disputed amount was recovered; the rest stays open. Details are ${where}.`,
+      "Rückholung teilweise erfolgt",
+      `Ein Teil des angefochtenen Betrags wurde zurückgeholt; der Rest bleibt offen. Details finden Sie ${where}.`,
+    ],
+    recovery_succeeded: [
+      "Recovery completed",
+      `The disputed amount was recovered from the original transfer. Details are ${where}.`,
+      "Rückholung abgeschlossen",
+      `Der angefochtene Betrag wurde aus dem ursprünglichen Transfer zurückgeholt. Details finden Sie ${where}.`,
+    ],
+    recovery_cancelled: [
+      "Recovery stopped",
+      `The recovery was stopped, for example because the dispute was decided in CareTip's favour. Details are ${where}.`,
+      "Rückholung beendet",
+      `Die Rückholung wurde beendet, zum Beispiel weil die Anfechtung zugunsten von CareTip entschieden wurde. Details finden Sie ${where}.`,
+    ],
+  };
+  const m = map[event];
+  if (!m) return null;
+  return de ? { title: m[2], body: m[3] } : { title: m[0], body: m[1] };
 }
 
 export function localizeNotificationPayload(

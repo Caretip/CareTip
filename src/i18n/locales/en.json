@@ -2845,7 +2845,8 @@
       "paymentsConnect": "Connect",
       "paymentsHistory": "Payout History",
       "settings": "Settings",
-      "caretipFeedback": "CareTip Feedback"
+      "caretipFeedback": "CareTip Feedback",
+      "paymentsDisputes": "Disputed tips"
     },
     "business": {
       "overview": "Dashboard",
@@ -7289,7 +7290,8 @@
       "payoutsSubtitle": "Business payouts and employee tip routing.",
       "nav": {
         "connect": "Connect",
-        "payouts": "Payout History"
+        "payouts": "Payout History",
+        "disputes": "Disputes"
       },
       "tipRouting": {
         "title": "How should employee tips be paid?",
@@ -8353,7 +8355,8 @@
         "successfulSubscriptions": "Successful Subscriptions",
         "refunds": "Refunds",
         "connectPayouts": "Connect payouts",
-        "scheduledPayoutOps": "Scheduled payout operations"
+        "scheduledPayoutOps": "Scheduled payout operations",
+        "disputes": "Disputes"
       },
       "users": {
         "management": "User Management",
@@ -9776,6 +9779,242 @@
         "viewActions": "Admin actions",
         "viewApi": "API access"
       }
+    },
+    "disputesPage": {
+      "title": "Disputes",
+      "subtitle": "Chargebacks and inquiries from Stripe, with evidence deadlines and recovery.",
+      "authorityNote": "Stripe status, amounts, deadlines and funds come from Stripe and cannot be edited here. Investigation status and notes are CareTip's internal work only.",
+      "viewsAria": "Dispute views",
+      "testMode": "test",
+      "searchPlaceholder": "Search dispute, charge, PaymentIntent, transfer or business",
+      "emptyTitle": "No disputes in this view",
+      "emptyDescription": "Disputes appear here as soon as Stripe reports them.",
+      "colDispute": "Dispute",
+      "colBusiness": "Business",
+      "colSubject": "Payment type",
+      "colAmount": "Disputed amount",
+      "colStripeStatus": "Stripe status",
+      "colDue": "Evidence due",
+      "colRecovery": "Recovery",
+      "detailSubtitle": "Stripe data, CareTip's internal handling, evidence and recovery.",
+      "stripeSection": "Stripe (authoritative)",
+      "paymentSection": "Original payment",
+      "internalSection": "CareTip internal",
+      "evidenceSection": "Evidence",
+      "recoverySection": "Recovery",
+      "syncNow": "Sync from Stripe",
+      "synced": "Synced from Stripe.",
+      "reason": "Reason",
+      "pastDue": "deadline passed",
+      "submissions": "Evidence submissions",
+      "withdrawn": "Withdrawn from CareTip",
+      "reinstated": "Reinstated to CareTip",
+      "disputeFee": "Dispute fees (net)",
+      "lastSync": "Last Stripe sync",
+      "syncError": "Last sync error",
+      "employee": "Employee",
+      "chargeAmount": "Charge amount",
+      "refunded": "refunded",
+      "transfer": "Transfer",
+      "destination": "Destination account",
+      "applicationFee": "CareTip fee",
+      "investigation": "Investigation status",
+      "notes": "Internal notes",
+      "saveInternal": "Save internal notes",
+      "saved": "Saved.",
+      "evidenceNote": "Only state what the records show. Stripe accepts these text fields; upload files (receipts, documents) in the Stripe Dashboard. Nothing is sent until you submit.",
+      "prefill": "Prefill from payment records",
+      "source": "Source: {{source}}",
+      "saveDraft": "Save evidence draft",
+      "draftSaved": "Evidence draft saved. Review it, then submit.",
+      "reviewedConfirm": "I reviewed this exact evidence and it is accurate",
+      "submitEvidence": "Submit evidence to Stripe",
+      "submitted": "Evidence submitted. Status updated from Stripe.",
+      "submittedAt": "Evidence submitted {{at}}",
+      "recovered": "Recovered so far (from Stripe reversals): {{amount}}",
+      "payableLine": "Employee payable ({{model}}): transferred {{transferred}}, reversed {{reversed}}",
+      "recoverConfirm": "Recover the beneficiary’s share from the original transfer (I confirm CareTip may recover it)",
+      "recover": "Recover from transfer",
+      "recoveryRequested": "Recovery processed. Result read back from Stripe.",
+      "view": {
+        "all": "All",
+        "open": "Open",
+        "needs_evidence": "Needs evidence",
+        "deadline_soon": "Due within 7 days",
+        "awaiting_decision": "Awaiting Stripe decision",
+        "won": "Won",
+        "lost": "Lost",
+        "funds_withdrawn": "Funds withdrawn",
+        "funds_reinstated": "Funds reinstated",
+        "recovery_attention": "Recovery to review",
+        "sync_errors": "Sync errors",
+        "recovery_outstanding": "Recovery outstanding"
+      },
+      "stripeStatus": {
+        "warning_needs_response": "Inquiry: response needed",
+        "warning_under_review": "Inquiry: under review",
+        "warning_closed": "Inquiry closed",
+        "needs_response": "Response needed",
+        "under_review": "Under review",
+        "won": "Won",
+        "lost": "Lost",
+        "prevented": "Prevented"
+      },
+      "subject": {
+        "tip_destination_business": "Tip (to business)",
+        "tip_destination_employee": "Tip (to employee)",
+        "tip_platform_hold": "Tip (held, transferred later)",
+        "physical_qr_order": "QR print order",
+        "subscription": "Subscription",
+        "unattributed": "Not attributed"
+      },
+      "recovery": {
+        "not_applicable": "Not applicable",
+        "not_required": "Not required",
+        "review_required": "Review required",
+        "in_progress": "In progress",
+        "recovered": "Recovered",
+        "partially_recovered": "Partially recovered",
+        "failed": "Failed",
+        "outstanding": "Outstanding",
+        "cancelled": "Cancelled"
+      },
+      "investigationStatus": {
+        "new": "New",
+        "investigating": "Investigating",
+        "evidence_in_preparation": "Evidence in preparation",
+        "awaiting_stripe_decision": "Awaiting Stripe decision",
+        "closed": "Closed internally"
+      },
+      "evidenceField": {
+        "product_description": "Product or service description",
+        "customer_name": "Customer name",
+        "customer_email_address": "Customer email",
+        "service_date": "Service date",
+        "shipping_tracking_number": "Shipping tracking number",
+        "refund_policy_disclosure": "How the refund policy was shown",
+        "refund_refusal_explanation": "Why a refund was not given",
+        "customer_purchase_ip": "Customer IP address",
+        "uncategorized_text": "Other facts"
+      },
+      "exposure": "Outstanding exposure: {{amount}} of {{target}} recoverable",
+      "verificationMatched": "Stripe stored exactly the reviewed evidence text.",
+      "verificationMismatch": "Stripe stored different text for: {{fields}}. Check the dispute in the Stripe Dashboard.",
+      "approvalTitle": "Recovery approval",
+      "approvedLine": "Approved {{amount}} by {{by}} on {{at}} (policy {{policy}})",
+      "notApproved": "Not approved. Recovery never starts automatically.",
+      "breakdownTitle": "Recovery breakdown (read from Stripe)",
+      "loadContext": "Load transfer and balance from Stripe",
+      "disputedAmount": "Disputed amount",
+      "beneficiaryShare": "Beneficiary share (recoverable)",
+      "feeAllocation": "CareTip fee",
+      "refundsIssued": "Refunds issued",
+      "transferAmount": "Original transfer",
+      "transferReversed": "Already reversed on this transfer (all reasons)",
+      "otherReversals": "Other reversals (refunds etc.)",
+      "connectedAvailable": "Account's available balance now",
+      "balanceUnknown": "unknown",
+      "nextRetry": "Next scheduled attempt: {{at}} (attempt {{count}} of {{max}})",
+      "lastFailure": "Last result: {{code}}",
+      "approveAmount": "Amount to approve (optional, in €)",
+      "approveConfirm": "I reviewed this lost dispute and approve recovering up to this amount from the original transfer",
+      "approve": "Approve and recover",
+      "retryNow": "Retry now",
+      "retryConfirm": "Retry within the existing approval",
+      "cancelReason": "Reason for stopping",
+      "cancel": "Stop recovery",
+      "cancelled": "Stopped {{at}}: {{reason}}",
+      "attemptsTitle": "Attempts",
+      "trigger_admin": "admin",
+      "trigger_scheduled_retry": "scheduled retry",
+      "recoveryDone": "Recovery request processed. Result read back from Stripe.",
+      "stage2Note": "Money already paid out to a bank account cannot be recalled with a transfer reversal. That is not handled here (future Stage 2).",
+      "availableShort": "available",
+      "summary": {
+        "title": "Summary",
+        "happenedTitle": "What happened?",
+        "happened": {
+          "tip_destination_employee": "A customer challenged a tip of {{amount}} paid to {{employee}} at {{business}}.",
+          "tip_platform_hold": "A customer challenged a tip of {{amount}} for {{employee}} at {{business}}.",
+          "tip_destination_business": "A customer challenged a tip of {{amount}} paid to {{business}}.",
+          "physical_qr_order": "A customer challenged a payment of {{amount}} for a CareTip QR print order ({{business}}).",
+          "subscription": "A customer challenged a subscription payment of {{amount}} to CareTip ({{business}}).",
+          "unattributed": "A customer challenged a payment of {{amount}}. CareTip could not match it to a tip or order."
+        },
+        "paymentDate": "Original payment: {{date}} (CareTip record)",
+        "paymentDateUnknown": "Original payment date: not available in CareTip's records",
+        "confirmedTitle": "What has Stripe confirmed?",
+        "confirmed": {
+          "status_needs_response": "The dispute is open and waiting for CareTip's evidence.",
+          "status_under_review": "Evidence was sent; the customer's bank is deciding.",
+          "status_won": "The dispute was decided in CareTip's favour.",
+          "status_lost": "The dispute was decided in the customer's favour.",
+          "status_other": "Stripe reports a status CareTip does not recognise.",
+          "funds_withdrawn": "Stripe took {{amount}} from CareTip's Stripe balance.",
+          "funds_reinstated": "Stripe returned {{amount}} to CareTip's Stripe balance.",
+          "evidence_submitted": "Evidence was submitted to the bank ({{count}}×).",
+          "evidence_due": "Evidence is due by {{at}}.",
+          "recovered": "Stripe confirms {{amount}} was taken back from the recipient's Stripe account."
+        },
+        "lastChecked": "Last checked with Stripe: {{at}}",
+        "moneyTitle": "Where is the money?",
+        "location": {
+          "platform": "CareTip's Stripe balance",
+          "business_account": "Business's Stripe account",
+          "employee_account": "Employee's Stripe account",
+          "bank": "Bank account",
+          "unknown": "Unknown"
+        },
+        "money": {
+          "taken_from_platform": "Stripe took {{amount}} from this balance for the dispute and has not returned it.",
+          "returned_to_platform": "{{amount}} was returned after the dispute.",
+          "not_withdrawn_yet": "Stripe has not taken any money yet.",
+          "tip_sent_to_account": "The tip was sent to this account when it was paid.",
+          "tip_not_paid_out_yet": "The tip had not been sent to the employee yet.",
+          "recovered_from_account": "{{amount}} was taken back from this account.",
+          "bank_payout_unknown": "Whether the money was already paid out to their bank cannot be known: Stripe does not link bank payouts to single tips.",
+          "caretip_own_sale": "This was CareTip's own sale; no business or employee received it.",
+          "payment_not_attributed": "Not known which account received this payment."
+        },
+        "source": {
+          "stripe": "confirmed by Stripe",
+          "caretip_record": "CareTip record",
+          "not_determinable": "cannot be confirmed"
+        },
+        "nextTitle": "What happens next?",
+        "next": {
+          "reconciliation_required": "Financial reconciliation required: CareTip could not confirm the latest state with Stripe.",
+          "evidence_required": "Evidence required.",
+          "deadline_passed": "The evidence deadline has passed. Waiting for the bank's decision.",
+          "awaiting_bank": "Evidence submitted. Awaiting the bank's decision.",
+          "won": "Dispute won.",
+          "won_funds_returned": "Dispute won. Funds reinstated by Stripe.",
+          "won_after_recovery": "Dispute won, but money had already been taken back from the recipient before the decision.",
+          "lost_caretip_sale": "Dispute lost. The loss is CareTip's own; nobody else is affected.",
+          "lost_not_attributed": "Dispute lost. The payment could not be matched to a tip or order.",
+          "lost_tip_not_paid_out": "Dispute lost. The tip had not been paid out, so nothing needs to be taken back.",
+          "lost_recovery_review": "Dispute lost. Recovery action requires review.",
+          "recovery_waiting_funds": "Recovery requested from Stripe, waiting until the recipient's account has money.",
+          "recovery_waiting_confirmation": "Recovery requested from Stripe. Waiting for Stripe's confirmation.",
+          "recovery_partial": "Stripe confirmed part of the recovery. The rest is still open.",
+          "recovery_confirmed": "Stripe confirmed recovery.",
+          "recovery_failed": "Recovery could not be completed.",
+          "recovery_cancelled": "Recovery was stopped."
+        },
+        "actionTitle": "What do I need to do?",
+        "action": {
+          "sync_or_tell_developer": "Click \"Sync from Stripe\". If this message stays, tell the developer.",
+          "prepare_evidence": "Gather the documents below and submit them before the deadline.",
+          "none_wait_for_bank": "Nothing. The bank decides; CareTip will show the result.",
+          "none": "Nothing.",
+          "ask_owner_return_recovered": "Ask the owner whether the recovered money should be paid back to the recipient. Do not move money yourself.",
+          "tell_developer": "Tell the developer so the payment can be matched.",
+          "none_retries_scheduled": "Nothing. CareTip asks Stripe again automatically within the approved amount.",
+          "none_wait_for_stripe": "Nothing. Wait for Stripe's confirmation.",
+          "ask_owner": "Ask the owner how to proceed. Technical details are below.",
+          "decide_recovery_with_policy": "Only approve a recovery if the owner's written policy allows it for this case. If unsure, ask the owner."
+        }
+      }
     }
   },
   "industries": {
@@ -10166,6 +10405,35 @@
       "field-service": {
         "title": "Field service tipping — CareTip",
         "description": "QR tipping for field service and mobile service teams."
+      }
+    }
+  },
+  "disputes": {
+    "participant": {
+      "title": "Disputed tips",
+      "subtitle_business": "Card disputes on tips paid at your venue, their outcome and any recovery.",
+      "subtitle_employee": "Card disputes on tips paid to you, their outcome and any recovery.",
+      "intro_business": "A cardholder can dispute a payment with their bank. Stripe decides the outcome; CareTip shows it here.",
+      "intro_employee": "A cardholder can dispute a tip with their bank. Stripe decides the outcome; CareTip shows it here. Nothing is taken back without a CareTip review.",
+      "loading": "Loading…",
+      "emptyTitle": "No disputed tips",
+      "emptyDescription_business": "Disputes on tips paid at your venue would appear here.",
+      "emptyDescription_employee": "Disputes on tips paid to you would appear here.",
+      "opened": "Opened {{date}}",
+      "reinstated": "Stripe returned the disputed funds.",
+      "lostNoRecovery": "Lost. No recovery has been approved.",
+      "recoveryStatus": "Recovery",
+      "approved": "Approved",
+      "recovered": "Recovered",
+      "outstanding": "Outstanding",
+      "outcome": {
+        "open": "Dispute open",
+        "won": "Dispute won",
+        "lost": "Dispute lost"
+      },
+      "paidTo": {
+        "business": "paid to the venue",
+        "employee": "paid to a team member"
       }
     }
   }

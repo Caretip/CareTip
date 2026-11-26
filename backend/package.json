@@ -294,6 +294,7 @@
     "test:google-oauth-redirect": "tsx scripts/google-oauth-redirect-runtime.ts",
     "test:google-oauth-signup": "tsx scripts/google-oauth-signup-runtime.ts",
     "test:connect-onboarding-start": "tsx scripts/connect-onboarding-start-runtime.ts",
+    "test:stripe-dispute-lifecycle": "tsx scripts/stripe-dispute-lifecycle-runtime.ts",
     "test:public-business-availability": "tsx scripts/public-business-availability-runtime.ts",
     "test:sec03-privilege-hardening": "tsx scripts/sec03-privilege-hardening-runtime.ts",
     "test:supabase-rls-repair": "tsx scripts/supabase-rls-repair-runtime.ts"

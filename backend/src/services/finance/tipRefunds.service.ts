@@ -337,22 +337,9 @@ export async function applyExistingStripeDisputeAfterSuccessfulTip(params: {
       ? disputeObj
       : await stripe.disputes.retrieve(disputeId);
 
-  const piFromCharge =
-    typeof charge.payment_intent === "string"
-      ? charge.payment_intent
-      : charge.payment_intent?.id ?? params.paymentIntentId;
-
-  await upsertStripeDisputeEvent({
-    stripeDisputeId: dispute.id,
-    stripeChargeId: charge.id,
-    stripePaymentIntentId: piFromCharge,
-    amountCents: dispute.amount,
-    currency: dispute.currency,
-    status: dispute.status,
-    reason: typeof dispute.reason === "string" ? dispute.reason : null,
-    occurredAt: new Date((dispute.created ?? Math.floor(Date.now() / 1000)) * 1000),
-    stripeEventAccount: null,
-  });
+  // Same authoritative path as the webhook: projection + existing ledgers from a fresh read.
+  const { syncStripeDisputeFromStripe } = await import("../disputes/stripeDisputeProjection.service.js");
+  await syncStripeDisputeFromStripe(dispute.id, { source: "tip_backfill" });
 }
 
 export async function listTipRefunds(params: {

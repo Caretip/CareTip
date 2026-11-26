@@ -10,12 +10,20 @@ export function BusinessStripeLayout() {
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const isPayouts = pathname.includes("/payouts");
+  const isDisputes = pathname.includes("/disputes");
   const [headerActions, setHeaderActions] = useState<ReactNode>(null);
   const setActions = useCallback((node: ReactNode) => {
     setHeaderActions(node);
   }, []);
 
   const header = useMemo(() => {
+    if (isDisputes) {
+      return {
+        title: t("business.stripe.nav.disputes"),
+        subtitle: t("disputes.participant.subtitle_business"),
+        hideSubtitleOnMobile: true,
+      };
+    }
     if (isPayouts) {
       return {
         title: t("business.stripe.nav.payouts"),
@@ -28,7 +36,7 @@ export function BusinessStripeLayout() {
       subtitle: t("business.stripe.moduleSubtitle"),
       hideSubtitleOnMobile: true,
     };
-  }, [isPayouts, t]);
+  }, [isDisputes, isPayouts, t]);
 
   return (
     <div className={businessUi.modulePageShell}>

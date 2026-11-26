@@ -28,6 +28,7 @@ export const INTERNAL_JOBS: InternalJobSpec[] = [
   { path: "business-distribution-integrity-scan", schedule: "45 4 * * *", purpose: "Find tip distribution ledger drift", destructive: false },
   { path: "employee-tip-release-reconciliation-tick", schedule: "*/10 * * * *", purpose: "Resolve uncertain tip transfers", destructive: false },
   { path: "payment-refund-operations-tick", schedule: "*/5 * * * *", purpose: "Retry CareTip-initiated refunds; replay billing events deferred while billing was off", destructive: false },
+  { path: "dispute-reconciliation-tick", schedule: "40 * * * *", purpose: "Re-read Stripe disputes, deadline reminders, recovery attempts", destructive: false },
   { path: "payment-reconciliation", schedule: "20 * * * *", purpose: "Stripe and tip/QR order drift (writes payments only with PAYMENT_RECONCILIATION_REPAIR=true)", destructive: false },
   { path: "employee-stripe-inactivity-tick", schedule: "15 6 * * *", purpose: "Review inactive employee accounts", destructive: false },
   { path: "dsar-export-tick", schedule: "*/5 * * * *", purpose: "Build data export requests", destructive: false },

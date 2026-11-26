@@ -1102,6 +1102,7 @@ model Business {
   user           User            @relation(fields: [userId], references: [id], onDelete: Restrict)
   employees      Employee[]
   transactions   Transaction[]
+  stripeDisputes StripeDispute[]
   tipRefunds     TipRefund[]
   stripeConnectPayouts StripeConnectPayout[]
   stripeConnectInstantPayoutRequests StripeConnectInstantPayoutRequest[]
@@ -2582,4 +2583,181 @@ model StripePayoutReturn {
   @@index([employeeId, returnedAt(sort: Desc)])
   @@index([payoutKind, payoutRowId])
   @@map("stripe_payout_returns")
+}
+
+/// Local projection of a Stripe dispute. Stripe is authoritative for every stripe*, amount, evidence
+/// and funds field: they are copied from a fresh disputes.retrieve, never typed by a person.
+/// Classification, investigation, evidence draft and recovery are CareTip operational data around it.
+/// The tip and QR ledgers (tip_refunds, payables, physical_qr_payment_adjustments) are still fed from
+/// the same retrieved state; this table never replaces them.
+enum StripeDisputeSubjectKind {
+  tip_destination_business
+  tip_destination_employee
+  tip_platform_hold
+  physical_qr_order
+  subscription
+  unattributed
+}
+
+/// CareTip internal work state only. Never a Stripe status.
+enum StripeDisputeInvestigationStatus {
+  new
+  investigating
+  evidence_in_preparation
+  awaiting_stripe_decision
+  closed
+}
+
+enum StripeDisputeRecoveryStatus {
+  not_applicable
+  not_required
+  review_required
+  in_progress
+  /// Approved by an admin; not (fully) recovered yet; a bounded retry is scheduled.
+  outstanding
+  recovered
+  partially_recovered
+  failed
+  /// Approval withdrawn because the dispute was won or its funds were reinstated (or by an admin).
+  cancelled
+}
+
+enum StripeDisputeRecoveryAttemptStatus {
+  pending
+  succeeded
+  failed
+  unknown
+}
+
+model StripeDispute {
+  id                        String    @id @default(cuid())
+  stripeDisputeId           String    @unique @map("stripe_dispute_id")
+  livemode                  Boolean   @default(false)
+  /// Raw Stripe status (needs_response, under_review, won, lost, warning_*). Never set by an admin.
+  stripeStatus              String    @map("stripe_status") @db.VarChar(40)
+  stripeReason              String?   @map("stripe_reason") @db.VarChar(64)
+  amountCents               Int       @map("amount_cents")
+  currency                  String    @db.VarChar(8)
+  stripeChargeId            String?   @map("stripe_charge_id")
+  stripePaymentIntentId     String?   @map("stripe_payment_intent_id")
+  /// Connected account the event came from, when the charge itself lives on a connected account.
+  stripeEventAccountId      String?   @map("stripe_event_account_id")
+  chargeAmountCents         Int?      @map("charge_amount_cents")
+  chargeAmountRefundedCents Int?      @map("charge_amount_refunded_cents")
+  isChargeRefundable        Boolean?  @map("is_charge_refundable")
+  /// Destination charge: transfer_data.destination and the automatic transfer created with it.
+  destinationAccountId      String?   @map("destination_account_id")
+  destinationTransferId     String?   @map("destination_transfer_id")
+  applicationFeeCents       Int?      @map("application_fee_cents")
+  evidenceDueBy             DateTime? @map("evidence_due_by")
+  evidenceHasEvidence       Boolean   @default(false) @map("evidence_has_evidence")
+  evidencePastDue           Boolean   @default(false) @map("evidence_past_due")
+  evidenceSubmissionCount   Int       @default(0) @map("evidence_submission_count")
+  /// From the dispute balance transactions: amounts withdrawn from and reinstated to CareTip, and fees.
+  fundsWithdrawnCents       Int       @default(0) @map("funds_withdrawn_cents")
+  fundsReinstatedCents      Int       @default(0) @map("funds_reinstated_cents")
+  disputeFeeCents           Int       @default(0) @map("dispute_fee_cents")
+  balanceTransactionCount   Int       @default(0) @map("balance_transaction_count")
+  /// Currency of the dispute balance transactions (CareTip platform balance); the funds totals above are in it.
+  fundsCurrency             String?   @map("funds_currency") @db.VarChar(8)
+  /// True when the balance transactions are not all in one currency: totals cover fundsCurrency only.
+  fundsCurrencyMixed        Boolean   @default(false) @map("funds_currency_mixed")
+  stripeCreatedAt           DateTime  @map("stripe_created_at")
+  lastStripeSyncAt          DateTime  @map("last_stripe_sync_at")
+  lastStripeEventId         String?   @map("last_stripe_event_id")
+  lastStripeEventType       String?   @map("last_stripe_event_type") @db.VarChar(64)
+  lastSyncError             String?   @map("last_sync_error") @db.VarChar(300)
+  lastSyncErrorAt           DateTime? @map("last_sync_error_at")
+
+  subjectKind       StripeDisputeSubjectKind @default(unattributed) @map("subject_kind")
+  businessId        String?                  @map("business_id")
+  employeeId        String?                  @map("employee_id")
+  transactionId     String?                  @map("transaction_id")
+  physicalQrOrderId String?                  @map("physical_qr_order_id")
+  subscriptionId    String?                  @map("subscription_id")
+
+  investigationStatus          StripeDisputeInvestigationStatus @default(new) @map("investigation_status")
+  internalNotes                String?                          @map("internal_notes") @db.Text
+  assignedToUserId             String?                          @map("assigned_to_user_id")
+  /// Reviewed evidence draft (text fields only). Not sent to Stripe until an admin submits it.
+  evidenceDraft                Json?                            @map("evidence_draft")
+  evidenceDraftUpdatedAt       DateTime?                        @map("evidence_draft_updated_at")
+  evidenceDraftUpdatedBy       String?                          @map("evidence_draft_updated_by")
+  evidenceSubmittedAt          DateTime?                        @map("evidence_submitted_at")
+  evidenceSubmittedBy          String?                          @map("evidence_submitted_by")
+  evidenceLastError            String?                          @map("evidence_last_error") @db.VarChar(300)
+  evidenceLastErrorAt          DateTime?                        @map("evidence_last_error_at")
+  /// Set when the evidence Stripe stored was read back and compared with the reviewed draft.
+  evidenceVerifiedAt           DateTime?                        @map("evidence_verified_at")
+  /// Draft fields whose text Stripe did not store exactly as reviewed (empty = all matched).
+  evidenceVerificationMismatch String[]                         @default([]) @map("evidence_verification_mismatch")
+
+  recoveryStatus    StripeDisputeRecoveryStatus @default(not_applicable) @map("recovery_status")
+  /// Sum of succeeded reversals CareTip made for this dispute (amounts from Stripe reversal objects).
+  recoveredCents    Int                         @default(0) @map("recovered_cents")
+  recoveryNote      String?                     @map("recovery_note") @db.VarChar(300)
+  /// Cross-instance recovery claim (lease); independent of updatedAt, which every sync refreshes.
+  recoveryClaimedAt DateTime?                   @map("recovery_claimed_at")
+  /// Admin approval: the most that may be recovered for this dispute (retries never exceed it).
+  recoveryApprovedCents      Int?      @map("recovery_approved_cents")
+  recoveryApprovedBy         String?   @map("recovery_approved_by")
+  recoveryApprovedAt         DateTime? @map("recovery_approved_at")
+  recoveryPolicyVersion      String?   @map("recovery_policy_version") @db.VarChar(40)
+  /// Scope of the approval: the one transfer and connected account it may reverse.
+  recoveryTransferId         String?   @map("recovery_transfer_id")
+  recoveryConnectedAccountId String?   @map("recovery_connected_account_id")
+  recoveryNextRetryAt        DateTime? @map("recovery_next_retry_at")
+  recoveryRetryCount         Int       @default(0) @map("recovery_retry_count")
+  recoveryLastFailureCode    String?   @map("recovery_last_failure_code") @db.VarChar(64)
+  recoveryLastFailureAt      DateTime? @map("recovery_last_failure_at")
+  recoveryCancelledAt        DateTime? @map("recovery_cancelled_at")
+  recoveryCancelReason       String?   @map("recovery_cancel_reason") @db.VarChar(200)
+  /// Notification keys already delivered (dedupe across webhook retries and reconciliation).
+  notifiedKeys      String[]                    @default([]) @map("notified_keys")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  business         Business?                      @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  recoveryAttempts StripeDisputeRecoveryAttempt[]
+
+  @@index([stripeStatus])
+  @@index([evidenceDueBy])
+  @@index([businessId, stripeCreatedAt(sort: Desc)])
+  @@index([recoveryStatus])
+  @@index([recoveryNextRetryAt])
+  @@index([stripeChargeId])
+  @@index([stripePaymentIntentId])
+  @@map("stripe_disputes")
+}
+
+/// One attempt to recover a lost dispute from the beneficiary transfer. Amount and reversal id come from
+/// Stripe; pending and unknown rows are resolved by reading the transfer reversals back from Stripe.
+model StripeDisputeRecoveryAttempt {
+  id               String                             @id @default(cuid())
+  disputeId        String                             @map("dispute_id")
+  stripeTransferId String                             @map("stripe_transfer_id")
+  amountCents      Int                                @map("amount_cents")
+  idempotencyKey   String                             @unique @map("idempotency_key") @db.VarChar(191)
+  status           StripeDisputeRecoveryAttemptStatus @default(pending)
+  stripeReversalId String?                            @unique @map("stripe_reversal_id")
+  errorCode        String?                            @map("error_code") @db.VarChar(64)
+  errorMessage     String?                            @map("error_message") @db.VarChar(300)
+  requestedBy      String?                            @map("requested_by")
+  createdAt        DateTime                           @default(now()) @map("created_at")
+  completedAt      DateTime?                          @map("completed_at")
+  /// admin (approval or manual retry) | scheduled_retry (within an existing approval)
+  trigger          String                             @default("admin") @db.VarChar(20)
+  method           String                             @default("transfer_reversal") @db.VarChar(32)
+  /// Connected account's available balance (currency of the dispute) read just before the request.
+  connectedAvailableCents    Int?                     @map("connected_available_cents")
+  /// Transfer amount_reversed (all reasons) read just before the request.
+  transferReversedBeforeCents Int?                    @map("transfer_reversed_before_cents")
+  stripeRequestId  String?                            @map("stripe_request_id") @db.VarChar(64)
+
+  dispute StripeDispute @relation(fields: [disputeId], references: [id], onDelete: Restrict)
+
+  @@index([disputeId, createdAt])
+  @@index([status])
+  @@map("stripe_dispute_recovery_attempts")
 }

@@ -503,35 +503,46 @@ export async function applyDisputeToEmployeePayable(params: {
       nextLost = exposure;
     }
 
-    let nextReversed = row.reversedCents;
-    let lastTransferError = row.lastTransferError;
-    if (incoming === "lost" && row.chargeModel === EmployeeTipChargeModel.platform_hold) {
-      const targetReversed = Math.min(row.transferredCents, row.refundedCents + nextLost);
-      const reverseIncrement = Math.max(0, targetReversed - row.reversedCents);
-      if (reverseIncrement > 0) {
-        const { nextReversed: reversedAfter, reversalFailed } = await maybeReversePlatformHoldTransfer({
-          row,
-          incrementCents: reverseIncrement,
-        });
-        nextReversed = reversedAfter;
-        const proposed = reversalFailed ? "transfer_reversal_failed" : null;
-        lastTransferError = preserveDurableReleaseMarker(row.lastTransferError, proposed);
-      }
-    }
-
+    // A lost dispute is recorded (disputedLostCents: blocks any further release of that share), but
+    // money already transferred to the employee is NOT reversed here. Chargeback recovery is a
+    // separate, platform-admin-approved action (services/disputes/stripeDisputeRecovery.service.ts),
+    // switched off unless DISPUTE_TRANSFER_RECOVERY_ENABLED=true. Refund reversals are unchanged.
     await tx.employeeTipPayable.update({
       where: { id: row.id },
       data: {
         disputedOpenCents: nextOpen,
         disputedLostCents: nextLost,
         stripeDisputeId: disputeId,
-        reversedCents: nextReversed,
-        ...mergePayableLastTransferErrorUpdate(row.lastTransferError, lastTransferError),
       },
     });
   }));
 
   return ran ? "applied" : "missing";
+}
+
+/**
+ * Records a chargeback recovery reversal (made by the admin-approved recovery service) on the payable,
+ * so later refund reversals keep reading the correct cumulative reversed amount. Runs under the same
+ * payable lock as refunds and disputes. Returns false when there is no payable.
+ */
+export async function recordDisputeRecoveryReversalOnPayable(params: {
+  transactionId: string;
+  amountCents: number;
+}): Promise<boolean> {
+  if (!Number.isInteger(params.amountCents) || params.amountCents <= 0) return false;
+  const head = await prisma.employeeTipPayable.findUnique({
+    where: { transactionId: params.transactionId },
+    select: { id: true, employeeId: true },
+  });
+  if (!head) return false;
+  return runSerializedByKey(payableLockKey(head), () =>
+    withLockedPayable(head.id, async (tx, row) => {
+      await tx.employeeTipPayable.update({
+        where: { id: row.id },
+        data: { reversedCents: Math.min(row.transferredCents, row.reversedCents + params.amountCents) },
+      });
+    }),
+  );
 }
 
 export async function employeePayableSummaryForEmployee(employeeId: string): Promise<{

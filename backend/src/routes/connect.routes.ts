@@ -3,6 +3,7 @@ import { Role } from "@prisma/client";
 import { authMiddleware, requireRole, requireVerifiedEmail } from "../middleware/auth.middleware.js";
 import { requireCompletedOnboarding } from "../middleware/requireCompletedOnboarding.middleware.js";
 import * as connectController from "../controllers/connect.controller.js";
+import * as participantDisputesController from "../controllers/participantDisputes.controller.js";
 import * as employeeTipPayoutModeController from "../controllers/employeeTipPayoutMode.controller.js";
 import * as employeeStripeConnectionsController from "../controllers/employeeStripeConnections.controller.js";
 import * as tipDistributionController from "../controllers/tipDistribution.controller.js";
@@ -17,6 +18,7 @@ const managerConnect = [
 ] as const;
 
 router.get("/connect/status", ...managerConnect, connectController.getMyConnectStatus);
+router.get("/connect/disputes", ...managerConnect, participantDisputesController.getMyBusinessDisputes);
 router.post("/connect/account-link", ...managerConnect, connectController.postMyConnectAccountLink);
 router.post("/connect/login-link", ...managerConnect, connectController.postMyConnectLoginLink);
 router.get("/connect/financial-summary", ...managerConnect, connectController.getMyBusinessFinancialSummary);

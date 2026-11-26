@@ -132,6 +132,7 @@ export const STRIPE_PAYOUTS_HREF = `${STRIPE_BASE}/payouts` as const;
 export const stripeSubNavItems = [
   { labelKey: "business.stripe.nav.connect", href: STRIPE_CONNECT_HREF },
   { labelKey: "business.stripe.nav.payouts", href: STRIPE_PAYOUTS_HREF },
+  { labelKey: "business.stripe.nav.disputes", href: `${STRIPE_BASE}/disputes` },
 ] as const;
 
 const settingsSidebarChildren: readonly BusinessSidebarChildNavItem[] =

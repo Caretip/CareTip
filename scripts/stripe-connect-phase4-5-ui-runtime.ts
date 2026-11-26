@@ -169,7 +169,10 @@ function testNoMutationUi(): boolean {
   for (const file of files) {
     const src = read(file);
     for (const token of banned) {
-      if (src.includes(token)) {
+      // "Withdraw" as a word or label (Withdraw, Withdrawal, Withdraw now), not inside an identifier such
+      // as Stripe's dispute field fundsWithdrawnCents, which describes money Stripe took, not a payout action.
+      const hit = token === "Withdraw" ? /(^|[^A-Za-z])Withdraw/.test(src) : src.includes(token);
+      if (hit) {
         fail(`${file} must not contain ${token}`);
         ok = false;
       }

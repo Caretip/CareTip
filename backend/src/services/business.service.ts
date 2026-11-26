@@ -152,7 +152,8 @@ export type BusinessHardDeleteBlocker =
   | "refunds"
   | "connect_payouts"
   | "physical_qr_orders"
-  | "active_stripe_subscription";
+  | "active_stripe_subscription"
+  | "stripe_disputes";
 
 /** Preflight refused an empty-venue wipe because protected Restrict history exists. */
 export class BusinessHardDeleteBlockedError extends Error {
@@ -180,6 +181,8 @@ const HARD_DELETE_BLOCKED_MESSAGE: Record<BusinessHardDeleteBlocker, string> = {
     "Cannot hard-delete business with physical QR orders; use soft-close/deactivation instead.",
   active_stripe_subscription:
     "Cannot hard-delete business while an active Stripe platform subscription exists. Cancel billing first or use soft-close instead.",
+  stripe_disputes:
+    "Cannot hard-delete business with Stripe disputes on record; use soft-close/deactivation instead.",
 };
 
 function prismaFkConstraintName(err: unknown): string {
@@ -248,11 +251,12 @@ export async function deleteBusinessCascadeUsers(
         throw new Error("Business owner user has unexpected role; delete aborted");
       }
 
-      const [tipCount, refundCount, payoutCount, physicalQrOrderCount] = await Promise.all([
+      const [tipCount, refundCount, payoutCount, physicalQrOrderCount, disputeCount] = await Promise.all([
       tx.transaction.count({ where: { businessId } }),
       tx.tipRefund.count({ where: { businessId } }),
       tx.stripeConnectPayout.count({ where: { businessId } }),
         tx.physicalQrOrder.count({ where: { businessId } }),
+        tx.stripeDispute.count({ where: { businessId } }),
       ]);
       if (tipCount > 0) {
         throw new BusinessHardDeleteBlockedError("tips", HARD_DELETE_BLOCKED_MESSAGE.tips);
@@ -271,6 +275,9 @@ export async function deleteBusinessCascadeUsers(
           "physical_qr_orders",
           HARD_DELETE_BLOCKED_MESSAGE.physical_qr_orders,
         );
+      }
+      if (disputeCount > 0) {
+        throw new BusinessHardDeleteBlockedError("stripe_disputes", HARD_DELETE_BLOCKED_MESSAGE.stripe_disputes);
       }
 
       const employees = await tx.employee.findMany({

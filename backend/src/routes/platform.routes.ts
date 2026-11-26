@@ -14,10 +14,12 @@ import { supportTicketReplyLimiter } from "../middleware/supportTicketRateLimit.
 import { clientSafeMessage } from "../utils/httpErrors.js";
 import {
   platformScheduledPayoutOpsMutationRateLimit,
+  platformDisputeMutationRateLimit,
   uploadImageRateLimit,
   uploadKycRateLimit,
 } from "../middleware/securityRateLimit.middleware.js";
 import * as platformScheduledPayoutOpsController from "../controllers/platformScheduledPayoutOps.controller.js";
+import * as platformDisputesController from "../controllers/platformDisputes.controller.js";
 
 const router = Router();
 
@@ -44,6 +46,18 @@ router.get("/analytics", platformController.getAnalytics);
 router.get("/transactions", platformController.listTransactions);
 router.get("/refunds", platformController.listRefunds);
 router.get("/refunds/export", platformController.exportRefunds);
+router.get("/disputes", platformDisputesController.listDisputes);
+router.get("/disputes/summary", platformDisputesController.getDisputeSummary);
+router.get("/disputes/:id", platformDisputesController.getDispute);
+router.post("/disputes/:id/sync", platformDisputeMutationRateLimit, platformDisputesController.postDisputeSync);
+router.patch("/disputes/:id/internal", platformDisputesController.patchDisputeInternal);
+router.get("/disputes/:id/evidence/suggestion", platformDisputesController.getEvidenceSuggestion);
+router.put("/disputes/:id/evidence/draft", platformDisputesController.putEvidenceDraft);
+router.post("/disputes/:id/evidence/submit", platformDisputeMutationRateLimit, platformDisputesController.postEvidenceSubmit);
+router.post("/disputes/:id/recovery", platformDisputeMutationRateLimit, platformDisputesController.postDisputeRecovery);
+router.post("/disputes/:id/recovery/retry", platformDisputeMutationRateLimit, platformDisputesController.postDisputeRecoveryRetry);
+router.post("/disputes/:id/recovery/cancel", platformDisputeMutationRateLimit, platformDisputesController.postDisputeRecoveryCancel);
+router.get("/disputes/:id/recovery/context", platformDisputesController.getDisputeRecoveryContext);
 router.get("/connect-payouts", platformController.listConnectPayouts);
 router.get("/connect-payouts/:id", platformController.getConnectPayout);
 router.post(

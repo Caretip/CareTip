@@ -2,6 +2,7 @@ import { Router } from "express";
 import { Role } from "@prisma/client";
 import { authMiddleware, requireRole, requireVerifiedEmail } from "../middleware/auth.middleware.js";
 import * as employeeConnectController from "../controllers/employeeConnect.controller.js";
+import * as participantDisputesController from "../controllers/participantDisputes.controller.js";
 
 const router = Router();
 
@@ -12,6 +13,7 @@ const employeeConnect = [
 ] as const;
 
 router.get("/employee-connect/status", ...employeeConnect, employeeConnectController.getMyEmployeeConnectStatus);
+router.get("/employee-connect/disputes", ...employeeConnect, participantDisputesController.getMyEmployeeDisputes);
 router.get(
   "/employee-connect/payables",
   ...employeeConnect,

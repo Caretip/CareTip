@@ -7717,3 +7717,286 @@ export async function fetchPlatformSubscriptionActivity(params: {
     },
   );
 }
+
+// ─── Platform admin: Stripe disputes ───
+/** Raw Stripe statuses as stored by the backend sync. Never edited in CareTip. */
+export type StripeDisputeStatus =
+  | "warning_needs_response"
+  | "warning_under_review"
+  | "warning_closed"
+  | "needs_response"
+  | "under_review"
+  | "won"
+  | "lost"
+  | string;
+
+export type PlatformDisputeView =
+  | "all"
+  | "open"
+  | "needs_evidence"
+  | "deadline_soon"
+  | "awaiting_decision"
+  | "won"
+  | "lost"
+  | "funds_withdrawn"
+  | "funds_reinstated"
+  | "recovery_attention"
+  | "sync_errors";
+
+export type PlatformDisputeListItem = {
+  id: string;
+  stripeDisputeId: string;
+  stripeStatus: StripeDisputeStatus;
+  stripeReason: string | null;
+  amountCents: number;
+  currency: string;
+  livemode: boolean;
+  subjectKind: string;
+  businessId: string | null;
+  businessName: string | null;
+  evidenceDueBy: string | null;
+  evidenceSubmissionCount: number;
+  evidencePastDue: boolean;
+  fundsWithdrawnCents: number;
+  fundsReinstatedCents: number;
+  investigationStatus: string;
+  recoveryStatus: string;
+  recoveredCents: number;
+  stripeCreatedAt: string;
+  lastStripeSyncAt: string;
+  lastSyncError: string | null;
+};
+
+export type PlatformDisputeRecoveryAttempt = {
+  id: string;
+  stripeTransferId: string;
+  amountCents: number;
+  status: string;
+  stripeReversalId: string | null;
+  errorCode: string | null;
+  errorMessage: string | null;
+  createdAt: string;
+  completedAt: string | null;
+  trigger: string;
+  connectedAvailableCents: number | null;
+  transferReversedBeforeCents: number | null;
+};
+
+export type DisputeRecoveryContext =
+  | { recoverable: false }
+  | {
+      recoverable: true;
+      transferId: string;
+      transferAmountCents: number;
+      transferReversedCents: number;
+      transferRemainingCents: number;
+      connectedAccountId: string | null;
+      connectedAvailableCents: number | null;
+      currency: string;
+      targetCents: number;
+      approvedCents: number | null;
+      recoveredForThisDisputeCents: number;
+      outstandingCents: number;
+      reversalsForThisDispute: Array<{ id: string; amountCents: number; created: number | null }>;
+      otherReversals: Array<{ id: string; amountCents: number; created: number | null; reason: string }>;
+    };
+
+export type DisputeRecoveryResult = {
+  attemptId: string | null;
+  status: string;
+  amountCents: number;
+  recoveredCents: number;
+  targetCents: number;
+  outstandingCents: number;
+  nextRetryAt: string | null;
+  reason?: string;
+};
+
+export type ParticipantDisputeRecovery = {
+  status: string;
+  approvedCents: number;
+  recoveredCents: number;
+  outstandingCents: number;
+  nextAttemptAt: string | null;
+};
+
+export type ParticipantDispute = {
+  id: string;
+  createdAt: string;
+  amountCents: number;
+  currency: string;
+  outcome: "open" | "won" | "lost";
+  fundsReinstated: boolean;
+  paidTo?: "business" | "employee";
+  employeeName?: string | null;
+  recovery: ParticipantDisputeRecovery | null;
+};
+
+export type DisputeExplanationSource = "stripe" | "caretip_record" | "not_determinable";
+export type DisputeExplanation = {
+  happened: {
+    amountCents: number;
+    currency: string;
+    paymentDate: string | null;
+    paymentDateSource: DisputeExplanationSource;
+    businessName: string | null;
+    employeeName: string | null;
+    subject: string;
+  };
+  confirmed: Array<{ code: string; params?: Record<string, string | number> }>;
+  money: Array<{
+    location: "platform" | "business_account" | "employee_account" | "bank" | "unknown";
+    code: string;
+    amountCents?: number;
+    currency?: string;
+    source: DisputeExplanationSource;
+  }>;
+  nextStep: string;
+  adminAction: string;
+  needsAttention: boolean;
+  verification: { lastStripeSyncAt: string; stale: boolean; syncError: boolean; mixedCurrency: boolean };
+};
+
+export type PlatformDisputeDetail = PlatformDisputeListItem & {
+  stripeChargeId: string | null;
+  stripePaymentIntentId: string | null;
+  chargeAmountCents: number | null;
+  chargeAmountRefundedCents: number | null;
+  destinationAccountId: string | null;
+  destinationTransferId: string | null;
+  applicationFeeCents: number | null;
+  evidenceHasEvidence: boolean;
+  disputeFeeCents: number;
+  transactionId: string | null;
+  physicalQrOrderId: string | null;
+  internalNotes: string | null;
+  evidenceDraft: Record<string, string> | null;
+  evidenceDraftHash: string | null;
+  evidenceDraftUpdatedAt: string | null;
+  evidenceSubmittedAt: string | null;
+  evidenceLastError: string | null;
+  recoveryNote: string | null;
+  recoveryExposureCents: number;
+  /** Plain-language summary computed by the server; the page only translates it. */
+  explanation: DisputeExplanation;
+  recoveryApprovedCents: number | null;
+  recoveryApprovedAt: string | null;
+  recoveryApprovedByEmail: string | null;
+  recoveryPolicyVersion: string | null;
+  recoveryNextRetryAt: string | null;
+  recoveryRetryCount: number;
+  recoveryLastFailureCode: string | null;
+  recoveryCancelledAt: string | null;
+  recoveryCancelReason: string | null;
+  recoveryTargetCents: number;
+  evidenceVerifiedAt: string | null;
+  evidenceVerificationMismatch: string[];
+  business: { id: string; name: string } | null;
+  employee: { id: string; name: string } | null;
+  payable: {
+    chargeModel: string;
+    payableCents: number;
+    transferredCents: number;
+    reversedCents: number;
+    refundedCents: number;
+    disputedOpenCents: number;
+    disputedLostCents: number;
+    stripeTransferId: string | null;
+  } | null;
+  recoveryAttempts: PlatformDisputeRecoveryAttempt[];
+};
+
+export type EvidenceSuggestion = {
+  draft: Record<string, string>;
+  sources: Record<string, string>;
+  facts: Array<{ label: string; value: string; source: string }>;
+};
+
+const platformDisputeOpts = (init?: RequestInit): RequestInit => ({
+  ...init,
+  headers: { ...getHeaders(), "Content-Type": "application/json" },
+  credentials: "include",
+});
+
+export function fetchPlatformDisputes(params: { view?: PlatformDisputeView; q?: string; take?: number; skip?: number }) {
+  const sp = new URLSearchParams();
+  if (params.view && params.view !== "all") sp.set("view", params.view);
+  if (params.q) sp.set("q", params.q);
+  if (params.take != null) sp.set("take", String(params.take));
+  if (params.skip != null) sp.set("skip", String(params.skip));
+  const qs = sp.toString();
+  return apiRequest<{ view: PlatformDisputeView; total: number; items: PlatformDisputeListItem[] }>(
+    apiPath(`/api/platform/disputes${qs ? `?${qs}` : ""}`),
+    platformDisputeOpts(),
+  );
+}
+
+export function fetchPlatformDisputeSummary() {
+  return apiRequest<Record<string, number>>(apiPath("/api/platform/disputes/summary"), platformDisputeOpts());
+}
+
+export function fetchPlatformDispute(id: string) {
+  return apiRequest<PlatformDisputeDetail>(apiPath(`/api/platform/disputes/${encodeURIComponent(id)}`), platformDisputeOpts());
+}
+
+export function syncPlatformDispute(id: string) {
+  return apiRequest<{ outcome: string }>(apiPath(`/api/platform/disputes/${encodeURIComponent(id)}/sync`), platformDisputeOpts({ method: "POST", body: "{}" }));
+}
+
+export function updatePlatformDisputeInternal(id: string, body: { investigationStatus?: string; internalNotes?: string | null }) {
+  return apiRequest<{ ok: true }>(apiPath(`/api/platform/disputes/${encodeURIComponent(id)}/internal`), platformDisputeOpts({ method: "PATCH", body: JSON.stringify(body) }));
+}
+
+export function fetchDisputeEvidenceSuggestion(id: string) {
+  return apiRequest<EvidenceSuggestion>(apiPath(`/api/platform/disputes/${encodeURIComponent(id)}/evidence/suggestion`), platformDisputeOpts());
+}
+
+export function saveDisputeEvidenceDraft(id: string, evidence: Record<string, string>) {
+  return apiRequest<{ draft: Record<string, string>; hash: string; updatedAt: string }>(
+    apiPath(`/api/platform/disputes/${encodeURIComponent(id)}/evidence/draft`),
+    platformDisputeOpts({ method: "PUT", body: JSON.stringify({ evidence }) }),
+  );
+}
+
+export function submitDisputeEvidence(id: string, reviewedHash: string) {
+  return apiRequest<{ confirmed: boolean; verified: boolean; mismatched: string[]; stripeStatus: string; submissionCount: number }>(
+    apiPath(`/api/platform/disputes/${encodeURIComponent(id)}/evidence/submit`),
+    platformDisputeOpts({ method: "POST", body: JSON.stringify({ confirm: true, reviewedHash }) }),
+  );
+}
+
+/** Admin approval of a recovery (explicit confirmation) followed by the first attempt. */
+export function recoverPlatformDispute(id: string, amountCents?: number) {
+  return apiRequest<DisputeRecoveryResult>(
+    apiPath(`/api/platform/disputes/${encodeURIComponent(id)}/recovery`),
+    platformDisputeOpts({ method: "POST", body: JSON.stringify({ confirm: true, ...(amountCents ? { amountCents } : {}) }) }),
+  );
+}
+
+export function retryPlatformDisputeRecovery(id: string) {
+  return apiRequest<DisputeRecoveryResult>(
+    apiPath(`/api/platform/disputes/${encodeURIComponent(id)}/recovery/retry`),
+    platformDisputeOpts({ method: "POST", body: JSON.stringify({ confirm: true }) }),
+  );
+}
+
+export function cancelPlatformDisputeRecovery(id: string, reason: string) {
+  return apiRequest<{ cancelled: boolean }>(
+    apiPath(`/api/platform/disputes/${encodeURIComponent(id)}/recovery/cancel`),
+    platformDisputeOpts({ method: "POST", body: JSON.stringify({ confirm: true, reason }) }),
+  );
+}
+
+export function fetchPlatformDisputeRecoveryContext(id: string) {
+  return apiRequest<DisputeRecoveryContext>(apiPath(`/api/platform/disputes/${encodeURIComponent(id)}/recovery/context`), platformDisputeOpts());
+}
+
+/** Business manager: disputes on tips paid at the signed-in business only. */
+export function fetchMyBusinessDisputes() {
+  return apiRequest<{ items: ParticipantDispute[] }>(apiPath("/api/me/connect/disputes"), platformDisputeOpts());
+}
+
+/** Employee: disputes on the signed-in employee's own tips only. */
+export function fetchMyEmployeeDisputes() {
+  return apiRequest<{ items: ParticipantDispute[] }>(apiPath("/api/me/employee-connect/disputes"), platformDisputeOpts());
+}

@@ -176,6 +176,13 @@ export const platformScheduledPayoutOpsMutationRateLimit = createAuthUserLimiter
   SCHED_PAYOUT_OPS_MSG,
 );
 
+/** Dispute evidence submission and transfer recovery (shares the ops budget settings). */
+export const platformDisputeMutationRateLimit = createAuthUserLimiter(
+  "platform-dispute-ops",
+  securityRateLimits.platformScheduledPayoutOps,
+  SCHED_PAYOUT_OPS_MSG,
+);
+
 const API_FINANCIAL_MSG = "Too many payment or payout requests. Please try again later.";
 
 /** Money must not move on per-process counts, so these refuse when shared storage is unreachable. */

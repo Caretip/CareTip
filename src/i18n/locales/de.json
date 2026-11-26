@@ -2846,7 +2846,8 @@
       "paymentsConnect": "Connect",
       "paymentsHistory": "Auszahlungsverlauf",
       "settings": "Einstellungen",
-      "caretipFeedback": "CareTip-Feedback"
+      "caretipFeedback": "CareTip-Feedback",
+      "paymentsDisputes": "Angefochtene Trinkgelder"
     },
     "business": {
       "overview": "Dashboard",
@@ -7287,7 +7288,8 @@
       "payoutsSubtitle": "Betriebliche Auszahlungen und Mitarbeiter-Weiterleitung.",
       "nav": {
         "connect": "Connect",
-        "payouts": "Auszahlungsverlauf"
+        "payouts": "Auszahlungsverlauf",
+        "disputes": "Anfechtungen"
       },
       "tipRouting": {
         "title": "Wie sollen Mitarbeiter-Trinkgelder ausgezahlt werden?",
@@ -8351,7 +8353,8 @@
         "successfulSubscriptions": "Erfolgreiche Abonnements",
         "refunds": "Erstattungen",
         "connectPayouts": "Connect-Auszahlungen",
-        "scheduledPayoutOps": "Geplante Auszahlungen (Ops)"
+        "scheduledPayoutOps": "Geplante Auszahlungen (Ops)",
+        "disputes": "Anfechtungen"
       },
       "users": {
         "management": "Benutzerverwaltung",
@@ -9774,6 +9777,242 @@
         "viewActions": "Admin-Aktionen",
         "viewApi": "API-Zugriffe"
       }
+    },
+    "disputesPage": {
+      "title": "Zahlungsanfechtungen",
+      "subtitle": "Rückbuchungen und Anfragen von Stripe, mit Fristen für Nachweise und Rückholung.",
+      "authorityNote": "Stripe-Status, Beträge, Fristen und Geldbewegungen kommen von Stripe und lassen sich hier nicht ändern. Bearbeitungsstatus und Notizen sind nur CareTip-intern.",
+      "viewsAria": "Ansichten der Anfechtungen",
+      "testMode": "Test",
+      "searchPlaceholder": "Anfechtung, Charge, PaymentIntent, Transfer oder Unternehmen suchen",
+      "emptyTitle": "Keine Anfechtungen in dieser Ansicht",
+      "emptyDescription": "Anfechtungen erscheinen hier, sobald Stripe sie meldet.",
+      "colDispute": "Anfechtung",
+      "colBusiness": "Unternehmen",
+      "colSubject": "Zahlungsart",
+      "colAmount": "Angefochtener Betrag",
+      "colStripeStatus": "Stripe-Status",
+      "colDue": "Nachweise fällig",
+      "colRecovery": "Rückholung",
+      "detailSubtitle": "Stripe-Daten, CareTip-interne Bearbeitung, Nachweise und Rückholung.",
+      "stripeSection": "Stripe (maßgeblich)",
+      "paymentSection": "Ursprüngliche Zahlung",
+      "internalSection": "CareTip intern",
+      "evidenceSection": "Nachweise",
+      "recoverySection": "Rückholung",
+      "syncNow": "Mit Stripe abgleichen",
+      "synced": "Mit Stripe abgeglichen.",
+      "reason": "Grund",
+      "pastDue": "Frist abgelaufen",
+      "submissions": "Eingereichte Nachweise",
+      "withdrawn": "Von CareTip abgebucht",
+      "reinstated": "An CareTip zurückgebucht",
+      "disputeFee": "Anfechtungsgebühren (netto)",
+      "lastSync": "Letzter Stripe-Abgleich",
+      "syncError": "Letzter Abgleichfehler",
+      "employee": "Mitarbeiter",
+      "chargeAmount": "Zahlungsbetrag",
+      "refunded": "erstattet",
+      "transfer": "Transfer",
+      "destination": "Zielkonto",
+      "applicationFee": "CareTip-Gebühr",
+      "investigation": "Bearbeitungsstatus",
+      "notes": "Interne Notizen",
+      "saveInternal": "Interne Notizen speichern",
+      "saved": "Gespeichert.",
+      "evidenceNote": "Nur angeben, was die Unterlagen belegen. Stripe nimmt diese Textfelder an; Dateien (Belege, Dokumente) im Stripe-Dashboard hochladen. Nichts wird gesendet, bevor Sie einreichen.",
+      "prefill": "Aus Zahlungsdaten vorausfüllen",
+      "source": "Quelle: {{source}}",
+      "saveDraft": "Nachweis-Entwurf speichern",
+      "draftSaved": "Entwurf gespeichert. Prüfen und dann einreichen.",
+      "reviewedConfirm": "Ich habe genau diese Nachweise geprüft und sie sind zutreffend",
+      "submitEvidence": "Nachweise bei Stripe einreichen",
+      "submitted": "Nachweise eingereicht. Status von Stripe aktualisiert.",
+      "submittedAt": "Nachweise eingereicht am {{at}}",
+      "recovered": "Bisher zurückgeholt (laut Stripe-Rückbuchungen): {{amount}}",
+      "payableLine": "Mitarbeiterforderung ({{model}}): übertragen {{transferred}}, zurückgebucht {{reversed}}",
+      "recoverConfirm": "Anteil des Empfängers aus dem ursprünglichen Transfer zurückholen (ich bestätige, dass CareTip dies darf)",
+      "recover": "Aus Transfer zurückholen",
+      "recoveryRequested": "Rückholung ausgeführt. Ergebnis von Stripe gelesen.",
+      "view": {
+        "all": "Alle",
+        "open": "Offen",
+        "needs_evidence": "Nachweise nötig",
+        "deadline_soon": "Fällig in 7 Tagen",
+        "awaiting_decision": "Warten auf Stripe",
+        "won": "Gewonnen",
+        "lost": "Verloren",
+        "funds_withdrawn": "Betrag abgebucht",
+        "funds_reinstated": "Betrag zurückgebucht",
+        "recovery_attention": "Rückholung prüfen",
+        "sync_errors": "Abgleichfehler",
+        "recovery_outstanding": "Rückholung offen"
+      },
+      "stripeStatus": {
+        "warning_needs_response": "Anfrage: Antwort nötig",
+        "warning_under_review": "Anfrage: in Prüfung",
+        "warning_closed": "Anfrage geschlossen",
+        "needs_response": "Antwort nötig",
+        "under_review": "In Prüfung",
+        "won": "Gewonnen",
+        "lost": "Verloren",
+        "prevented": "Verhindert"
+      },
+      "subject": {
+        "tip_destination_business": "Trinkgeld (an Unternehmen)",
+        "tip_destination_employee": "Trinkgeld (an Mitarbeiter)",
+        "tip_platform_hold": "Trinkgeld (gehalten, später übertragen)",
+        "physical_qr_order": "QR-Druckbestellung",
+        "subscription": "Abonnement",
+        "unattributed": "Nicht zugeordnet"
+      },
+      "recovery": {
+        "not_applicable": "Nicht zutreffend",
+        "not_required": "Nicht nötig",
+        "review_required": "Prüfung nötig",
+        "in_progress": "Läuft",
+        "recovered": "Zurückgeholt",
+        "partially_recovered": "Teilweise zurückgeholt",
+        "failed": "Fehlgeschlagen",
+        "outstanding": "Offen",
+        "cancelled": "Beendet"
+      },
+      "investigationStatus": {
+        "new": "Neu",
+        "investigating": "In Bearbeitung",
+        "evidence_in_preparation": "Nachweise in Vorbereitung",
+        "awaiting_stripe_decision": "Warten auf Stripe-Entscheidung",
+        "closed": "Intern abgeschlossen"
+      },
+      "evidenceField": {
+        "product_description": "Beschreibung der Leistung",
+        "customer_name": "Name des Kunden",
+        "customer_email_address": "E-Mail des Kunden",
+        "service_date": "Leistungsdatum",
+        "shipping_tracking_number": "Sendungsnummer",
+        "refund_policy_disclosure": "Wie die Erstattungsregeln angezeigt wurden",
+        "refund_refusal_explanation": "Warum keine Erstattung erfolgte",
+        "customer_purchase_ip": "IP-Adresse des Kunden",
+        "uncategorized_text": "Weitere Fakten"
+      },
+      "exposure": "Offener Betrag: {{amount}} von {{target}} zurückholbar",
+      "verificationMatched": "Stripe hat genau den geprüften Nachweistext gespeichert.",
+      "verificationMismatch": "Stripe hat für diese Felder anderen Text gespeichert: {{fields}}. Bitte im Stripe-Dashboard prüfen.",
+      "approvalTitle": "Freigabe der Rückholung",
+      "approvedLine": "{{amount}} freigegeben von {{by}} am {{at}} (Regelwerk {{policy}})",
+      "notApproved": "Nicht freigegeben. Eine Rückholung startet nie automatisch.",
+      "breakdownTitle": "Aufstellung der Rückholung (von Stripe gelesen)",
+      "loadContext": "Transfer und Guthaben von Stripe laden",
+      "disputedAmount": "Angefochtener Betrag",
+      "beneficiaryShare": "Anteil des Empfängers (zurückholbar)",
+      "feeAllocation": "CareTip-Gebühr",
+      "refundsIssued": "Erstattete Beträge",
+      "transferAmount": "Ursprünglicher Transfer",
+      "transferReversed": "Bereits zurückgebucht auf diesem Transfer (alle Gründe)",
+      "otherReversals": "Andere Rückbuchungen (Erstattungen usw.)",
+      "connectedAvailable": "Verfügbares Guthaben des Kontos jetzt",
+      "balanceUnknown": "unbekannt",
+      "nextRetry": "Nächster geplanter Versuch: {{at}} (Versuch {{count}} von {{max}})",
+      "lastFailure": "Letztes Ergebnis: {{code}}",
+      "approveAmount": "Freizugebender Betrag (optional, in €)",
+      "approveConfirm": "Ich habe diese verlorene Anfechtung geprüft und gebe die Rückholung bis zu diesem Betrag aus dem ursprünglichen Transfer frei",
+      "approve": "Freigeben und zurückholen",
+      "retryNow": "Jetzt erneut versuchen",
+      "retryConfirm": "Innerhalb der bestehenden Freigabe erneut versuchen",
+      "cancelReason": "Grund für das Beenden",
+      "cancel": "Rückholung beenden",
+      "cancelled": "Beendet am {{at}}: {{reason}}",
+      "attemptsTitle": "Versuche",
+      "trigger_admin": "Admin",
+      "trigger_scheduled_retry": "geplante Wiederholung",
+      "recoveryDone": "Rückholung verarbeitet. Ergebnis von Stripe gelesen.",
+      "stage2Note": "Bereits auf ein Bankkonto ausgezahltes Geld lässt sich mit einer Transfer-Rückbuchung nicht zurückrufen. Das wird hier nicht behandelt (künftige Stufe 2).",
+      "availableShort": "verfügbar",
+      "summary": {
+        "title": "Zusammenfassung",
+        "happenedTitle": "Was ist passiert?",
+        "happened": {
+          "tip_destination_employee": "Ein Kunde hat ein Trinkgeld von {{amount}} an {{employee}} bei {{business}} angefochten.",
+          "tip_platform_hold": "Ein Kunde hat ein Trinkgeld von {{amount}} für {{employee}} bei {{business}} angefochten.",
+          "tip_destination_business": "Ein Kunde hat ein Trinkgeld von {{amount}} an {{business}} angefochten.",
+          "physical_qr_order": "Ein Kunde hat eine Zahlung von {{amount}} für eine CareTip-QR-Druckbestellung angefochten ({{business}}).",
+          "subscription": "Ein Kunde hat eine Abo-Zahlung von {{amount}} an CareTip angefochten ({{business}}).",
+          "unattributed": "Ein Kunde hat eine Zahlung von {{amount}} angefochten. CareTip konnte sie keinem Trinkgeld und keiner Bestellung zuordnen."
+        },
+        "paymentDate": "Ursprüngliche Zahlung: {{date}} (CareTip-Daten)",
+        "paymentDateUnknown": "Datum der ursprünglichen Zahlung: in den CareTip-Daten nicht vorhanden",
+        "confirmedTitle": "Was hat Stripe bestätigt?",
+        "confirmed": {
+          "status_needs_response": "Die Anfechtung ist offen und wartet auf Nachweise von CareTip.",
+          "status_under_review": "Die Nachweise wurden gesendet; die Bank des Kunden entscheidet.",
+          "status_won": "Die Anfechtung wurde zugunsten von CareTip entschieden.",
+          "status_lost": "Die Anfechtung wurde zugunsten des Kunden entschieden.",
+          "status_other": "Stripe meldet einen Status, den CareTip nicht kennt.",
+          "funds_withdrawn": "Stripe hat {{amount}} vom Stripe-Guthaben von CareTip abgezogen.",
+          "funds_reinstated": "Stripe hat {{amount}} auf das Stripe-Guthaben von CareTip zurückgebucht.",
+          "evidence_submitted": "Nachweise wurden an die Bank übermittelt ({{count}}×).",
+          "evidence_due": "Nachweise sind fällig bis {{at}}.",
+          "recovered": "Stripe bestätigt, dass {{amount}} vom Stripe-Konto des Empfängers zurückgeholt wurden."
+        },
+        "lastChecked": "Zuletzt bei Stripe geprüft: {{at}}",
+        "moneyTitle": "Wo ist das Geld?",
+        "location": {
+          "platform": "Stripe-Guthaben von CareTip",
+          "business_account": "Stripe-Konto des Betriebs",
+          "employee_account": "Stripe-Konto der Mitarbeiterin bzw. des Mitarbeiters",
+          "bank": "Bankkonto",
+          "unknown": "Unbekannt"
+        },
+        "money": {
+          "taken_from_platform": "Stripe hat {{amount}} für die Anfechtung von diesem Guthaben abgezogen und nicht zurückgebucht.",
+          "returned_to_platform": "{{amount}} wurden nach der Anfechtung zurückgebucht.",
+          "not_withdrawn_yet": "Stripe hat noch kein Geld abgezogen.",
+          "tip_sent_to_account": "Das Trinkgeld wurde bei der Zahlung an dieses Konto gesendet.",
+          "tip_not_paid_out_yet": "Das Trinkgeld war noch nicht an die Mitarbeiterin bzw. den Mitarbeiter gesendet.",
+          "recovered_from_account": "{{amount}} wurden von diesem Konto zurückgeholt.",
+          "bank_payout_unknown": "Ob das Geld schon auf die Bank ausgezahlt wurde, lässt sich nicht feststellen: Stripe ordnet Bankauszahlungen keinem einzelnen Trinkgeld zu.",
+          "caretip_own_sale": "Das war ein eigener Verkauf von CareTip; kein Betrieb und keine Mitarbeitenden haben das Geld erhalten.",
+          "payment_not_attributed": "Es ist nicht bekannt, welches Konto diese Zahlung erhalten hat."
+        },
+        "source": {
+          "stripe": "von Stripe bestätigt",
+          "caretip_record": "CareTip-Daten",
+          "not_determinable": "nicht bestätigbar"
+        },
+        "nextTitle": "Wie geht es weiter?",
+        "next": {
+          "reconciliation_required": "Finanzabgleich erforderlich: CareTip konnte den aktuellen Stand nicht bei Stripe bestätigen.",
+          "evidence_required": "Nachweise erforderlich.",
+          "deadline_passed": "Die Frist für Nachweise ist abgelaufen. Die Bank entscheidet.",
+          "awaiting_bank": "Nachweise übermittelt. Die Bank entscheidet.",
+          "won": "Anfechtung gewonnen.",
+          "won_funds_returned": "Anfechtung gewonnen. Stripe hat das Geld zurückgebucht.",
+          "won_after_recovery": "Anfechtung gewonnen, aber vor der Entscheidung wurde bereits Geld vom Empfänger zurückgeholt.",
+          "lost_caretip_sale": "Anfechtung verloren. Der Verlust trägt CareTip selbst; sonst ist niemand betroffen.",
+          "lost_not_attributed": "Anfechtung verloren. Die Zahlung konnte keinem Trinkgeld und keiner Bestellung zugeordnet werden.",
+          "lost_tip_not_paid_out": "Anfechtung verloren. Das Trinkgeld war noch nicht ausgezahlt; es muss nichts zurückgeholt werden.",
+          "lost_recovery_review": "Anfechtung verloren. Eine Rückholung muss geprüft werden.",
+          "recovery_waiting_funds": "Rückholung bei Stripe angefragt; es wird gewartet, bis das Konto des Empfängers Guthaben hat.",
+          "recovery_waiting_confirmation": "Rückholung bei Stripe angefragt. Warten auf die Bestätigung von Stripe.",
+          "recovery_partial": "Stripe hat einen Teil der Rückholung bestätigt. Der Rest ist noch offen.",
+          "recovery_confirmed": "Stripe hat die Rückholung bestätigt.",
+          "recovery_failed": "Die Rückholung konnte nicht abgeschlossen werden.",
+          "recovery_cancelled": "Die Rückholung wurde beendet."
+        },
+        "actionTitle": "Was muss ich tun?",
+        "action": {
+          "sync_or_tell_developer": "Auf „Mit Stripe abgleichen“ klicken. Bleibt diese Meldung, den Entwickler informieren.",
+          "prepare_evidence": "Die Unterlagen unten zusammenstellen und vor Fristende einreichen.",
+          "none_wait_for_bank": "Nichts. Die Bank entscheidet; CareTip zeigt das Ergebnis an.",
+          "none": "Nichts.",
+          "ask_owner_return_recovered": "Die Inhaberin bzw. den Inhaber fragen, ob das zurückgeholte Geld an den Empfänger zurückgezahlt werden soll. Selbst kein Geld bewegen.",
+          "tell_developer": "Den Entwickler informieren, damit die Zahlung zugeordnet werden kann.",
+          "none_retries_scheduled": "Nichts. CareTip fragt Stripe automatisch erneut an, im Rahmen des genehmigten Betrags.",
+          "none_wait_for_stripe": "Nichts. Auf die Bestätigung von Stripe warten.",
+          "ask_owner": "Die Inhaberin bzw. den Inhaber fragen, wie es weitergeht. Technische Details stehen unten.",
+          "decide_recovery_with_policy": "Eine Rückholung nur genehmigen, wenn die schriftliche Richtlinie der Inhaberin bzw. des Inhabers dies für diesen Fall erlaubt. Im Zweifel nachfragen."
+        }
+      }
     }
   },
   "industries": {
@@ -10164,6 +10403,35 @@
       "field-service": {
         "title": "Trinkgeld im Außendienst — CareTip",
         "description": "QR-Trinkgeld für Außendienst- und mobile Service-Teams."
+      }
+    }
+  },
+  "disputes": {
+    "participant": {
+      "title": "Angefochtene Trinkgelder",
+      "subtitle_business": "Kartenanfechtungen von Trinkgeldern in Ihrem Betrieb, ihr Ergebnis und eine etwaige Rückholung.",
+      "subtitle_employee": "Kartenanfechtungen von Trinkgeldern an Sie, ihr Ergebnis und eine etwaige Rückholung.",
+      "intro_business": "Ein Karteninhaber kann eine Zahlung bei seiner Bank anfechten. Stripe entscheidet über das Ergebnis; CareTip zeigt es hier.",
+      "intro_employee": "Ein Karteninhaber kann ein Trinkgeld bei seiner Bank anfechten. Stripe entscheidet über das Ergebnis; CareTip zeigt es hier. Ohne Prüfung durch CareTip wird nichts zurückgeholt.",
+      "loading": "Wird geladen…",
+      "emptyTitle": "Keine angefochtenen Trinkgelder",
+      "emptyDescription_business": "Anfechtungen von Trinkgeldern in Ihrem Betrieb würden hier erscheinen.",
+      "emptyDescription_employee": "Anfechtungen von Trinkgeldern an Sie würden hier erscheinen.",
+      "opened": "Eröffnet am {{date}}",
+      "reinstated": "Stripe hat den angefochtenen Betrag zurückgebucht.",
+      "lostNoRecovery": "Verloren. Es wurde keine Rückholung freigegeben.",
+      "recoveryStatus": "Rückholung",
+      "approved": "Freigegeben",
+      "recovered": "Zurückgeholt",
+      "outstanding": "Offen",
+      "outcome": {
+        "open": "Anfechtung offen",
+        "won": "Anfechtung gewonnen",
+        "lost": "Anfechtung verloren"
+      },
+      "paidTo": {
+        "business": "an den Betrieb gezahlt",
+        "employee": "an ein Teammitglied gezahlt"
       }
     }
   }

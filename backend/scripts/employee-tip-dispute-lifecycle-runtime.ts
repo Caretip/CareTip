@@ -337,10 +337,12 @@ async function runDb() {
     }
     await disputeEvent(suffix, afterXfer.pi, `dp_after_${suffix}`, "lost", 1000);
     const afterLost = await prisma.employeeTipPayable.findUnique({ where: { id: afterXfer.payable.id } });
-    if (afterLost?.disputedLostCents === 851 && afterLost.reversedCents === 851 && afterReversals === 1) {
-      pass("9-post-transfer-lost-reverses", "Lost post-Transfer dispute reverses remaining Transfer");
+    // Policy 2026-11-26: a lost dispute is recorded, but the transferred tip is not reversed
+    // automatically; recovery is a separate platform-admin-approved action (stripe-dispute-lifecycle).
+    if (afterLost?.disputedLostCents === 851 && afterLost.reversedCents === 0 && afterReversals === 0) {
+      pass("9-post-transfer-lost-recorded-not-reversed", "Lost post-Transfer dispute is recorded; no automatic reversal");
     } else {
-      fail("9-post-transfer-lost-reverses", JSON.stringify({ afterLost, afterReversals }));
+      fail("9-post-transfer-lost-recorded-not-reversed", JSON.stringify({ afterLost, afterReversals }));
     }
 
     const failRev = await makeTip({
@@ -350,7 +352,11 @@ async function runDb() {
       transferId: `tr_failrev_${suffix}`,
       tag: "failrev",
     });
+    // Policy 2026-11-26: no reversal is attempted on a loss, so none can fail or be counted as recovered.
+    // (A failed admin-approved recovery is covered in stripe-dispute-lifecycle: "insufficient balance".)
+    let failRevAttempts = 0;
     __setEmployeeTipTransferReversalFnForTests(async () => {
+      failRevAttempts += 1;
       throw new Error("insufficient connected balance");
     });
     await disputeEvent(suffix, failRev.pi, `dp_failrev_${suffix}`, "lost", 1000);
@@ -358,11 +364,12 @@ async function runDb() {
     if (
       failRow?.disputedLostCents === 851 &&
       failRow.reversedCents === 0 &&
-      failRow.lastTransferError === "transfer_reversal_failed"
+      failRevAttempts === 0 &&
+      failRow.lastTransferError !== "transfer_reversal_failed"
     ) {
-      pass("10-reversal-failure-not-claimed-recovered", "Failed reversal does not mark reversedCents as recovered");
+      pass("10-lost-not-reversed-not-claimed-recovered", "Loss recorded; no reversal attempted; nothing counted as recovered");
     } else {
-      fail("10-reversal-failure-not-claimed-recovered", JSON.stringify(failRow));
+      fail("10-lost-not-reversed-not-claimed-recovered", JSON.stringify({ failRow, failRevAttempts }));
     }
     pass("11-employee-paid-out-simulated", "Insufficient recoverable balance uses the same reversal-failure path");
 

@@ -30,7 +30,6 @@ import { logTrialSync } from "../lib/subscription/trialSyncDebugLog.js";
 import { logServerError } from "../utils/httpErrors.js";
 import {
   upsertStripeRefundEvent,
-  upsertStripeDisputeEvent,
 } from "../services/finance/tipRefunds.service.js";
 import { isPhysicalQrCheckoutSession } from "../services/physicalQr/physicalQrCheckout.service.js";
 import {
@@ -69,6 +68,8 @@ const TIP_EVENT_TYPES = new Set([
   "charge.dispute.created",
   "charge.dispute.closed",
   "charge.dispute.updated",
+  "charge.dispute.funds_withdrawn",
+  "charge.dispute.funds_reinstated",
 ]);
 
 const CONNECT_EVENT_TYPES = new Set(["account.updated"]);
@@ -84,6 +85,8 @@ const CONNECT_ENDPOINT_EVENT_TYPES = new Set([
   "charge.dispute.created",
   "charge.dispute.updated",
   "charge.dispute.closed",
+  "charge.dispute.funds_withdrawn",
+  "charge.dispute.funds_reinstated",
 ]);
 
 function usesStripeWebhookEventStore(event: Stripe.Event): boolean {
@@ -290,26 +293,15 @@ async function dispatchNonBillingStripeEvent(event: Stripe.Event): Promise<void>
     return;
   }
 
-  if (
-    event.type === "charge.dispute.created" ||
-    event.type === "charge.dispute.closed" ||
-    event.type === "charge.dispute.updated"
-  ) {
+  if (event.type.startsWith("charge.dispute.")) {
+    // The event only says which dispute changed. Its current state is read from Stripe (which also
+    // makes late or out-of-order deliveries harmless); a failed read throws so Stripe retries.
     const dispute = event.data.object as Stripe.Dispute;
-    const chargeId = typeof dispute.charge === "string" ? dispute.charge : dispute.charge?.id ?? null;
-    const pi =
-      typeof dispute.payment_intent === "string"
-        ? dispute.payment_intent
-        : dispute.payment_intent?.id ?? null;
-    await upsertStripeDisputeEvent({
-      stripeDisputeId: dispute.id,
-      stripeChargeId: chargeId,
-      stripePaymentIntentId: pi,
-      amountCents: dispute.amount,
-      currency: dispute.currency,
-      status: dispute.status,
-      reason: typeof dispute.reason === "string" ? dispute.reason : null,
-      occurredAt: new Date((dispute.created ?? Math.floor(Date.now() / 1000)) * 1000),
+    const { syncStripeDisputeFromStripe } = await import("../services/disputes/stripeDisputeProjection.service.js");
+    await syncStripeDisputeFromStripe(dispute.id, {
+      source: "webhook",
+      stripeEventId: event.id,
+      stripeEventType: event.type,
       stripeEventAccount: typeof event.account === "string" ? event.account : null,
     });
   }
