@@ -215,7 +215,8 @@ await check("S10 concurrent writers: a slower, older read cannot overwrite a new
 });
 
 // ── H4 / M5: checkout keys, single open session, customer creation ──
-type Created = { key: string; paramsJson: string; session: Stripe.Checkout.Session };
+/** `original` is the response body as first returned: Stripe replays exactly that for the same key. */
+type Created = { key: string; paramsJson: string; session: Stripe.Checkout.Session; original: string };
 const byKey = new Map<string, Created>();
 const createLog: Array<{ key?: string; price?: string }> = [];
 const checkoutSessions = new Map<string, Stripe.Checkout.Session>();
@@ -230,7 +231,9 @@ __setCheckoutSessionsCreateFnForTests(async (params, options) => {
       // Stripe's documented behaviour for reusing a key with different parameters.
       throw Object.assign(new Error("Keys for idempotent requests can only be used with the same parameters they were first used with."), { type: "StripeIdempotencyError", statusCode: 400 });
     }
-    return checkoutSessions.get(cached.session.id)!;
+    // Real Stripe replays the stored original response (status as at creation), marked as a replay;
+    // it does not return the session's current state.
+    return { ...JSON.parse(cached.original), lastResponse: { headers: { "idempotent-replayed": "true" } } } as Stripe.Checkout.Session;
   }
   const session = {
     id: `cs_bill_${sfx}_${checkoutSessions.size + 1}`,
@@ -242,7 +245,7 @@ __setCheckoutSessionsCreateFnForTests(async (params, options) => {
     metadata: params.metadata,
   } as unknown as Stripe.Checkout.Session;
   checkoutSessions.set(session.id, session);
-  byKey.set(key, { key, paramsJson, session });
+  byKey.set(key, { key, paramsJson, session, original: JSON.stringify(session) });
   return session;
 });
 __setListStripeSubscriptionsForCustomerForTests(async () => []);
@@ -250,6 +253,7 @@ const stripe = getStripeClient() as unknown as { customers: Record<string, unkno
 stripe.checkout.sessions.list = async (q: { customer?: string }) => ({
   data: [...checkoutSessions.values()].filter((s) => s.customer === q.customer && s.status === "open"),
 });
+stripe.checkout.sessions.retrieve = async (id: string) => checkoutSessions.get(id)!;
 const expired: string[] = [];
 stripe.checkout.sessions.expire = async (id: string) => {
   expired.push(id);
@@ -288,6 +292,17 @@ await check("K1 monthly then yearly within 24h both succeed (distinct keys, no S
   assert.notEqual(createLog[0]!.key, createLog[1]!.key);
   assert.ok(createLog[0]!.key!.startsWith(`caretip_billing_checkout_${b.id}_`));
   assert.ok(expired.includes(monthly.sessionId), "the earlier session is expired: only one can be completed");
+});
+
+await check("K1b monthly → yearly → monthly again: the expired monthly session is never reused (replay is re-read)", async () => {
+  const b = await newBusiness("k1b");
+  const monthly = await checkoutFor(b.id, "monthly");
+  const yearly = await checkoutFor(b.id, "yearly"); // expires the monthly session
+  assert.ok(expired.includes(monthly.sessionId));
+  const monthlyAgain = await checkoutFor(b.id, "monthly"); // same key: Stripe replays the stale "open" body
+  assert.notEqual(monthlyAgain.sessionId, monthly.sessionId, "must not hand the browser an expired session");
+  assert.equal(checkoutSessions.get(monthlyAgain.sessionId)!.status, "open");
+  assert.ok(expired.includes(yearly.sessionId), "the yearly session is expired in turn");
 });
 
 await check("K2 same request retried → same key → same session", async () => {

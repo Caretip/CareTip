@@ -13,6 +13,7 @@ import {
   writePhysicalQrOrderSnapshot,
 } from "@/app/lib/physicalQrOrdersSessionCache";
 import { performExternalStripeRedirect } from "@/app/lib/externalStripeRedirect";
+import { StripeHandoffLabel } from "@/app/components/payments/StripeHandoffLabel";
 import {
   formatBerlinDateTime,
   formatPhysicalQrMoney,
@@ -38,6 +39,9 @@ import { QR_STUDIO_BASE } from "../../../components/business/businessDashboardNa
 import { businessUi } from "../../../components/business/businessDashboardUi";
 import { cn } from "@/lib/utils";
 import { toDisplayErrorMessage } from "@/app/lib/errorMessages";
+
+/** Checks every 2 s after returning from Stripe, then every 15 s until the payment is confirmed. */
+const CONFIRM_FAST_ATTEMPTS = 15;
 
 export function PhysicalQrOrderDetailPage() {
   const { user } = useRequireAuth();
@@ -107,14 +111,18 @@ export function PhysicalQrOrderDetailPage() {
         if (cancelled) return;
         setOrder(next);
         if (businessId) writePhysicalQrOrderSnapshot(businessId, next);
-        if (next.paymentStatus === "PAID" || next.paymentStatus === "FAILED" || attempts >= 15) {
+        // Only Stripe's confirmation (via the server) ends "Confirming your payment". Giving up after
+        // a fixed number of checks brought "Proceed to payment" back for an order that was already
+        // paid but not yet confirmed by the webhook.
+        if (next.paymentStatus === "PAID" || next.paymentStatus === "FAILED") {
           setConfirming(false);
           return;
         }
       } catch {
         /* keep polling */
       }
-      window.setTimeout(() => void tick(), 2000);
+      // Quick checks first, then a slower check while the page stays open.
+      window.setTimeout(() => void tick(), attempts < CONFIRM_FAST_ATTEMPTS ? 2000 : 15_000);
     };
     void tick();
     return () => {
@@ -131,7 +139,14 @@ export function PhysicalQrOrderDetailPage() {
     setPaying(true);
     try {
       const session = await checkoutPhysicalQrOrder(orderId);
-      const redirected = performExternalStripeRedirect(session.url, "checkout");
+      const redirected = performExternalStripeRedirect(session.url, "checkout", undefined, {
+        presentation: "inline",
+        onStalled: () => {
+          setPaying(false);
+          payInFlight.current = false;
+          toast.error(t("business.billing.checkoutStalled"));
+        },
+      });
       if (!redirected.ok) throw new Error(t("business.qrStudio.physical.orderError"));
     } catch (err) {
       toast.error(toDisplayErrorMessage(err, t("business.qrStudio.physical.orderError")));
@@ -332,7 +347,13 @@ export function PhysicalQrOrderDetailPage() {
             onClick={() => void pay()}
             className={cn(businessUi.btnPrimary)}
           >
-            {failed ? t("business.qrStudio.physical.orders.tryPaymentAgain") : t("business.qrStudio.physical.payNow")}
+            {paying ? (
+              <StripeHandoffLabel />
+            ) : failed ? (
+              t("business.qrStudio.physical.orders.tryPaymentAgain")
+            ) : (
+              t("business.qrStudio.physical.payNow")
+            )}
           </Button>
         </div>
       ) : null}

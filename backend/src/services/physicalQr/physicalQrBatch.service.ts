@@ -1,5 +1,6 @@
 import type Stripe from "stripe";
 import { prisma } from "../../prisma.js";
+import { isIdempotentReplay } from "../stripeBilling.service.js";
 import { PaymentOperationBusyError, withPaymentOperationLease } from "../../lib/payments/operationLease.js";
 import { getStripeClient, isStripeConfigured } from "../stripe.service.js";
 import { resolveCheckoutFrontendBaseUrl } from "../../config/frontendUrl.js";
@@ -367,9 +368,12 @@ async function createPhysicalQrBatchCheckoutSessionLocked(input: {
         },
         { idempotencyKey: physicalQrCheckoutIdempotencyKey(order.id, totalCents, previousSessionId) },
       );
-      if (created.status === "open" && created.url) {
+      // A replayed body shows the session as it was when first created; re-read it from Stripe so an
+      // expired or meanwhile paid session is never handed to the browser.
+      const current = isIdempotentReplay(created) ? await stripe.checkout.sessions.retrieve(created.id) : created;
+      if (current.status === "open" && created.url) {
         session = created;
-      } else if (created.status === "complete" || created.payment_status === "paid") {
+      } else if (current.status === "complete" || current.payment_status === "paid") {
         throw new PhysicalQrOrderError(
           "ORDER_PAYMENT_PROCESSING",
           "This order has already been paid. It will update in a moment.",

@@ -57,6 +57,9 @@ export function BusinessSettingsPage() {
 
   useEffect(() => {
     if (legacySettingsSectionRedirectTarget(rawSection)) return;
+    // A Stripe checkout return (?billing=success|canceled) is sent on to Billing by the effect
+    // above; rewriting the URL to ?section=general here won the race and left the user on General.
+    if (searchParams.get("billing")) return;
     if (searchParams.get("section") === section) return;
     setSearchParams({ section }, { replace: true });
   }, [section, searchParams, setSearchParams, rawSection]);

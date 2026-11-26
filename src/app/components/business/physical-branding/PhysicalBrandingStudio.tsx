@@ -272,7 +272,14 @@ export function PhysicalBrandingStudio() {
 
   const startCheckout = useCallback(async (orderId: string) => {
     const session = await checkoutPhysicalQrOrder(orderId);
-    const redirected = performExternalStripeRedirect(session.url, "checkout");
+    const redirected = performExternalStripeRedirect(session.url, "checkout", undefined, {
+      presentation: "inline",
+      onStalled: () => {
+        printCheckoutInFlight.current = false;
+        setSubmitting(false);
+        toast.error(t("business.billing.checkoutStalled"));
+      },
+    });
     if (!redirected.ok) {
       throw new Error(t("business.qrStudio.physical.orderError"));
     }

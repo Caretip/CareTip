@@ -203,7 +203,9 @@
         "imprint": "Opening Legal Notice…",
         "dpa": "Opening Data Processing Agreement…",
         "plv": "Opening Price & Services List…"
-      }
+      },
+      "billingPortal": "Opening the Stripe billing portal…",
+      "checkoutButton": "Preparing secure checkout…"
     },
     "syncingAccountStatus": "Preparing billing…",
     "loadingTeamMembers": "Loading your team…",
@@ -7906,7 +7908,9 @@
           "f6": "API & integration support",
           "f7": "Invoice & procurement billing"
         }
-      }
+      },
+      "checkoutStalled": "Stripe checkout didn’t open. Check your connection and try again.",
+      "portalStalled": "The Stripe billing portal didn’t open. Check your connection and try again."
     },
     "commercial": {
       "title": "Plan fit & usage",

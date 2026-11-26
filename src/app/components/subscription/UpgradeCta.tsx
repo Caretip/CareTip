@@ -1,7 +1,6 @@
 import { useCallback, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { useStaleExternalStripeStateReset } from "@/app/hooks/useStaleExternalStripeStateReset";
-import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { createBillingCheckoutSession, fetchBillingStatus } from "@/app/lib/api";
@@ -12,11 +11,8 @@ import {
   closeOverlayThenNavigate,
   type CloseBeforeNavigate,
 } from "@/app/lib/activateCareTipNavigation";
-import {
-  APP_LOADING_PRIORITY,
-  useAppLoadingRegistration,
-} from "@/app/lib/globalAppLoading";
-import { performExternalStripeRedirect } from "@/app/lib/externalStripeRedirect";
+import { StripeHandoffLabel } from "@/app/components/payments/StripeHandoffLabel";
+import { isAllowedStripeRedirectUrl, performExternalStripeRedirect } from "@/app/lib/externalStripeRedirect";
 import { cn } from "@/lib/utils";
 
 type UpgradeCtaProps = {
@@ -47,12 +43,6 @@ export function UpgradeCta({
   const resetBusy = useCallback(() => setBusy(false), []);
   useStaleExternalStripeStateReset({ onReset: resetBusy, billingReturn: searchParams });
 
-  useAppLoadingRegistration(
-    "upgrade-cta-checkout",
-    APP_LOADING_PRIORITY.APP_INIT,
-    busy,
-    t("common.loading.checkout"),
-  );
 
   const requiredTier = featureKey ? getFeatureCatalog(featureKey).requiredTier : "premium";
 
@@ -78,14 +68,27 @@ export function UpgradeCta({
     try {
       const billing = await fetchBillingStatus();
       if (billing?.billingEnabled && billing.stripeConfigured) {
-        if (closeBeforeNavigate) {
-          await closeBeforeNavigate();
-        }
+        // Session first, while this button shows the progress; a surrounding dialog closes only
+        // once a valid Stripe URL is back, so the user is never left without feedback.
         const session = await createBillingCheckoutSession({
           planKey: "premium",
           billingCycle: billing.billingCycle ?? "monthly",
         });
-        const redirect = performExternalStripeRedirect(session.url, "checkout");
+        if (!isAllowedStripeRedirectUrl(session.url, "checkout")) {
+          toast.error(t("business.billing.checkoutNoUrl"));
+          setBusy(false);
+          return;
+        }
+        if (closeBeforeNavigate) {
+          await closeBeforeNavigate();
+        }
+        const redirect = performExternalStripeRedirect(session.url, "checkout", undefined, {
+          presentation: "inline",
+          onStalled: () => {
+            setBusy(false);
+            toast.error(t("business.billing.checkoutStalled"));
+          },
+        });
         if (!redirect.ok) {
           toast.error(t("business.billing.checkoutNoUrl"));
           setBusy(false);
@@ -116,8 +119,7 @@ export function UpgradeCta({
 
   return (
     <button type="button" className={baseClass} disabled={busy} onClick={() => void handleUpgrade()}>
-      {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-      {label}
+      {busy ? <StripeHandoffLabel /> : label}
     </button>
   );
 }

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { CreditCard, Loader2 } from "lucide-react";
+import { CreditCard } from "lucide-react";
+import { StripeHandoffLabel } from "@/app/components/payments/StripeHandoffLabel";
 import { Link } from "react-router";
 import type { BillingStatus } from "../../../../lib/api";
 import { BillingStatusBadge } from "./BillingStatusBadge";
@@ -187,11 +188,13 @@ export function BillingSubscriptionSummary({
               aria-busy={managePlanBusy || undefined}
             >
               {managePlanBusy ? (
-                <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
+                <StripeHandoffLabel kind="portal" />
               ) : (
-                <CreditCard className="size-4 shrink-0" aria-hidden />
+                <>
+                  <CreditCard className="size-4 shrink-0" aria-hidden />
+                  {t("business.billing.managePlan")}
+                </>
               )}
-              {t("business.billing.managePlan")}
             </button>
           ) : (
             <ManagePlanScrollLink className={cn(caretipBtnPrimary, "inline-flex")} />

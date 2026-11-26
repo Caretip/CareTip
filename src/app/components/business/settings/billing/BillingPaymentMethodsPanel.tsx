@@ -1,14 +1,11 @@
 import { useCallback, useState } from "react";
 import { useStaleExternalStripeStateReset } from "../../../../hooks/useStaleExternalStripeStateReset";
 import { useTranslation } from "react-i18next";
-import { CreditCard, Loader2 } from "lucide-react";
+import { CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { createBillingPortalSession } from "../../../../lib/api";
 import { toUserFriendlyMessage } from "../../../../lib/errorMessages";
-import {
-  APP_LOADING_PRIORITY,
-  useAppLoadingRegistration,
-} from "../../../../lib/globalAppLoading";
+import { StripeHandoffLabel } from "@/app/components/payments/StripeHandoffLabel";
 import { performExternalStripeRedirect } from "../../../../lib/externalStripeRedirect";
 import { Button } from "@/components/ui/button";
 
@@ -25,18 +22,18 @@ export function BillingPaymentMethodsPanel() {
   const resetBusy = useCallback(() => setBusy(false), []);
   useStaleExternalStripeStateReset({ onReset: resetBusy });
 
-  useAppLoadingRegistration(
-    "billing-payment-methods-portal",
-    APP_LOADING_PRIORITY.APP_INIT,
-    busy,
-    t("common.loading.checkout"),
-  );
 
   async function openPaymentMethods() {
     setBusy(true);
     try {
       const { url } = await createBillingPortalSession({ flow: "payment_methods" });
-      const redirect = performExternalStripeRedirect(url, "portal");
+      const redirect = performExternalStripeRedirect(url, "portal", undefined, {
+        presentation: "inline",
+        onStalled: () => {
+          setBusy(false);
+          toast.error(t("business.billing.portalStalled"));
+        },
+      });
       if (!redirect.ok) {
         toast.error(t("business.billing.portalError"));
         setBusy(false);
@@ -58,9 +55,14 @@ export function BillingPaymentMethodsPanel() {
         ))}
       </ul>
       <Button type="button" onClick={() => void openPaymentMethods()} disabled={busy}>
-        {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-        <CreditCard className="mr-2 h-4 w-4" aria-hidden />
-        {t("business.billing.managePaymentMethods")}
+        {busy ? (
+          <StripeHandoffLabel kind="portal" />
+        ) : (
+          <>
+            <CreditCard className="mr-2 h-4 w-4" aria-hidden />
+            {t("business.billing.managePaymentMethods")}
+          </>
+        )}
       </Button>
     </div>
   );

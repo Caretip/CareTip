@@ -53,6 +53,8 @@ export async function startActivationCheckout(
   options?: {
     closeBeforeNavigate?: CloseBeforeNavigate;
     navigate?: NavigateFunction;
+    /** The browser never left for Stripe: the caller restores its button (lock is released here). */
+    onStalled?: () => void;
   },
 ): Promise<ActivationCheckoutResult> {
   if (activationCheckoutInFlight) return "busy";
@@ -81,7 +83,14 @@ export async function startActivationCheckout(
         billingCycle: "monthly",
         checkoutFlow: "billing",
       });
-      const redirect = performExternalStripeRedirect(session.url, "checkout");
+      const redirect = performExternalStripeRedirect(session.url, "checkout", undefined, {
+        presentation: "inline",
+        onStalled: () => {
+          activationCheckoutInFlight = false;
+          toast.error(t("business.billing.checkoutStalled"));
+          options?.onStalled?.();
+        },
+      });
       if (!redirect.ok) {
         toast.error(t("business.billing.checkoutNoUrl"));
         return "failed" as const;

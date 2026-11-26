@@ -143,7 +143,7 @@ assert(
 );
 assert(
   loadingManager.includes("getExternalStripeNavigationHoldMessage") &&
-    redirect.includes("beginExternalStripeNavigationHold(holdMessage)"),
+    /beginExternalStripeNavigationHold\(holdMessage[,)]/.test(redirect),
   "Stripe hold prefers explicit checkout message over stale journey ref",
 );
 assert(

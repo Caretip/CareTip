@@ -19,7 +19,7 @@ const STAFF_PRESETS: Record<string, readonly StaffPreset[]> = {
       roleKey: "host",
       displayName: "James",
       photoUrl:
-        "https://images.unsplash.com/photo-1507003211169-0a6dd7228f2d?w=240&h=240&fit=crop&crop=face&q=80",
+        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=240&h=240&fit=crop&crop=face&q=80",
     },
     {
       roleKey: "chef",
@@ -175,7 +175,7 @@ const STAFF_PRESETS: Record<string, readonly StaffPreset[]> = {
       roleKey: "teamMember",
       displayName: "James",
       photoUrl:
-        "https://images.unsplash.com/photo-1507003211169-0a6dd7228f2d?w=240&h=240&fit=crop&crop=face&q=80",
+        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=240&h=240&fit=crop&crop=face&q=80",
     },
     {
       roleKey: "teamMember",

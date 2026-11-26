@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router";
 import { useStaleExternalStripeStateReset } from "@/app/hooks/useStaleExternalStripeStateReset";
 import { Loader2, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { StripeHandoffLabel } from "@/app/components/payments/StripeHandoffLabel";
 import { toast } from "sonner";
 import {
   APP_LOADING_PRIORITY,
@@ -139,18 +140,13 @@ export function ActivationPlanButtons({
   }, []);
   useStaleExternalStripeStateReset({ onReset: resetActivationBusy, billingReturn: searchParams });
 
-  useAppLoadingRegistration(
-    "activation-plan-checkout",
-    APP_LOADING_PRIORITY.APP_INIT,
-    busy === "pro",
-    t("common.loading.checkout"),
-  );
+  // "pro" opens Stripe: the button shows the progress while the session is prepared (no overlay).
 
   async function handle(plan: ActivationCheckoutPlan) {
     if (busy !== null) return;
     setBusy(plan);
     try {
-      const result = await startActivationCheckout(plan, t, { navigate });
+      const result = await startActivationCheckout(plan, t, { navigate, onStalled: () => setBusy(null) });
       if (result !== "stripe_navigated") {
         setBusy(null);
       }
@@ -191,8 +187,7 @@ export function ActivationPlanButtons({
         className="flex min-h-[44px] flex-col items-start gap-1 rounded-xl border border-border bg-background px-4 py-3 text-left transition-colors hover:bg-muted/40 disabled:opacity-60"
       >
         <span className="text-sm font-semibold text-foreground">
-          {busy === "pro" ? <Loader2 className="inline h-4 w-4 animate-spin" aria-hidden /> : null}
-          {t("subscription.activation.proCta")}
+          {busy === "pro" ? <StripeHandoffLabel /> : t("subscription.activation.proCta")}
         </span>
         <span className="text-xs text-muted-foreground">{t("subscription.activation.proHint")}</span>
       </button>

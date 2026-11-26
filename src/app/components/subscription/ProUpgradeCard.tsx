@@ -1,16 +1,13 @@
 import { useCallback, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { useStaleExternalStripeStateReset } from "@/app/hooks/useStaleExternalStripeStateReset";
-import { Check, Loader2 } from "lucide-react";
+import { Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { toUserFriendlyMessage } from "@/app/lib/errorMessages";
 import { useBillingStatus } from "@/app/hooks/useBillingStatus";
 import { BILLING_SUBSCRIPTION_PATH } from "@/app/lib/activateCareTipNavigation";
-import {
-  APP_LOADING_PRIORITY,
-  useAppLoadingRegistration,
-} from "@/app/lib/globalAppLoading";
+import { StripeHandoffLabel } from "@/app/components/payments/StripeHandoffLabel";
 import { performExternalStripeRedirect } from "@/app/lib/externalStripeRedirect";
 import { useMerchantCheckoutLegalGate } from "@/app/components/legal/useMerchantCheckoutLegalGate";
 import { cn } from "@/lib/utils";
@@ -38,13 +35,6 @@ export function ProUpgradeCard({ className }: ProUpgradeCardProps) {
   useStaleExternalStripeStateReset({ onReset: resetCheckoutBusy, billingReturn: searchParams });
   const { LegalGate, canProceed, startCheckout } = useMerchantCheckoutLegalGate();
 
-  useAppLoadingRegistration(
-    "pro-upgrade-checkout",
-    APP_LOADING_PRIORITY.APP_INIT,
-    checkoutBusy,
-    t("common.loading.checkout"),
-  );
-
   const trialEligible = Boolean(
     billing?.trialEligible && billing.billingEnabled && billing.stripeConfigured,
   );
@@ -63,7 +53,13 @@ export function ProUpgradeCard({ className }: ProUpgradeCardProps) {
         includeTrial,
         checkoutFlow: "billing",
       });
-      const redirect = performExternalStripeRedirect(session.url, "checkout");
+      const redirect = performExternalStripeRedirect(session.url, "checkout", undefined, {
+        presentation: "inline",
+        onStalled: () => {
+          setCheckoutBusy(false);
+          toast.error(t("business.billing.checkoutStalled"));
+        },
+      });
       if (!redirect.ok) {
         toast.error(t("business.billing.checkoutNoUrl"));
         setCheckoutBusy(false);
@@ -105,8 +101,7 @@ export function ProUpgradeCard({ className }: ProUpgradeCardProps) {
                 className="pro-upgrade-card__cta pro-upgrade-card__cta--primary"
                 aria-busy={checkoutBusy || undefined}
               >
-                {checkoutBusy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-                {t("business.billing.trialFlow.promoCta")}
+                {checkoutBusy ? <StripeHandoffLabel /> : t("business.billing.trialFlow.promoCta")}
               </button>
               <p className="pro-upgrade-card__trial-note text-center text-[11px] leading-snug text-muted-foreground">
                 {t("business.billing.trialPaymentNote")}
@@ -120,8 +115,7 @@ export function ProUpgradeCard({ className }: ProUpgradeCardProps) {
               className="pro-upgrade-card__cta pro-upgrade-card__cta--primary"
               aria-busy={checkoutBusy || undefined}
             >
-              {checkoutBusy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-              {t("subscription.upgrade.upgradeToPremium")}
+              {checkoutBusy ? <StripeHandoffLabel /> : t("subscription.upgrade.upgradeToPremium")}
             </button>
           ) : (
             <Link to={BILLING_SUBSCRIPTION_PATH} className="pro-upgrade-card__cta pro-upgrade-card__cta--primary">

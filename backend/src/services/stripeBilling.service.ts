@@ -218,6 +218,21 @@ async function expireOtherOpenBillingCheckouts(params: {
 
 const BILLING_CHECKOUT_FINGERPRINT_METADATA_KEY = "caretipCheckoutFingerprint";
 
+/** Stripe marks a response replayed from an earlier request with the same idempotency key. */
+export function isIdempotentReplay(obj: object): boolean {
+  const headers = (obj as { lastResponse?: { headers?: Record<string, string | undefined> } }).lastResponse?.headers ?? {};
+  const value = headers["idempotent-replayed"] ?? headers["Idempotent-Replayed"];
+  return String(value ?? "").toLowerCase() === "true";
+}
+
+/** Current status of a (replayed) Checkout Session, read from Stripe. */
+async function retrieveCheckoutSessionStatus(
+  created: Stripe.Checkout.Session,
+): Promise<Pick<Stripe.Checkout.Session, "status">> {
+  const fresh = await getStripeClient().checkout.sessions.retrieve(created.id);
+  return { status: fresh.status };
+}
+
 async function createPlatformSubscriptionCheckoutSessionLocked(params: {
   businessId: string;
   subscriptionId?: string | null;
@@ -325,7 +340,12 @@ async function createPlatformSubscriptionCheckoutSessionLocked(params: {
     );
     // Stripe replays the stored response for a reused key. If that session was completed or has
     // expired, chain to a new key derived from it (deterministic, so concurrent retries agree).
-    if (!created.status || created.status === "open") {
+    // A replayed body still shows the status from when it was first created ("open"), so a replay
+    // is re-read from Stripe: otherwise a session expired since (for example by switching between
+    // monthly and yearly, which expires the other open checkout) was handed to the browser and
+    // Stripe showed "You're all done here".
+    const current = isIdempotentReplay(created) ? await retrieveCheckoutSessionStatus(created) : created;
+    if (!current.status || current.status === "open") {
       session = created;
     } else {
       previousSessionId = created.id;

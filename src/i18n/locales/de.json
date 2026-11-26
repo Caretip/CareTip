@@ -203,7 +203,9 @@
         "imprint": "Impressum wird geöffnet…",
         "dpa": "Auftragsverarbeitungsvertrag wird geöffnet…",
         "plv": "Preis- und Leistungsverzeichnis wird geöffnet…"
-      }
+      },
+      "billingPortal": "Stripe-Abrechnungsportal wird geöffnet…",
+      "checkoutButton": "Sicherer Checkout wird vorbereitet…"
     },
     "syncingAccountStatus": "Abrechnung wird vorbereitet…",
     "loadingTeamMembers": "Ihr Team wird geladen…",
@@ -7904,7 +7906,9 @@
           "f6": "API- & Integrations-Support",
           "f7": "Rechnungs- & Einkaufsabrechnung"
         }
-      }
+      },
+      "checkoutStalled": "Der Stripe-Checkout wurde nicht geöffnet. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+      "portalStalled": "Das Stripe-Abrechnungsportal wurde nicht geöffnet. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
     },
     "commercial": {
       "title": "Plan-Fit & Nutzung",

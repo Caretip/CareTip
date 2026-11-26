@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { ChevronRight, CreditCard, Package, PackageCheck, Plus, Receipt, Truck } from "lucide-react";
 import { checkoutPhysicalQrOrder, fetchPhysicalQrOrders, type PhysicalQrCustomerOrder } from "@/app/lib/api";
 import { performExternalStripeRedirect } from "@/app/lib/externalStripeRedirect";
+import { StripeHandoffLabel } from "@/app/components/payments/StripeHandoffLabel";
 import {
   readPhysicalQrOrdersSnapshot,
   writePhysicalQrOrdersSnapshot,
@@ -138,7 +139,14 @@ export function QrStudioOrdersPage() {
       setPayingOrderId(id);
       try {
         const session = await checkoutPhysicalQrOrder(id);
-        const redirected = performExternalStripeRedirect(session.url, "checkout");
+        const redirected = performExternalStripeRedirect(session.url, "checkout", undefined, {
+          presentation: "inline",
+          onStalled: () => {
+            setPayingOrderId(null);
+            payInFlight.current = false;
+            toast.error(t("business.billing.checkoutStalled"));
+          },
+        });
         if (!redirected.ok) {
           throw new Error(t("business.qrStudio.physical.orderError"));
         }
@@ -272,10 +280,10 @@ export function QrStudioOrdersPage() {
                         <button
                           type="button"
                           className="ac-btn ac-btn--primary"
-                          disabled={payingOrderId === o.id}
+                          disabled={payingOrderId !== null}
                           onClick={() => void payOrder(o.id)}
                         >
-                          {payLabel(o)}
+                          {payingOrderId === o.id ? <StripeHandoffLabel /> : payLabel(o)}
                         </button>
                       </div>
                     </li>
@@ -436,10 +444,10 @@ export function QrStudioOrdersPage() {
                             <button
                               type="button"
                               className="ac-btn ac-btn--primary ac-btn--sm"
-                              disabled={payingOrderId === o.id}
+                              disabled={payingOrderId !== null}
                               onClick={() => void payOrder(o.id)}
                             >
-                              {payLabel(o)}
+                              {payingOrderId === o.id ? <StripeHandoffLabel /> : payLabel(o)}
                             </button>
                           ) : (
                             <Link to={orderHref(o.id)} className="ac-btn ac-btn--ghost ac-btn--sm">

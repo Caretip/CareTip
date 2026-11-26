@@ -28,10 +28,7 @@ import { PricingBillingToggle } from "@/components/pricing/PricingBillingToggle"
 import { pricingPageUi } from "@/components/pricing/pricingPageUi";
 import { dashboardWorkspaceUi } from "@/app/components/dashboard/dashboardWorkspaceUi";
 import { cn } from "@/lib/utils";
-import {
-  APP_LOADING_PRIORITY,
-  useAppLoadingRegistration,
-} from "../../../../lib/globalAppLoading";
+import { StripeHandoffLabel } from "@/app/components/payments/StripeHandoffLabel";
 import { formatBillingDate, resolveBillingLocale } from "./billingFormatters";
 import { performExternalStripeRedirect } from "../../../../lib/externalStripeRedirect";
 import { useStaleExternalStripeStateReset } from "../../../../hooks/useStaleExternalStripeStateReset";
@@ -67,13 +64,8 @@ export function BillingPlanManagement({
   const canCheckout = billing.billingEnabled && billing.stripeConfigured;
   const canPortal = canCheckout && Boolean(billing.stripeCustomerId);
 
-  const checkoutRedirecting = busyPlan !== null && busyPlan !== "cancel";
-  useAppLoadingRegistration(
-    "billing-plan-checkout",
-    APP_LOADING_PRIORITY.APP_INIT,
-    checkoutRedirecting,
-    t("common.loading.checkout"),
-  );
+  // While the server prepares the session the page stays on screen; the clicked button shows the
+  // progress and all plan buttons are disabled. No global overlay: it read as a blank white page.
 
   async function handleUpgrade(planKey: SubscriptionPlanKey, includeTrial = false) {
     if (planKey === "enterprise" || planKey === "basic") return;
@@ -85,7 +77,13 @@ export function BillingPlanManagement({
         includeTrial,
         checkoutFlow: "billing",
       });
-      const redirect = performExternalStripeRedirect(session.url, "checkout");
+      const redirect = performExternalStripeRedirect(session.url, "checkout", undefined, {
+        presentation: "inline",
+        onStalled: () => {
+          setBusyPlan(null);
+          toast.error(t("business.billing.checkoutStalled"));
+        },
+      });
       if (!redirect.ok) {
         toast.error(t("business.billing.checkoutNoUrl"));
         setBusyPlan(null);
@@ -100,7 +98,13 @@ export function BillingPlanManagement({
     setBusyPlan("portal");
     try {
       const { url } = await createBillingPortalSession();
-      const redirect = performExternalStripeRedirect(url, "portal");
+      const redirect = performExternalStripeRedirect(url, "portal", undefined, {
+        presentation: "inline",
+        onStalled: () => {
+          setBusyPlan(null);
+          toast.error(t("business.billing.portalStalled"));
+        },
+      });
       if (!redirect.ok) {
         toast.error(t("business.billing.portalError"));
         setBusyPlan(null);
@@ -234,7 +238,7 @@ export function BillingPlanManagement({
             aria-busy={busyPlan === "premium" || undefined}
           >
             {busyPlan === "premium" ? (
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              <StripeHandoffLabel />
             ) : (
               t("business.billing.trialFlow.promoCta")
             )}
@@ -267,7 +271,7 @@ export function BillingPlanManagement({
           aria-busy={busyPlan === planKey || undefined}
         >
           {busyPlan === planKey ? (
-            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+            <StripeHandoffLabel />
           ) : planKey === "premium" ? (
             t("business.billing.planCard.subscribeToPro")
           ) : (
@@ -291,7 +295,7 @@ export function BillingPlanManagement({
             aria-busy={busyPlan === "portal" || undefined}
           >
             {busyPlan === "portal" ? (
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              <StripeHandoffLabel kind="portal" />
             ) : (
               t("business.billing.planCard.downgradeToPlan", { plan: tierName })
             )}

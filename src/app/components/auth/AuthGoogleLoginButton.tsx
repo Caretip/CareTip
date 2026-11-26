@@ -23,8 +23,12 @@ const GSI_MAX_WIDTH = 400;
 const GSI_BUTTON_HEIGHT = 40;
 /** Google's button has a fixed 40px height: scaled evenly to our control size (see the frame's CSS). */
 const GSI_SCALE = 1.2;
-/** Extra width so Google's own side borders fall outside the frame, which draws the outline. */
-const GSI_BLEED = 8;
+/**
+ * Extra width so Google's own 1px side borders fall outside the frame, which draws the outline. Kept to
+ * those borders only: the personalized button ("Continue as …" with the account email) places Google's
+ * logo at its right edge, and a wider bleed cropped its padding so the logo sat jammed against our edge.
+ */
+const GSI_BLEED = 2;
 /** After returning to this tab, wait this long for the popup credential before offering recovery. */
 const POPUP_STALL_GRACE_MS = 4000;
 

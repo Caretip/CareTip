@@ -588,7 +588,14 @@ export function PrintQrStudio() {
         return;
       }
       logPhysicalQrPerf("redirect-initiated", physicalQrPerfNow() - tClick, { zeroCost: false });
-      const redirected = performExternalStripeRedirect(session.url, "checkout");
+      const redirected = performExternalStripeRedirect(session.url, "checkout", undefined, {
+        presentation: "inline",
+        onStalled: () => {
+          printCheckoutInFlight.current = false;
+          setSubmitting(false);
+          toast.error(t("business.billing.checkoutStalled"));
+        },
+      });
       if (!redirected.ok) throw new Error(t("business.qrStudio.physical.orderError"));
     } catch (err) {
       const code = err instanceof ApiRequestError ? err.code : undefined;

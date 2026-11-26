@@ -1,4 +1,8 @@
-import { beginExternalStripeNavigationHold } from "./externalStripeNavigationHold";
+import {
+  beginExternalStripeNavigationHold,
+  endExternalStripeNavigationHold,
+  type ExternalStripeHoldPresentation,
+} from "./externalStripeNavigationHold";
 
 const STRIPE_CHECKOUT_HOST = "checkout.stripe.com";
 const STRIPE_BILLING_PORTAL_HOST = "billing.stripe.com";
@@ -76,29 +80,78 @@ export function isAllowedStripeRedirectUrl(
   }
 }
 
+export type ExternalStripeRedirectOptions = {
+  /**
+   * "inline" keeps the CareTip page on screen (the caller's button shows the progress) until the
+   * browser actually replaces it with Stripe. Default "overlay" shows the global loading screen.
+   */
+  presentation?: ExternalStripeHoldPresentation;
+  /**
+   * Inline only: called if the page is still showing `stallMs` after the hand-off started (the
+   * browser never left, for example offline or blocked). The caller restores its button and
+   * explains; a retry reuses the same open Checkout Session (server-side idempotency).
+   */
+  onStalled?: () => void;
+  stallMs?: number;
+};
+
+/** After this long without leaving the page, an inline hand-off is treated as failed. */
+export const EXTERNAL_STRIPE_HANDOFF_STALL_MS = 20_000;
+
+let stallTimer: number | null = null;
+
+function clearStallTimer(): void {
+  if (stallTimer !== null) window.clearTimeout(stallTimer);
+  stallTimer = null;
+}
+
 /**
  * Navigate to a Stripe-hosted checkout, billing portal, Connect onboarding, or Express Dashboard URL.
+ * Only call it once the server returned the URL: it validates the destination (HTTPS, exact Stripe
+ * host) and only then starts the browser navigation. Nothing is unmounted and no intermediate route
+ * is used; the current page stays until the browser replaces it.
  * On success, keeps caller loading state active — the browser is leaving the SPA.
- * Only release loading when this returns `{ ok: false }` or throws.
+ * Only release loading when this returns `{ ok: false }` or throws (or `onStalled` fires).
  */
 export function performExternalStripeRedirect(
   rawUrl: string | null | undefined,
   kind: StripeRedirectKind = "checkout",
   holdMessage?: string,
+  options?: ExternalStripeRedirectOptions,
 ): ExternalStripeRedirectResult {
   const trimmed = rawUrl?.trim();
   if (!trimmed) {
     return { ok: false, reason: "missing_url" };
   }
 
+  let parsed: URL;
   try {
-    const parsed = parseStripeRedirectUrl(trimmed, kind);
-    beginExternalStripeNavigationHold(holdMessage);
-    window.location.assign(parsed.href);
-    return { ok: true, navigated: true };
+    parsed = parseStripeRedirectUrl(trimmed, kind);
   } catch {
     return { ok: false, reason: "invalid_url" };
   }
+  const presentation = options?.presentation ?? "overlay";
+  beginExternalStripeNavigationHold(holdMessage, { presentation });
+  if (presentation === "inline" && options?.onStalled) {
+    clearStallTimer();
+    const onStalled = options.onStalled;
+    const cancel = () => clearStallTimer();
+    window.addEventListener("pagehide", cancel, { once: true });
+    stallTimer = window.setTimeout(() => {
+      stallTimer = null;
+      window.removeEventListener("pagehide", cancel);
+      endExternalStripeNavigationHold();
+      onStalled();
+    }, options.stallMs ?? EXTERNAL_STRIPE_HANDOFF_STALL_MS);
+  }
+  try {
+    window.location.assign(parsed.href);
+  } catch {
+    clearStallTimer();
+    endExternalStripeNavigationHold();
+    return { ok: false, reason: "invalid_url" };
+  }
+  return { ok: true, navigated: true };
 }
 
 /** @deprecated Prefer {@link performExternalStripeRedirect} for flows that manage loading state. */

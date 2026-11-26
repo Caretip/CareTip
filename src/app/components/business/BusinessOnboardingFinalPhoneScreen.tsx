@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Home, Lock, RotateCw, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { BusinessLogoMark } from "./BusinessLogoMark";
@@ -37,11 +38,20 @@ function StatusBarIcons() {
 
 function StaffTile({ member, tipLabel }: { member: TipPreviewStaffMember; tipLabel: string }) {
   const initial = member.displayName.trim().charAt(0).toUpperCase() || "?";
+  // A photo that fails to load (removed, offline, blocked) shows the initial instead of a broken image.
+  const [photoFailed, setPhotoFailed] = useState(false);
   return (
     <li className="onb-phone__staff">
       <span className="onb-phone__staff-photo">
-        {member.photoUrl ? (
-          <img src={member.photoUrl} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" />
+        {member.photoUrl && !photoFailed ? (
+          <img
+            src={member.photoUrl}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            referrerPolicy="no-referrer"
+            onError={() => setPhotoFailed(true)}
+          />
         ) : (
           <span className="onb-phone__staff-initial">{initial}</span>
         )}

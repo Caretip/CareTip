@@ -1,8 +1,5 @@
 import { toUserFriendlyMessage } from "@/app/lib/errorMessages";
-import {
-  APP_LOADING_PRIORITY,
-  useAppLoadingRegistration,
-} from "@/app/lib/globalAppLoading";
+import { StripeHandoffLabel } from "@/app/components/payments/StripeHandoffLabel";
 import {
   isBillingTrialActive,
   shouldShowTrialExpiredUpgrade,
@@ -22,7 +19,6 @@ import { useMerchantCheckoutLegalGate } from "@/app/components/legal/useMerchant
 import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { useStaleExternalStripeStateReset } from "@/app/hooks/useStaleExternalStripeStateReset";
-import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import type { BillingStatus } from "@/app/lib/api";
@@ -50,12 +46,7 @@ export function BillingTrialPlanDialog({
       ? t("staticPages.pricing.tiers.business.feeYearly")
       : t("staticPages.pricing.tiers.business.feeMonthly");
 
-  useAppLoadingRegistration(
-    "billing-trial-checkout",
-    APP_LOADING_PRIORITY.APP_INIT,
-    busy,
-    t("common.loading.checkout"),
-  );
+  // The dialog stays open while the session is prepared; its button shows the progress.
 
   async function startTrialCheckout() {
     if (!canProceed) {
@@ -70,7 +61,13 @@ export function BillingTrialPlanDialog({
         includeTrial: true,
         checkoutFlow: "billing",
       });
-      const redirect = performExternalStripeRedirect(session.url, "checkout");
+      const redirect = performExternalStripeRedirect(session.url, "checkout", undefined, {
+        presentation: "inline",
+        onStalled: () => {
+          setBusy(false);
+          toast.error(t("business.billing.checkoutStalled"));
+        },
+      });
       if (!redirect.ok) {
         toast.error(t("business.billing.checkoutNoUrl"));
         setBusy(false);
@@ -111,8 +108,7 @@ export function BillingTrialPlanDialog({
             className={cn(dashboardWorkspaceUi.btnPrimary, "w-full justify-center")}
             aria-busy={busy || undefined}
           >
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-            {t("business.billing.trialFlow.confirmCta")}
+            {busy ? <StripeHandoffLabel /> : t("business.billing.trialFlow.confirmCta")}
           </button>
           <p className="text-center text-[11px] leading-snug text-muted-foreground">
             {t("business.billing.trialPaymentNote")}
@@ -178,12 +174,6 @@ function BillingTrialExpiredUpgrade({ billingCycle }: { billingCycle: "monthly" 
   useStaleExternalStripeStateReset({ onReset: resetBusy, billingReturn: searchParams });
   const { LegalGate, canProceed, startCheckout } = useMerchantCheckoutLegalGate();
 
-  useAppLoadingRegistration(
-    "billing-trial-expired-checkout",
-    APP_LOADING_PRIORITY.APP_INIT,
-    busy,
-    t("common.loading.checkout"),
-  );
 
   async function handleUpgrade() {
     if (!canProceed) {
@@ -198,7 +188,13 @@ function BillingTrialExpiredUpgrade({ billingCycle }: { billingCycle: "monthly" 
         includeTrial: false,
         checkoutFlow: "billing",
       });
-      const redirect = performExternalStripeRedirect(session.url, "checkout");
+      const redirect = performExternalStripeRedirect(session.url, "checkout", undefined, {
+        presentation: "inline",
+        onStalled: () => {
+          setBusy(false);
+          toast.error(t("business.billing.checkoutStalled"));
+        },
+      });
       if (!redirect.ok) {
         toast.error(t("business.billing.checkoutNoUrl"));
         setBusy(false);
@@ -226,8 +222,7 @@ function BillingTrialExpiredUpgrade({ billingCycle }: { billingCycle: "monthly" 
         className={cn(dashboardWorkspaceUi.btnPrimary, "mt-4 inline-flex w-full justify-center sm:w-auto")}
         aria-busy={busy || undefined}
       >
-        {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-        {t("business.billing.trialFlow.upgradeCta")}
+        {busy ? <StripeHandoffLabel /> : t("business.billing.trialFlow.upgradeCta")}
       </button>
       <p className="mt-3 text-center text-xs text-muted-foreground">
         <Link to="/contact?intent=enterprise" className="font-medium text-primary hover:underline">

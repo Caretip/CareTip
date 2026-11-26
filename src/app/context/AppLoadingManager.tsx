@@ -67,7 +67,7 @@ import { isPublicShellPath } from "../lib/publicRoutes";
 import { isCustomerJourneyPath } from "../lib/appLoadingJourney";
 import {
   getExternalStripeNavigationHoldMessage,
-  isExternalStripeNavigationHoldActive,
+  isExternalStripeNavigationHoldOverlayActive,
   subscribeExternalStripeNavigationHold,
 } from "../lib/externalStripeNavigationHold";
 /** Block APP_INIT from re-opening the overlay shortly after a full dismiss (paint-ready race). */
@@ -226,9 +226,10 @@ export function AppLoadingManagerProvider({ children }: { children: React.ReactN
     () => null,
   );
 
+  /** Only holds that asked for the overlay; an inline hand-off keeps the page on screen. */
   const externalStripeHoldActive = useSyncExternalStore(
     subscribeExternalStripeNavigationHold,
-    isExternalStripeNavigationHoldActive,
+    isExternalStripeNavigationHoldOverlayActive,
     () => false,
   );
 

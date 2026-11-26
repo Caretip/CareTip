@@ -7,10 +7,6 @@ import { toast } from "sonner";
 import { useBillingStatus } from "../../../hooks/useBillingStatus";
 import { createBillingPortalSession, type SubscriptionBillingCycle } from "../../../lib/api";
 import { toUserFriendlyMessage } from "../../../lib/errorMessages";
-import {
-  APP_LOADING_PRIORITY,
-  useAppLoadingRegistration,
-} from "../../../lib/globalAppLoading";
 import { useBusinessPageBoot } from "../../../lib/useBusinessPageBoot";
 import { performExternalStripeRedirect } from "../../../lib/externalStripeRedirect";
 import { BillingPlanManagement } from "./billing/BillingPlanManagement";
@@ -35,12 +31,6 @@ export function BusinessSettingsBillingPanel() {
   useStaleExternalStripeStateReset({ onReset: resetPortalBusy, billingReturn: searchParams });
   const [trialAutoOpen, setTrialAutoOpen] = useState(false);
 
-  useAppLoadingRegistration(
-    "billing-settings-portal",
-    APP_LOADING_PRIORITY.APP_INIT,
-    portalBusy,
-    t("common.loading.checkout"),
-  );
 
   useEffect(() => {
     if (data?.billingCycle) {
@@ -65,7 +55,13 @@ export function BusinessSettingsBillingPanel() {
     setPortalBusy(true);
     try {
       const { url } = await createBillingPortalSession();
-      const redirect = performExternalStripeRedirect(url, "portal");
+      const redirect = performExternalStripeRedirect(url, "portal", undefined, {
+        presentation: "inline",
+        onStalled: () => {
+          setPortalBusy(false);
+          toast.error(t("business.billing.portalStalled"));
+        },
+      });
       if (!redirect.ok) {
         toast.error(t("business.billing.portalError"));
         setPortalBusy(false);

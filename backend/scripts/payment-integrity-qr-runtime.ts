@@ -54,6 +54,8 @@ __setRefundsCreateFnForTests(async (params, options) => {
 type FakeSession = { id: string; status: "open" | "complete" | "expired"; payment_status: string; amount_total: number; currency: string; url: string | null; expires_at: number };
 const sessions = new Map<string, FakeSession>();
 const createdByKey = new Map<string, string>();
+/** Response bodies as first returned: Stripe replays exactly that for a reused idempotency key. */
+const originalBodyById = new Map<string, string>();
 const createCalls: Array<{ key?: string }> = [];
 const expireCalls: string[] = [];
 let createDelayMs = 0;
@@ -63,12 +65,15 @@ stripe.checkout.sessions.create = async (params: Stripe.Checkout.SessionCreatePa
   if (createDelayMs) await new Promise((r) => setTimeout(r, createDelayMs));
   const key = options?.idempotencyKey ?? `nokey_${createCalls.length}`;
   const cachedId = createdByKey.get(key);
-  if (cachedId) return sessions.get(cachedId);
+  if (cachedId) {
+    return { ...JSON.parse(originalBodyById.get(cachedId)!), lastResponse: { headers: { "idempotent-replayed": "true" } } };
+  }
   const id = `cs_qr_${sfx}_${sessions.size + 1}`;
   const amount = (params.line_items?.[0] as { price_data?: { unit_amount?: number } })?.price_data?.unit_amount ?? 0;
   const s: FakeSession = { id, status: "open", payment_status: "unpaid", amount_total: amount, currency: "eur", url: `https://checkout.stripe.test/${id}`, expires_at: Math.floor(Date.now() / 1000) + 86_400 };
   sessions.set(id, s);
   createdByKey.set(key, id);
+  originalBodyById.set(id, JSON.stringify(s));
   return s;
 };
 stripe.checkout.sessions.retrieve = async (id: string) => {
@@ -319,6 +324,21 @@ await check("C5 stored session already paid → 409, no new session", async () =
     (err: { code?: string }) => err.code === "ORDER_PAYMENT_PROCESSING",
   );
   assert.equal(createCalls.length, 0);
+});
+
+await check("C5b replayed session body says open but it was paid meanwhile → 409, never handed to the browser", async () => {
+  const o = await order();
+  const first = await createPhysicalQrBatchCheckoutSession({ businessId: business.id, userId: user.id, orderId: o.id });
+  const s = sessions.get(first.sessionId!)!;
+  s.status = "complete";
+  s.payment_status = "paid";
+  // The order lost its stored session id (for example a DB write lost after Stripe created the
+  // session): the next attempt reuses the same key and Stripe replays the original "open" body.
+  await prisma.physicalQrOrder.update({ where: { id: o.id }, data: { stripeCheckoutSessionId: null } });
+  await assert.rejects(
+    createPhysicalQrBatchCheckoutSession({ businessId: business.id, userId: user.id, orderId: o.id }),
+    (err: { code?: string }) => err.code === "ORDER_PAYMENT_PROCESSING",
+  );
 });
 
 await check("C6 failed payment can be retried (PAYMENT_FAILED → PENDING_PAYMENT)", async () => {
