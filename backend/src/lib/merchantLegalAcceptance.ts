@@ -1,10 +1,11 @@
-import { LegalDocumentType } from "@prisma/client";
+import { LegalDocumentType, type Prisma } from "@prisma/client";
 import { prisma } from "../prisma.js";
 import { getLatestLegalDocument } from "../services/legalDocument.service.js";
 import {
   CARETIP_PLV_VALID_FROM,
   careTipControlledPdfSha256,
   getCareTipControlledLegalDocMeta,
+  normalizeCareTipLegalLanguage,
 } from "./caretipControlledLegalDocs.js";
 
 export const MERCHANT_LEGAL_ACCEPTANCE_ACTION = "merchant_b2b_legal_accepted" as const;
@@ -86,6 +87,24 @@ export async function hasMerchantLegalAcceptance(userId: string): Promise<boolea
   return Boolean(row);
 }
 
+/**
+ * Sign-up: call before any write, so a missing acceptance (or unreadable documents) never leaves an
+ * account behind. Record the result in the transaction that creates the account.
+ */
+export async function requireMerchantLegalSnapshot(
+  accepted: unknown,
+  language?: string | null,
+): Promise<MerchantLegalDocumentSnapshot> {
+  if (!parseMerchantLegalAcceptedFlag(accepted)) {
+    throw new MerchantLegalAcceptanceError(
+      MERCHANT_LEGAL_ACCEPTANCE_REQUIRED_MSG,
+      "MERCHANT_LEGAL_ACCEPTANCE_REQUIRED",
+      400,
+    );
+  }
+  return getMerchantLegalDocumentSnapshot(normalizeCareTipLegalLanguage(language));
+}
+
 export async function assertAndRecordMerchantLegalAcceptance(args: {
   userId: string;
   accepted: unknown;
@@ -93,17 +112,20 @@ export async function assertAndRecordMerchantLegalAcceptance(args: {
   language?: string;
   businessId?: string | null;
 }): Promise<MerchantLegalDocumentSnapshot> {
-  if (!parseMerchantLegalAcceptedFlag(args.accepted)) {
-    throw new MerchantLegalAcceptanceError(
-      MERCHANT_LEGAL_ACCEPTANCE_REQUIRED_MSG,
-      "MERCHANT_LEGAL_ACCEPTANCE_REQUIRED",
-      400,
-    );
-  }
+  const snapshot = await requireMerchantLegalSnapshot(args.accepted, args.language);
+  await recordMerchantLegalAcceptance({ ...args, snapshot });
+  return snapshot;
+}
 
-  const snapshot = await getMerchantLegalDocumentSnapshot(args.language);
-
-  await prisma.auditLog.create({
+export async function recordMerchantLegalAcceptance(args: {
+  userId: string;
+  snapshot: MerchantLegalDocumentSnapshot;
+  context: MerchantLegalAcceptanceContext;
+  businessId?: string | null;
+  tx?: Prisma.TransactionClient;
+}): Promise<void> {
+  const { snapshot } = args;
+  await (args.tx ?? prisma).auditLog.create({
     data: {
       userId: args.userId,
       action: MERCHANT_LEGAL_ACCEPTANCE_ACTION,
@@ -123,8 +145,6 @@ export async function assertAndRecordMerchantLegalAcceptance(args: {
       }),
     },
   });
-
-  return snapshot;
 }
 
 /**

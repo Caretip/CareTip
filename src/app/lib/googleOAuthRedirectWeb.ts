@@ -123,6 +123,23 @@ export function takeGoogleRedirectHandoff(now = Date.now()): string | null {
   }
 }
 
+/**
+ * What the user had chosen when they left for Google, while a fresh hand-off is waiting to be finished;
+ * otherwise null. Read it during the auth page's first render: the form's provider row saves its own
+ * (empty) state as soon as it mounts, and child effects run before the page's.
+ */
+export function peekGoogleRedirectReturn(now = Date.now()): GoogleRedirectIntent | null {
+  try {
+    const raw = safeStorage()?.getItem(HANDOFF_KEY);
+    if (!raw) return null;
+    const { at } = JSON.parse(raw) as { at?: unknown };
+    if (typeof at !== "number" || now - at > GOOGLE_REDIRECT_HANDOFF_MAX_AGE_MS) return null;
+    return readGoogleRedirectIntent();
+  } catch {
+    return null;
+  }
+}
+
 export function hasPendingGoogleRedirectHandoff(): boolean {
   try {
     return Boolean(safeStorage()?.getItem(HANDOFF_KEY));

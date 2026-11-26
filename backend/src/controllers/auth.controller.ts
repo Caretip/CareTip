@@ -59,9 +59,7 @@ import * as accountRecovery from "../services/accountRecovery.service.js";
 import { ipPrefixForLog, resolveClientIp } from "../lib/clientIp.js";
 import { logRefreshOutcome, storeErrorCode } from "../lib/authRefreshDiagnostics.js";
 import {
-  MERCHANT_LEGAL_ACCEPTANCE_CONTEXT,
   MERCHANT_LEGAL_ACCEPTANCE_REQUIRED_MSG,
-  assertAndRecordMerchantLegalAcceptance,
   parseMerchantLegalAcceptedFlag,
 } from "../lib/merchantLegalAcceptance.js";
 import * as mfaLoginService from "../services/mfaLogin.service.js";
@@ -363,19 +361,8 @@ export async function register(req: Request, res: Response) {
           name: typeof name === "string" ? name : undefined,
           locale,
         },
-        { acceptLanguage, platform },
+        { acceptLanguage, platform, recordLegalAcceptance: true },
       );
-      try {
-        await assertAndRecordMerchantLegalAcceptance({
-          userId: result.user.id,
-          accepted: true,
-          context: MERCHANT_LEGAL_ACCEPTANCE_CONTEXT.signup,
-          language: locale ?? acceptLanguage?.slice(0, 2),
-          businessId: result.user.businessId ?? null,
-        });
-      } catch (acceptErr) {
-        logServerError("auth.register.merchantLegalAcceptance", acceptErr);
-      }
       clearRefreshCookie(res);
       return res.status(201).json(result);
     }
@@ -1336,6 +1323,9 @@ export async function oauth(req: Request, res: Response) {
         businessType,
         location,
         locale,
+        merchantLegalAccepted: parseMerchantLegalAcceptedFlag(
+          body.merchantLegalAccepted ?? body.legalAccepted ?? body.acceptMerchantLegal,
+        ),
       },
       {
         acceptLanguage: req.get("accept-language") ?? undefined,
@@ -1420,19 +1410,6 @@ export async function oauth(req: Request, res: Response) {
           isLogin,
           httpStatus: isLogin ? 200 : 201,
         });
-      }
-      if (!isLogin && session.user.role === "MANAGER") {
-        try {
-          await assertAndRecordMerchantLegalAcceptance({
-            userId: session.user.id,
-            accepted: true,
-            context: MERCHANT_LEGAL_ACCEPTANCE_CONTEXT.oauth_signup,
-            language: locale ?? req.get("accept-language")?.slice(0, 2),
-            businessId: session.user.businessId ?? null,
-          });
-        } catch (acceptErr) {
-          logServerError("auth.oauth.merchantLegalAcceptance", acceptErr);
-        }
       }
       return res.status(isLogin ? 200 : 201).json(session);
     } catch (e) {

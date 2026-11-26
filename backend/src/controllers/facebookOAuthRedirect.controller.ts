@@ -33,9 +33,7 @@ import {
 } from "../services/refreshToken.service.js";
 import { CLIENT_FALLBACK, logServerError } from "../utils/httpErrors.js";
 import {
-  MERCHANT_LEGAL_ACCEPTANCE_CONTEXT,
   MERCHANT_LEGAL_ACCEPTANCE_REQUIRED_MSG,
-  assertAndRecordMerchantLegalAcceptance,
   parseMerchantLegalAcceptedFlag,
 } from "../lib/merchantLegalAcceptance.js";
 import * as mfaLoginService from "../services/mfaLogin.service.js";
@@ -372,6 +370,7 @@ export async function facebookOAuthCallback(req: Request, res: Response): Promis
         businessType: state.businessType,
         location: state.location,
         locale: state.locale,
+        merchantLegalAccepted: state.merchantLegalAccepted === true,
       },
       {
         acceptLanguage: req.get("accept-language") ?? undefined,
@@ -434,20 +433,6 @@ export async function facebookOAuthCallback(req: Request, res: Response): Promis
           logServerError("facebookOAuthRedirect.loginSecurityAlert", e);
         }
       })();
-    }
-
-    if (!state.isLogin && result.user.role === "MANAGER") {
-      try {
-        await assertAndRecordMerchantLegalAcceptance({
-          userId: result.user.id,
-          accepted: state.merchantLegalAccepted === true,
-          context: MERCHANT_LEGAL_ACCEPTANCE_CONTEXT.oauth_signup,
-          language: state.locale ?? req.get("accept-language")?.slice(0, 2),
-          businessId: result.user.businessId ?? null,
-        });
-      } catch (acceptErr) {
-        logServerError("facebookOAuthRedirect.merchantLegal", acceptErr);
-      }
     }
 
     logFacebookOAuthDiagnostic(correlationId, "facebook_session_created", {

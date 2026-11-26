@@ -1,6 +1,11 @@
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { Prisma, type BusinessVerificationStatus, type Role, type User } from "@prisma/client";
+import {
+  MERCHANT_LEGAL_ACCEPTANCE_CONTEXT,
+  recordMerchantLegalAcceptance,
+  requireMerchantLegalSnapshot,
+} from "../lib/merchantLegalAcceptance.js";
 import { prisma } from "../prisma.js";
 import { validatePassword } from "../utils/passwordValidation.js";
 import { issueRefreshToken } from "./refreshToken.service.js";
@@ -437,7 +442,12 @@ export async function registerBusiness(
     /** Client app language (`en` / `de`); stored on user for email + UI consistency. */
     locale?: string | null;
   },
-  opts?: { acceptLanguage?: string | null; platform?: AuthLinkPlatform }
+  opts?: {
+    acceptLanguage?: string | null;
+    platform?: AuthLinkPlatform;
+    /** The caller checked the user's explicit acceptance: store it together with the account. */
+    recordLegalAcceptance?: boolean;
+  }
 ): Promise<RegisterPendingResult> {
   const email = normalizeLoginEmail(input.email);
   const pwCheck = validatePassword(input.password);
@@ -451,6 +461,9 @@ export async function registerBusiness(
     throw new Error(AUTH_REGISTER_GENERIC_MESSAGE);
   }
 
+  const legalSnapshot = opts?.recordLegalAcceptance
+    ? await requireMerchantLegalSnapshot(true, input.locale ?? opts.acceptLanguage?.slice(0, 2))
+    : null;
   const baseName = (email.split("@")[0] || "My").trim();
   const placeholderBusinessName = `${baseName} venue`;
   const slug = await generateUniqueBusinessSlugForName(placeholderBusinessName);
@@ -498,6 +511,16 @@ export async function registerBusiness(
     if (isSubscriptionBasicDefaultEnabled() && user.business?.id) {
       await provisionInternalBasicSubscription(user.business.id, {
         source: "email_signup",
+        tx,
+      });
+    }
+
+    if (legalSnapshot) {
+      await recordMerchantLegalAcceptance({
+        userId: user.id,
+        businessId: user.business?.id ?? null,
+        snapshot: legalSnapshot,
+        context: MERCHANT_LEGAL_ACCEPTANCE_CONTEXT.signup,
         tx,
       });
     }

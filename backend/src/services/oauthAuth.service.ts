@@ -31,6 +31,11 @@ import {
   AUTH_OAUTH_SIGN_IN_FAILED_CODE,
 } from "./authDisclosureMessages.js";
 import { isWalkthroughDemoAccount } from "../lib/walkthroughDemoAccounts.js";
+import {
+  MERCHANT_LEGAL_ACCEPTANCE_CONTEXT,
+  recordMerchantLegalAcceptance,
+  requireMerchantLegalSnapshot,
+} from "../lib/merchantLegalAcceptance.js";
 
 /** Uniform public OAuth failure (no account-existence / linking / admin oracle). */
 export const OAUTH_SIGN_IN_FAILED_CODE = AUTH_OAUTH_SIGN_IN_FAILED_CODE;
@@ -73,6 +78,8 @@ type OAuthBody = {
   businessType?: string;
   location?: string;
   locale?: string;
+  /** The user's own explicit acceptance; required to create a business account. */
+  merchantLegalAccepted?: boolean;
 };
 
 /** OAuth identity succeeded but TOTP is still required — no access JWT is minted. */
@@ -491,6 +498,10 @@ export async function authenticateWithOAuth(
   }
 
   if (intendedRole === "MANAGER") {
+    const legalSnapshot = await requireMerchantLegalSnapshot(
+      body.merchantLegalAccepted,
+      body.locale ?? opts?.acceptLanguage?.slice(0, 2),
+    );
     const businessName = body.businessName?.trim();
     const businessType = body.businessType?.trim();
     const location = body.location?.trim();
@@ -537,6 +548,14 @@ export async function authenticateWithOAuth(
           throw new Error("Business creation failed during OAuth signup.");
         }
 
+        await recordMerchantLegalAcceptance({
+          userId: user.id,
+          businessId,
+          snapshot: legalSnapshot,
+          context: MERCHANT_LEGAL_ACCEPTANCE_CONTEXT.oauth_signup,
+          tx,
+        });
+
         if (isSubscriptionBasicDefaultEnabled()) {
           const provision = await provisionInternalBasicSubscription(businessId, {
             source: "oauth_signup",
@@ -556,7 +575,14 @@ export async function authenticateWithOAuth(
         return user;
       },
       { maxWait: 10_000, timeout: 30_000 },
-    );
+    ).catch(async (err: unknown) => {
+      // Two sign-ups at once (double tap, retry): the unique email / Google subject lets one win.
+      if ((err as { code?: unknown })?.code === "P2002") {
+        const winner = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+        if (winner) throw new OAuthAccountExistsError();
+      }
+      throw err;
+    });
 
     scheduleWelcomeEmailBestEffort({
       userId: created.id,

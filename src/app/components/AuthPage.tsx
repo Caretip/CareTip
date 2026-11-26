@@ -80,7 +80,7 @@ import { MobileWebAuthShell } from "./auth/mobileWeb";
 import { AuthOAuthProgress, type OAuthProgressProvider } from "./auth/AuthOAuthProgress";
 import {
   hasPendingGoogleRedirectHandoff,
-  readGoogleRedirectIntent,
+  peekGoogleRedirectReturn,
   takeGoogleRedirectHandoff,
 } from "../lib/googleOAuthRedirectWeb";
 
@@ -144,7 +144,12 @@ export function AuthPage() {
   const inviteGateBlocking = isEmployeeJoinSignup && !inviteGateReady;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
+  /** Returning from Google (full-page redirect): the user's own choices on this form before they left. */
+  const [googleReturn] = useState(() => {
+    const intent = peekGoogleRedirectReturn();
+    return intent && intent.isLogin === isLogin ? intent : null;
+  });
+  const [name, setName] = useState(googleReturn?.name ?? '');
   const [inviteCode, setInviteCode] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -158,7 +163,9 @@ export function AuthPage() {
   const [pendingMfaToken, setPendingMfaToken] = useState('');
   const [mfaSetupRequired, setMfaSetupRequired] = useState(false);
   const [otpCode, setOtpCode] = useState('');
-  const [merchantLegalAccepted, setMerchantLegalAccepted] = useState(false);
+  const [merchantLegalAccepted, setMerchantLegalAccepted] = useState(
+    googleReturn?.merchantLegalAccepted === true,
+  );
   const { login, register, loginWithOAuth, logout, user, sessionValidated, authStatus, completeAuthLogin } = useAuth();
   const loginWaitExpired = useLoginBootstrapWaitExpired(authStatus);
   const authInFlightRef = useRef(false);
@@ -721,13 +728,10 @@ export function AuthPage() {
       setError(t("auth.oauth.googleRedirect.error_expired"));
       return;
     }
-    const intent = readGoogleRedirectIntent();
-    if (intent?.name) setName(intent.name);
-    if (intent?.merchantLegalAccepted) setMerchantLegalAccepted(true);
     void runSocialOAuth("google", handoff, {
-      name: intent?.name,
-      inviteCode: intent?.inviteCode,
-      merchantLegalAccepted: intent?.merchantLegalAccepted,
+      name: googleReturn?.name,
+      inviteCode: googleReturn?.inviteCode,
+      merchantLegalAccepted: googleReturn?.merchantLegalAccepted,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authStatus]);
