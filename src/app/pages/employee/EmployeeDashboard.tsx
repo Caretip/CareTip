@@ -36,7 +36,6 @@ import { writeEmployeeAssignmentSnapshot } from "../../lib/employeePageSessionCa
 import { EmployeeWorkLocationCard } from "../../components/employee/EmployeeWorkLocationCard";
 import { useEmployeeDashboardAnalytics } from "../../hooks/useEmployeeDashboardAnalytics";
 import { useEmployeeAccountSummary } from "../../hooks/useEmployeeAccountSummary";
-import { FeatureGate } from "../../components/subscription/FeatureGate";
 import { EmployeeDashboardMetricsGrid } from "../../components/employee/EmployeeDashboardMetricsGrid";
 import { DashboardAnalyticsPeriodToggle } from "../../components/dashboard/DashboardAnalyticsPeriodToggle";
 import { dashboardWorkspaceUi } from "../../components/dashboard/dashboardWorkspaceUi";
@@ -83,8 +82,9 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
     enabled: dashboardEnabled && employeeEntitlements == null,
     role: dashboardEnabled ? "employee" : null,
   });
-  const { advancedAnalyticsEnabled, ready: entitlementsReady } =
-    employeeEntitlements ?? fallbackEntitlements;
+  const { ready: entitlementsReady } = employeeEntitlements ?? fallbackEntitlements;
+  // Employee self-analytics are always available (the backend no longer checks the employer's plan).
+  const advancedAnalyticsEnabled = true;
 
   const dashboardDataReady =
     dashboardEnabled &&
@@ -655,7 +655,7 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
             />
           </motion.div>
 
-          <FeatureGate featureKey="advancedAnalytics" role="employee" enabled={dashboardEnabled}>
+          {/* Employees' own analytics are not tied to the employer's plan: no lock, no upgrade prompt. */}
           <div className="employee-dashboard-charts-band">
           <DashboardChartsIdleMount
             whenVisible
@@ -671,7 +671,6 @@ export const EmployeeDashboard = memo(function EmployeeDashboard() {
             />
           </DashboardChartsIdleMount>
           </div>
-          </FeatureGate>
 
           <EmployeeWorkLocationCard
             assignment={workLocation}

@@ -19,9 +19,8 @@ import { parseBoundedSkip } from "../utils/paginationLimits.js";
 import { runSerializedByKey } from "../utils/serializedByKey.js";
 import { businessUtcRangeForLocalDates, businessUtcRangeForTimeframe, sanitizeIanaTimezone } from "../utils/businessTime.js";
 import { sanitizeLikeContainsSearch } from "../utils/likeSearch.js";
-import { businessTipsQueryRequiresAdvancedAnalytics, employeeTipsListQueryRequiresAdvancedAnalytics, isEmployeeTipsScopeAllowedForTier } from "../config/subscriptionCapabilities.js";
+import { businessTipsQueryRequiresAdvancedAnalytics, employeeTipsListQueryRequiresAdvancedAnalytics } from "../config/subscriptionCapabilities.js";
 import {
-  getSubscriptionTierForBusinessId,
   hasFeature,
   maskEmployeeGoalsInResponse,
   subscriptionBypass,
@@ -35,6 +34,13 @@ function tipsErrorHttpStatus(err: unknown): number {
   }
   return 400;
 }
+
+/**
+ * Employee self-service (own goals, own analytics) is not tied to the employer's plan: employees have
+ * no subscription and cannot buy one. Manager-side features (team goal progress, setting a staff
+ * member's goal, business analytics, CSV export) keep their business plan checks unchanged.
+ */
+const EMPLOYEE_OWN_GOALS_ENABLED = true;
 
 export async function getByEmployee(req: Request, res: Response) {
   try {
@@ -71,7 +77,7 @@ export async function getByEmployee(req: Request, res: Response) {
         { employeeId: employee.id, scope },
         () => loadEmployeeAccountSummary(employee.id),
       );
-      const goalsEnabled = subscriptionBypass(req) || (await hasFeature(employee.businessId, "employeeGoals"));
+      const goalsEnabled = EMPLOYEE_OWN_GOALS_ENABLED;
       return res.json(
         maskEmployeeGoalsInResponse(
           {
@@ -90,16 +96,11 @@ export async function getByEmployee(req: Request, res: Response) {
       );
     }
 
-    // `account` already returned above; only `summary` skips the advanced-analytics gate.
-    if (!subscriptionBypass(req) && scope !== "summary") {
-      const tier = await getSubscriptionTierForBusinessId(employee.businessId);
-      if (!isEmployeeTipsScopeAllowedForTier(tier, scope)) {
-        return res.status(403).json(await featureAccessDeniedPayloadForBusiness(employee.businessId, "advancedAnalytics"));
-      }
-    }
+    // The employee's own analytics (all scopes) are not tied to the employer's plan; the data is
+    // always scoped to this employee (getEmployeeTipsContext above).
 
     if (timeframe == null) {
-      const goalsEnabled = subscriptionBypass(req) || (await hasFeature(employee.businessId, "employeeGoals"));
+      const goalsEnabled = EMPLOYEE_OWN_GOALS_ENABLED;
       const [accountSummary, currentMonthTotal, goal] = await Promise.all([
         loadEmployeeAccountSummary(employee.id),
         loadEmployeeCurrentMonthTotal(employee.id, employee.businessTimezone),
@@ -142,7 +143,7 @@ export async function getByEmployee(req: Request, res: Response) {
             return { summary: summaryResult, accountSummary: accountResult };
           }),
       );
-      const goalsEnabled = subscriptionBypass(req) || (await hasFeature(employee.businessId, "employeeGoals"));
+      const goalsEnabled = EMPLOYEE_OWN_GOALS_ENABLED;
       return res.json(
         maskEmployeeGoalsInResponse(
           {
@@ -193,7 +194,7 @@ export async function getByEmployee(req: Request, res: Response) {
         timeframe,
       }),
     );
-    const goalsEnabled = subscriptionBypass(req) || (await hasFeature(employee.businessId, "employeeGoals"));
+    const goalsEnabled = EMPLOYEE_OWN_GOALS_ENABLED;
     const [accountSummary, currentMonthTotal, goal] = await Promise.all([
       loadEmployeeAccountSummary(employee.id),
       loadEmployeeCurrentMonthTotal(employee.id, employee.businessTimezone),

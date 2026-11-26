@@ -46,6 +46,18 @@ function isSettingNumericMonthlyGoal(monthlyGoal: unknown): boolean {
  * `employeeGoals` applies only to setting a goal amount.
  * Omitting `monthlyGoal` or sending `null` (clear) is not a Pro-gated profile edit.
  */
+/** Employee editing their own monthly goal: only the value is validated (no employer-plan check). */
+function validateOwnMonthlyGoal(res: Response, monthlyGoal: unknown): boolean {
+  if (!isSettingNumericMonthlyGoal(monthlyGoal)) return true;
+  const n = Number(monthlyGoal);
+  if (Number.isNaN(n) || n < 0) {
+    res.status(400).json({ message: "Monthly goal must be a non-negative number" });
+    return false;
+  }
+  return true;
+}
+
+/** Manager setting a staff member's goal: a business feature, still checked against the plan. */
 async function enforceEmployeeGoalsIfSettingMonthlyGoal(
   req: Request,
   res: Response,
@@ -137,7 +149,7 @@ export async function patchMyProfile(req: Request, res: Response) {
     const tipInAppNotifications = strictBoolean(req.body.tipInAppNotifications);
     const tipPushNotifications = strictBoolean(req.body.tipPushNotifications);
     const tipEmailNotifications = strictBoolean(req.body.tipEmailNotifications);
-    if (!(await enforceEmployeeGoalsIfSettingMonthlyGoal(req, res, monthlyGoal))) {
+    if (!validateOwnMonthlyGoal(res, monthlyGoal)) {
       return;
     }
     const updated = await employeeService.updateEmployeeSelf(userId, {

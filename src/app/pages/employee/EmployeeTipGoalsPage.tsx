@@ -3,8 +3,6 @@ import { Check, Pencil, Plus, Target, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { useRequireAuth } from "../../hooks/useRequireAuth";
-import { useSubscriptionEntitlements } from "../../hooks/useSubscriptionEntitlements";
-import { LockedFeatureCard } from "../../components/subscription/LockedFeatureCard";
 import {
   archiveMyGoal,
   createMyGoal,
@@ -106,10 +104,6 @@ function GoalRowActions({
 export function EmployeeTipGoalsPage() {
   const { t } = useTranslation();
   const { user, authReady, sessionValidated } = useRequireAuth();
-  const { tier, ready, hasFeature } = useSubscriptionEntitlements({
-    enabled: authReady && user?.role === "employee",
-    role: user?.role === "employee" ? "employee" : null,
-  });
   const [boot] = useState(() => readEmployeeGoalsSnapshot(user?.id));
   const [loading, setLoading] = useState(() => !boot);
   const [goals, setGoals] = useState<EmployeeGoalRow[]>(() => boot ?? []);
@@ -251,33 +245,7 @@ export function EmployeeTipGoalsPage() {
     return null;
   }
 
-  if (!ready) {
-    return (
-      <div className={employeeUi.page}>
-        <div className={employeeUi.pageInner}>
-          <EmployeePageHeader
-            title={t("employee.tipGoals.title")}
-            description={t("employee.tipGoals.subtitle").trim() || undefined}
-          />
-          <EmployeeGoalListSkeleton rows={4} className="mt-6" />
-        </div>
-      </div>
-    );
-  }
-
-  if (!hasFeature("employeeGoals")) {
-    return (
-      <div className={employeeUi.page}>
-        <div className={employeeUi.pageInner}>
-          <EmployeePageHeader
-            title={t("employee.tipGoals.title")}
-            description={t("employee.tipGoals.subtitle").trim() || undefined}
-          />
-          <LockedFeatureCard featureKey="employeeGoals" tier={tier} className="mt-6" />
-        </div>
-      </div>
-    );
-  }
+  // Employees' own goals are not tied to the employer's plan (no lock, no upgrade prompt).
 
   return (
     <div className={employeeUi.page}>

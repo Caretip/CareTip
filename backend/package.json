@@ -294,6 +294,7 @@
     "test:google-oauth-redirect": "tsx scripts/google-oauth-redirect-runtime.ts",
     "test:google-oauth-signup": "tsx scripts/google-oauth-signup-runtime.ts",
     "test:connect-onboarding-start": "tsx scripts/connect-onboarding-start-runtime.ts",
+    "test:employee-self-service-entitlements": "tsx scripts/employee-self-service-entitlements-runtime.ts",
     "test:login-lockout-device": "tsx scripts/login-lockout-device-runtime.ts",
     "test:valkey-stall": "tsx scripts/valkey-stall-runtime.ts connect && tsx scripts/valkey-stall-runtime.ts command",
     "test:ddos-resilience": "tsx scripts/lib/runWithIsolatedPostgres.ts scripts/ddos-resilience-runtime.ts",

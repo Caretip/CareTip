@@ -49,7 +49,7 @@ export const employeeDashboardNavEntries: readonly EmployeeDashboardNavEntry[] =
     labelKey: "dashboardNav.employee.tipGoals",
     href: "/employee/tip-goals",
     icon: "tipGoals",
-    featureKey: "employeeGoals",
+    // No featureKey: employees have no plan; their own goals are never locked.
   },
   {
     type: "group",

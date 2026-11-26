@@ -8,7 +8,6 @@ import {
   requireVerifiedEmail,
 } from "../middleware/auth.middleware.js";
 import { requireBusinessVerificationCapability } from "../middleware/requireBusinessVerificationCapability.middleware.js";
-import { requireFeature } from "../services/subscriptionEntitlement.service.js";
 import * as employeeController from "../controllers/employee.controller.js";
 import * as qrController from "../controllers/qr.controller.js";
 import * as goalController from "../controllers/goal.controller.js";
@@ -17,7 +16,7 @@ import { MULTER_SAFE_LIMITS } from "../lib/multerUploadLimits.js";
 import { uploadImageRateLimit } from "../middleware/securityRateLimit.middleware.js";
 
 const router = Router();
-const goalsPremium = requireFeature("employeeGoals");
+// /me/goal is the employee's own goal: not tied to the employer's plan (see goals.routes.ts).
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -103,7 +102,6 @@ router.get(
   authMiddleware,
   requireVerifiedEmail,
   requireRole(Role.EMPLOYEE),
-  goalsPremium,
   goalController.getMyGoal,
 );
 router.put(
@@ -111,7 +109,6 @@ router.put(
   authMiddleware,
   requireVerifiedEmail,
   requireRole(Role.EMPLOYEE),
-  goalsPremium,
   goalController.putMyGoal,
 );
 router.delete(
@@ -119,7 +116,6 @@ router.delete(
   authMiddleware,
   requireVerifiedEmail,
   requireRole(Role.EMPLOYEE),
-  goalsPremium,
   goalController.deleteMyGoal,
 );
 
