@@ -104,6 +104,11 @@ export function refreshCookieSameSite(requestHost: string): "lax" | "none" {
   return firstPartyApiHosts().has(requestHost) ? "lax" : "none";
 }
 
+/** Same attributes as the refresh cookie (httpOnly, Secure in production, host-only, per-host SameSite). */
+export function firstPartyCookieOptions(res: unknown): Record<string, unknown> {
+  return refreshCookieBaseOptions(res);
+}
+
 function refreshCookieBaseOptions(res: unknown): Record<string, unknown> {
   return {
     httpOnly: true,

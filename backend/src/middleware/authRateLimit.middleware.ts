@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction, RequestHandler } from "express";
 import { rateLimitIp } from "../lib/clientIp.js";
+import { trustedDeviceIdForLogin } from "../services/trustedLoginDevice.service.js";
 import crypto from "crypto";
 import { authRateLimits } from "../config/authRateLimit.config.js";
 import type { RateLimitLayer } from "../utils/layeredRateLimit.js";
@@ -115,8 +116,13 @@ export const loginRateLimit = createSyncLimiter((req) => {
     { name: "ip", key: keyIp("login", ip), ...lim.ip },
   ];
   if (email) {
+    // The email layer counts attempts from every address together, so anyone who knows the email
+    // could exhaust it. A browser that already signed in to this email counts in its own bucket.
+    const deviceId = trustedDeviceIdForLogin(req, email);
     layers.push(
-      { name: "email", key: keyEmail("login", email), ...lim.email },
+      deviceId
+        ? { name: "email", key: `${keyEmail("login", email)}|device:${crypto.createHash("sha256").update(deviceId).digest("hex").slice(0, 24)}`, ...lim.email }
+        : { name: "email", key: keyEmail("login", email), ...lim.email },
       { name: "ip+email", key: keyIpEmail("login", ip, email), ...lim.ipEmail },
     );
   }

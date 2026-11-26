@@ -16,6 +16,11 @@
  *   instance then enforces its own lockout, and the IP and email rate limits still apply.
  * - Only password sign-in (and the password-confirmed verification resend) is affected. OAuth
  *   sign-in and password reset stay available, so a lockout cannot shut a user out entirely.
+ * - Device scope: a browser that already signed in to this email (trustedLoginDevice.service.ts)
+ *   counts its failures in its own state, so failures by anyone else (who has no such cookie) can
+ *   lock the email-wide state but never that browser. Everything else, attackers included, uses
+ *   the email-wide state, so rotating IP addresses gains nothing.
+ * - A completed password reset clears the email-wide state.
  */
 import crypto from "node:crypto";
 import { getRateLimitRedisClient } from "../utils/rateLimitStore.js";
@@ -48,11 +53,15 @@ export type LoginLockoutSuccess = {
   hadLockout: boolean;
 };
 
-function stateKey(normalizedEmail: string): string {
+function stateKey(normalizedEmail: string, deviceId?: string | null): string {
   const digest = crypto.createHash("sha256").update(normalizedEmail).digest("hex").slice(0, 32);
   // Braces keep both keys in one Redis Cluster hash slot.
-  return `auth:lockout:v1:{${digest}}`;
+  const base = `auth:lockout:v1:{${digest}}`;
+  if (!deviceId) return base;
+  return `${base}:d:${crypto.createHash("sha256").update(deviceId).digest("hex").slice(0, 24)}`;
 }
+
+export type LoginLockoutScope = { deviceId?: string | null };
 
 /* ---------------- Redis implementation ---------------- */
 
@@ -221,8 +230,8 @@ function memorySuccess(key: string): LoginLockoutSuccess {
 /* ---------------- Public API ---------------- */
 
 /** Call before checking a password. A refused attempt must not check the password at all. */
-export async function beginLoginAttempt(normalizedEmail: string): Promise<LoginLockoutBegin> {
-  const key = stateKey(normalizedEmail);
+export async function beginLoginAttempt(normalizedEmail: string, scope?: LoginLockoutScope): Promise<LoginLockoutBegin> {
+  const key = stateKey(normalizedEmail, scope?.deviceId);
   const token = crypto.randomUUID();
   const raw = await redisEval(LOCKOUT_BEGIN_SCRIPT, key, [token, LOGIN_LOCKOUT_MAX_FAILURES, PENDING_TTL_MS]);
   if (!Array.isArray(raw)) return memoryBegin(key, token);
@@ -256,6 +265,7 @@ export async function recordLoginFailure(ticket: LoginAttemptTicket): Promise<Lo
     console.warn("[auth.lockout] account sign-in locked", {
       // First 8 hex characters of the hashed email: correlates events without logging the address.
       account: ticket.key.slice(ticket.key.indexOf("{") + 1, ticket.key.indexOf("{") + 9),
+      scope: ticket.key.includes("}:d:") ? "trusted-device" : "email",
       level: result.level,
       minutes: Math.round(result.retryAfterMs / 60_000),
     });
@@ -269,6 +279,22 @@ export async function recordLoginSuccess(ticket: LoginAttemptTicket): Promise<Lo
   if (raw == null) return memorySuccess(ticket.key);
   memory.delete(ticket.key);
   return { hadLockout: Number(raw) > 0 };
+}
+
+/**
+ * Clears the email-wide lockout after the user proved control of the inbox (completed password
+ * reset), so a user locked out on a new device can sign in with the new password.
+ */
+export async function clearLoginLockout(normalizedEmail: string): Promise<void> {
+  const key = stateKey(normalizedEmail);
+  memory.delete(key);
+  const redis = (await getRateLimitRedisClient()) as { del(...keys: string[]): Promise<unknown> } | null;
+  if (!redis) return;
+  try {
+    await redis.del(key, `${key}:p`);
+  } catch (err) {
+    console.warn("[auth.lockout] could not clear shared lockout state", { reason: err instanceof Error ? err.message : String(err) });
+  }
 }
 
 /** The attempt ended without a credential result (e.g. database error): release its slot. */

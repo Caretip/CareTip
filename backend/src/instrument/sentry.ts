@@ -51,8 +51,18 @@ export function captureServerException(
         scope.setExtra(key, value);
       }
     }
+    // Searchable tags for alert rules (Sentry issue alerts can filter on tags on every plan).
+    const prismaCode = prismaErrorCode(error);
+    if (prismaCode) scope.setTag("prisma_code", prismaCode);
+    if (typeof context?.alert === "string") scope.setTag("caretip_alert", context.alert);
     Sentry.captureException(error);
   });
+}
+
+/** Prisma error code (e.g. P2024 = connection pool timeout), if the error carries one. */
+export function prismaErrorCode(error: unknown): string | null {
+  const code = (error as { code?: unknown } | null)?.code;
+  return typeof code === "string" && /^P\d{4}$/.test(code) ? code : null;
 }
 
 export { Sentry };

@@ -64,6 +64,7 @@ import {
 } from "../lib/merchantLegalAcceptance.js";
 import * as mfaLoginService from "../services/mfaLogin.service.js";
 import * as loginLockout from "../services/loginLockout.service.js";
+import { setTrustedDeviceCookie, verifiedTrustedDeviceIdForLogin } from "../services/trustedLoginDevice.service.js";
 import { localeFromAcceptLanguage } from "../emails/i18nEmail.js";
 import {
   isAllowedAccessJwtType,
@@ -464,7 +465,9 @@ async function validateCredentialsWithLockout(
   email: string,
   password: string,
 ): Promise<Awaited<ReturnType<typeof authService.validateLoginCredentials>> | null> {
-  const attempt = await loginLockout.beginLoginAttempt(email);
+  // Signature AND current credential version: a cookie from before a password reset is not trusted.
+  const deviceId = await verifiedTrustedDeviceIdForLogin(req, email);
+  const attempt = await loginLockout.beginLoginAttempt(email, { deviceId });
   if (!attempt.allowed) {
     respondLoginLocked(req, res, attempt.retryAfterMs);
     return null;
@@ -477,6 +480,7 @@ async function validateCredentialsWithLockout(
     if (err instanceof EmailNotVerifiedLoginError) {
       // The password was correct; only verification is missing.
       await loginLockout.recordLoginSuccess(ticket);
+      await setTrustedDeviceCookie(res, email, deviceId);
       throw err;
     }
     if (err instanceof Error && err.message === AUTH_INVALID_CREDENTIALS_MESSAGE) {
@@ -491,6 +495,8 @@ async function validateCredentialsWithLockout(
     throw err;
   }
   const cleared = await loginLockout.recordLoginSuccess(ticket);
+  // Correct password: this browser may now sign in to this email even while others lock it.
+  await setTrustedDeviceCookie(res, email, deviceId);
   if (cleared.hadLockout) {
     console.info("[auth.lockout] successful sign-in after lockout", { userId: user.id });
     void auditService.writeAuditLog({ userId: user.id, action: "auth.login_after_lockout" });
@@ -1142,8 +1148,8 @@ export async function resendVerificationEmail(req: Request, res: Response) {
     const locale =
       typeof body.locale === "string" && body.locale.trim() ? body.locale.trim() : undefined;
     const platform = resolveAuthLinkPlatform(req);
-    // This endpoint also confirms a password, so it shares the sign-in lockout.
-    const attempt = await loginLockout.beginLoginAttempt(email);
+    // This endpoint also confirms a password, so it shares the sign-in lockout (and its device scope).
+    const attempt = await loginLockout.beginLoginAttempt(email, { deviceId: await verifiedTrustedDeviceIdForLogin(req, email) });
     if (!attempt.allowed) {
       respondLoginLocked(req, res, attempt.retryAfterMs);
       return;

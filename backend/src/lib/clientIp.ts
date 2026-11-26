@@ -158,3 +158,58 @@ export function ipPrefixForLog(ip: string): string {
   if (ip.includes(":")) return `${ip.split(":").slice(0, 3).join(":")}::/48`;
   return ip;
 }
+
+export type AddressKind = "loopback" | "private" | "link-local" | "cgnat" | "public" | "invalid";
+
+/** Coarse class of an address, for proxy diagnostics (never used for access decisions). */
+export function addressKind(raw: string | null | undefined): AddressKind {
+  const ip = normalizeIp(raw);
+  if (!ip) return "invalid";
+  if (ip.includes(":")) {
+    const g = expandIPv6(ip);
+    if (!g) return "invalid";
+    if (g.join(":") === "0000:0000:0000:0000:0000:0000:0000:0001") return "loopback";
+    const first = parseInt(g[0]!, 16);
+    if ((first & 0xfe00) === 0xfc00) return "private";
+    if ((first & 0xffc0) === 0xfe80) return "link-local";
+    return "public";
+  }
+  const [a, b] = ip.split(".").map(Number) as [number, number];
+  if (a === 127) return "loopback";
+  if (a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168)) return "private";
+  if (a === 169 && b === 254) return "link-local";
+  if (a === 100 && b >= 64 && b <= 127) return "cgnat";
+  return "public";
+}
+
+/**
+ * The shape of the proxy chain this request arrived through, with address prefixes only. Shown in
+ * the secret-gated /health detail so the real chain can be measured before choosing
+ * TRUST_PROXY_HOPS or TRUST_PROXY_CIDRS (for example after putting Cloudflare in front).
+ */
+export function describeProxyChain(req: Pick<Request, "ip" | "headers"> & { socket?: { remoteAddress?: string } }) {
+  const raw = req.headers["x-forwarded-for"];
+  const entries = (Array.isArray(raw) ? raw.join(",") : raw ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  const resolved = resolveClientIp(req);
+  const cf = typeof req.headers["cf-connecting-ip"] === "string" ? normalizeIp(req.headers["cf-connecting-ip"]) : null;
+  // Prefixes only for public / carrier-grade addresses (needed to choose TRUST_PROXY_CIDRS);
+  // internal addresses are reported by kind alone. Never a full address, never a header value.
+  const describe = (ip: string | null | undefined) => {
+    const n = normalizeIp(ip);
+    const kind = addressKind(ip);
+    return { kind, prefix: n && (kind === "public" || kind === "cgnat") ? ipPrefixForLog(n) : null };
+  };
+  const setting = resolveTrustProxySetting();
+  return {
+    // The mode, not the configured ranges.
+    trustProxy: setting === false ? "off" : typeof setting === "number" ? `hops:${setting}` : `cidrs:${setting.length - 3}`,
+    forwardedEntries: entries.length,
+    // Left = as sent by the client side, right = added by the nearest proxy.
+    forwarded: entries.slice(-6).map(describe),
+    socketPeer: describe(req.socket?.remoteAddress),
+    resolvedClient: describe(resolved),
+    cfConnectingIpPresent: cf !== null,
+    cfConnectingIpMatchesResolved: cf !== null && cf === resolved,
+    trueClientIpPresent: typeof req.headers["true-client-ip"] === "string",
+  };
+}

@@ -126,12 +126,12 @@ await test("Health: concurrent and repeated checks share one database probe per 
 });
 
 // ── HTTP server timeouts ──
-await test("HTTP server: header (20 s) and request (120 s) timeouts below Node defaults", () => {
+await test("HTTP server: header timeout 20 s (Node: 60 s); request timeout 300 s keeps slow uploads working", () => {
   const server = createServer();
   timeouts.applyHttpServerTimeouts(server);
   assert.equal(server.headersTimeout, 20_000, "below Node's 60 s default");
   assert.ok(server.headersTimeout > server.keepAliveTimeout, "Node requires headersTimeout > keepAliveTimeout");
-  assert.equal(server.requestTimeout, 120_000, "below Node's 300 s default");
+  assert.equal(server.requestTimeout, 300_000, "Node's default kept: a 10 MB upload on a slow uplink needs ~160 s");
 });
 
 // ── Process handlers ──
@@ -141,6 +141,45 @@ await test("unhandled promise rejection is logged, the process keeps running", a
   void Promise.reject(new Error("deliberate unhandled rejection (test)"));
   await new Promise((r) => setTimeout(r, 50));
   assert.ok(true, "still alive");
+});
+
+// ── Monitoring instrumentation ──
+await test("5xx monitor: reports once when >2% of ≥200 requests fail in 5 min; quiet otherwise; health checks excluded", async () => {
+  const mon = await import("../src/lib/httpErrorRateMonitor.js");
+  const reports: Array<{ total: number; errors: number; rate: number }> = [];
+  mon.__setErrorRateReporterForTests((s) => reports.push(s));
+  const t0 = Date.UTC(2031, 0, 1, 10);
+  for (let i = 0; i < 150; i++) mon.recordResponse(i < 20 ? 500 : 200, t0 + i * 100);
+  assert.equal(reports.length, 0, "below the minimum volume: no report");
+  for (let i = 0; i < 300; i++) mon.recordResponse(200, t0 + 20_000 + i * 100);
+  assert.equal(reports.length, 1, "20 / 450 = 4.4 % over the window");
+  for (let i = 0; i < 300; i++) mon.recordResponse(500, t0 + 60_000 + i * 100);
+  assert.equal(reports.length, 1, "at most one report per 15 minutes");
+  mon.__setErrorRateReporterForTests((s) => reports.push(s));
+  for (let i = 0; i < 1000; i++) mon.recordResponse(i % 100 === 0 ? 500 : 200, t0 + i * 200);
+  assert.equal(reports.length, 1, "1 % stays quiet");
+});
+await test("Sentry tags: Prisma error codes are tagged (P2024 pool timeout alertable)", async () => {
+  const { prismaErrorCode } = await import("../src/instrument/sentry.js");
+  assert.equal(prismaErrorCode({ code: "P2024" }), "P2024");
+  assert.equal(prismaErrorCode({ code: "ECONNRESET" }), null);
+  assert.equal(prismaErrorCode(new Error("x")), null);
+});
+await test("proxy-chain diagnostics classify addresses and compare CF-Connecting-IP (prefixes only)", () => {
+  assert.equal(clientIp.addressKind("10.1.2.3"), "private");
+  assert.equal(clientIp.addressKind("100.70.0.1"), "cgnat");
+  assert.equal(clientIp.addressKind("172.20.0.1"), "private");
+  assert.equal(clientIp.addressKind("203.0.113.5"), "public");
+  assert.equal(clientIp.addressKind("fd00::1"), "private");
+  const d = clientIp.describeProxyChain({ ip: "203.0.113.9", headers: { "x-forwarded-for": "6.6.6.6, 203.0.113.9", "cf-connecting-ip": "203.0.113.9" }, socket: { remoteAddress: "10.0.0.1" } } as never);
+  assert.equal(d.forwardedEntries, 2);
+  assert.equal(d.socketPeer.kind, "private");
+  assert.equal(d.cfConnectingIpMatchesResolved, true);
+  assert.ok(!JSON.stringify(d).includes("203.0.113.9"), "no full client address in the output");
+  assert.equal(d.socketPeer.prefix, null, "internal peer: kind only, no prefix");
+  assert.equal(d.resolvedClient.prefix, "203.0.113.0/24");
+  assert.match(String(d.trustProxy), /^(off|hops:d+|cidrs:d+)$/, "mode only, never the configured ranges");
+  assert.ok(!("headers" in d) && !JSON.stringify(d).includes("6.6.6.6"), "no raw header values");
 });
 
 // ── HTTP: real routers on a local server ──
@@ -189,6 +228,14 @@ await test("tip-session lookup: capped per session (150 / 15 min), other session
   assert.equal(first429, 151);
   const other = await fetch(`${base}/api/payments/tip-session/cs_test_otherSession9876543210`);
   assert.equal(other.status, 503);
+});
+
+await test("tip-session lookup: malformed ids share one bucket and never consume a real session's allowance", async () => {
+  for (let i = 0; i < 160; i++) await fetch(`${base}/api/payments/tip-session/bogus-${i}`);
+  const bogus = await fetch(`${base}/api/payments/tip-session/bogus-final`);
+  assert.equal(bogus.status, 429, "malformed ids are counted together");
+  const real = await fetch(`${base}/api/payments/tip-session/cs_test_unaffectedSession123456`);
+  assert.equal(real.status, 503, "a real session is unaffected");
 });
 
 await test("legal webhook: own limit (30 / 15 min per address) before the 15 MB body is read", async () => {

@@ -8,6 +8,7 @@ import { resolveEmailPersonalizationForUser } from "../emails/emailPersonalizati
 import { buildPasswordResetContent, resolveUserPreferredLocale, type EmailLocale } from "../emails/i18nEmail.js";
 import { userMayAuthenticate } from "./accountAccess.service.js";
 import { revokeAllRefreshTokensForUser } from "./refreshToken.service.js";
+import { clearLoginLockout } from "./loginLockout.service.js";
 
 const RESET_TTL_MS = 60 * 60 * 1000; // 1 hour
 const RESET_EXPIRES_HOURS = RESET_TTL_MS / (60 * 60 * 1000);
@@ -136,7 +137,7 @@ export async function resetPasswordWithToken(plainToken: string, newPassword: st
   const tokenHash = hashToken(token);
   const row = await prisma.passwordResetToken.findUnique({
     where: { tokenHash },
-    include: { user: { select: { id: true, isActive: true, accountStatus: true } } },
+    include: { user: { select: { id: true, email: true, isActive: true, accountStatus: true } } },
   });
 
   if (!row || row.expiresAt < new Date() || !userMayAuthenticate(row.user)) {
@@ -155,4 +156,7 @@ export async function resetPasswordWithToken(plainToken: string, newPassword: st
 
   // Same session invalidation as change-password (refresh revoke + authTokenVersion bump).
   await revokeAllRefreshTokensForUser(row.userId);
+  // The user proved control of the inbox: lift an email-wide sign-in lockout (e.g. one caused by
+  // someone else guessing), so the new password works at once on any device.
+  if (row.user.email) await clearLoginLockout(normalizeLoginEmail(row.user.email));
 }

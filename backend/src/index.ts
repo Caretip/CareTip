@@ -53,6 +53,7 @@ import leadRoutes from "./routes/lead.routes.js";
 import legalRoutes from "./routes/legal.routes.js";
 import { initSocketServer } from "./socket/socketServer.js";
 import { applyHttpServerTimeouts } from "./lib/httpServerTimeouts.js";
+import { httpErrorRateMonitor } from "./lib/httpErrorRateMonitor.js";
 import { installProcessErrorHandlers } from "./lib/processErrorHandlers.js";
 import { errorHandler } from "./middleware/errorHandler.middleware.js";
 import { requestIdMiddleware } from "./middleware/requestId.middleware.js";
@@ -71,7 +72,7 @@ import {
 import { getObservabilityHealthDiagnostics } from "./config/observabilityEnv.js";
 import { securityHeadersMiddleware } from "./middleware/securityHeaders.middleware.js";
 import { authenticatedApiRateLimit } from "./middleware/securityRateLimit.middleware.js";
-import { configureTrustProxy, noteForwardedChain } from "./lib/clientIp.js";
+import { configureTrustProxy, noteForwardedChain, describeProxyChain } from "./lib/clientIp.js";
 import { startNotificationWorker, stopNotificationWorker } from "./services/notifications/notificationWorker.js";
 import { closeSocketServer, socketAdapterReady } from "./socket/socketServer.js";
 import { closeRateLimitStore, warmRateLimitStore } from "./utils/rateLimitStore.js";
@@ -99,6 +100,7 @@ app.disable("x-powered-by");
 configureTrustProxy(app);
 
 app.use(requestIdMiddleware);
+app.use(httpErrorRateMonitor);
 app.use(securityHeadersMiddleware);
 
 async function assertEnvForAuth(): Promise<void> {
@@ -291,6 +293,8 @@ app.get("/health", (req, res) => {
     uploads,
     redis: getRedisHealthSnapshot(),
     instance: process.env.RENDER_INSTANCE_ID?.trim() || "local",
+    // Measure the real proxy chain (prefixes only) before changing TRUST_PROXY_* or adding a CDN.
+    proxy: describeProxyChain(req),
   });
 });
 

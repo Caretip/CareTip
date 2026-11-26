@@ -96,8 +96,18 @@ function redisConfigured(): boolean {
 
 function markRedisUnavailable(err: unknown): void {
   if (testClientActive || closing) return;
+  const failed = redisClient as (RedisClient & { disconnect?: () => void }) | null;
   redisReady = false;
   redisClient = null;
+  // Start the reconnect cooldown now: otherwise the next request reconnects at once, and against
+  // a Valkey that accepts connections but does not answer, every retry waits for a timeout.
+  lastConnectAttemptMs = Date.now();
+  // Close the failed connection; a new one is made after the cooldown (no leaked sockets).
+  try {
+    failed?.disconnect?.();
+  } catch {
+    /* already closed */
+  }
   reportRedisState("rateLimit", "degraded", err);
 }
 

@@ -1,4 +1,5 @@
 import { sharedRateLimit } from "./sharedRateLimit.middleware.js";
+import { isPlausibleCheckoutSessionId } from "../lib/stripeCheckoutSessionId.js";
 
 /**
  * Auth credential rate limits use layered IP + email (+ invite) keys in
@@ -16,7 +17,12 @@ export const tipSessionLookupLimiter = sharedRateLimit({
   windowMs: 15 * 60 * 1000,
   max: 150,
   message: "Too many requests for this payment. Please wait a moment and refresh.",
-  key: (req) => `session:${String(req.params.sessionId ?? "").slice(0, 260)}`,
+  // Malformed ids share one bucket: they are refused before Stripe anyway, and must not each
+  // create a counter in the shared store.
+  key: (req) => {
+    const id = String(req.params.sessionId ?? "").trim();
+    return isPlausibleCheckoutSessionId(id) ? `session:${id}` : "session:malformed";
+  },
 });
 
 export const publicTipCheckoutLimiter = sharedRateLimit({
