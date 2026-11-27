@@ -33,8 +33,8 @@ function main(): void {
   assert.equal(resolveAppleNativeScheme("https://evil.example"), "caretip");
   assert.equal(encodeAppleAndroidState("caretip", "abc"), "caretip.abc");
 
-  const redirect = appleAndroidRedirectUri("https://caretip.onrender.com");
-  assert.equal(redirect, "https://caretip.onrender.com/api/auth/apple/native-callback");
+  const redirect = appleAndroidRedirectUri("https://api.caretip.de");
+  assert.equal(redirect, "https://api.caretip.de/api/auth/apple/native-callback");
   assert.equal(isHttpsAppleRedirectUri(redirect), true);
   assert.equal(
     isHttpsAppleRedirectUri(appleAndroidRedirectUri("http://192.168.1.10:3001")),

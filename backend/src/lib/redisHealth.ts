@@ -92,6 +92,8 @@ export function reportRedisState(component: RedisComponent, next: RedisComponent
       ...(h.lastError ? [{ error: h.lastError }] : []),
     );
     captureServerException(new Error(`Redis ${label} degraded`), {
+      // Tag caretip_alert=redis_degraded: a plain Sentry issue alert can filter on it (like api_5xx_rate).
+      alert: "redis_degraded",
       component,
       previousState: prev,
       instance: instanceLabel(),
@@ -128,6 +130,7 @@ export function checkPersistentRedisOutage(nowMs = Date.now()): void {
       `[redis] ${label} STILL DEGRADED instance=${instanceLabel()} for ${Math.round(downFor / 60_000)}min — ${impact(component)}`,
     );
     captureServerException(new Error(`Redis ${label} persistently unavailable`), {
+      alert: "redis_degraded_persistent",
       component,
       instance: instanceLabel(),
       downForMinutes: Math.round(downFor / 60_000),

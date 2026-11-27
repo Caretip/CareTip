@@ -5,8 +5,11 @@
 
 export type AppEnv = "development" | "staging" | "production";
 
-/** Render production API — same origin as web `VITE_API_URL` in deployed builds. */
-export const PRODUCTION_API_URL = "https://caretip.onrender.com";
+/**
+ * Canonical production API (Render custom domain) — same origin as web `VITE_API_URL`.
+ * Never the Render-generated *.onrender.com address: it is being retired (docs/ops/api-hostname-migration.md).
+ */
+export const PRODUCTION_API_URL = "https://api.caretip.de";
 
 const DEFAULT_DEV_API_URL = "http://localhost:3001";
 const DEFAULT_TIMEOUT_MS = 20_000;

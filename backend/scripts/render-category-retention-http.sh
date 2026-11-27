@@ -10,7 +10,7 @@ if [ -z "${CRON_SECRET:-}" ]; then
   exit 1
 fi
 
-ORIGIN="${CARE_TIP_API_ORIGIN:-https://caretip.onrender.com}"
+ORIGIN="${CARE_TIP_API_ORIGIN:-https://api.caretip.de}"
 JOB_PATH="${CARE_TIP_INTERNAL_JOB_PATH:?CARE_TIP_INTERNAL_JOB_PATH must be set}"
 
 # Header name must be x-cron-secret. Do not send Authorization or x-health-secret.

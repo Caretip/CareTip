@@ -4,7 +4,7 @@
  *
  * Env (cron service):
  *   CRON_SECRET — required; must match web service CRON_SECRET
- *   CARE_TIP_API_ORIGIN — default https://caretip.onrender.com
+ *   CARE_TIP_API_ORIGIN — default https://api.caretip.de (canonical API host)
  *   CARE_TIP_INTERNAL_JOB_PATH — e.g. /api/internal/jobs/category-retention-sweep
  *   CARE_TIP_JOB_TIMEOUT_MS — optional client timeout (default 120000, max 900000). The API keeps
  *     running a job if this caller gives up; jobs that must not overlap hold their own lease.
@@ -21,7 +21,7 @@ if (!jobPath) {
   process.exit(1);
 }
 
-const origin = (process.env.CARE_TIP_API_ORIGIN?.trim() || "https://caretip.onrender.com").replace(
+const origin = (process.env.CARE_TIP_API_ORIGIN?.trim() || "https://api.caretip.de").replace(
   /\/+$/,
   "",
 );

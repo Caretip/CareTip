@@ -73,6 +73,23 @@ export function reviewProductionConfig(env: NodeJS.ProcessEnv = process.env): Pr
   if (!has(env, "CRON_SECRET")) warnings.push("CRON_SECRET is not set: scheduled jobs will be refused");
   if (!has(env, "STRIPE_WEBHOOK_SECRET")) warnings.push("STRIPE_WEBHOOK_SECRET is not set: Stripe webhooks will be refused");
   if (!has(env, "REDIS_URL")) warnings.push("REDIS_URL is not set: rate limits are per process");
+  // API hostname migration: without an explicit public URL the API builds its own absolute URLs
+  // (disk media, KYC proxy links) from Render's generated *.onrender.com address, which stops
+  // answering once the Render subdomain is disabled. Host only (not secret).
+  if (!has(env, "PUBLIC_API_BASE_URL") && !has(env, "API_PUBLIC_URL") && !has(env, "BACKEND_PUBLIC_URL")) {
+    const renderUrl = env.RENDER_EXTERNAL_URL?.trim() ?? "";
+    let renderHost = "";
+    try {
+      renderHost = renderUrl ? new URL(renderUrl).host : "";
+    } catch {
+      renderHost = "";
+    }
+    if (renderHost.endsWith(".onrender.com")) {
+      warnings.push(
+        `PUBLIC_API_BASE_URL is not set: API-built URLs use the Render hostname ${renderHost}; set PUBLIC_API_BASE_URL=https://api.caretip.de before disabling it`,
+      );
+    }
+  }
   if (env.ENABLE_DEMO_BYPASS === "true") warnings.push("ENABLE_DEMO_BYPASS is set and ignored in production: remove it");
   if (has(env, "EMAIL_VERIFICATION_BYPASS_EMAILS") || has(env, "EMAIL_VERIFICATION_BYPASS_FIRST_NAMES")) {
     warnings.push("Email verification bypass lists are set and ignored in production: remove them");

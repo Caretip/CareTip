@@ -185,7 +185,8 @@ const proxyRule = redirects
   .map((line) => line.trim())
   .find((line) => line.startsWith("/api/*"));
 assert.ok(proxyRule, "Netlify /api/* proxy rule missing");
-assert.match(proxyRule!, /^\/api\/\*\s+https:\/\/caretip\.onrender\.com\/api\/:splat\s+200\s*$/);
+// Canonical API host (first-party API domain); the Render-generated hostname is being retired.
+assert.match(proxyRule!, /^\/api\/\*\s+https:\/\/api\.caretip\.de\/api\/:splat\s+200\s*$/);
 
 function proxyMatches(pathname: string): boolean {
   return pathname.startsWith("/api/");

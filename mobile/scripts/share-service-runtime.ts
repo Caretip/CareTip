@@ -11,7 +11,7 @@ import {
 
 function main() {
   const opts = {
-    apiBaseUrl: "https://caretip.onrender.com",
+    apiBaseUrl: "https://api.caretip.de",
     appPublicUrl: "https://caretip.de",
   };
 
@@ -29,6 +29,8 @@ function main() {
 
   // Reject staging / tunnels / Render API host
   assert.equal(isPublicHttpUrl("https://staging.caretip.de/x", opts), false);
+  assert.equal(isPublicHttpUrl("https://api.caretip.de/public", opts), false);
+  // Legacy Render API host (being retired) stays rejected.
   assert.equal(isPublicHttpUrl("https://caretip.onrender.com/public", opts), false);
   assert.equal(isPublicHttpUrl("https://foo.expo.dev/x", opts), false);
   assert.equal(isPublicHttpUrl("https://abc.ngrok-free.app/x", opts), false);

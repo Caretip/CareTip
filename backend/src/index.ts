@@ -54,6 +54,7 @@ import legalRoutes from "./routes/legal.routes.js";
 import { initSocketServer } from "./socket/socketServer.js";
 import { applyHttpServerTimeouts } from "./lib/httpServerTimeouts.js";
 import { httpErrorRateMonitor } from "./lib/httpErrorRateMonitor.js";
+import { legacyHostMonitor } from "./lib/legacyHostMonitor.js";
 import { installProcessErrorHandlers } from "./lib/processErrorHandlers.js";
 import { errorHandler } from "./middleware/errorHandler.middleware.js";
 import { requestIdMiddleware } from "./middleware/requestId.middleware.js";
@@ -101,6 +102,8 @@ configureTrustProxy(app);
 
 app.use(requestIdMiddleware);
 app.use(httpErrorRateMonitor);
+// Counts traffic still arriving on the Render-generated hostname (retirement measurement, no PII).
+app.use(legacyHostMonitor);
 app.use(securityHeadersMiddleware);
 
 async function assertEnvForAuth(): Promise<void> {

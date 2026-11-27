@@ -31,7 +31,7 @@
       },
       "env": {
         "EXPO_PUBLIC_APP_ENV": "staging",
-        "EXPO_PUBLIC_API_URL": "https://caretip.onrender.com",
+        "EXPO_PUBLIC_API_URL": "https://api.caretip.de",
         "EXPO_PUBLIC_APP_URL": "https://caretip.de"
       }
     },
@@ -56,7 +56,7 @@
       },
       "env": {
         "EXPO_PUBLIC_APP_ENV": "production",
-        "EXPO_PUBLIC_API_URL": "https://caretip.onrender.com",
+        "EXPO_PUBLIC_API_URL": "https://api.caretip.de",
         "EXPO_PUBLIC_APP_URL": "https://caretip.de"
       }
     }

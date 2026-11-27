@@ -72,7 +72,7 @@ Build Command       true
 Command             node scripts/render-category-retention-http.mjs
 Schedule            */5 * * * *        (every 5 minutes, UTC)
 Environment         CRON_SECRET                 = (copy the value from the backend web service; see below)
-                    CARE_TIP_API_ORIGIN         = (the backend URL your existing CareTip cron jobs use; render.yaml documents https://caretip.onrender.com)
+                    CARE_TIP_API_ORIGIN         = https://api.caretip.de   (canonical API host, as in render.yaml; never the *.onrender.com address)
                     CARE_TIP_INTERNAL_JOB_PATH  = /api/internal/jobs/payment-refund-operations-tick
                     CARE_TIP_JOB_TIMEOUT_MS     = 300000   (optional; default 120000)
 ```

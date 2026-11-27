@@ -1,6 +1,6 @@
 # DDoS resilience, traffic abuse and account lockout
 
-Last reviewed 2026-11-26. **CareTip is not DDoS-proof.** Three layers, each with its own limits:
+Last reviewed 2026-11-27. **CareTip is not DDoS-proof.** Three layers, each with its own limits:
 
 | Layer | What it does | Who provides it | Status |
 |---|---|---|---|
@@ -74,25 +74,13 @@ lock or resets the password. One email per browser (the latest sign-in).
 The API answers on both `api.caretip.de` and `caretip.onrender.com`. Any protection placed in front of
 `api.caretip.de` can be bypassed through the Render hostname until it is disabled.
 
-**Live dependencies found (2026-11-26):**
-
-| Where | Reference | Action |
-|---|---|---|
-| Mobile app | `mobile/constants/config.ts` `PRODUCTION_API_URL`; `mobile/eas.json` `EXPO_PUBLIC_API_URL` (two profiles) | Change to `https://api.caretip.de`, release, wait for adoption |
-| Apple Sign in (Android/web return URL) | Registered at Apple: `https://caretip.onrender.com/api/auth/apple/native-callback` (`.env.example`) | Add the `api.caretip.de` URL at Apple first, then remove the old one |
-| Web CSP | `scripts/spa-csp-policy.mjs` → `public/_headers`, `vercel.json` (`https://`/`wss://caretip.onrender.com`) | Remove after the web app no longer needs `VITE_LEGACY_API_URL` |
-| Web session migration | `VITE_LEGACY_API_URL` (`src/app/lib/apiOrigin.ts`) moves sessions from the old host | Unset once sessions have migrated (refresh cookies live ≤ their max age) |
-| Cron runner default | `backend/scripts/render-category-retention-http.mjs` defaults to the Render host; `render.yaml` sets `api.caretip.de` | Already overridden; change the default when convenient |
-| Docs and test scripts | Several `backend/scripts/*`, `docs/*` | No runtime effect |
-
-Not found in the repository (check in the dashboards): Stripe Live webhook endpoint URLs (test-mode
-endpoints use `api.caretip.de`), Facebook and Google OAuth redirect URIs, Render health check path.
-
-**Order:** (1) ship the mobile release and confirm adoption; (2) move Apple, Facebook and Google redirect
-URIs and any Stripe Live webhook to `api.caretip.de`; (3) watch Render logs for requests with
-`Host: caretip.onrender.com` for 2 weeks; (4) remove the CSP entries and `VITE_LEGACY_API_URL`;
-(5) disable the Render subdomain (dashboard toggle, or `renderSubdomainPolicy: disabled`; it then answers
-404). **Rollback:** re-enable the subdomain in Render (immediate).
+The full inventory, external checklist, mobile plan, measurable retirement criteria and rollback are in
+**`docs/ops/api-hostname-migration.md`** (2026-11-27). Summary of what changed against the earlier order:
+the Apple Return URL for `api.caretip.de` must be registered *before* the mobile release;
+`PUBLIC_API_BASE_URL` must be set on Render; every live cron job's `CARE_TIP_API_ORIGIN` must be checked;
+Stripe endpoints are moved by editing their URL in place (the signing secret stays); old-host traffic is
+measured by the API itself (`[legacy-host]` log lines); and `VITE_LEGACY_API_URL` is removed *before* the
+subdomain is disabled. **Rollback:** re-enable the subdomain in Render (immediate).
 
 ## 5. Cloudflare readiness for `api.caretip.de`
 
@@ -100,12 +88,24 @@ Do this only after section 4, step 5.
 
 1. **DNS:** keep the `CNAME api → caretip.onrender.com` as **DNS only** until Render shows the certificate
    valid, then switch to **Proxied**. Remove any `AAAA` records (Render is IPv4).
-2. **TLS:** SSL mode **Full (strict)** (Render serves a valid certificate for the custom domain). Always
-   Use HTTPS on; minimum TLS 1.2.
-3. **Origin protection:** the Render subdomain must already be disabled; otherwise Cloudflare is bypassed.
-   Whether Render can restrict inbound traffic to Cloudflare's addresses was not established in this
-   review; check Render's current options. Without such a restriction, `TRUST_PROXY_CIDRS` (step 4) still
-   prevents a direct caller from choosing its rate-limit address.
+2. **TLS:** Render's Cloudflare guide uses SSL mode **Full** and requires the record to stay DNS only until
+   Render has verified the domain and issued its certificate. **Full (strict)** also works once that
+   certificate is valid (Render serves it for `api.caretip.de`), and is preferred. Render answers plain
+   HTTP with 301 except ACME challenges, so do not add an edge rule that interferes with
+   `/.well-known/acme-challenge/` on `api.caretip.de`, and watch the first certificate renewal after
+   proxying (a failed renewal under Full (strict) is an outage; fall back to Full while fixing). Minimum TLS 1.2.
+3. **Origin protection (verified against Render's docs, 2026-11-27):**
+   - Disabling the Render subdomain removes the `*.onrender.com` bypass, but the custom domain itself stays
+     reachable at Render's edge without passing through Cloudflare (anyone can connect to Render's address
+     with `Host: api.caretip.de`).
+   - Render **inbound IP rules** (allow only Cloudflare's ranges) exist but require the **Scale or Enterprise**
+     plan. Not available on the current plan.
+   - Realistic options on the current plan: (a) accept the bypass: CareTip's own limits still apply and
+     `TRUST_PROXY_CIDRS` (step 4) stops a direct caller from choosing its rate-limit address; (b) a Cloudflare
+     Transform Rule adds a secret request header and the API refuses requests without it (exempting nothing,
+     since webhooks then also arrive through Cloudflare): needs a small code change and a rotation procedure,
+     to be done in the Cloudflare phase; (c) upgrade the Render plan and use inbound IP rules.
+     Cloudflare Authenticated Origin Pulls are not usable (Render cannot require client certificates).
 4. **Client address (do not guess the hop count):** first measure. Call
    `GET https://api.caretip.de/health` with the `x-health-secret` header (value: `HEALTH_CHECK_SECRET`) before
    and after enabling the proxy; the `proxy` section shows the forwarded-chain length, each entry's kind
@@ -137,16 +137,36 @@ Do this only after section 4, step 5.
 - A statement timeout rolls back the whole transaction (no partial financial write). Stripe webhooks retry
   and payment work is idempotent and reconciled, so a timeout surfaces as a retried error, not drift.
 - 15 s is too tight: unbounded CSV exports, retention/anonymisation batches, analytics and migrations can
-  run longer. **Recommended: 30 s after measuring.**
+  run longer.
 
-Rollout:
-1. Measure: `select query, calls, max_exec_time from pg_stat_statements order by max_exec_time desc limit 30;`
-2. If nothing legitimate exceeds ~10 s: `alter role postgres set statement_timeout = '30s';`
-   and `alter role postgres set idle_in_transaction_session_timeout = '60s';`
-3. Verify with `select rolname, rolconfig from pg_roles where rolname = 'postgres';` (not `SHOW`).
-4. A migration that may run longer must start with `SET statement_timeout = 0;`.
-5. Rollback: `alter role postgres reset statement_timeout;` (new connections).
-A dedicated application role would allow a tighter timeout without touching migrations (larger change).
+**Review 2026-11-27: do not apply the role-wide timeout yet.**
+- Migrations run as the same `postgres` role on **every deploy** (`npm start` → `scripts/runMigrateDeploy.mjs`,
+  session pooler). A migration statement killed at 30 s is recorded as failed (Prisma P3009), later
+  deploys refuse to migrate, and the runner then **starts the API anyway** on the old schema. A long
+  index build or backfill would therefore turn into a broken deploy, not a retried query.
+- The all-time transaction CSV export (`getTipsForExport` without a range) is one unbounded query; at real
+  volume it is exactly what a 30 s cap would kill.
+- Interactive transactions allow up to 60 s (anonymisation, KYC destruction), but that limit covers the
+  whole transaction of short statements and is unaffected by a per-statement cap.
+- With no production traffic yet, `pg_stat_statements` cannot show realistic durations.
+
+Rollout, when there is real traffic:
+1. Measure for 2–4 weeks: `select query, calls, mean_exec_time, max_exec_time from pg_stat_statements
+   order by max_exec_time desc limit 30;` and `select pid, now() - query_start as runtime, left(query, 120)
+   from pg_stat_activity where state <> 'idle' order by runtime desc;`. A statement is affected if its
+   `max_exec_time` exceeds 30 000 ms.
+2. Bound the export first (date range limit or streaming in pages).
+3. Migrations: every migration that may exceed a few seconds starts with `SET statement_timeout = 0;`
+   (Prisma runs the file on one session-pooler connection, so it applies to that migration only). Add
+   this to the migration-review checklist before applying the role setting.
+4. Apply: `alter role postgres set statement_timeout = '30s';` and
+   `alter role postgres set idle_in_transaction_session_timeout = '60s';`. Takes effect for new connections.
+5. Verify with `select rolname, rolconfig from pg_roles where rolname = 'postgres';` (not `SHOW`), then
+   watch Sentry for `canceling statement due to statement timeout` (SQLSTATE 57014) for a week.
+6. Rollback: `alter role postgres reset statement_timeout;` and
+   `alter role postgres reset idle_in_transaction_session_timeout;` (new connections; restart the API to
+   drop pooled ones).
+A dedicated application role (separate from migrations) would allow a tighter timeout safely; larger change.
 
 ## 7. Monitoring
 
@@ -154,7 +174,8 @@ A dedicated application role would allow a tighter timeout without touching migr
 |---|---|---|
 | 5xx rate | In-process watch: ≥200 requests and >2 % 5xx over 5 min per instance → Sentry issue tagged `caretip_alert=api_5xx_rate` (≤1 per 15 min; health checks excluded) | Sentry issue alert: tag `caretip_alert` equals `api_5xx_rate` → email, **high** |
 | DB pool timeouts | Prisma errors carry tag `prisma_code` (e.g. `P2024`) | Sentry issue alert: tag `prisma_code` equals `P2024` → email, **high** |
-| Valkey degraded/recovered | Already reported to Sentry and logs | Sentry issue alert on the Redis degraded issue → email, **medium** |
+| Valkey degraded/recovered | Sentry events tagged `caretip_alert=redis_degraded` (state change) and `redis_degraded_persistent` (still down after the reminder interval); logs `[redis] … DEGRADED/RECOVERED` | Sentry issue alert: tag `caretip_alert` equals `redis_degraded` → email, **medium**; second rule for `redis_degraded_persistent` → **high** |
+| Old API hostname traffic | `[legacy-host]` summary log lines (see `docs/ops/api-hostname-migration.md`) | None (read during retirement) |
 | Service unhealthy, deploy/cron failure | — | Render notifications (email): unhealthy service, failed deploy, failed cron, **high** |
 | CPU / memory | — | Render has no threshold alerts. Watch Render Metrics; for alerts use a metrics stream (Pro plan) to e.g. Grafana: CPU or memory >80 % for 10 min, **medium** |
 | Rate-limit blocks | Logged (`[security.rateLimit] blocked`, `[auth.rateLimit] blocked`, `[auth.lockout] account sign-in locked`) | Optional log alert if your log tool supports it |
@@ -179,6 +200,7 @@ email issue alerts but not rate-based alert types.
 
 - `REDIS_URL` on the web service (shared limits and lockout). `RATE_LIMIT_FALLBACK_INSTANCE_COUNT` when
   running more than one instance.
+- `PUBLIC_API_BASE_URL=https://api.caretip.de` (hostname migration; the API warns at startup while unset).
 - Optional: `LANDING_AI_DAILY_MAX_CALLS`, `RATE_LIMIT_REDIS_COMMAND_TIMEOUT_MS`,
   `RATE_LIMIT_REDIS_CONNECT_TIMEOUT_MS`, `HEALTH_CHECK_SECRET` (for the proxy measurement).
 - Sentry and Render alerts in section 7; database timeout in section 6; hostname migration and Cloudflare
