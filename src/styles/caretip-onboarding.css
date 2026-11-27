@@ -1823,12 +1823,12 @@
   border-top: 0;
 }
 
-/* The guest preview, folded away on smaller screens */
+/* The guest preview, folded away on smaller screens: a quiet row, no box around the phone. */
 .business-onboarding-preview-toggle {
   margin-top: 1.5rem;
-  border: 1px solid var(--onb-line);
-  border-radius: 1.25rem;
-  background: var(--onb-warm);
+  border-top: 1px solid var(--onb-line);
+  border-bottom: 1px solid var(--onb-line);
+  background: none;
 }
 
 .business-onboarding-preview-toggle > summary {
@@ -1839,11 +1839,17 @@
   align-items: center;
   column-gap: 0.75rem;
   row-gap: 0.125rem;
-  padding: 0.75rem 1.125rem;
+  padding: 0.875rem 0.125rem;
   color: hsl(var(--foreground));
   font-size: 0.9375rem;
   font-weight: 650;
   list-style: none;
+}
+
+.business-onboarding-preview-toggle > summary:focus-visible {
+  border-radius: 0.5rem;
+  outline: 2px solid var(--onb-orange);
+  outline-offset: 2px;
 }
 
 .business-onboarding-preview-toggle > summary::-webkit-details-marker {
@@ -1876,7 +1882,7 @@
 }
 
 .business-onboarding-preview-toggle .business-onboarding-guest-preview {
-  padding: 0.25rem 1rem 1.25rem;
+  padding: 1rem 0 2.25rem;
 }
 
 .business-onboarding-preview-toggle .business-onboarding-guest-preview__intro {
@@ -2151,14 +2157,20 @@
     gap: 4rem;
   }
 
+  /* No card behind the phone: the device floats on the page, lit by a soft glow. */
   .business-onboarding-layout .business-onboarding-preview-aside {
     position: sticky;
     top: 2.5rem;
     margin-top: 0;
-    padding: 1.5rem 1.25rem 1.75rem;
-    border: 1px solid var(--onb-line);
-    border-radius: 1.5rem;
-    background: var(--onb-warm);
+    padding: 0.5rem 0 2.5rem;
+    border: 0;
+    border-radius: 0;
+    background: none;
+  }
+
+  .business-onboarding-layout .business-onboarding-preview-aside .business-onboarding-guest-preview__intro {
+    margin-bottom: 1.75rem;
+    text-align: center;
   }
 
   .business-onboarding-layout .business-onboarding-preview-aside .business-onboarding-guest-preview__device-shadow {
@@ -2558,5 +2570,90 @@
 @media (max-width: 380px) {
   .onb-phone {
     --onb-phone-scale: 0.6;
+  }
+}
+
+/* ---------- Guest preview staging: the phone on the page, lit, with a live marker ---------- */
+
+.business-onboarding-layout .business-onboarding-guest-preview__device-wrap {
+  isolation: isolate;
+}
+
+/* Soft brand-orange light behind the device (replaces the card that used to frame it). */
+.business-onboarding-layout .business-onboarding-guest-preview__device-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 8% -18% 4%;
+  z-index: -1;
+  border-radius: 50%;
+  background:
+    radial-gradient(closest-side, rgb(235 153 44 / 0.3), rgb(235 153 44 / 0.11) 55%, transparent 100%);
+  filter: blur(18px);
+  pointer-events: none;
+}
+
+.dark .business-onboarding-layout .business-onboarding-guest-preview__device-wrap::before {
+  background:
+    radial-gradient(closest-side, rgb(235 153 44 / 0.22), rgb(235 153 44 / 0.08) 55%, transparent 100%);
+}
+
+/* A gentle float so the device reads as an object, not a picture. */
+.business-onboarding-layout .business-onboarding-preview-aside .onb-phone {
+  transform: translateY(0);
+  transition: transform 500ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.business-onboarding-layout .business-onboarding-preview-aside:hover .onb-phone {
+  transform: translateY(-4px);
+}
+
+.business-onboarding-layout .business-onboarding-guest-preview__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+}
+
+/* Live marker: the landing page's diamond, breathing slowly. */
+.business-onboarding-layout .business-onboarding-guest-preview__label::before {
+  content: "";
+  width: 0.4375rem;
+  height: 0.4375rem;
+  flex: none;
+  background: var(--onb-orange);
+  clip-path: var(--onb-diamond);
+  animation: onb-live-breathe 2.4s ease-in-out infinite;
+}
+
+@keyframes onb-live-breathe {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.8);
+  }
+}
+
+.business-onboarding-layout .business-onboarding-guest-preview__helper {
+  margin-top: 0.375rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.8125rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .business-onboarding-layout .business-onboarding-guest-preview__label::before {
+    animation: none;
+  }
+
+  .business-onboarding-layout .business-onboarding-preview-aside .onb-phone,
+  .business-onboarding-layout .business-onboarding-preview-aside:hover .onb-phone {
+    transform: none;
+    transition: none;
   }
 }
