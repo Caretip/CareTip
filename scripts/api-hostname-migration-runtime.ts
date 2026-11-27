@@ -1,7 +1,7 @@
 /**
  * API hostname migration guard: `https://api.caretip.de` is the canonical API host everywhere a
- * deployed client or job is configured; `caretip.onrender.com` survives only as an explicit,
- * exact-origin legacy entry while it is being retired (docs/ops/api-hostname-migration.md).
+ * deployed client or job is configured; `caretip.onrender.com` is being retired
+ * (docs/ops/api-hostname-migration.md) and is no longer allowed by the web CSP.
  * Static checks plus the backend production-config warning. No network, database or secrets.
  * Run: npm run test:api-hostname-migration
  */
@@ -76,13 +76,14 @@ check("cron: the job runner's fallback origin is the canonical host", () => {
   assert.ok(!read("backend/scripts/render-category-retention-http.mjs").includes(LEGACY_HOST));
 });
 
-check("web CSP: canonical API host allowed; legacy host only as exact origins (never *.onrender.com)", () => {
+check("web CSP: canonical API host allowed; retired Render host not allowed at all", () => {
   for (const rel of ["scripts/spa-csp-policy.mjs", "public/_headers", "vercel.json"]) {
     const s = read(rel);
     assert.ok(s.includes("https://*.caretip.de") || s.includes(CANONICAL), `${rel}: https API origin`);
     assert.ok(s.includes("wss://*.caretip.de") || s.includes("wss://api.caretip.de"), `${rel}: wss API origin`);
     // An actual origin (scheme + wildcard), not prose that explains why the wildcard is forbidden.
     assert.ok(!/(https|wss):\/\/\*\.onrender\.com/.test(s), `${rel}: no wildcard Render origin`);
+    assert.ok(!/(https|wss):\/\/caretip\.onrender\.com/.test(s), `${rel}: retired Render API origin removed`);
   }
 });
 

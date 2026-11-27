@@ -129,9 +129,20 @@ function verifySpaCsp(label, entry, opts = {}) {
       failures.push(`${label} (${source}): ${directive} must not contain a bare * source`);
     }
   }
-  for (const origin of ["https://caretip.onrender.com", "wss://caretip.onrender.com"]) {
-    if (!connectSrc.split(/\s+/).includes(origin)) {
-      failures.push(`${label} (${source}): connect-src must allow the exact API origin ${origin}`);
+  // Canonical API https://api.caretip.de (+ Socket.IO over wss), exact or via *.caretip.de.
+  const connectTokens = connectSrc.split(/\s+/);
+  for (const [exact, wildcard] of [
+    ["https://api.caretip.de", "https://*.caretip.de"],
+    ["wss://api.caretip.de", "wss://*.caretip.de"],
+  ]) {
+    if (!connectTokens.includes(exact) && !connectTokens.includes(wildcard)) {
+      failures.push(`${label} (${source}): connect-src must allow the canonical API origin ${exact}`);
+    }
+  }
+  // The Render-generated API hostname is retired: no directive may allow it.
+  for (const [directive, value] of d) {
+    if (/caretip\.onrender\.com/i.test(value)) {
+      failures.push(`${label} (${source}): ${directive} must not allow the retired API host caretip.onrender.com`);
     }
   }
   for (const host of SPA_CONNECT_SRC) {

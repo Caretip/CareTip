@@ -6,8 +6,7 @@
  * | Host pattern | Feature | Breakage if removed |
  * |--------------|---------|---------------------|
  * | 'self' | Dev Vite proxy (/api, /socket.io); same-origin prod | All API + socket in dev |
- * | caretip.de / www / *.caretip.de | Production SPA + optional same-site API | Prod API on subdomain |
- * | caretip.onrender.com + wss (exact origin) | Legacy VITE_API_URL backend (render.yaml) + Socket.IO | Login, dashboard, realtime on the legacy API origin |
+ * | caretip.de / www / *.caretip.de (https + wss) | Production SPA; canonical API https://api.caretip.de + its Socket.IO | Login, dashboard, realtime |
  * | oauth2.googleapis.com, www.googleapis.com, accounts.google.com | @react-oauth/google | Google sign-in |
  * | firebase*.googleapis.com, *.googleapis.com | FCM web push + Firebase SDK | Push notifications |
  * | assets.calendly.com (script/style/connect) | Request Demo Calendly popup widget |
@@ -32,10 +31,10 @@ export const SPA_CONNECT_SRC = [
   "https://www.caretip.de",
   "https://*.caretip.de",
   "wss://*.caretip.de",
-  // SEC-10: exact Render origin of the CareTip API (render.yaml), not *.onrender.com — any Render
-  // customer can host *.onrender.com. A new API host must be added here explicitly.
-  "https://caretip.onrender.com",
-  "wss://caretip.onrender.com",
+  // The API is served only on https://api.caretip.de (covered above). The Render-generated
+  // caretip.onrender.com origin was removed with the legacy session move (VITE_LEGACY_API_URL).
+  // SEC-10: never add *.onrender.com (any Render customer can host it); an API host outside
+  // *.caretip.de must be added here as an exact origin.
   "https://oauth2.googleapis.com",
   "https://www.googleapis.com",
   "https://accounts.google.com",

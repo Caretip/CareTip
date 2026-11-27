@@ -30,7 +30,7 @@ Apple sign-in (popup, return URL = page origin).
 | `mobile/constants/config.ts` `PRODUCTION_API_URL`, `mobile/eas.json` (preview, production) | 1 Active production | **Changed** to `api.caretip.de`; needs a mobile release (section 4) |
 | Apple Services ID Return URL `…onrender.com/api/auth/apple/native-callback` (Android Sign in with Apple, built from the mobile API URL) | 1 Active production | Add the `api.caretip.de` URL **before** the mobile release (section 5) |
 | Netlify `VITE_LEGACY_API_URL` + `src/app/lib/legacySessionMigration.ts` | 2 Legacy compatibility | Keep; remove at retirement step R1 |
-| CSP exact `https://`/`wss://caretip.onrender.com` (`scripts/spa-csp-policy.mjs` → `public/_headers`, `vercel.json`; `scripts/csp-verify.mjs`) | 2 Legacy compatibility | Keep; remove together with `VITE_LEGACY_API_URL` |
+| CSP exact `https://`/`wss://caretip.onrender.com` (`scripts/spa-csp-policy.mjs` → `public/_headers`, `vercel.json`; `scripts/csp-verify.mjs`) | 2 Legacy compatibility | **Removed from the repository 2026-11-27** (R1); `csp-verify` now forbids the host. Live once Netlify deploys it |
 | Backend `resolvePublicApiBaseUrl` fallback to `RENDER_EXTERNAL_URL` | 2 (latent) | Set `PUBLIC_API_BASE_URL` on Render (section 5); startup now warns while unset |
 | Cron runner default (`backend/scripts/render-category-retention-http.{mjs,sh}`) | 2 | **Changed** to `api.caretip.de` (used only when `CARE_TIP_API_ORIGIN` is unset) |
 | Old mobile builds already installed | 2 | Keep the old host until adoption (section 4) |
@@ -135,8 +135,10 @@ Criteria (all must hold):
 
 Sequence:
 - R1 (after C6) Remove `VITE_LEGACY_API_URL` in Netlify and the CSP legacy entries (`scripts/spa-csp-policy.mjs`,
-  regenerate `public/_headers`/`vercel.json`, update `scripts/csp-verify.mjs` and the legacy assertions in the
-  frontend first-party test); deploy.
+  `public/_headers`, `vercel.json`, `scripts/csp-verify.mjs`); deploy. Status 2026-11-27: variable removed in
+  Netlify by the owner, CSP removed in the repository (not yet deployed). Both must reach production in the
+  same build: confirm the deployed bundle no longer contains `VITE_LEGACY_API_URL`. The legacy session-move
+  code stays; it is inert while the variable is unset.
 - R2 Wait 7 days; confirm no sign-in regressions.
 - R3 (after C1–C5) Disable the Render subdomain: Render → web service → Settings → Custom Domains →
   Render Subdomain → Disabled (or `renderSubdomainPolicy: disabled`). It then answers 404.
