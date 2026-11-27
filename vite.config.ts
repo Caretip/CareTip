@@ -1,9 +1,11 @@
 import { defineConfig, loadEnv } from 'vite'
 import { fileURLToPath } from 'node:url'
+import { readFileSync } from 'node:fs'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { deployVersionPlugin, readLocalGitSha, resolveDeployBuildInfo } from './scripts/deploy-build-version.mjs'
+import { DEFERRED_LOCALE_SECTIONS } from './src/i18n/localeSplit'
 
 /** Normalize BASE_URL / *_APP_URL values into `https://host` (no path). Used only at config time. */
 function publicSiteOriginFromEnvValue(raw: string | undefined): string {
@@ -38,9 +40,12 @@ function bootAssetsMetaPlugin() {
       handler(_html: string, ctx: { bundle?: Record<string, { fileName: string; facadeModuleId?: string | null }> }) {
         const assets: Record<string, string> = {};
         for (const { fileName, facadeModuleId } of Object.values(ctx.bundle ?? {})) {
-          const locale = /\/i18n\/locales\/(de|en)\.json/.exec(facadeModuleId ?? '');
-          if (locale) assets[locale[1]!] = `/${fileName}`;
+          // `de` / `en`: the core part every page needs; `deApp` / `enApp`: the deferred sections.
+          const locale = /caretip-locale-(de|en)-(core|app)$/.exec(facadeModuleId ?? '');
+          if (locale) assets[locale[2] === 'core' ? locale[1]! : `${locale[1]}App`] = `/${fileName}`;
           if (/^assets\/landing-[\w-]+\.css$/.test(fileName)) assets.landingCss = `/${fileName}`;
+          // Entry stylesheet: theme-init.js inserts it (nonBlockingMainStylesheetPlugin).
+          if (/^assets\/index-[\w-]+\.css$/.test(fileName)) assets.mainCss = `/${fileName}`;
         }
         if (!Object.keys(assets).length) return [];
         return [
@@ -53,6 +58,64 @@ function bootAssetsMetaPlugin() {
       },
     },
   };
+}
+
+/**
+ * Serves each locale file in two parts (see src/i18n/localeSplit.ts): `virtual:caretip-locale/de/core`
+ * and `virtual:caretip-locale/de/app` (same for `en`). The homepage needs only `core`, about a third of
+ * the file; translators still edit one JSON file per language.
+ */
+function localePartsPlugin() {
+  const RESOLVED = '\0caretip-locale-'
+  return {
+    name: 'caretip-locale-parts',
+    resolveId(id: string) {
+      const m = /^virtual:caretip-locale\/(de|en)\/(core|app)$/.exec(id)
+      return m ? `${RESOLVED}${m[1]}-${m[2]}` : null
+    },
+    load(this: { addWatchFile: (file: string) => void }, id: string) {
+      const m = /^\0caretip-locale-(de|en)-(core|app)$/.exec(id)
+      if (!m) return null
+      const file = fileURLToPath(new URL(`./src/i18n/locales/${m[1]}.json`, import.meta.url))
+      this.addWatchFile(file)
+      const all = JSON.parse(readFileSync(file, 'utf8')) as Record<string, unknown>
+      const deferred = new Set<string>(DEFERRED_LOCALE_SECTIONS)
+      const part = Object.fromEntries(
+        Object.entries(all).filter(([key]) => (m[2] === 'app' ? deferred.has(key) : !deferred.has(key))),
+      )
+      // JSON.parse of a string literal is faster to evaluate than an object literal of this size.
+      return `export default /* #__PURE__ */ JSON.parse(${JSON.stringify(JSON.stringify(part))});`
+    },
+  }
+}
+
+/**
+ * The main stylesheet (~95 KB gzipped) no longer blocks first paint. Every page opens on the
+ * `#caretip-html-boot` cover, which is styled inline in index.html. Before, a phone on 4G showed a
+ * blank (or, in dark mode, black) screen for ~3 s while this file and the app's scripts shared the
+ * connection.
+ *
+ * The render-blocking link becomes a preload (early discovery). theme-init.js inserts the stylesheet
+ * itself from `caretip-boot-assets.mainCss`: script-inserted stylesheets do not block rendering, and it
+ * still applies as soon as it arrives, while the scripts are downloading. React mounts only after it
+ * has loaded (main.tsx `mainStylesheetReady`). Build only: in dev, Vite injects CSS from JavaScript.
+ */
+function nonBlockingMainStylesheetPlugin() {
+  return {
+    name: 'caretip-non-blocking-main-css',
+    apply: 'build' as const,
+    transformIndexHtml: {
+      order: 'post' as const,
+      handler(html: string) {
+        const re = /<link rel="stylesheet" crossorigin href="(\/assets\/index-[\w-]+\.css)">/g
+        const matches = html.match(re) ?? []
+        if (matches.length !== 1) {
+          throw new Error(`caretip-non-blocking-main-css: expected one entry stylesheet link, found ${matches.length}`)
+        }
+        return html.replace(re, '<link rel="preload" as="style" crossorigin href="$1" data-caretip-main-css>')
+      },
+    },
+  }
 }
 
 /**
@@ -169,7 +232,9 @@ export default defineConfig(({ mode, command }) => {
     // Tailwind is not being actively used – do not remove them
     react(),
     tailwindcss(),
+    localePartsPlugin(),
     bootAssetsMetaPlugin(),
+    nonBlockingMainStylesheetPlugin(),
     deployVersionPlugin(deployBuild),
     VitePWA({
       registerType: 'autoUpdate',

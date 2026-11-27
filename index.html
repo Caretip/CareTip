@@ -10,7 +10,9 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5"
     />
-    <meta name="color-scheme" content="light dark" />
+    <!-- "light" until theme-init.js says otherwise: with "light dark", a dark-mode device painted a black
+         canvas until the stylesheet arrived, although CareTip is light unless the visitor chose dark. -->
+    <meta name="color-scheme" content="light" />
     <meta name="theme-color" content="#FAF9F6" />
     <meta name="theme-color" content="#FAF9F6" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />

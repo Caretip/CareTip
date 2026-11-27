@@ -11,6 +11,8 @@ import { handleVitePreloadError, startDeployUpdateRuntime } from "./app/lib/depl
 import { registerCaretipServiceWorker } from "./app/lib/deployUpdate/serviceWorkerRegistration";
 import { scheduleMobileDeferredWork } from "./lib/mobilePerf";
 import { landingI18nPreload } from "./i18n/preloadLocale";
+import { ensureFullLocale } from "./i18n/i18n";
+import { registerRouteModulePrerequisite } from "./app/lib/chunkLoadRecovery";
 import { loadLandingStyles } from "./app/lib/landingStyles";
 import { prefetchCustomerEntryGraph } from "./app/lib/prefetchCustomerEntryGraph";
 import { markLandingColdLoad } from "./app/lib/landingColdLoadMarks";
@@ -126,10 +128,42 @@ if (import.meta.env.PROD) {
 
 markLandingColdLoad("react-start");
 
-// The home page must not paint unstyled, and its boot handoff waits for the real hero.
-const firstPaintStyles = window.location.pathname === "/" ? loadLandingStyles() : Promise.resolve();
+/**
+ * The entry stylesheet is not render-blocking (vite.config.ts `nonBlockingMainStylesheetPlugin`):
+ * theme-init.js inserts it from script so the inline-styled boot cover paints at once. React mounts
+ * only once it has loaded. A failed download mounts anyway, as a failed render-blocking link did.
+ */
+function mainStylesheetReady(): Promise<void> {
+  let sheet = document.querySelector<HTMLLinkElement>('link[rel="stylesheet"][data-caretip-main-css]');
+  if (!sheet) {
+    const preload = document.querySelector<HTMLLinkElement>('link[rel="preload"][data-caretip-main-css]');
+    if (!preload) return Promise.resolve(); // dev server: Vite injects CSS from JavaScript
+    // theme-init.js did not run: insert it here, in the preload's place in <head>.
+    sheet = document.createElement("link");
+    sheet.rel = "stylesheet";
+    sheet.crossOrigin = "anonymous";
+    sheet.href = preload.href;
+    sheet.setAttribute("data-caretip-main-css", "");
+    preload.after(sheet);
+  }
+  if (sheet.sheet || sheet.hasAttribute("data-caretip-settled")) return Promise.resolve();
+  const link = sheet;
+  return new Promise((resolve) => {
+    link.addEventListener("load", () => resolve(), { once: true });
+    link.addEventListener("error", () => resolve(), { once: true });
+  });
+}
 
-void Promise.all([landingI18nPreload, firstPaintStyles])
+const isHomePage = window.location.pathname === "/";
+const mainStyles = mainStylesheetReady();
+// The home page must not paint unstyled, and its boot handoff waits for the real hero.
+const firstPaintStyles = isHomePage ? loadLandingStyles() : Promise.resolve();
+// The homepage needs only the core translations; every other entry gets them all before it paints.
+const localeReady = isHomePage ? landingI18nPreload : Promise.all([landingI18nPreload, ensureFullLocale()]);
+// Lazy routes (navigation from the homepage included) wait for the full translations with their code.
+registerRouteModulePrerequisite(() => ensureFullLocale());
+
+void Promise.all([localeReady, firstPaintStyles, mainStyles])
   .then(() => {
     markLandingColdLoad("i18n-ready");
     removeStaticCrawlerSummary();
@@ -138,6 +172,13 @@ void Promise.all([landingI18nPreload, firstPaintStyles])
         <App />
       </GlobalErrorBoundary>,
     );
+    if (isHomePage) {
+      // After the hero: fetch the rest of the translations so the next page does not wait for them.
+      scheduleMobileDeferredWork(() => void ensureFullLocale().catch(() => {}), {
+        mobileTimeoutMs: 2500,
+        desktopTimeoutMs: 800,
+      });
+    }
   })
   .catch((error) => {
     console.error("[CareTip] Bootstrap failed:", error);

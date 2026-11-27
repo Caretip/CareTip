@@ -7,6 +7,7 @@ import {
 } from "../app/lib/appLanguageLoading";
 import { registerI18nIntegrityDev } from "./i18nIntegrityDev";
 import { markLandingColdLoad } from "../app/lib/landingColdLoadMarks";
+import type { LocalePart } from "./localeSplit";
 
 export type AppLanguage = "de" | "en";
 
@@ -45,27 +46,58 @@ export function resolveAppLanguageFromCode(lng: string | undefined): AppLanguage
 }
 
 let initPromise: Promise<typeof i18n> | null = null;
-let alternateLocalePrefetch: Promise<void> | null = null;
+/** Per language: the deferred sections (`app` part, see localeSplit.ts) merged into the bundle. */
+const fullLocaleLoads = new Map<AppLanguage, Promise<void>>();
 
 export function getAlternateAppLanguage(lng?: string): AppLanguage {
   const current = resolveAppLanguageFromCode(lng ?? i18n.language);
   return current === "en" ? "de" : "en";
 }
 
-async function loadLocaleBundle(lng: AppLanguage): Promise<TranslationBundle> {
+/** Static import paths, one per file, so Vite emits one chunk per language and part. */
+async function loadLocalePart(lng: AppLanguage, part: LocalePart): Promise<TranslationBundle> {
   const mod =
     lng === "en"
-      ? await import("./locales/en.json")
-      : await import("./locales/de.json");
-  return (mod as { default?: TranslationBundle }).default ?? (mod as TranslationBundle);
+      ? part === "core"
+        ? await import("virtual:caretip-locale/en/core")
+        : await import("virtual:caretip-locale/en/app")
+      : part === "core"
+        ? await import("virtual:caretip-locale/de/core")
+        : await import("virtual:caretip-locale/de/app");
+  return mod.default;
+}
+
+/**
+ * Complete translations for `lng`: the core part plus the deferred sections (dashboards, admin,
+ * employee area, legal pages). Idempotent; a failed download is retried on the next call.
+ * The homepage renders without it; lazy routes and every other cold entry wait for it.
+ */
+export function ensureFullLocale(lng?: AppLanguage): Promise<void> {
+  const target = lng ?? (i18n.isInitialized ? resolveAppLanguageFromCode(i18n.language) : readDocumentOrStoredLanguage());
+  let pending = fullLocaleLoads.get(target);
+  if (!pending) {
+    // Start the deferred part now, alongside initialisation, instead of after it. Marked handled at
+    // once: a failure before it is awaited below must not surface as an unhandled rejection (it still
+    // rejects `pending`).
+    const appPart = loadLocalePart(target, "app");
+    appPart.catch(() => {});
+    pending = ensureI18nReady().then(async () => {
+      const core = i18n.hasResourceBundle(target, "translation") ? null : await loadLocalePart(target, "core");
+      if (core) i18n.addResourceBundle(target, "translation", core, true, true);
+      i18n.addResourceBundle(target, "translation", await appPart, true, true);
+    });
+    pending.catch(() => {
+      if (fullLocaleLoads.get(target) === pending) fullLocaleLoads.delete(target);
+    });
+    fullLocaleLoads.set(target, pending);
+  }
+  return pending;
 }
 
 /** Ensure translation resources exist before switching language. */
 export async function ensureLocaleBundle(lng: AppLanguage): Promise<void> {
   await ensureI18nReady();
-  if (i18n.hasResourceBundle(lng, "translation")) return;
-  const bundle = await loadLocaleBundle(lng);
-  i18n.addResourceBundle(lng, "translation", bundle, true, true);
+  await ensureFullLocale(lng);
 }
 
 /** Data saver or a slow link: the other language is fetched on switch instead of in advance. */
@@ -77,21 +109,15 @@ function connectionDiscouragesPrefetch(): boolean {
 }
 
 /**
- * Idle prefetch of the non-active locale (~350KB JSON chunk) so DE↔EN switches
+ * Idle prefetch of the non-active locale (both parts) so DE↔EN switches
  * do not wait on network. Does not change the active language or block first paint.
  */
 export function prefetchAlternateLocaleBundle(): Promise<void> {
   if (typeof window === "undefined" || connectionDiscouragesPrefetch()) return Promise.resolve();
-  return ensureI18nReady().then(() => {
-    const alternate = getAlternateAppLanguage();
-    if (i18n.hasResourceBundle(alternate, "translation")) return;
-    if (!alternateLocalePrefetch) {
-      alternateLocalePrefetch = loadLocaleBundle(alternate).then((bundle) => {
-        i18n.addResourceBundle(alternate, "translation", bundle, true, true);
-      });
-    }
-    return alternateLocalePrefetch;
-  });
+  // Best effort (callers fire and forget): a failed download is retried by the switch itself.
+  return ensureI18nReady()
+    .then(() => ensureFullLocale(getAlternateAppLanguage()))
+    .catch(() => {});
 }
 
 /** Prefetch EN + DE once the guest tipping journey starts (instant DE↔EN toggles). */
@@ -151,7 +177,8 @@ export function ensureI18nReady(): Promise<typeof i18n> {
 
   initPromise = (async () => {
     const lng = readDocumentOrStoredLanguage();
-    const primary = await loadLocaleBundle(lng);
+    // Core part only; the deferred sections arrive through ensureFullLocale (see localeSplit.ts).
+    const primary = await loadLocalePart(lng, "core");
     const resources: Record<string, { translation: TranslationBundle }> = {
       [lng]: { translation: primary },
     };

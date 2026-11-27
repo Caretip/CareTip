@@ -79,12 +79,27 @@ function withRouteModuleDeadline<T>(load: Promise<T>): Promise<T> {
  * {@link RouteModuleTimeoutError} for the route error screen, whose Try again starts fresh connections.
  */
 export async function loadRouteModuleWithRetry<T>(factory: () => Promise<T>): Promise<T> {
+  const load = async (): Promise<T> => {
+    const [mod] = await Promise.all([factory(), routeModulePrerequisite?.()]);
+    return mod;
+  };
   try {
-    return await withRouteModuleDeadline(factory());
+    return await withRouteModuleDeadline(load());
   } catch (error) {
     if (!isChunkLoadFailure(error)) throw error;
-    return await withRouteModuleDeadline(factory());
+    return await withRouteModuleDeadline(load());
   }
+}
+
+let routeModulePrerequisite: (() => Promise<unknown>) | null = null;
+
+/**
+ * Something every lazy route needs besides its own code, loaded in parallel with it and retried with
+ * it. main.tsx registers the deferred translation sections (src/i18n/localeSplit.ts), which the
+ * homepage renders without. Registered there so this module keeps no imports.
+ */
+export function registerRouteModulePrerequisite(load: () => Promise<unknown>): void {
+  routeModulePrerequisite = load;
 }
 
 /**

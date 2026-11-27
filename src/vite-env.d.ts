@@ -44,3 +44,9 @@ interface ImportMeta {
 declare const __CARETIP_BUILD_VERSION__: string;
 /** ISO-8601 build time; empty under `vite` dev. */
 declare const __CARETIP_BUILD_TIME__: string;
+
+/** One part of a locale file (`vite.config.ts` → `localePartsPlugin`, `src/i18n/localeSplit.ts`). */
+declare module "virtual:caretip-locale/*" {
+  const bundle: Record<string, unknown>;
+  export default bundle;
+}
