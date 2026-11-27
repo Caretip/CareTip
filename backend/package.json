@@ -294,6 +294,7 @@
     "test:google-oauth-redirect": "tsx scripts/google-oauth-redirect-runtime.ts",
     "test:google-oauth-signup": "tsx scripts/google-oauth-signup-runtime.ts",
     "test:connect-onboarding-start": "tsx scripts/connect-onboarding-start-runtime.ts",
+    "test:cron-runner": "tsx scripts/cron-runner-runtime.ts",
     "test:origin-protection": "tsx scripts/origin-protection-runtime.ts",
     "test:legacy-host-monitor": "tsx scripts/legacy-host-monitor-runtime.ts",
     "test:employee-self-service-entitlements": "tsx scripts/employee-self-service-entitlements-runtime.ts",

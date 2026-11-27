@@ -184,6 +184,16 @@ which connects to the instance directly. Without `HEALTH_CHECK_SECRET` both retu
 `/api/health` shares one database probe per 5 s. **The Render health check path must be one of these two**
 (check Settings → Health Check Path before enforcing).
 
+**Cron jobs send the header themselves (2026-11-27).** Report mode showed `missing:internal_job@api_host`:
+Render Cron Job requests to `api.caretip.de` reached the origin without Cloudflare's header (they did not
+pass through the zone's Transform Rule). The runner (`backend/scripts/render-category-retention-http.mjs`,
+and the `.sh` fallback) now sends `x-caretip-origin-secret` from the cron service's own
+`ORIGIN_PROTECTION_SECRET` (same value as the web service) next to `x-cron-secret`, and **refuses to run
+without it** (exit 1, nothing sent). Deployment order: (1) set `ORIGIN_PROTECTION_SECRET` on every cron job
+(the old runner ignores it); (2) only then deploy the new runner. Reversing the order makes every job fail
+until the variable is set. Rotation: update the cron jobs together with Cloudflare (the API accepts
+`ORIGIN_PROTECTION_SECRET_PREVIOUS` meanwhile).
+
 **No other exemption is needed:** Stripe (platform and Connect), cron jobs (`CARE_TIP_API_ORIGIN`), the mobile
 app, the Apple form-post callback, the IT-Recht webhook and Netlify's `/api/*` proxy all address
 `api.caretip.de` and therefore pass through Cloudflare, which adds the header. Each keeps its own

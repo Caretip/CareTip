@@ -98,7 +98,8 @@ const origin = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 const runCron = (path: string, secret: string | undefined, extra: Record<string, string> = {}) =>
   new Promise<{ status: number | null; stdout: string; stderr: string }>((resolve) => {
     const child = spawn(process.execPath, [runner], {
-      env: { ...process.env, CRON_SECRET: secret ?? "", CARE_TIP_API_ORIGIN: origin, CARE_TIP_INTERNAL_JOB_PATH: path, ...extra },
+      // The runner also requires the origin-protection secret (test-only value; this test app has no origin check).
+      env: { ...process.env, CRON_SECRET: secret ?? "", ORIGIN_PROTECTION_SECRET: "test-origin-secret-for-runner-0000000000", CARE_TIP_API_ORIGIN: origin, CARE_TIP_INTERNAL_JOB_PATH: path, ...extra },
     });
     let stdout = "";
     let stderr = "";

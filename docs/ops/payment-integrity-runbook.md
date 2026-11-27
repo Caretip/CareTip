@@ -75,6 +75,7 @@ Environment         CRON_SECRET                 = (copy the value from the backe
                     CARE_TIP_API_ORIGIN         = https://api.caretip.de   (canonical API host, as in render.yaml; never the *.onrender.com address)
                     CARE_TIP_INTERNAL_JOB_PATH  = /api/internal/jobs/payment-refund-operations-tick
                     CARE_TIP_JOB_TIMEOUT_MS     = 300000   (optional; default 120000)
+                    ORIGIN_PROTECTION_SECRET    = (same value as the web service; required by the runner since 2026-11-27)
 ```
 
 What each run does: it retries due refunds that CareTip initiated itself (bounded attempts, same Stripe idempotency key, a lookup before any new key). It then replays billing webhooks that arrived while `SUBSCRIPTION_BILLING_ENABLED` was off.
@@ -102,6 +103,7 @@ Environment         CRON_SECRET                 = (copy the value from the backe
                     CARE_TIP_API_ORIGIN         = (same value as Job 1)
                     CARE_TIP_INTERNAL_JOB_PATH  = /api/internal/jobs/payment-reconciliation
                     CARE_TIP_JOB_TIMEOUT_MS     = 600000   (recommended: a 72-hour window can take longer than 2 minutes)
+                    ORIGIN_PROTECTION_SECRET    = (same value as the web service; required by the runner since 2026-11-27)
 ```
 
 Configuration on the **web service**, not the cron jobs:
