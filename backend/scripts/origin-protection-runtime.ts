@@ -38,9 +38,11 @@ const { initSocketServer, closeSocketServer } = await import("../src/socket/sock
 const { scrubSentryEvent } = await import("../src/instrument/sentryScrub.js");
 const { prisma } = await import("../src/prisma.js");
 const { io: ioClient } = await import("socket.io-client");
+const { requestIdMiddleware } = await import("../src/middleware/requestId.middleware.js");
 
 // App wired in the same order as src/index.ts.
 const app = express();
+app.use(requestIdMiddleware);
 app.use(op.originProtectionMiddleware);
 app.use("/api/webhooks", express.raw({ type: "application/json" }), stripeWebhookRoutes);
 app.use(cors(corsMiddlewareOptions));
@@ -303,6 +305,188 @@ await test("report: nothing blocked; one summary line by category, no secret or 
   assert.match(lines[0]!, /exempt_health:health@/);
   assert.ok(!lines[0]!.includes(ORIGIN) && !lines[0]!.includes("127.0.0.1"));
 });
+
+// ── Successful-validation evidence (validation=accepted) ──
+/** node:http request with a chosen Host; returns status and the X-Request-Id the API answered with. */
+function hostCall(method: string, path: string, host: string, headers: Record<string, string> = {}): Promise<{ status: number; requestId: string }> {
+  const { port } = server.address() as AddressInfo;
+  return new Promise((resolve, reject) => {
+    const req = httpRequest({ host: "127.0.0.1", port, method, path, headers: { ...headers, host } }, (res) => {
+      res.resume();
+      res.on("end", () => resolve({ status: res.statusCode ?? 0, requestId: String(res.headers["x-request-id"] ?? "") }));
+    });
+    req.on("error", reject);
+    req.end();
+  });
+}
+/**
+ * Stand-in for Cloudflare's edge: a loopback proxy that applies the Transform Rule exactly as configured
+ * ("Set static" X-CareTip-Origin-Secret, overwriting any client value; only when Host is api.caretip.de),
+ * adds CF-Ray, and forwards to the API. The client never knows the secret.
+ */
+const edge = createServer((creq, cres) => {
+  const headers = { ...creq.headers };
+  if (String(headers.host ?? "").replace(/:\d+$/, "") === "api.caretip.de") headers[H] = ORIGIN; // Set static (overwrite)
+  headers["cf-ray"] = "8f00000000000abc-AMS";
+  const { port } = server.address() as AddressInfo;
+  const preq = httpRequest({ host: "127.0.0.1", port, method: creq.method, path: creq.url, headers }, (pres) => {
+    cres.writeHead(pres.statusCode ?? 502, pres.headers);
+    pres.pipe(cres);
+  });
+  preq.on("error", () => {
+    cres.writeHead(502);
+    cres.end();
+  });
+  creq.pipe(preq);
+});
+await new Promise<void>((r) => edge.listen(0, "127.0.0.1", r));
+function viaEdge(method: string, path: string, host: string, headers: Record<string, string> = {}): Promise<{ status: number; requestId: string }> {
+  const { port } = edge.address() as AddressInfo;
+  return new Promise((resolve, reject) => {
+    const req = httpRequest({ host: "127.0.0.1", port, method, path, headers: { ...headers, host } }, (res) => {
+      res.resume();
+      res.on("end", () => resolve({ status: res.statusCode ?? 0, requestId: String(res.headers["x-request-id"] ?? "") }));
+    });
+    req.on("error", reject);
+    req.end();
+  });
+}
+const reportEnv = { ...enforceEnv, ORIGIN_PROTECTION_MODE: "report" };
+let evidence: string[] = [];
+/** Fresh configuration + capture, as after a deploy (rate-limit state starts empty). */
+function freshReport(env: Record<string, string> = reportEnv) {
+  op.configureOriginProtection(env);
+  evidence = [];
+  op.__setOriginProtectionReporterForTests((l) => evidence.push(l));
+}
+const accepted = () => evidence.filter((l) => l.includes("validation=accepted"));
+const allEvidence: string[] = [];
+const keep = () => allEvidence.push(...evidence);
+
+await test("accepted config: default 600 s, 0 disables, bad value warns and uses the default, clamped 10–86400", () => {
+  assert.equal(op.resolveOriginProtectionConfig(reportEnv).acceptedLogIntervalMs, 600_000);
+  assert.equal(op.resolveOriginProtectionConfig({ ...reportEnv, ORIGIN_PROTECTION_ACCEPTED_LOG_INTERVAL_S: "0" }).acceptedLogIntervalMs, 0);
+  assert.equal(op.resolveOriginProtectionConfig({ ...reportEnv, ORIGIN_PROTECTION_ACCEPTED_LOG_INTERVAL_S: "3" }).acceptedLogIntervalMs, 10_000);
+  assert.equal(op.resolveOriginProtectionConfig({ ...reportEnv, ORIGIN_PROTECTION_ACCEPTED_LOG_INTERVAL_S: "999999" }).acceptedLogIntervalMs, 86_400_000);
+  const bad = op.resolveOriginProtectionConfig({ ...reportEnv, ORIGIN_PROTECTION_ACCEPTED_LOG_INTERVAL_S: "ten" });
+  assert.equal(bad.acceptedLogIntervalMs, 600_000);
+  assert.equal(bad.mode, "report", "a bad interval never changes the mode or the secrets");
+  assert.equal(bad.fatal.length, 0);
+  assert.match(bad.warnings.join(" "), /ORIGIN_PROTECTION_ACCEPTED_LOG_INTERVAL_S/);
+  assert.match(op.describeOriginProtection(op.resolveOriginProtectionConfig(reportEnv)), / accepted_log=600s$/);
+  assert.equal(op.describeOriginProtection(op.resolveOriginProtectionConfig({})), "[origin-protection] mode=off", "off summary unchanged");
+});
+
+await test("evidence 1+4: correct secret on api.caretip.de → one validation=accepted line (api_host, report, request id)", async () => {
+  freshReport();
+  const r = await hostCall("GET", "/api/me/settings?token=abc", "api.caretip.de", { [H]: ORIGIN, "cf-ray": "8f0000000000aaaa-FRA", authorization: "Bearer x.y.z", cookie: "refresh=secretcookie" });
+  assert.equal(r.status, 401, "auth still answers");
+  assert.deepEqual(accepted(), [
+    `[origin-protection] validation=accepted mode=report host=api_host category=other transport=http cf_ray=8f0000000000aaaa-FRA request_id=${r.requestId} accepted_since_last_line=0`,
+  ]);
+  op.flushOriginProtectionCounts();
+  assert.equal(evidence.length, 1, "no missing/invalid counted for an accepted request");
+  keep();
+});
+
+await test("evidence 5: fake client header overwritten by the (simulated) Cloudflare Set static rule is accepted", async () => {
+  freshReport();
+  const r = await viaEdge("GET", "/api/me/settings", "api.caretip.de", { [H]: "deliberately-wrong-caretip-test-20261127", "x-request-id": "origin-verify-20261127-01" });
+  assert.equal(r.status, 401);
+  assert.equal(r.requestId, "origin-verify-20261127-01", "client-chosen id is echoed for correlation");
+  assert.deepEqual(accepted(), [
+    "[origin-protection] validation=accepted mode=report host=api_host category=other transport=http cf_ray=8f00000000000abc-AMS request_id=origin-verify-20261127-01 accepted_since_last_line=0",
+  ]);
+  op.flushOriginProtectionCounts();
+  assert.ok(!evidence.some((l) => /invalid:|missing:/.test(l)), "no invalid or missing outcome");
+  keep();
+});
+
+await test("evidence 2+3: missing and incorrect headers keep the existing counts and produce no accepted line", async () => {
+  freshReport();
+  assert.equal((await hostCall("GET", "/api/me/settings", "api.caretip.de")).status, 401, "report: not blocked");
+  assert.equal((await hostCall("GET", "/api/me/settings", "api.caretip.de", { [H]: "deliberately-wrong-caretip-test-20261127" })).status, 401);
+  assert.equal(accepted().length, 0);
+  op.flushOriginProtectionCounts();
+  assert.equal(evidence.length, 1);
+  assert.match(evidence[0]!, /^\[origin-protection\] mode=report \d+s would reject\/exempt: invalid:other@api_host=1 missing:other@api_host=1$/);
+  keep();
+});
+
+await test("evidence 6: direct Render requests are distinguished (render_host), with and without the secret", async () => {
+  freshReport();
+  await hostCall("GET", "/api/me/settings", "caretip.onrender.com");
+  await viaEdge("GET", "/api/me/settings", "caretip.onrender.com", { [H]: "fake" }); // rule does not match this host
+  assert.equal(accepted().length, 0);
+  await hostCall("GET", "/api/me/settings", "caretip.onrender.com", { [H]: ORIGIN });
+  await hostCall("GET", "/api/me/settings", "api.caretip.de", { [H]: ORIGIN });
+  const a = accepted();
+  assert.equal(a.length, 2, "separate rate limit per host label");
+  assert.match(a[0]!, / host=render_host /);
+  assert.match(a[1]!, / host=api_host /);
+  op.flushOriginProtectionCounts();
+  assert.match(evidence.find((l) => l.includes("would reject"))!, /invalid:other@render_host=1 missing:other@render_host=1$/);
+  keep();
+});
+
+await test("evidence 10: rate limit — one line per host label per interval, suppressed count carried, 0 disables", async () => {
+  freshReport({ ...reportEnv, ORIGIN_PROTECTION_ACCEPTED_LOG_INTERVAL_S: "60" });
+  const t0 = 1_900_000_000_000;
+  const req = () => ({ method: "GET", path: "/api/me/settings", headers: { host: "api.caretip.de", [H]: ORIGIN } as Record<string, string> });
+  assert.equal(op.decideOriginRequest(req(), t0, "rid-00000001"), "allow");
+  for (let i = 1; i <= 5; i++) op.decideOriginRequest(req(), t0 + i * 1000);
+  assert.equal(accepted().length, 1, "suppressed inside the interval");
+  op.decideOriginRequest(req(), t0 + 60_000, "rid-00000002");
+  assert.equal(accepted().length, 2);
+  assert.match(accepted()[1]!, /request_id=rid-00000002 accepted_since_last_line=5$/);
+  assert.match(accepted()[0]!, /cf_ray=none request_id=rid-00000001 accepted_since_last_line=0$/);
+  // Unsafe CF-Ray / request id values are never echoed.
+  freshReport();
+  op.decideOriginRequest({ method: "GET", path: "/x", headers: { host: "api.caretip.de", [H]: ORIGIN, "cf-ray": "abc\n[origin-protection] forged" } }, t0, "bad id with spaces");
+  assert.match(accepted()[0]!, /cf_ray=none request_id=none /);
+  freshReport({ ...reportEnv, ORIGIN_PROTECTION_ACCEPTED_LOG_INTERVAL_S: "0" });
+  await hostCall("GET", "/api/me/settings", "api.caretip.de", { [H]: ORIGIN });
+  assert.equal(accepted().length, 0, "disabled");
+  keep();
+});
+
+await test("evidence 7: health exemption unchanged (no header → exempt count, never an accepted line)", async () => {
+  freshReport();
+  assert.equal((await hostCall("GET", "/health", "caretip.onrender.com")).status, 200);
+  assert.equal((await hostCall("HEAD", "/api/health", "caretip.onrender.com")).status, 200);
+  assert.equal(accepted().length, 0);
+  op.flushOriginProtectionCounts();
+  assert.match(evidence[0]!, /exempt_health:health@render_host=2$/);
+  freshReport({ ...enforceEnv });
+  assert.equal((await hostCall("POST", "/health", "caretip.onrender.com")).status, 403, "enforce: still exact GET/HEAD only");
+  keep();
+});
+
+await test("evidence 8: internal Cron job still needs its own secret after origin acceptance (report and enforce)", async () => {
+  for (const env of [reportEnv, enforceEnv]) {
+    freshReport(env);
+    assert.equal((await viaEdge("POST", "/api/internal/jobs/purge-mobile-web-handoff", "api.caretip.de", { "x-cron-secret": "nope" })).status, 401);
+    assert.equal((await viaEdge("POST", "/api/internal/jobs/purge-mobile-web-handoff", "api.caretip.de", { "x-cron-secret": CRON })).status, 200);
+    assert.match(accepted()[0]!, new RegExp(`validation=accepted mode=${env.ORIGIN_PROTECTION_MODE} host=api_host category=internal_job transport=http`));
+    keep();
+  }
+});
+
+await test("evidence: Socket.IO acceptance is logged as transport=socket; enforce rejections unchanged", async () => {
+  freshReport(enforceEnv);
+  assert.equal(await socketAttempt(["polling"], { [H]: ORIGIN }), "reached-auth");
+  assert.equal(await socketAttempt(["websocket"]), "refused");
+  assert.match(accepted()[0]!, /validation=accepted mode=enforce host=other_host category=socket transport=socket /);
+  keep();
+});
+
+await test("evidence 9: no secret, header value, fingerprint, path, query, address, cookie or token in any line", () => {
+  assert.ok(allEvidence.length >= 8, `collected ${allEvidence.length} lines`);
+  const forbidden = [ORIGIN, ORIGIN_PREV, CRON, op.secretFingerprint(ORIGIN), "deliberately-wrong", "/api/me/settings", "token=abc", "127.0.0.1", "secretcookie", "Bearer", "x.y.z", "purge-mobile-web-handoff"];
+  for (const line of allEvidence) for (const f of forbidden) assert.ok(!line.includes(f), `a line contained a forbidden value (${forbidden.indexOf(f)})`);
+});
+edge.close();
+op.configureOriginProtection(enforceEnv);
 
 // ── Sentry ──
 await test("Sentry: the header is filtered from event payloads", () => {

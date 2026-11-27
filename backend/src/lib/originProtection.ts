@@ -30,10 +30,20 @@ import { classifyLegacyHostRequest, requestHostname } from "./legacyHostMonitor.
  *
  * A verified request provably passed through Cloudflare, so its `CF-Connecting-IP` (always set by
  * Cloudflare, client values overwritten) is used as the client address (`clientIp.ts`).
+ *
+ * Positive evidence (`report` and `enforce`): a successful validation is logged as
+ * `[origin-protection] validation=accepted mode=… host=api_host|render_host|other_host …`, at most once per
+ * host label per `ORIGIN_PROTECTION_ACCEPTED_LOG_INTERVAL_S` (default 600; `0` disables; 10–86400). The first
+ * accepted request per host label after startup is always logged. Only the outcome, host label, request
+ * category, transport, CF-Ray, the request id (also returned to the client as `X-Request-Id`) and a count
+ * of suppressed acceptances; never a secret, header value, fingerprint, path, query, address or cookie.
  */
 export const ORIGIN_PROTECTION_HEADER = "x-caretip-origin-secret";
 export const ORIGIN_SECRET_MIN_LENGTH = 32;
 export const ORIGIN_PROTECTION_REPORT_INTERVAL_MS = 60_000;
+export const ORIGIN_ACCEPTED_LOG_DEFAULT_S = 600;
+const ORIGIN_ACCEPTED_LOG_MIN_S = 10;
+const ORIGIN_ACCEPTED_LOG_MAX_S = 86_400;
 const EXEMPT_HEALTH_PATHS = new Set(["/health", "/api/health"]);
 
 export type OriginProtectionMode = "off" | "report" | "enforce";
@@ -44,7 +54,21 @@ export type OriginProtectionConfig = {
   /** Startup must stop (enforcement requested but unsafe). Never contains a secret value. */
   fatal: string[];
   warnings: string[];
+  /** Minimum gap between `validation=accepted` lines per host label; 0 = never logged. */
+  acceptedLogIntervalMs: number;
 };
+
+function resolveAcceptedLogIntervalMs(raw: string | undefined, warnings: string[]): number {
+  const text = (raw ?? "").trim();
+  if (text === "") return ORIGIN_ACCEPTED_LOG_DEFAULT_S * 1000;
+  const n = Number(text);
+  if (!Number.isInteger(n) || n < 0) {
+    warnings.push(`ORIGIN_PROTECTION_ACCEPTED_LOG_INTERVAL_S must be 0 or a whole number of seconds; using ${ORIGIN_ACCEPTED_LOG_DEFAULT_S}`);
+    return ORIGIN_ACCEPTED_LOG_DEFAULT_S * 1000;
+  }
+  if (n === 0) return 0;
+  return Math.min(ORIGIN_ACCEPTED_LOG_MAX_S, Math.max(ORIGIN_ACCEPTED_LOG_MIN_S, n)) * 1000;
+}
 
 /** Short, non-reversible fingerprint so operators can compare Render and Cloudflare values. */
 export function secretFingerprint(secret: string): string {
@@ -54,6 +78,7 @@ export function secretFingerprint(secret: string): string {
 export function resolveOriginProtectionConfig(env: NodeJS.ProcessEnv = process.env): OriginProtectionConfig {
   const fatal: string[] = [];
   const warnings: string[] = [];
+  const acceptedLogIntervalMs = resolveAcceptedLogIntervalMs(env.ORIGIN_PROTECTION_ACCEPTED_LOG_INTERVAL_S, warnings);
   const rawMode = (env.ORIGIN_PROTECTION_MODE ?? "").trim().toLowerCase();
   let mode: OriginProtectionMode = "off";
   if (rawMode === "" || rawMode === "off") mode = "off";
@@ -61,7 +86,7 @@ export function resolveOriginProtectionConfig(env: NodeJS.ProcessEnv = process.e
   else {
     // A typo must not silently mean "unprotected" when someone believes protection is on.
     fatal.push(`ORIGIN_PROTECTION_MODE must be off, report or enforce (got an unrecognised value)`);
-    return { mode: "off", secrets: [], fatal, warnings };
+    return { mode: "off", secrets: [], fatal, warnings, acceptedLogIntervalMs };
   }
 
   const candidates = [
@@ -85,19 +110,19 @@ export function resolveOriginProtectionConfig(env: NodeJS.ProcessEnv = process.e
   }
   if (!candidates[0][1]) problems.push("ORIGIN_PROTECTION_SECRET is not set");
 
-  if (mode === "off") return { mode, secrets: [], fatal, warnings };
+  if (mode === "off") return { mode, secrets: [], fatal, warnings, acceptedLogIntervalMs };
 
   if (mode === "enforce" && (problems.length > 0 || secrets.length === 0)) {
     fatal.push(...problems.map((p) => `ORIGIN_PROTECTION_MODE=enforce: ${p}`));
     if (problems.length === 0) fatal.push("ORIGIN_PROTECTION_MODE=enforce: no usable secret");
-    return { mode, secrets: [], fatal, warnings };
+    return { mode, secrets: [], fatal, warnings, acceptedLogIntervalMs };
   }
   if (mode === "report" && (problems.length > 0 || secrets.length === 0)) {
     // Reporting must never break traffic: misconfigured report mode behaves as off, loudly.
     warnings.push(...problems.map((p) => `ORIGIN_PROTECTION_MODE=report: ${p}; origin protection is OFF`));
-    return { mode: "off", secrets: [], fatal, warnings };
+    return { mode: "off", secrets: [], fatal, warnings, acceptedLogIntervalMs };
   }
-  return { mode, secrets, fatal, warnings };
+  return { mode, secrets, fatal, warnings, acceptedLogIntervalMs };
 }
 
 let active: OriginProtectionConfig = resolveOriginProtectionConfig({});
@@ -118,7 +143,8 @@ export function getOriginProtectionMode(): OriginProtectionMode {
 export function describeOriginProtection(config: OriginProtectionConfig = active): string {
   if (config.mode === "off") return "[origin-protection] mode=off";
   const fps = config.secrets.map(secretFingerprint).join(",");
-  return `[origin-protection] mode=${config.mode} header=${ORIGIN_PROTECTION_HEADER} secrets=${config.secrets.length} fingerprint=${fps}`;
+  const acceptedLog = config.acceptedLogIntervalMs > 0 ? `${config.acceptedLogIntervalMs / 1000}s` : "off";
+  return `[origin-protection] mode=${config.mode} header=${ORIGIN_PROTECTION_HEADER} secrets=${config.secrets.length} fingerprint=${fps} accepted_log=${acceptedLog}`;
 }
 
 /**
@@ -163,6 +189,46 @@ export function __setOriginProtectionReporterForTests(fn: Reporter | null): void
 function resetOriginProtectionCounters(): void {
   counts.clear();
   windowStart = 0;
+  acceptedLog.clear();
+}
+
+type HostLabel = "render_host" | "api_host" | "other_host";
+function hostLabelOf(host: string): HostLabel {
+  return host.endsWith(".onrender.com") ? "render_host" : host === "api.caretip.de" ? "api_host" : "other_host";
+}
+
+// ── Successful-validation evidence (rate-limited per host label; at most 3 entries) ──
+const acceptedLog = new Map<HostLabel, { lastAt: number; suppressed: number }>();
+/** Cloudflare Ray ids are hex plus a colo code; anything else is not echoed. */
+const SAFE_RAY = /^[A-Za-z0-9-]{1,48}$/;
+const SAFE_REQUEST_ID = /^[A-Za-z0-9._:-]{8,64}$/;
+
+/** Never throws (a logging problem must not turn into a rejection in enforce mode). */
+function noteAccepted(req: { method?: string; path?: string; headers: IncomingHttpHeaders }, requestId: string | undefined, now: number): void {
+  try {
+    const interval = active.acceptedLogIntervalMs;
+    if (interval <= 0) return;
+    const host = hostLabelOf(requestHostname(req.headers));
+    const state = acceptedLog.get(host);
+    if (state && now - state.lastAt < interval) {
+      state.suppressed += 1;
+      return;
+    }
+    const suppressed = state?.suppressed ?? 0;
+    acceptedLog.set(host, { lastAt: now, suppressed: 0 });
+    const socket = (req.path ?? "").startsWith("/socket.io");
+    const category = socket
+      ? "socket"
+      : classifyLegacyHostRequest({ method: req.method ?? "GET", path: req.path ?? "/", headers: req.headers } as Pick<Request, "method" | "path" | "headers">);
+    const rawRay = req.headers["cf-ray"];
+    const ray = typeof rawRay === "string" && SAFE_RAY.test(rawRay) ? rawRay : "none";
+    const rid = requestId && SAFE_REQUEST_ID.test(requestId) ? requestId : "none";
+    reporter(
+      `[origin-protection] validation=accepted mode=${active.mode} host=${host} category=${category} transport=${socket ? "socket" : "http"} cf_ray=${ray} request_id=${rid} accepted_since_last_line=${suppressed}`,
+    );
+  } catch {
+    /* diagnostics only */
+  }
 }
 
 export function flushOriginProtectionCounts(now = Date.now()): void {
@@ -179,8 +245,7 @@ export function flushOriginProtectionCounts(now = Date.now()): void {
 function record(outcome: Outcome, category: string, host: string, now = Date.now()): void {
   if (windowStart === 0) windowStart = now;
   if (now - windowStart >= ORIGIN_PROTECTION_REPORT_INTERVAL_MS) flushOriginProtectionCounts(now);
-  const hostLabel = host.endsWith(".onrender.com") ? "render_host" : host === "api.caretip.de" ? "api_host" : "other_host";
-  const key = `${outcome}:${category}@${hostLabel}`;
+  const key = `${outcome}:${category}@${hostLabelOf(host)}`;
   if (!counts.has(key) && counts.size >= 64) return; // bounded
   counts.set(key, (counts.get(key) ?? 0) + 1);
 }
@@ -191,13 +256,17 @@ type Decision = "allow" | "reject";
 export function decideOriginRequest(
   req: { method?: string; path?: string; headers: IncomingHttpHeaders },
   now = Date.now(),
+  requestId?: string,
 ): Decision {
   if (active.mode === "off") {
     delete req.headers[ORIGIN_PROTECTION_HEADER];
     return "allow";
   }
   const present = typeof req.headers[ORIGIN_PROTECTION_HEADER] !== "undefined";
-  if (checkAndStripOriginHeader(req.headers)) return "allow";
+  if (checkAndStripOriginHeader(req.headers)) {
+    noteAccepted(req, requestId, now);
+    return "allow";
+  }
   const category = (req.path ?? "").startsWith("/socket.io")
     ? "socket"
     : classifyLegacyHostRequest({ method: req.method ?? "GET", path: req.path ?? "/", headers: req.headers } as Pick<Request, "method" | "path" | "headers">);
@@ -214,7 +283,9 @@ export function decideOriginRequest(
 export const originProtectionMiddleware: RequestHandler = (req, res, next) => {
   let decision: Decision = "allow";
   try {
-    decision = decideOriginRequest(req);
+    // Set by requestIdMiddleware (mounted earlier) and returned to the client as X-Request-Id.
+    const requestId = res.locals?.requestId;
+    decision = decideOriginRequest(req, Date.now(), typeof requestId === "string" ? requestId : undefined);
   } catch {
     decision = active.mode === "enforce" ? "reject" : "allow";
   }
