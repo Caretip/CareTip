@@ -2685,7 +2685,6 @@ export async function updateEmployee(
     name?: string;
     role?: string;
     jobTitle?: string;
-    monthlyGoal?: number | null;
     isActive?: boolean;
     email?: string;
     locationId?: string | null;

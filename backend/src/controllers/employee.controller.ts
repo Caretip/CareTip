@@ -42,10 +42,6 @@ function isSettingNumericMonthlyGoal(monthlyGoal: unknown): boolean {
   return monthlyGoal !== undefined && monthlyGoal !== null && monthlyGoal !== "";
 }
 
-/**
- * `employeeGoals` applies only to setting a goal amount.
- * Omitting `monthlyGoal` or sending `null` (clear) is not a Pro-gated profile edit.
- */
 /** Employee editing their own monthly goal: only the value is validated (no employer-plan check). */
 function validateOwnMonthlyGoal(res: Response, monthlyGoal: unknown): boolean {
   if (!isSettingNumericMonthlyGoal(monthlyGoal)) return true;
@@ -57,20 +53,11 @@ function validateOwnMonthlyGoal(res: Response, monthlyGoal: unknown): boolean {
   return true;
 }
 
-/** Manager setting a staff member's goal: a business feature, still checked against the plan. */
-async function enforceEmployeeGoalsIfSettingMonthlyGoal(
-  req: Request,
-  res: Response,
-  monthlyGoal: unknown,
-): Promise<boolean> {
-  if (!isSettingNumericMonthlyGoal(monthlyGoal)) return true;
-  const n = Number(monthlyGoal);
-  if (Number.isNaN(n) || n < 0) {
-    res.status(400).json({ message: "Monthly goal must be a non-negative number" });
-    return false;
-  }
-  return enforceFeatureForRequest(req, res, "employeeGoals");
-}
+/**
+ * Tip goals belong to the employee: they set them themselves (Tip goals page, profile settings).
+ * The business only tracks progress, so a manager's staff edit may not set or clear a goal.
+ */
+const MANAGER_GOAL_EDIT_REFUSED = "Tip goals are set by employees themselves. Businesses can track progress but not set goals.";
 
 export async function ensureMySlug(req: Request, res: Response) {
   try {
@@ -347,15 +334,15 @@ export async function updateEmployee(req: Request, res: Response) {
     if (!employeeId?.trim()) {
       return res.status(400).json({ message: "Employee ID is required" });
     }
-    const { name, role, jobTitle, monthlyGoal, isActive, email, locationId, tableIds } = req.body;
+    const { name, role, jobTitle, isActive, email, locationId, tableIds } = req.body;
+    if (req.body && Object.prototype.hasOwnProperty.call(req.body, "monthlyGoal")) {
+      return res.status(400).json({ code: "EMPLOYEE_GOAL_SELF_SERVICE_ONLY", message: MANAGER_GOAL_EDIT_REFUSED });
+    }
     if (isActive !== undefined && typeof isActive !== "boolean") {
       return res.status(400).json({ message: "isActive must be a boolean" });
     }
     if (tableIds !== undefined && !Array.isArray(tableIds)) {
       return res.status(400).json({ message: "tableIds must be an array" });
-    }
-    if (!(await enforceEmployeeGoalsIfSettingMonthlyGoal(req, res, monthlyGoal))) {
-      return;
     }
     const tableIdList =
       tableIds === undefined
@@ -370,12 +357,6 @@ export async function updateEmployee(req: Request, res: Response) {
       actorUserId: userId,
       name,
       jobTitle: role ?? jobTitle,
-      monthlyGoal:
-        monthlyGoal === undefined
-          ? undefined
-          : monthlyGoal === null
-            ? null
-            : Number(monthlyGoal),
       isActive,
       email,
       ...(locationId !== undefined

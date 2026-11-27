@@ -301,7 +301,6 @@ export interface UpdateEmployeeInput {
   actorUserId?: string;
   name?: string;
   jobTitle?: string;
-  monthlyGoal?: number | null;
   isActive?: boolean;
   email?: string;
   locationId?: string | null;
@@ -324,7 +323,7 @@ export async function updateEmployeeForBusiness(
     throw new Error("Employee not found");
   }
 
-  const { name, jobTitle, monthlyGoal, isActive, email, locationId, tableIds } = input;
+  const { name, jobTitle, isActive, email, locationId, tableIds } = input;
   const shouldUpdateAssignments =
     typeof locationId !== "undefined" || typeof tableIds !== "undefined";
   let resolvedAssignments: { locationId: string | null; tableIds: string[] } | null = null;
@@ -406,13 +405,6 @@ export async function updateEmployeeForBusiness(
     },
     });
   });
-
-  if (monthlyGoal !== undefined) {
-    await applyEmployeeMonthlyGoalFromColumn(employeeId, monthlyGoal, {
-      userId: emp.userId,
-      businessId,
-    });
-  }
 
   if (
     nameTrimmed !== undefined &&

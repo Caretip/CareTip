@@ -22,6 +22,7 @@ const { authResultForUserId } = await import("../src/services/auth.service.js");
 const { provisionInternalBasicSubscription } = await import("../src/services/subscription.service.js");
 const { capabilitiesForTier } = await import("../src/config/subscriptionCapabilities.js");
 const { hasFeature } = await import("../src/services/subscriptionEntitlement.service.js");
+const { listEmployeeGoalsForBusiness } = await import("../src/services/goal.service.js");
 
 const app = express();
 app.use(express.json());
@@ -44,7 +45,10 @@ async function call(method: string, path: string, tok: string, body?: unknown) {
     method,
     headers: { "content-type": "application/json", authorization: `Bearer ${tok}`, "x-caretip-client": "1" },
     body: body === undefined ? undefined : JSON.stringify(body),
-  }).catch((e: { cause?: { code?: string; message?: string } }) => {
+    // A hung request fails the test quickly instead of waiting out the 300 s fetch default.
+    signal: AbortSignal.timeout(20_000),
+  }).catch((e: { name?: string; cause?: { code?: string; message?: string } }) => {
+    if (e?.name === "TimeoutError") throw new Error(`${method} ${path}: no response within 20 s (hung)`);
     throw new Error(`${method} ${path}: ${e?.cause?.code ?? e?.cause?.message ?? String(e)}`);
   });
   let json: Record<string, unknown> = {};
@@ -104,10 +108,8 @@ await test("1. employee of a Basic business: own tip goals work (list, create, u
   assert.equal(bad.status, 400, "own monthly goal still validated");
 });
 
-await test("2. employee of a Basic business: own analytics (account, summary, analytics scopes) and goal progress are returned", async () => {
-  // scope=full WITH a timeframe is skipped: it deadlocks for every plan (pre-existing, nested
-  // runSerializedByKey on the same key) and neither the web nor the mobile app calls it.
-  for (const scope of ["account", "summary", "analytics"]) {
+await test("2. employee of a Basic business: own analytics (all scopes) and goal progress are returned", async () => {
+  for (const scope of ["account", "summary", "analytics", "full"]) {
     const r = await call("GET", `/api/tips/employee?scope=${scope}&timeframe=week`, basic.employeeToken);
     assert.equal(r.status, 200, `${scope}: ${JSON.stringify(r.json)}`);
   }
@@ -117,6 +119,23 @@ await test("2. employee of a Basic business: own analytics (account, summary, an
   const list = await call("GET", "/api/tips/employee/list?range=month", basic.employeeToken);
   assert.equal(list.status, 200);
   assert.ok(Array.isArray((list.json as { tips?: unknown[] }).tips ?? (list.json as { items?: unknown[] }).items ?? []), "empty state is a list, not an error");
+});
+
+await test("2b. scope=full with a timeframe answers, also when requested concurrently (was a deadlock for every plan)", async () => {
+  for (const v of [basic, pro]) {
+    for (const tf of ["today", "week", "month"]) {
+      const started = Date.now();
+      const rs = await Promise.all(
+        [0, 1, 2].map(() => call("GET", `/api/tips/employee?scope=full&timeframe=${tf}`, v.employeeToken)),
+      );
+      for (const r of rs) {
+        assert.equal(r.status, 200, `${tf}: ${JSON.stringify(r.json)}`);
+        assert.ok(Array.isArray(r.json.tips) && Array.isArray(r.json.chartSeries), "full payload shape");
+        assert.equal(typeof r.json.periodAmountEur, "number");
+      }
+      assert.ok(Date.now() - started < 15_000, `${tf} took ${Date.now() - started} ms`);
+    }
+  }
 });
 
 await test("3. an employee cannot read or change another employee's goals", async () => {
@@ -137,19 +156,39 @@ await test("4. employees cannot use manager-only analytics or staff management",
   assert.equal((await call("GET", "/api/goals", basic.managerToken)).status, 403, "goal self-service is employee-only");
 });
 
-await test("5–6. Basic business: manager-side Pro checks unchanged (setting a staff goal is refused with the plan payload)", async () => {
-  const r = await call("PATCH", `/api/employees/${basic.employee.id}`, basic.managerToken, { monthlyGoal: 300 });
-  assert.equal(r.status, 403, JSON.stringify(r.json));
-  assert.ok(/SUBSCRIPTION|PLAN|CAPABILITY|premium/i.test(JSON.stringify(r.json)), "plan payload unchanged");
+async function activeGoalAmounts(employeeId: string) {
+  const rows = await prisma.employeeGoal.findMany({ where: { employeeId, status: "active" }, select: { goalAmount: true } });
+  return rows.map((r) => Number(r.goalAmount)).sort((a, b) => a - b);
+}
+
+await test("5. managers cannot set or clear an employee's tip goal, on any plan (employees set their own)", async () => {
+  for (const v of [basic, pro]) {
+    const before = await activeGoalAmounts(v.employee.id);
+    for (const monthlyGoal of [300, null, ""]) {
+      const r = await call("PATCH", `/api/employees/${v.employee.id}`, v.managerToken, { monthlyGoal });
+      assert.equal(r.status, 400, `${JSON.stringify(monthlyGoal)}: ${JSON.stringify(r.json)}`);
+      assert.equal(r.json.code, "EMPLOYEE_GOAL_SELF_SERVICE_ONLY");
+    }
+    assert.deepEqual(await activeGoalAmounts(v.employee.id), before, "employee's goals untouched");
+    // Ordinary staff edits (no goal) still work for the manager.
+    const ok = await call("PATCH", `/api/employees/${v.employee.id}`, v.managerToken, { name: "Staff Member Renamed" });
+    assert.equal(ok.status, 200, JSON.stringify(ok.json));
+  }
+});
+
+await test("6. Basic business: plan entitlements unchanged (no team goal tracking, no advanced analytics)", async () => {
   assert.equal(await hasFeature(basic.businessId, "employeeGoals"), false);
   assert.equal(await hasFeature(basic.businessId, "advancedAnalytics"), false);
 });
 
-await test("7. Pro business: manager keeps Pro entitlements (staff goal editable, capabilities present)", async () => {
-  const r = await call("PATCH", `/api/employees/${pro.employee.id}`, pro.managerToken, { monthlyGoal: 300 });
-  assert.equal(r.status, 200, JSON.stringify(r.json));
+await test("7. Pro business: keeps team goal tracking, which shows the goals employees set themselves", async () => {
   assert.equal(await hasFeature(pro.businessId, "employeeGoals"), true);
   assert.equal(await hasFeature(pro.businessId, "advancedAnalytics"), true);
+  const tracked = await listEmployeeGoalsForBusiness(pro.businessId, { maxGoals: 25 });
+  assert.ok(
+    tracked.some((g: { employeeId?: string; goalAmount?: number }) => g.employeeId === pro.employee.id && Number(g.goalAmount) === 99),
+    `tracking lists the employee-set goal: ${JSON.stringify(tracked)}`,
+  );
 });
 
 await test("8. plan matrix unchanged: Basic lacks employeeGoals/advancedAnalytics, Pro and Enterprise have them", async () => {

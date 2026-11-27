@@ -351,7 +351,6 @@ export function StaffManagementPage() {
   });
   const canGrowTeam = hasFeature("teamManagement");
   const canCreateCustomJobTitles = hasFeature("customJobTitles");
-  const canSetEmployeeGoals = hasFeature("employeeGoals");
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({
@@ -379,7 +378,6 @@ export function StaffManagementPage() {
     role: "Server",
     customRole: "",
     email: "",
-    monthlyGoal: "" as string,
     isActive: true,
     locationId: "",
     tableIds: [] as string[],
@@ -692,8 +690,6 @@ export function StaffManagementPage() {
           ? resolved.customRole
           : "",
       email: employee.email,
-      monthlyGoal:
-        employee.monthlyGoal != null ? String(employee.monthlyGoal) : "",
       isActive: employee.isActive,
       locationId: employee.locationId ?? "",
       tableIds: [...employee.assignedTableIds],
@@ -728,7 +724,6 @@ export function StaffManagementPage() {
       role: string;
       email: string;
       isActive: boolean;
-      monthlyGoal?: number | null;
       locationId?: string | null;
       tableIds?: string[];
     } = {
@@ -737,22 +732,7 @@ export function StaffManagementPage() {
       email,
       isActive: editForm.isActive,
     };
-    if (canSetEmployeeGoals) {
-      const rawGoal = editForm.monthlyGoal.trim();
-      let nextGoal: number | null = null;
-      if (rawGoal !== "") {
-        const n = parseFloat(rawGoal);
-        if (Number.isNaN(n) || n < 0) {
-          toastErr(t("business.staffPage.toastMonthlyGoalInvalid"));
-          return;
-        }
-        nextGoal = n;
-      }
-      const prevGoal = previous?.monthlyGoal ?? null;
-      if (nextGoal !== prevGoal) {
-        payload.monthlyGoal = nextGoal;
-      }
-    }
+    // Tip goals are set by employees themselves; the business only tracks them (no goal field here).
     const nextLocationId = editForm.locationId.trim() ? editForm.locationId : null;
     const prevLocationId = previous?.locationId ?? null;
     const assignmentsChanged =
@@ -1649,19 +1629,6 @@ export function StaffManagementPage() {
                       className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                   </div>
-                  {canSetEmployeeGoals ? (
-                    <div>
-                      <label className="mb-1 block text-sm text-muted-foreground">{t("business.staffPage.monthlyGoalUsd")}</label>
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        placeholder={t("business.staffPage.placeholderNoGoal")}
-                        value={editForm.monthlyGoal}
-                        onChange={(e) => setEditForm((f) => ({ ...f, monthlyGoal: e.target.value }))}
-                        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                      />
-                    </div>
-                  ) : null}
                 </div>
                 <div>
                   <label className="mb-1 block text-sm text-muted-foreground">{t("business.staffPage.labelAssignedLocation")}</label>

@@ -187,13 +187,13 @@ export async function getByEmployee(req: Request, res: Response) {
       });
     }
 
-    const dash = await runSerializedByKey(`emp-stats-full:${employee.id}:${timeframe}`, () =>
-      loadEmployeeTipsDashboardForTimeframe({
-        employeeId: employee.id,
-        businessTimezone: employee.businessTimezone,
-        timeframe,
-      }),
-    );
+    // The service serialises on `emp-stats-full:<employee>:<timeframe>` itself. Wrapping it again
+    // under the same key here made the inner call wait on the outer one forever (deadlock).
+    const dash = await loadEmployeeTipsDashboardForTimeframe({
+      employeeId: employee.id,
+      businessTimezone: employee.businessTimezone,
+      timeframe,
+    });
     const goalsEnabled = EMPLOYEE_OWN_GOALS_ENABLED;
     const [accountSummary, currentMonthTotal, goal] = await Promise.all([
       loadEmployeeAccountSummary(employee.id),

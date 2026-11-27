@@ -300,8 +300,9 @@ function testPhase1EmployeeProfileRegression(): boolean {
     "utf8",
   );
   let ok = true;
-  if (!staff.includes("if (canSetEmployeeGoals)") || !staff.includes("payload.monthlyGoal = nextGoal")) {
-    fail("StaffManagement must send monthlyGoal only when employee goals are enabled and changed");
+  // Tip goals are set by employees themselves; the business only tracks them.
+  if (/payload\.monthlyGoal|editForm\.monthlyGoal|canSetEmployeeGoals/.test(staff)) {
+    fail("StaffManagement must not set or send an employee's tip goal (employees set their own)");
     ok = false;
   }
   if (!staff.includes("if (assignmentsChanged)")) {
@@ -313,10 +314,10 @@ function testPhase1EmployeeProfileRegression(): boolean {
     ok = false;
   }
   if (
-    !employeeCtl.includes("enforceEmployeeGoalsIfSettingMonthlyGoal") ||
-    !employeeCtl.includes("isSettingNumericMonthlyGoal")
+    !employeeCtl.includes("EMPLOYEE_GOAL_SELF_SERVICE_ONLY") ||
+    !employeeCtl.includes("validateOwnMonthlyGoal(res, monthlyGoal)")
   ) {
-    fail("Employee controller must gate employeeGoals only when setting a numeric goal");
+    fail("Employee controller must refuse manager goal edits and validate the employee's own goal");
     ok = false;
   }
   if (ok) pass("Phase 1 employee ordinary-profile edit guards remain intact");
