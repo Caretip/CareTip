@@ -55,6 +55,7 @@ import { initSocketServer } from "./socket/socketServer.js";
 import { applyHttpServerTimeouts } from "./lib/httpServerTimeouts.js";
 import { httpErrorRateMonitor } from "./lib/httpErrorRateMonitor.js";
 import { legacyHostMonitor } from "./lib/legacyHostMonitor.js";
+import { configureOriginProtection, describeOriginProtection, originProtectionMiddleware } from "./lib/originProtection.js";
 import { installProcessErrorHandlers } from "./lib/processErrorHandlers.js";
 import { errorHandler } from "./middleware/errorHandler.middleware.js";
 import { requestIdMiddleware } from "./middleware/requestId.middleware.js";
@@ -100,11 +101,26 @@ app.disable("x-powered-by");
 
 configureTrustProxy(app);
 
+// Cloudflare origin protection (ORIGIN_PROTECTION_MODE off|report|enforce; default off). An unsafe
+// enforcement configuration stops startup here, before the server listens.
+{
+  const originProtection = configureOriginProtection();
+  for (const warning of originProtection.warnings) console.warn(`[config] ${warning}`);
+  if (originProtection.fatal.length > 0) {
+    for (const problem of originProtection.fatal) console.error(`FATAL: ${problem}`);
+    process.exit(1);
+  }
+  console.info(describeOriginProtection(originProtection));
+}
+
 app.use(requestIdMiddleware);
 app.use(httpErrorRateMonitor);
 // Counts traffic still arriving on the Render-generated hostname (retirement measurement, no PII).
 app.use(legacyHostMonitor);
 app.use(securityHeadersMiddleware);
+// Before webhooks, CORS, body parsing, rate limits and routes: a rejected direct-origin request costs
+// nothing beyond this check. Socket.IO applies the same decision in its allowRequest hook.
+app.use(originProtectionMiddleware);
 
 async function assertEnvForAuth(): Promise<void> {
   const configReview = reviewProductionConfig();

@@ -2,6 +2,7 @@ import { Server } from "socket.io";
 import type { Server as HttpServer } from "http";
 import type { Express } from "express";
 import { rateLimitIpForRawRequest } from "../lib/clientIp.js";
+import { allowSocketRequest } from "../lib/originProtection.js";
 import { enforceRateLimitLayersDistributed } from "../utils/rateLimitStore.js";
 import { Role } from "@prisma/client";
 import { prisma } from "../prisma.js";
@@ -271,6 +272,9 @@ export function initSocketServer(httpServer: HttpServer, app?: Express): Server 
     pingInterval: 25000,
     pingTimeout: 20000,
     maxHttpBufferSize: SOCKET_MAX_HTTP_BUFFER_SIZE,
+    // Cloudflare origin protection for every new engine.io session (polling handshake or direct
+    // WebSocket). Later requests need the random session id issued by an allowed handshake.
+    allowRequest: allowSocketRequest,
   });
 
   io.use((socket, next) => {

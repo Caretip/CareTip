@@ -102,9 +102,10 @@ Do this only after section 4, step 5.
      plan. Not available on the current plan.
    - Realistic options on the current plan: (a) accept the bypass: CareTip's own limits still apply and
      `TRUST_PROXY_CIDRS` (step 4) stops a direct caller from choosing its rate-limit address; (b) a Cloudflare
-     Transform Rule adds a secret request header and the API refuses requests without it (exempting nothing,
-     since webhooks then also arrive through Cloudflare): needs a small code change and a rotation procedure,
-     to be done in the Cloudflare phase; (c) upgrade the Render plan and use inbound IP rules.
+     Transform Rule adds a secret request header and the API refuses requests without it: **implemented
+     2026-11-27** (`backend/src/lib/originProtection.ts`, `ORIGIN_PROTECTION_MODE` off/report/enforce, only
+     the health endpoints exempt); configuration, activation, rotation and rollback in
+     `docs/ops/api-hostname-migration.md` section 9; (c) upgrade the Render plan and use inbound IP rules.
      Cloudflare Authenticated Origin Pulls are not usable (Render cannot require client certificates).
 4. **Client address (do not guess the hop count):** first measure. Call
    `GET https://api.caretip.de/health` with the `x-health-secret` header (value: `HEALTH_CHECK_SECRET`) before
@@ -118,6 +119,9 @@ Do this only after section 4, step 5.
      peer is `cgnat` (100.64/10), add that range too.
    - Do **not** set `TRUST_PROXY_HOPS=2` blindly: if any request reaches the origin with fewer proxies, the
      client could choose its own address. The CIDR list is safe against that.
+   - With origin protection in `report` or `enforce`, a request that carries Cloudflare's verified header
+     uses `CF-Connecting-IP` as its client address (unverified requests never do), so proxied traffic gets
+     real client addresses even before the CIDR list is set.
    - Verify: `cfConnectingIpMatchesResolved: true`, and rate-limit logs show varied client prefixes.
 5. **WAF / rate rules:** managed WAF rules on; rate rules on `/api/auth/*` (e.g. 60 per minute per IP) and
    `/api/payments/create-tip-session`; challenge (not block) for suspicious bots on HTML-less API paths

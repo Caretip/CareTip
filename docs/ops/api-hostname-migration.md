@@ -153,3 +153,87 @@ Sequence:
   change, then redeploy. Re-enable the subdomain first.
 - Stripe: edit the endpoint URL back. Apple/Google/Meta: re-add the removed entries.
 - Mobile: a release cannot be recalled; keep the old host enabled until C4/C5 hold again.
+
+## 9. Cloudflare origin protection (implemented in code 2026-11-27; not active in production)
+
+Cloudflare proxies `api.caretip.de`, but the origin is still reachable without it: through
+`caretip.onrender.com`, and through Render's edge with `Host: api.caretip.de`. Render inbound IP rules
+need the Scale/Enterprise plan, so the API checks a secret header that only Cloudflare adds
+(`backend/src/lib/originProtection.ts`).
+
+**Settings (Render web service):**
+
+| Variable | Value |
+|---|---|
+| `ORIGIN_PROTECTION_MODE` | `off` (default; deploying the code changes nothing), `report` (count would-be rejections, block nothing), `enforce` (403) |
+| `ORIGIN_PROTECTION_SECRET` | ≥ 32 random characters, unique (`node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`) |
+| `ORIGIN_PROTECTION_SECRET_PREVIOUS` | Only during rotation; both are accepted |
+
+`enforce` with a missing, short or reused secret, or any unrecognised mode value, **stops startup**.
+`report` with a bad secret warns and behaves as `off`. The startup log shows only a fingerprint:
+`[origin-protection] mode=enforce header=x-caretip-origin-secret secrets=1 fingerprint=1a2b3c4d`.
+
+**What it checks.** Every Express request (mounted before webhooks, CORS, body parsing, rate limits and
+routes, so a rejected request costs almost nothing) and every new Socket.IO session (engine.io
+`allowRequest`, polling and direct WebSocket). Constant-time comparison; repeated headers rejected; the header
+is deleted after the check (no route, log or Sentry event sees it; Sentry also filters it by name).
+Rejections: `403 {"message":"Forbidden"}`, `Cache-Control: no-store`.
+
+**Exemption (only one):** `GET`/`HEAD` of exactly `/health` and `/api/health`, for Render's health checker,
+which connects to the instance directly. Without `HEALTH_CHECK_SECRET` both return only a status; no writes;
+`/api/health` shares one database probe per 5 s. **The Render health check path must be one of these two**
+(check Settings → Health Check Path before enforcing).
+
+**No other exemption is needed:** Stripe (platform and Connect), cron jobs (`CARE_TIP_API_ORIGIN`), the mobile
+app, the Apple form-post callback, the IT-Recht webhook and Netlify's `/api/*` proxy all address
+`api.caretip.de` and therefore pass through Cloudflare, which adds the header. Each keeps its own
+verification behind it (Stripe signatures per endpoint secret, `x-cron-secret`, provider tokens, sessions).
+Anything still calling `caretip.onrender.com` directly is rejected by `enforce`: enforcement therefore
+requires the retirement criteria C2–C5 (section 7) first.
+
+**Client address.** For a verified request the API uses `CF-Connecting-IP` (Cloudflare always sets it and
+overwrites client values) as the client address; never for unverified requests. Until `report` or `enforce`
+is on, behind Cloudflare the API may see Cloudflare edge addresses as clients, so users can share
+rate-limit and lockout buckets. Turning on `report` already fixes this for proxied traffic.
+
+**Cloudflare configuration (dashboard, `caretip.de` zone):**
+1. Rules → Transform Rules → **Modify Request Header** → Create rule "CareTip origin secret".
+   When: custom expression `(http.host eq "api.caretip.de")`. Then: **Set static**, header
+   `X-CareTip-Origin-Secret`, value = the secret. ("Set" overwrites any client-sent value; it also applies to
+   WebSocket upgrade requests.)
+2. SSL/TLS: Full (strict); Network: WebSockets on.
+3. No Cache Rules for `api.caretip.de` (defaults do not cache API responses).
+4. Do not put JavaScript or managed challenges in front of non-browser callers: `/api/webhooks/*`,
+   `/api/webhook/*`, `/api/internal/jobs/*`, `/api/legal/webhook`, `/api/auth/apple/native-callback`, and the
+   mobile app's API traffic. Bot Fight Mode cannot exempt paths; keep it off for this zone. Rate rules should
+   block (429), not challenge.
+
+**Activation (in order):**
+1. Generate the secret; store it in the password manager only.
+2. Cloudflare: create the Transform Rule (harmless while the API mode is `off`: the header is stripped).
+3. Render: set `ORIGIN_PROTECTION_SECRET`, `ORIGIN_PROTECTION_MODE=report`; deploy. Confirm the startup
+   fingerprint line.
+4. Verify: `curl -s -H "x-health-secret: $HEALTH_CHECK_SECRET" https://api.caretip.de/health` →
+   `proxy.originVerified: true` and `proxy.cfConnectingIpMatchesResolved: true`. The same request to
+   `https://caretip.onrender.com/health` → `originVerified: false`.
+5. Watch `[origin-protection] mode=report` log lines for 7 days. Expected: only `@render_host` entries
+   (legacy direct traffic) and `exempt_health`. Any `missing:*@api_host` means a request reached the origin
+   for `api.caretip.de` without Cloudflare's header (rule gap or bypass): fix before enforcing. Any
+   `stripe_webhook`, `internal_job`, `mobile_app` or `oauth_callback` entries mean a legitimate caller still uses
+   the Render host (section 5).
+6. Render: `ORIGIN_PROTECTION_MODE=enforce`; deploy. Verify: `curl -s -o /dev/null -w "%{http_code}"
+   https://caretip.onrender.com/api/me/settings` → 403; the web app, sign-in, live updates, a Stripe test of a
+   recent delivery (Resend) and the next cron runs work through `api.caretip.de`.
+
+**Rollback:** set `ORIGIN_PROTECTION_MODE=report` (or `off`) on Render and redeploy/restart (minutes). Never
+delete or change the Cloudflare rule while the API is in `enforce`: every request would be rejected.
+
+**Rotation:** Render: new value in `ORIGIN_PROTECTION_SECRET`, old one in `ORIGIN_PROTECTION_SECRET_PREVIOUS`;
+deploy. Cloudflare: change the rule value. After a clean report window, remove `_PREVIOUS`; deploy. Rotate
+immediately if the secret may have leaked.
+
+**Limitations:** the secret is a shared bearer value (anyone with Cloudflare or Render access can read it);
+Cloudflare Authenticated Origin Pulls are not usable on Render; rejected requests still reach Render's edge
+and use connections (volumetric floods against the origin remain Render's to absorb); the health endpoints
+stay reachable directly; Netlify-proxied requests carry Netlify's address unless
+`NETLIFY_PROXY_SIGNATURE_SECRET` is configured (unchanged).

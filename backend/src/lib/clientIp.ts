@@ -2,6 +2,7 @@ import { isIP } from "node:net";
 import jwt from "jsonwebtoken";
 import type { Express, Request } from "express";
 import type { IncomingMessage } from "node:http";
+import { getOriginProtectionMode, isOriginVerifiedHeaders } from "./originProtection.js";
 
 /**
  * Client address resolution. Every limiter, log and alert uses this, so there is one rule.
@@ -72,9 +73,21 @@ function netlifySignedClientIp(req: Pick<Request, "ip"> & Partial<Pick<Request, 
   return result;
 }
 
+/**
+ * Behind Cloudflare the connecting peer (and with one trusted hop, `req.ip`) is a Cloudflare edge
+ * address shared by many users. A request whose origin-protection header was verified provably came
+ * through CareTip's Cloudflare zone, and Cloudflare always sets `CF-Connecting-IP` (overwriting any
+ * client value), so that header is believed for verified requests only. Never for unverified ones.
+ */
+function cloudflareVerifiedClientIp(req: Partial<Pick<Request, "headers">>): string | null {
+  if (!req.headers || !isOriginVerifiedHeaders(req.headers)) return null;
+  const cf = req.headers["cf-connecting-ip"];
+  return typeof cf === "string" ? normalizeIp(cf) : null;
+}
+
 /** Never throws. An unusable address falls into one shared bucket rather than skipping limits. */
 export function resolveClientIp(req: Pick<Request, "ip"> & Partial<Pick<Request, "headers">>): string {
-  return netlifySignedClientIp(req) ?? normalizeIp(req.ip) ?? "unknown";
+  return netlifySignedClientIp(req) ?? cloudflareVerifiedClientIp(req) ?? normalizeIp(req.ip) ?? "unknown";
 }
 
 /**
@@ -211,5 +224,8 @@ export function describeProxyChain(req: Pick<Request, "ip" | "headers"> & { sock
     cfConnectingIpPresent: cf !== null,
     cfConnectingIpMatchesResolved: cf !== null && cf === resolved,
     trueClientIpPresent: typeof req.headers["true-client-ip"] === "string",
+    // Whether this request carried a valid Cloudflare origin header (never the header itself).
+    originProtectionMode: getOriginProtectionMode(),
+    originVerified: isOriginVerifiedHeaders(req.headers),
   };
 }
